@@ -108,6 +108,24 @@ describe('InterviewPrepView', () => {
     expect(screen.getByText('Connect API work to the role.')).toBeInTheDocument();
   });
 
+  it('marks list items with ink squares, not blue', () => {
+    const { container } = render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+      />
+    );
+
+    const markers = container.querySelectorAll('li > span[aria-hidden="true"]');
+    expect(markers.length).toBeGreaterThan(0);
+    for (const marker of markers) {
+      expect(marker).toHaveClass('size-1', 'bg-ink');
+      expect(marker).not.toHaveClass('bg-primary');
+    }
+  });
+
   it('shows a default unavailable message for generated prep when regeneration is blocked', () => {
     render(
       <InterviewPrepView

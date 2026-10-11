@@ -53,23 +53,25 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
       {TEMPLATE_OPTIONS.map((template) => (
         <button
           key={template.id}
+          type="button"
           onClick={() => onChange(template.id)}
-          className={`group flex flex-col items-center p-3 border-2 transition-all ${
+          aria-pressed={value === template.id}
+          className={`group flex flex-col items-center p-3 border border-ink bg-white transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-canvas ${
             value === template.id
-              ? 'border-blue-700 bg-white shadow-[3px_3px_0px_0px_#1D4ED8]'
-              : 'border-black bg-white hover:bg-background hover:shadow-sw-sm'
+              ? 'outline-2 outline-offset-2 outline-ink'
+              : 'hover:bg-canvas focus-visible:outline-none'
           }`}
           title={templateLabels[template.id].description}
         >
           {/* Template Thumbnail */}
-          <div className="w-16 h-20 mb-2 flex items-center justify-center">
+          <div className="mb-2">
             <TemplateThumbnail type={template.id} isActive={value === template.id} />
           </div>
 
           {/* Template Name */}
           <span
-            className={`font-mono text-[10px] uppercase tracking-wider font-bold ${
-              value === template.id ? 'text-blue-700' : 'text-ink-soft'
+            className={`font-mono text-xs uppercase tracking-wider font-bold ${
+              value === template.id ? 'text-ink' : 'text-ink-soft'
             }`}
           >
             {templateLabels[template.id].name}
@@ -92,14 +94,14 @@ interface TemplateThumbnailProps {
 }
 
 export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isActive }) => {
-  const lineColor = isActive ? 'bg-blue-700' : 'bg-steel-grey';
-  const borderColor = isActive ? 'border-blue-700' : 'border-steel-grey';
-  const accentColor = isActive ? 'bg-blue-600' : 'bg-blue-400';
+  const lineColor = isActive ? 'bg-primary' : 'bg-steel';
+  const borderColor = isActive ? 'border-primary' : 'border-steel';
+  const accentColor = isActive ? 'bg-primary/70' : 'bg-primary/50';
 
   if (type === 'swiss-single') {
     // Single column thumbnail
     return (
-      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
         {/* Header */}
         <div className={`h-2 ${lineColor} w-full`}></div>
         <div className={`h-0.5 ${lineColor} w-3/4`}></div>
@@ -120,9 +122,9 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
   if (type === 'latex') {
     // LaTeX thumbnail - centered name + Title-Case ruled section headers (serif feel)
     return (
-      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
         {/* Centered name + contact */}
-        <div className="flex flex-col items-center gap-0.5">
+        <div className="flex flex-col items-center gap-1">
           <div className={`h-1.5 ${lineColor} w-2/3`}></div>
           <div className={`h-0.5 ${lineColor} w-1/2 opacity-60`}></div>
         </div>
@@ -142,9 +144,9 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
   if (type === 'clean') {
     // Clean thumbnail - centered light name + large understated gray uppercase headers
     return (
-      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
         {/* Centered light name + contact line */}
-        <div className="flex flex-col items-center gap-0.5">
+        <div className="flex flex-col items-center gap-1">
           <div className={`h-1.5 ${lineColor} w-1/2 opacity-70`}></div>
           <div className={`h-0.5 ${lineColor} w-2/3 opacity-40`}></div>
         </div>
@@ -164,9 +166,9 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
   if (type === 'modern') {
     // Modern template thumbnail - with accent color highlights
     return (
-      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
         {/* Header with accent underline */}
-        <div className="flex flex-col items-center gap-0.5">
+        <div className="flex flex-col items-center gap-1">
           <div className={`h-2 ${lineColor} w-3/4`}></div>
           <div className={`h-0.5 ${accentColor} w-1/3`}></div>
         </div>
@@ -187,16 +189,16 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
   if (type === 'modern-two-column') {
     // Modern two-column template thumbnail - accent colors + two columns
     return (
-      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
         {/* Header with accent underline */}
-        <div className="flex flex-col items-center gap-0.5">
+        <div className="flex flex-col items-center gap-1">
           <div className={`h-1.5 ${lineColor} w-3/4`}></div>
           <div className={`h-0.5 ${accentColor} w-1/3`}></div>
         </div>
         {/* Two columns */}
         <div className="flex-1 flex gap-1 mt-1">
           {/* Left column (wider) - with accent headers */}
-          <div className="w-2/3 space-y-0.5">
+          <div className="w-2/3 space-y-1">
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
             <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
@@ -207,7 +209,7 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
           {/* Right column (narrower). Active state uses a heavier full
               border instead of a left stripe (impeccable BAN 1). */}
           <div
-            className={`w-1/3 border ${isActive ? 'border-blue-600' : 'border-blue-300'} pl-1 space-y-0.5`}
+            className={`w-1/3 border ${isActive ? 'border-primary/70' : 'border-primary/30'} pl-1 space-y-1`}
           >
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>
@@ -223,23 +225,23 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
   if (type === 'vivid') {
     // Vivid thumbnail - two-tone accent name + accent headers + accent arrow bullets
     return (
-      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
         {/* Two-tone name (left-aligned) */}
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
           <div className={`h-1.5 ${accentColor} w-1/3`}></div>
           <div className={`h-1.5 ${accentColor} w-1/4 opacity-50`}></div>
         </div>
         <div className={`h-0.5 ${lineColor} w-2/3 opacity-40`}></div>
         {/* Two columns (no divider) */}
-        <div className="flex-1 flex gap-1 mt-0.5">
+        <div className="flex-1 flex gap-1 mt-1">
           {/* Left column with arrow ticks */}
-          <div className="w-2/3 space-y-0.5">
+          <div className="w-2/3 space-y-1">
             <div className={`h-0.5 ${accentColor} w-1/2`}></div>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1">
               <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
               <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
             </div>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1">
               <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
               <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
             </div>
@@ -247,7 +249,7 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
             <div className={`h-0.5 ${accentColor} w-2/5`}></div>
           </div>
           {/* Right column (sidebar) */}
-          <div className="w-1/3 space-y-0.5">
+          <div className="w-1/3 space-y-1">
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>
             <div className="h-0.5"></div>
@@ -261,16 +263,16 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
 
   // Two column thumbnail (swiss-two-column)
   return (
-    <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+    <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
       {/* Header - centered */}
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex flex-col items-center gap-1">
         <div className={`h-1.5 ${lineColor} w-3/4`}></div>
         <div className={`h-0.5 ${lineColor} w-1/2 opacity-70`}></div>
       </div>
       {/* Two columns */}
       <div className="flex-1 flex gap-1 mt-1">
         {/* Left column (wider) */}
-        <div className="w-2/3 space-y-0.5">
+        <div className="w-2/3 space-y-1">
           <div className={`h-0.5 ${lineColor} w-full`}></div>
           <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
           <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
@@ -279,7 +281,7 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
           <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
         </div>
         {/* Right column (narrower) */}
-        <div className="w-1/3 border-l border-paper-tint pl-1 space-y-0.5">
+        <div className="w-1/3 border-l border-paper pl-1 space-y-1">
           <div className={`h-0.5 ${lineColor} w-full`}></div>
           <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>
           <div className="h-0.5"></div>

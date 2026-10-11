@@ -2,6 +2,7 @@
   "common": {
     "save": "Save",
     "saving": "Saving...",
+    "saved": "Saved",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -39,6 +40,19 @@
     "docs": "Docs",
     "launchApp": "Launch App"
   },
+  "community": {
+    "follow": "Follow @srbhr",
+    "star": "Star",
+    "starOnGithub": "Star on GitHub",
+    "sponsor": "Sponsor",
+    "discord": "Discord",
+    "joinDiscord": "Join Discord",
+    "contributors": "Contributors",
+    "settingsPrompt": "Enjoying Resume Matcher?",
+    "sponsorProject": "Sponsor the project",
+    "joinTheDiscord": "Join the Discord",
+    "aboutTitle": "About"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "builder": "Resume Builder",
@@ -46,7 +60,8 @@
     "settings": "Settings",
     "backToDashboard": "Back to Dashboard",
     "goToSettings": "Go to Settings",
-    "applicationTracker": "Application Tracker"
+    "applicationTracker": "Application Tracker",
+    "queue": "Tailoring Queue"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -65,6 +80,7 @@
     "downloadPdf": "Download PDF",
     "tailorResume": "Tailor for Job",
     "selectModule": "Select Module",
+    "modulesHeading": "Resume modules",
     "masterResume": "Master Resume",
     "tailoredResume": "Tailored Resume",
     "initializeMasterResume": "Initialize Master Resume",
@@ -114,6 +130,10 @@
     "masterLimitReached": "Up to {max} master resumes"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "Nothing generated yet",
+      "preview": "Preview"
+    },
     "title": "Resume Builder",
     "copySuffix": "(Copy)",
     "editMode": "Edit Mode",
@@ -213,12 +233,8 @@
       "coverLetter": "COVER LETTER",
       "outreach": "OUTREACH MAIL",
       "jdMatch": "JD MATCH",
-      "interviewPrep": "INTERVIEW PREP"
-    },
-    "footer": {
-      "moduleLabel": "Resume Builder Module",
-      "singleColumn": "Single Column",
-      "twoColumn": "Two Column"
+      "interviewPrep": "INTERVIEW PREP",
+      "atsCheck": "ATS CHECK"
     },
     "pageSize": {
       "usLetter": "US Letter"
@@ -318,6 +334,17 @@
         "keywordsExtracted": "{count} keywords extracted",
         "matchesFound": "{count} matches found",
         "matchRateLabel": "Match Rate:"
+      },
+      "atsScore": {
+        "description": "Scores the saved resume against this job description. The ATS CHECK tab tests how the PDF itself parses.",
+        "loading": "Loading ATS score…",
+        "notCalculated": "ATS score not calculated yet for this resume.",
+        "loadFailed": "Couldn't load the saved ATS score. Try Recalculate, or reload the page.",
+        "lastCalculated": "Last calculated {date}",
+        "recalculate": "Recalculate",
+        "recalculating": "Calculating…",
+        "saveFirst": "Save your changes, then recalculate.",
+        "recalculateFailed": "Couldn't calculate an ATS score. If this resume was tailored before scores were saved, tailor it again from the Tailor Resume page."
       }
     },
     "genericItemForm": {
@@ -489,7 +516,8 @@
       "coverLetterEditor": "Cover Letter Editor",
       "outreachEditor": "Outreach Message Editor",
       "jdMatchAnalysis": "JD Match Analysis",
-      "interviewPrep": "Interview Prep"
+      "interviewPrep": "Interview Prep",
+      "atsCheck": "ATS Parse Check"
     },
     "alerts": {
       "saveNotAvailable": "Save is only available when editing an existing resume.",
@@ -516,6 +544,126 @@
       "description": "Your latest edits could not be synced to the server or saved in this browser. Leaving now may lose those edits.",
       "leave": "Leave Anyway",
       "stay": "Keep Editing"
+    },
+    "atsCheck": {
+      "aboutTitle": "What this checks",
+      "aboutDescription": "We render your resume with the current template and settings, then read it back the way a plain ATS text extractor does. No AI is involved.",
+      "roundTripTitle": "Round trip",
+      "roundTripDescription": "Compares the extracted text with your resume data. It measures how faithfully this render reads back, not the accuracy of any specific ATS.",
+      "tipsTitle": "Tips",
+      "tips": {
+        "items": {
+          "singleColumn": "Single-column templates read in the right order.",
+          "standardHeadings": "Keep standard section names like Experience, Education and Skills.",
+          "contactInBody": "Keep your contact details in the main text."
+        }
+      },
+      "templateLabel": "Template: {template}",
+      "runButton": "RUN CHECK",
+      "rerunButton": "RUN AGAIN",
+      "running": "CHECKING...",
+      "emptyState": "Run a check to see how an ATS reads this resume with the current template.",
+      "saveFirst": "Save the resume first to run a check.",
+      "unsavedNotice": "Unsaved edits are not included. The check uses the last saved version.",
+      "error": "The check failed. Make sure the backend and frontend are running, then try again.",
+      "parseability": "Parseability",
+      "content": "Content",
+      "extractability": {
+        "full": "Text extraction: full",
+        "partial": "Text extraction: partial",
+        "none": "Text extraction: none"
+      },
+      "status": {
+        "pass": "PASS",
+        "warn": "WARN",
+        "fail": "FAIL"
+      },
+      "checksTitle": "Checks",
+      "contentRecall": "Content recall",
+      "orderFidelity": "Reading order",
+      "allFieldsFound": "Every field was found in the extracted text.",
+      "fieldsTruncated": "This resume has more fields than the check covers, so only the first ones were checked. Fields beyond the limit are not reflected here.",
+      "fieldStatus": {
+        "found": "Found",
+        "garbled": "Garbled",
+        "missing": "Missing",
+        "hidden": "Hidden"
+      },
+      "previewTitle": "Extracted text",
+      "sectionKinds": {
+        "experience": "Experience",
+        "education": "Education",
+        "skills": "Skills"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "Selectable text",
+          "pass": "{characters} characters of text were extracted.",
+          "fail": "No selectable text. The file looks scanned or image-only, so an ATS reads nothing."
+        },
+        "garbled_glyphs": {
+          "title": "Character encoding",
+          "pass": "No unreadable characters.",
+          "warn": "{count} characters could not be decoded.",
+          "fail": "{count} characters could not be decoded, so the text looks garbled to an ATS."
+        },
+        "text_coverage": {
+          "title": "Text vs. images",
+          "pass": "Every page has real text.",
+          "warn": "Pages {pages} are mostly images.",
+          "fail": "Every page is mostly images."
+        },
+        "multi_column": {
+          "title": "Single reading order",
+          "pass": "Text reads in one column.",
+          "fail": "Two columns detected on page {pages}. Many ATS readers mix the columns together.",
+          "templateHint": "This template uses two columns by design. Pick a single-column template for ATS-heavy applications."
+        },
+        "tables": {
+          "title": "Tables",
+          "pass": "No tables.",
+          "warn": "{count} tables found. Some ATS readers flatten or skip table cells."
+        },
+        "text_boxes": {
+          "title": "Text boxes",
+          "pass": "No text boxes.",
+          "warn": "Text boxes found. Some ATS readers skip them.",
+          "fail": "{characters} characters sit in text boxes that many ATS readers skip."
+        },
+        "header_footer_content": {
+          "title": "Headers and footers",
+          "pass": "Nothing important in page headers or footers.",
+          "warn": "Content found in headers or footers, which some ATS readers ignore.",
+          "fail": "Your contact details appear only in the header or footer, which many ATS readers ignore."
+        },
+        "images": {
+          "title": "Images",
+          "pass": "No images.",
+          "warn": "{count} images found. Text inside images is invisible to an ATS."
+        },
+        "page_count": {
+          "title": "Length",
+          "pass": "{pages} page(s).",
+          "warn": "{pages} pages. Consider trimming to two pages or fewer."
+        },
+        "contact_info": {
+          "title": "Contact details",
+          "pass": "Email and phone found near the top.",
+          "warn": "Contact details are incomplete or appear late in the text.",
+          "fail": "No email address found in the extracted text."
+        },
+        "section_headings": {
+          "title": "Section headings",
+          "pass": "Standard headings found: {found}.",
+          "warn": "Missing standard heading: {missing}.",
+          "fail": "Missing standard headings: {missing}. Use names like Experience, Education and Skills."
+        },
+        "dates": {
+          "title": "Dates",
+          "pass": "{years} years found in dates.",
+          "warn": "No recognizable dates found."
+        }
+      }
     }
   },
   "enrichment": {
@@ -591,6 +739,23 @@
         "description": "Comprehensive tailoring using the job description."
       }
     },
+    "length": {
+      "pageLimitLabel": "Page limit",
+      "pageLimitDescription": "Trims the least relevant bullets to fit where possible. No limit turns page fitting off.",
+      "pageLimitOptions": {
+        "1": "1 page",
+        "2": "2 pages",
+        "3": "3 pages",
+        "none": "No limit"
+      },
+      "bulletsLabel": "Bullets per role",
+      "bulletsDescription": "Most relevant bullets kept for each job or project.",
+      "bulletOptions": {
+        "3": "Up to 3",
+        "5": "Up to 5",
+        "all": "All"
+      }
+    },
     "analyzeJob": "Analyze Job",
     "generateTailored": "Generate Tailored Resume",
     "setupRequiredTitle": "[ SETUP REQUIRED ]",
@@ -625,6 +790,18 @@
       "rejectButton": "Reject & Regenerate",
       "confirmButton": "Confirm & Save"
     },
+    "atsScore": {
+      "title": "ATS Score Breakdown",
+      "keywordMatch": "Keyword Match",
+      "skillsCoverage": "Skills Coverage",
+      "titleMatch": "Title Match",
+      "sectionCompleteness": "Section Completeness",
+      "dateConsistency": "Date Consistency",
+      "missingKeywords": "Missing Keywords",
+      "injectableKeywords": "Safe to Add (in your master resume)",
+      "recommendations": "Recommendations",
+      "twoColumnWarning": "Two-column layout: many ATS parsers read columns out of order. Switch to a single-column template in the Builder before applying."
+    },
     "regenerateDialog": {
       "title": "Regenerate tailored resume?",
       "description": "This will discard the current preview and request a new AI tailoring result.",
@@ -646,13 +823,22 @@
       "previewUnavailable": "This preview expired or the source resume changed. Generate a fresh preview before saving."
     },
     "selectResumeDescription": "Bullets are drawn from this master resume.",
+    "tailoringLabel": "Tailoring:",
+    "jobDescriptionHint": "Paste the full job posting, including responsibilities and requirements (at least 50 characters).",
+    "steps": {
+      "label": "How tailoring works",
+      "paste": "Paste the job description",
+      "generate": "Generate a preview",
+      "review": "Review the changes and save"
+    },
     "selectionSummary": "Kept {kept} of {total} bullets (up to {max} per job or project)",
+    "selectionSummaryAll": "Kept {kept} of {total} bullets",
     "pageFit": {
-      "fits": "Fits on one page",
-      "trimmed": "Trimmed {count} more to fit one page",
-      "over": "Still over one page",
+      "fits": "Fits the page limit",
+      "trimmed": "Trimmed {count} more to fit the page limit",
+      "over": "Over the page limit; all selected bullets kept",
       "unavailable": "Page fit unavailable",
-      "finalOver": "May run over one page after rewriting",
+      "finalOver": "May run over the page limit after rewriting",
       "notRechecked": "Page fit not re-checked after rewriting"
     }
   },
@@ -668,17 +854,23 @@
     "contentLanguageDescription": "Language for generated content (resumes, cover letters)",
     "uiLanguage": "UI Language",
     "uiLanguageDescription": "Language for the user interface",
+    "languageTitle": "Language",
+    "display": {
+      "title": "Display",
+      "backgroundEffects": "Background effects",
+      "backgroundEffectsDescription": "Animated backgrounds behind pages and while AI is working. Turn off for a plain background."
+    },
     "theme": "Theme",
     "themeDescription": "Choose your preferred color theme",
     "lightMode": "Light",
     "darkMode": "Dark",
     "systemMode": "System",
-    "dangerZone": "Danger Zone",
-    "clearApiKeys": "Clear API Keys",
+    "dangerZone": "Danger zone",
+    "clearApiKeys": "Clear API keys",
     "clearApiKeysDescription": "Removes all stored API keys from the configuration. This action cannot be undone.",
-    "resetDatabase": "Reset Database",
+    "resetDatabase": "Reset database",
     "resetDatabaseDescription": "Deletes ALL data including resumes, jobs, and generated content. This action cannot be undone.",
-    "llmConfigurationTitle": "LLM Configuration",
+    "llmConfigurationTitle": "LLM configuration",
     "providerLabel": "Provider",
     "statusCards": {
       "llm": "LLM",
@@ -708,7 +900,7 @@
       "description": "> No API key configured. Add your LLM provider API key below to enable resume tailoring."
     },
     "systemStatus": {
-      "title": "System Status",
+      "title": "System status",
       "refresh": "Refresh",
       "unableToConnect": "Can't reach the server",
       "expectedAt": "Expected at: {apiUrl}",
@@ -721,6 +913,16 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECTED: {provider}",
+      "claudeCliNote": "Runs the Claude Code CLI installed and signed in on this machine, so no API key is needed here. Claude Code still sends your prompts to Anthropic through your account, and it uses its own default model.",
+      "claudeCliName": "Claude subscription (via Claude Code)",
+      "claudeCliShortName": "Claude plan",
+      "claudeCliWarningTitle": "Not officially supported",
+      "claudeCliWarning": "Anthropic does not officially support third-party apps using Claude Pro or Max subscriptions, so this may stop working if its policy changes; for guaranteed access, use an Anthropic API key. Resume Matcher never sees or stores your Claude credentials: it runs your own Claude Code CLI, which you sign in to yourself with `claude auth login`. Requests count toward your Claude plan's usage limits, and Anthropic may draw them from usage credits instead.",
+      "communityBuilt": "Community-built feature.",
+      "chatgptName": "ChatGPT plan (Sign in with ChatGPT)",
+      "chatgptShortName": "ChatGPT plan",
+      "chatgptWarningTitle": "Preview",
+      "chatgptWarning": "This uses OpenAI's official Sign in with ChatGPT for open-source apps, which is a preview and may change. It works with ChatGPT Plus and Pro. Requests go from your machine directly to OpenAI's API, and the sign-in tokens stay encrypted on this machine. Usage counts toward your ChatGPT plan's limits: on Plus, the five-hour limit is shared with your other apps that use your plan; Pro has no five-hour limit. For guaranteed access, use an OpenAI API key.",
       "modelLabel": "Model",
       "defaultModel": "DEFAULT: {model}",
       "apiKeyLabel": "API Key",
@@ -759,14 +961,39 @@
         "health_check_failed": "Health check failed.",
         "duplicate_v1_path": "Health check failed. The Base URL may contain a duplicate /v1 path.",
         "not_found_404": "Health check failed. 404 Not Found - check that the Base URL matches the provider.",
-        "html_response": "Health check failed. The Base URL returned HTML; it may be a console URL or an unsupported gateway path."
+        "html_response": "Health check failed. The Base URL returned HTML; it may be a console URL or an unsupported gateway path.",
+        "claude_cli_not_found": "Claude Code CLI not found. Install Claude Code and run `claude auth login`.",
+        "chatgpt_not_connected": "Not signed in with ChatGPT. Select ChatGPT plan in Settings and continue with ChatGPT.",
+        "chatgpt_usage_limit": "Your ChatGPT plan's usage limit for this app has been reached. Review it in ChatGPT settings under Usage.",
+        "chatgpt_not_eligible": "ChatGPT plan usage isn't available for this account. It needs ChatGPT Plus or Pro; otherwise use an OpenAI API key."
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."
       }
     },
+    "chatgpt": {
+      "continue": "Continue with ChatGPT",
+      "checking": "Checking",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "disconnect": "Disconnect",
+      "manageUsage": "Manage usage",
+      "disconnected": "Disconnected from ChatGPT.",
+      "revocationUnconfirmed": "Signed out on this machine, but OpenAI didn't confirm the session ended. You can also disconnect Resume Matcher in ChatGPT settings.",
+      "returnConnected": "Connected to your ChatGPT plan. Choose a model, then save.",
+      "returnCancelled": "ChatGPT sign-in was cancelled.",
+      "returnError": "ChatGPT sign-in didn't complete. Try again.",
+      "planDeclined": "ChatGPT plan usage wasn't allowed. Continue with ChatGPT again and allow it, or use an OpenAI API key.",
+      "sameMachineOnly": "Sign in from a browser on the machine running Resume Matcher.",
+      "signInFailed": "Couldn't start ChatGPT sign-in. Try again.",
+      "disconnectFailed": "Couldn't disconnect ChatGPT. Try again.",
+      "statusFailed": "Couldn't check the ChatGPT connection.",
+      "modelsFailed": "Couldn't load your ChatGPT models. Enter a model name instead.",
+      "modelHint": "After you sign in, models come from your ChatGPT account.",
+      "connectToSave": "Sign in with ChatGPT to save this provider."
+    },
     "contentGeneration": {
-      "title": "Content Generation",
+      "title": "Content generation",
       "description": "Enable additional content generation during resume tailoring. When enabled, these documents will be automatically generated alongside your tailored resume.",
       "coverLetter": {
         "label": "Cover Letter",
@@ -840,6 +1067,7 @@
     "titlePlaceholder": "Enter resume title...",
     "downloadFailedTitle": "Download Failed",
     "renameFailedTitle": "Rename Failed",
+    "renameTitle": "Rename resume",
     "defaultBadge": "Default master",
     "setDefault": "Set as default master",
     "setDefaultSuccess": "This master is now the default for tailoring.",
@@ -1009,7 +1237,8 @@
       "experience": "Experience",
       "education": "Education",
       "projects": "Projects",
-      "skills": "Skills"
+      "skills": "Skills",
+      "inferredSkill": "inferred"
     },
     "errors": {
       "turnFailed": "The wizard could not save that answer. Try again.",
@@ -1140,6 +1369,60 @@
       "projectFollowUps": "Project Follow-Ups",
       "skillGaps": "Skill Gaps",
       "talkingPoints": "Talking Points"
+    }
+  },
+  "queue": {
+    "title": "Tailoring Queue",
+    "subtitle": "Queue job descriptions and tailor them one after another in the background",
+    "form": {
+      "title": "Add a job",
+      "masterDescription": "Every queued job is tailored from this master resume.",
+      "noMaster": "Upload a master resume on the dashboard first.",
+      "jobDescriptionLabel": "Job description",
+      "jobDescriptionHint": "Role, company and job ID are detected from the text without an AI call. Edit them if they are wrong.",
+      "detectedTitle": "Detected details",
+      "roleLabel": "Role",
+      "rolePlaceholder": "e.g. Frontend Engineer",
+      "companyLabel": "Company",
+      "companyPlaceholder": "e.g. Stripe",
+      "jobReqIdLabel": "Job ID",
+      "cooldownLabel": "Cooldown (seconds)",
+      "cooldownHint": "Pause after each job to lower the risk of hitting your provider's rate limit.",
+      "submit": "Add to queue",
+      "adding": "Adding...",
+      "added": "Added to the queue. Paste the next job description."
+    },
+    "monitor": {
+      "title": "Queue",
+      "count": "Jobs: {count}",
+      "refresh": "Refresh",
+      "clearCompleted": "Clear completed",
+      "clearAll": "Clear all",
+      "emptyTitle": "No jobs in the queue",
+      "emptyDescription": "Add a job description to start tailoring.",
+      "untitled": "Untitled role",
+      "jobId": "ID {id}",
+      "viewResume": "View resume",
+      "remove": "Remove from queue"
+    },
+    "status": {
+      "pending": "Queued",
+      "processing": "Tailoring",
+      "completed": "Done",
+      "failed": "Failed"
+    },
+    "errors": {
+      "addFailed": "Couldn't add the job. Please try again.",
+      "item": {
+        "not_found": "The master resume or job was deleted.",
+        "too_large": "The job description or resume is too long to tailor.",
+        "timeout": "Tailoring timed out. Add the job again to retry.",
+        "failed": "Tailoring failed. Check your AI provider in Settings, then add the job again."
+      },
+      "loadFailed": "Couldn't load the queue.",
+      "deleteFailed": "Couldn't remove the job. Please try again.",
+      "deleteInProgress": "This job is being tailored. Remove it once it finishes.",
+      "clearFailed": "Couldn't clear the queue. Please try again."
     }
   }
 }

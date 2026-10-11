@@ -2,6 +2,7 @@
   "common": {
     "save": "Guardar",
     "saving": "Guardando...",
+    "saved": "Guardado",
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "edit": "Editar",
@@ -39,6 +40,19 @@
     "docs": "Guía de uso",
     "launchApp": "Iniciar app"
   },
+  "community": {
+    "follow": "Seguir a @srbhr",
+    "star": "Destacar",
+    "starOnGithub": "Destacar en GitHub",
+    "sponsor": "Patrocinar",
+    "discord": "Discord",
+    "joinDiscord": "Unirse a Discord",
+    "contributors": "Colaboradores",
+    "settingsPrompt": "¿Te gusta Resume Matcher?",
+    "sponsorProject": "Patrocina el proyecto",
+    "joinTheDiscord": "Únete al Discord",
+    "aboutTitle": "Acerca de"
+  },
   "nav": {
     "dashboard": "Panel",
     "builder": "Constructor de CV",
@@ -46,7 +60,8 @@
     "settings": "Configuración",
     "backToDashboard": "Volver al Panel",
     "goToSettings": "Ir a Configuración",
-    "applicationTracker": "Seguimiento de candidaturas"
+    "applicationTracker": "Seguimiento de candidaturas",
+    "queue": "Cola de adaptación"
   },
   "dashboard": {
     "title": "Panel",
@@ -65,6 +80,7 @@
     "downloadPdf": "Descargar PDF",
     "tailorResume": "Personalizar para Empleo",
     "selectModule": "Seleccionar módulo",
+    "modulesHeading": "Módulos de currículum",
     "masterResume": "Currículum maestro",
     "tailoredResume": "Currículum personalizado",
     "initializeMasterResume": "Inicializar currículum maestro",
@@ -114,6 +130,10 @@
     "masterLimitReached": "Hasta {max} currículums maestros"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "Aún no se ha generado nada",
+      "preview": "Vista previa"
+    },
     "title": "Constructor de CV",
     "copySuffix": "(Copia)",
     "editMode": "Modo Edición",
@@ -213,12 +233,8 @@
       "coverLetter": "CARTA",
       "outreach": "MENSAJE",
       "jdMatch": "COINCIDENCIA JD",
-      "interviewPrep": "PREPARACIÓN"
-    },
-    "footer": {
-      "moduleLabel": "Módulo del constructor",
-      "singleColumn": "Una columna",
-      "twoColumn": "Dos columnas"
+      "interviewPrep": "PREPARACIÓN",
+      "atsCheck": "REVISIÓN ATS"
     },
     "pageSize": {
       "usLetter": "Carta (EE. UU.)"
@@ -318,6 +334,17 @@
         "keywordsExtracted": "{count} palabras clave extraídas",
         "matchesFound": "{count} coincidencias encontradas",
         "matchRateLabel": "Tasa de coincidencia:"
+      },
+      "atsScore": {
+        "description": "Puntúa el currículum guardado frente a esta descripción del puesto. La pestaña REVISIÓN ATS comprueba cómo se lee el propio PDF.",
+        "loading": "Cargando la puntuación ATS…",
+        "notCalculated": "Aún no se ha calculado la puntuación ATS de este currículum.",
+        "loadFailed": "No se pudo cargar la puntuación ATS guardada. Prueba Recalcular o recarga la página.",
+        "lastCalculated": "Último cálculo: {date}",
+        "recalculate": "Recalcular",
+        "recalculating": "Calculando…",
+        "saveFirst": "Guarda tus cambios y luego recalcula.",
+        "recalculateFailed": "No se pudo calcular la puntuación ATS. Si este currículum se adaptó antes de que se guardaran las puntuaciones, vuelve a adaptarlo desde la página Personalizar CV."
       }
     },
     "genericItemForm": {
@@ -489,7 +516,8 @@
       "coverLetterEditor": "Editor de carta",
       "outreachEditor": "Editor de mensaje",
       "jdMatchAnalysis": "Análisis de coincidencia JD",
-      "interviewPrep": "Preparación de entrevista"
+      "interviewPrep": "Preparación de entrevista",
+      "atsCheck": "Revisión de lectura ATS"
     },
     "alerts": {
       "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
@@ -516,6 +544,126 @@
       "description": "Los últimos cambios no pudieron sincronizarse con el servidor ni guardarse en este navegador. Si sales ahora, podrías perderlos.",
       "leave": "Salir de todos modos",
       "stay": "Seguir editando"
+    },
+    "atsCheck": {
+      "aboutTitle": "Qué se revisa",
+      "aboutDescription": "Generamos tu currículum con la plantilla y los ajustes actuales y luego lo leemos como lo haría un extractor de texto ATS sencillo. No se usa IA.",
+      "roundTripTitle": "Ida y vuelta",
+      "roundTripDescription": "Compara el texto extraído con los datos de tu currículum. Mide qué tan fielmente se lee esta versión, no la precisión de un ATS concreto.",
+      "tipsTitle": "Consejos",
+      "tips": {
+        "items": {
+          "singleColumn": "Las plantillas de una columna se leen en el orden correcto.",
+          "standardHeadings": "Usa nombres de sección estándar como Experiencia, Educación y Habilidades.",
+          "contactInBody": "Mantén tus datos de contacto en el texto principal."
+        }
+      },
+      "templateLabel": "Plantilla: {template}",
+      "runButton": "REVISAR",
+      "rerunButton": "REVISAR DE NUEVO",
+      "running": "REVISANDO...",
+      "emptyState": "Ejecuta una revisión para ver cómo lee un ATS este currículum con la plantilla actual.",
+      "saveFirst": "Guarda el currículum antes de ejecutar una revisión.",
+      "unsavedNotice": "Los cambios sin guardar no se incluyen. La revisión usa la última versión guardada.",
+      "error": "La revisión falló. Comprueba que el backend y el frontend estén en marcha e inténtalo de nuevo.",
+      "parseability": "Legibilidad",
+      "content": "Contenido",
+      "extractability": {
+        "full": "Extracción de texto: completa",
+        "partial": "Extracción de texto: parcial",
+        "none": "Extracción de texto: ninguna"
+      },
+      "status": {
+        "pass": "OK",
+        "warn": "AVISO",
+        "fail": "FALLO"
+      },
+      "checksTitle": "Comprobaciones",
+      "contentRecall": "Contenido recuperado",
+      "orderFidelity": "Orden de lectura",
+      "allFieldsFound": "Todos los campos aparecen en el texto extraído.",
+      "fieldsTruncated": "Este currículum tiene más campos de los que cubre la comprobación, así que solo se revisaron los primeros. Los campos que superan el límite no se reflejan aquí.",
+      "fieldStatus": {
+        "found": "Encontrado",
+        "garbled": "Ilegible",
+        "missing": "Falta",
+        "hidden": "Oculto"
+      },
+      "previewTitle": "Texto extraído",
+      "sectionKinds": {
+        "experience": "Experiencia",
+        "education": "Educación",
+        "skills": "Habilidades"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "Texto seleccionable",
+          "pass": "Se extrajeron {characters} caracteres de texto.",
+          "fail": "No hay texto seleccionable. El archivo parece escaneado o solo imagen, así que un ATS no lee nada."
+        },
+        "garbled_glyphs": {
+          "title": "Codificación de caracteres",
+          "pass": "No hay caracteres ilegibles.",
+          "warn": "No se pudieron decodificar {count} caracteres.",
+          "fail": "No se pudieron decodificar {count} caracteres, así que el texto se ve corrupto para un ATS."
+        },
+        "text_coverage": {
+          "title": "Texto frente a imágenes",
+          "pass": "Todas las páginas tienen texto real.",
+          "warn": "Las páginas {pages} son casi solo imágenes.",
+          "fail": "Todas las páginas son casi solo imágenes."
+        },
+        "multi_column": {
+          "title": "Orden de lectura único",
+          "pass": "El texto se lee en una sola columna.",
+          "fail": "Se detectaron dos columnas en la página {pages}. Muchos ATS mezclan las columnas.",
+          "templateHint": "Esta plantilla usa dos columnas por diseño. Elige una plantilla de una columna para candidaturas con ATS."
+        },
+        "tables": {
+          "title": "Tablas",
+          "pass": "No hay tablas.",
+          "warn": "Se encontraron {count} tablas. Algunos ATS aplanan u omiten las celdas."
+        },
+        "text_boxes": {
+          "title": "Cuadros de texto",
+          "pass": "No hay cuadros de texto.",
+          "warn": "Hay cuadros de texto. Algunos ATS los omiten.",
+          "fail": "{characters} caracteres están en cuadros de texto que muchos ATS omiten."
+        },
+        "header_footer_content": {
+          "title": "Encabezados y pies de página",
+          "pass": "No hay nada importante en encabezados ni pies de página.",
+          "warn": "Hay contenido en encabezados o pies de página, que algunos ATS ignoran.",
+          "fail": "Tus datos de contacto solo aparecen en el encabezado o pie de página, que muchos ATS ignoran."
+        },
+        "images": {
+          "title": "Imágenes",
+          "pass": "No hay imágenes.",
+          "warn": "Se encontraron {count} imágenes. El texto dentro de ellas es invisible para un ATS."
+        },
+        "page_count": {
+          "title": "Extensión",
+          "pass": "{pages} página(s).",
+          "warn": "{pages} páginas. Considera reducirlo a dos páginas o menos."
+        },
+        "contact_info": {
+          "title": "Datos de contacto",
+          "pass": "Correo y teléfono encontrados al principio.",
+          "warn": "Los datos de contacto están incompletos o aparecen tarde en el texto.",
+          "fail": "No se encontró ningún correo en el texto extraído."
+        },
+        "section_headings": {
+          "title": "Títulos de sección",
+          "pass": "Títulos estándar encontrados: {found}.",
+          "warn": "Falta el título estándar: {missing}.",
+          "fail": "Faltan títulos estándar: {missing}. Usa nombres como Experiencia, Educación y Habilidades."
+        },
+        "dates": {
+          "title": "Fechas",
+          "pass": "Se encontraron {years} años en las fechas.",
+          "warn": "No se encontraron fechas reconocibles."
+        }
+      }
     }
   },
   "enrichment": {
@@ -591,6 +739,23 @@
         "description": "Ajuste integral usando la descripción del puesto."
       }
     },
+    "length": {
+      "pageLimitLabel": "Límite de páginas",
+      "pageLimitDescription": "Recorta los puntos menos relevantes para ajustarse cuando es posible. Sin límite desactiva el ajuste de páginas.",
+      "pageLimitOptions": {
+        "1": "1 página",
+        "2": "2 páginas",
+        "3": "3 páginas",
+        "none": "Sin límite"
+      },
+      "bulletsLabel": "Puntos por puesto",
+      "bulletsDescription": "Puntos más relevantes que se conservan por empleo o proyecto.",
+      "bulletOptions": {
+        "3": "Hasta 3",
+        "5": "Hasta 5",
+        "all": "Todos"
+      }
+    },
     "analyzeJob": "Analizar Trabajo",
     "generateTailored": "Generar CV Personalizado",
     "matchScore": "Puntuación de Coincidencia",
@@ -625,6 +790,18 @@
       "rejectButton": "Rechazar y regenerar",
       "confirmButton": "Confirmar y guardar"
     },
+    "atsScore": {
+      "title": "Desglose de puntuación ATS",
+      "keywordMatch": "Coincidencia de palabras clave",
+      "skillsCoverage": "Cobertura de habilidades",
+      "titleMatch": "Coincidencia de título",
+      "sectionCompleteness": "Completitud de secciones",
+      "dateConsistency": "Consistencia de fechas",
+      "missingKeywords": "Palabras clave faltantes",
+      "injectableKeywords": "Seguras de añadir (en tu currículum maestro)",
+      "recommendations": "Recomendaciones",
+      "twoColumnWarning": "Diseño a dos columnas: muchos ATS leen las columnas fuera de orden. Cambia a una plantilla de una columna en el editor antes de postular."
+    },
     "regenerateDialog": {
       "title": "¿Regenerar el currículum personalizado?",
       "description": "Esto descartará la vista previa actual y solicitará un nuevo resultado de personalización con IA.",
@@ -646,14 +823,23 @@
       "previewUnavailable": "La vista previa caducó o el currículum original cambió. Genera una nueva vista previa antes de guardar."
     },
     "selectResumeDescription": "Las viñetas se toman de este currículum maestro.",
+    "tailoringLabel": "Personalizando:",
+    "jobDescriptionHint": "Pega la oferta completa, con responsabilidades y requisitos (mínimo 50 caracteres).",
+    "steps": {
+      "label": "Cómo funciona la personalización",
+      "paste": "Pega la descripción del trabajo",
+      "generate": "Genera una vista previa",
+      "review": "Revisa los cambios y guarda"
+    },
     "selectionSummary": "Viñetas conservadas: {kept} de {total} (hasta {max} por puesto o proyecto)",
+    "selectionSummaryAll": "Se conservaron {kept} de {total} puntos",
     "pageFit": {
-      "fits": "Cabe en una página",
-      "trimmed": "Viñetas adicionales eliminadas para que quepa en una página: {count}",
-      "over": "Sigue superando una página",
+      "fits": "Cabe en el límite de páginas",
+      "trimmed": "Se recortaron {count} más para caber en el límite de páginas",
+      "over": "Supera el límite de páginas; se conservaron todos los puntos seleccionados",
       "unavailable": "Ajuste de página no disponible",
-      "finalOver": "Puede superar una página tras la reescritura",
-      "notRechecked": "Ajuste a una página no verificado tras la reescritura"
+      "finalOver": "Podría superar el límite de páginas tras la reescritura",
+      "notRechecked": "Ajuste al límite de páginas no verificado tras la reescritura"
     }
   },
   "settings": {
@@ -668,15 +854,21 @@
     "contentLanguageDescription": "Idioma para contenido generado (currículums, cartas de presentación)",
     "uiLanguage": "Idioma de la Interfaz",
     "uiLanguageDescription": "Idioma para la interfaz de usuario",
+    "languageTitle": "Idioma",
+    "display": {
+      "title": "Visualización",
+      "backgroundEffects": "Efectos de fondo",
+      "backgroundEffectsDescription": "Fondos animados detrás de las páginas y mientras la IA trabaja. Desactívalos para tener un fondo liso."
+    },
     "theme": "Tema",
     "themeDescription": "Elige tu tema de color preferido",
     "lightMode": "Claro",
     "darkMode": "Oscuro",
     "systemMode": "Sistema",
-    "dangerZone": "Zona de Peligro",
-    "clearApiKeys": "Borrar Claves API",
+    "dangerZone": "Zona de peligro",
+    "clearApiKeys": "Borrar claves API",
     "clearApiKeysDescription": "Elimina todas las claves API guardadas de la configuración. Esta acción no se puede deshacer.",
-    "resetDatabase": "Restablecer Base de Datos",
+    "resetDatabase": "Restablecer base de datos",
     "resetDatabaseDescription": "Elimina TODOS los datos, incluyendo currículums, trabajos y contenido generado. Esta acción no se puede deshacer.",
     "llmConfigurationTitle": "Configuración de LLM",
     "providerLabel": "Proveedor",
@@ -721,6 +913,16 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECCIONADO: {provider}",
+      "claudeCliNote": "Ejecuta la CLI de Claude Code instalada y con sesión iniciada en este equipo, por lo que no se necesita clave de API aquí. Claude Code sigue enviando tus prompts a Anthropic a través de tu cuenta y usa su propio modelo predeterminado.",
+      "claudeCliName": "Suscripción a Claude (vía Claude Code)",
+      "claudeCliShortName": "Plan Claude",
+      "claudeCliWarningTitle": "Sin soporte oficial",
+      "claudeCliWarning": "Anthropic no admite oficialmente que aplicaciones de terceros usen las suscripciones Claude Pro o Max, por lo que esto puede dejar de funcionar si cambia su política; para un acceso garantizado, usa una clave de API de Anthropic. Resume Matcher nunca ve ni almacena tus credenciales de Claude: ejecuta tu propia CLI de Claude Code, en la que inicias sesión tú mismo con `claude auth login`. Las solicitudes cuentan para los límites de uso de tu plan de Claude, y Anthropic puede cargarlas a créditos de uso en su lugar.",
+      "communityBuilt": "Función creada por la comunidad.",
+      "chatgptName": "Plan de ChatGPT (Iniciar sesión con ChatGPT)",
+      "chatgptShortName": "Plan ChatGPT",
+      "chatgptWarningTitle": "Versión preliminar",
+      "chatgptWarning": "Usa Sign in with ChatGPT, el inicio de sesión oficial de OpenAI para apps de código abierto, que está en versión preliminar y puede cambiar. Funciona con ChatGPT Plus y Pro. Las solicitudes van desde tu equipo directamente a la API de OpenAI, y los tokens de inicio de sesión se guardan cifrados en este equipo. El uso cuenta para los límites de tu plan de ChatGPT: en Plus, el límite de cinco horas se comparte con tus otras apps que usan tu plan; Pro no tiene límite de cinco horas. Para un acceso garantizado, usa una clave API de OpenAI.",
       "modelLabel": "Modelo",
       "defaultModel": "PREDETERMINADO: {model}",
       "apiKeyLabel": "Clave API",
@@ -759,11 +961,36 @@
         "health_check_failed": "La verificación falló.",
         "duplicate_v1_path": "La verificación falló. La URL base puede contener un /v1 duplicado.",
         "not_found_404": "La verificación falló. 404 No encontrado: comprueba que la URL base coincide con el proveedor.",
-        "html_response": "La verificación falló. La URL base devolvió HTML; puede ser la URL de consola o una ruta de puerta de enlace no compatible."
+        "html_response": "La verificación falló. La URL base devolvió HTML; puede ser la URL de consola o una ruta de puerta de enlace no compatible.",
+        "claude_cli_not_found": "No se encontró la CLI de Claude Code. Instala Claude Code y ejecuta `claude auth login`.",
+        "chatgpt_not_connected": "No has iniciado sesión con ChatGPT. Selecciona Plan ChatGPT en Configuración y continúa con ChatGPT.",
+        "chatgpt_usage_limit": "Se alcanzó el límite de uso de tu plan de ChatGPT para esta app. Revísalo en la configuración de ChatGPT, en Uso.",
+        "chatgpt_not_eligible": "El uso del plan de ChatGPT no está disponible para esta cuenta. Requiere ChatGPT Plus o Pro; si no, usa una clave API de OpenAI."
       },
       "healthWarnings": {
         "empty_content": "El LLM devolvió contenido vacío en la verificación de salud."
       }
+    },
+    "chatgpt": {
+      "continue": "Continuar con ChatGPT",
+      "checking": "Comprobando",
+      "connected": "Conectado",
+      "notConnected": "No conectado",
+      "disconnect": "Desconectar",
+      "manageUsage": "Gestionar uso",
+      "disconnected": "Desconectado de ChatGPT.",
+      "revocationUnconfirmed": "Se cerró la sesión en este equipo, pero OpenAI no confirmó que la sesión terminara. También puedes desconectar Resume Matcher en la configuración de ChatGPT.",
+      "returnConnected": "Conectado a tu plan de ChatGPT. Elige un modelo y guarda.",
+      "returnCancelled": "Se canceló el inicio de sesión con ChatGPT.",
+      "returnError": "No se completó el inicio de sesión con ChatGPT. Inténtalo de nuevo.",
+      "planDeclined": "No se permitió el uso del plan de ChatGPT. Continúa con ChatGPT de nuevo y permítelo, o usa una clave API de OpenAI.",
+      "sameMachineOnly": "Inicia sesión desde un navegador en el equipo donde se ejecuta Resume Matcher.",
+      "signInFailed": "No se pudo iniciar el inicio de sesión con ChatGPT. Inténtalo de nuevo.",
+      "disconnectFailed": "No se pudo desconectar ChatGPT. Inténtalo de nuevo.",
+      "statusFailed": "No se pudo comprobar la conexión con ChatGPT.",
+      "modelsFailed": "No se pudieron cargar tus modelos de ChatGPT. Escribe el nombre de un modelo.",
+      "modelHint": "Después de iniciar sesión, los modelos provienen de tu cuenta de ChatGPT.",
+      "connectToSave": "Inicia sesión con ChatGPT para guardar este proveedor."
     },
     "contentGeneration": {
       "title": "Generación de contenido",
@@ -840,6 +1067,7 @@
     "titlePlaceholder": "Ingrese el título del currículum...",
     "downloadFailedTitle": "Error de descarga",
     "renameFailedTitle": "Error al cambiar el nombre",
+    "renameTitle": "Renombrar currículum",
     "defaultBadge": "Maestro predeterminado",
     "setDefault": "Establecer como maestro predeterminado",
     "setDefaultSuccess": "Este maestro ahora es el predeterminado para la personalización.",
@@ -1009,7 +1237,8 @@
       "experience": "Experiencia",
       "education": "Educación",
       "projects": "Proyectos",
-      "skills": "Habilidades"
+      "skills": "Habilidades",
+      "inferredSkill": "inferida"
     },
     "errors": {
       "turnFailed": "El asistente no pudo guardar esa respuesta. Inténtalo de nuevo.",
@@ -1140,6 +1369,60 @@
       "projectFollowUps": "Seguimiento de proyectos",
       "skillGaps": "Brechas de habilidades",
       "talkingPoints": "Puntos clave"
+    }
+  },
+  "queue": {
+    "title": "Cola de adaptación",
+    "subtitle": "Pon ofertas de empleo en cola y adáptalas una tras otra en segundo plano",
+    "form": {
+      "title": "Añadir una oferta",
+      "masterDescription": "Cada oferta en cola se adapta a partir de este currículum maestro.",
+      "noMaster": "Primero sube un currículum maestro en el panel.",
+      "jobDescriptionLabel": "Descripción del puesto",
+      "jobDescriptionHint": "El puesto, la empresa y el ID de la oferta se detectan del texto sin llamar a la IA. Corrígelos si no son correctos.",
+      "detectedTitle": "Datos detectados",
+      "roleLabel": "Puesto",
+      "rolePlaceholder": "p. ej. Ingeniero frontend",
+      "companyLabel": "Empresa",
+      "companyPlaceholder": "p. ej. Stripe",
+      "jobReqIdLabel": "ID de la oferta",
+      "cooldownLabel": "Pausa (segundos)",
+      "cooldownHint": "Pausa tras cada oferta para reducir el riesgo de alcanzar el límite de uso de tu proveedor.",
+      "submit": "Añadir a la cola",
+      "adding": "Añadiendo...",
+      "added": "Añadida a la cola. Pega la siguiente descripción del puesto."
+    },
+    "monitor": {
+      "title": "Cola",
+      "count": "Ofertas: {count}",
+      "refresh": "Actualizar",
+      "clearCompleted": "Quitar completadas",
+      "clearAll": "Vaciar todo",
+      "emptyTitle": "No hay ofertas en la cola",
+      "emptyDescription": "Añade una descripción del puesto para empezar a adaptar.",
+      "untitled": "Puesto sin título",
+      "jobId": "ID {id}",
+      "viewResume": "Ver currículum",
+      "remove": "Quitar de la cola"
+    },
+    "status": {
+      "pending": "En cola",
+      "processing": "Adaptando",
+      "completed": "Hecho",
+      "failed": "Error"
+    },
+    "errors": {
+      "addFailed": "No se pudo añadir la oferta. Inténtalo de nuevo.",
+      "item": {
+        "not_found": "Se eliminó el currículum maestro o la oferta.",
+        "too_large": "La descripción del puesto o el currículum es demasiado largo para adaptarlo.",
+        "timeout": "Se agotó el tiempo de adaptación. Vuelve a añadir la oferta para reintentarlo.",
+        "failed": "La adaptación falló. Revisa tu proveedor de IA en Ajustes y vuelve a añadir la oferta."
+      },
+      "loadFailed": "No se pudo cargar la cola.",
+      "deleteFailed": "No se pudo quitar la oferta. Inténtalo de nuevo.",
+      "deleteInProgress": "Esta oferta se está adaptando. Quítala cuando termine.",
+      "clearFailed": "No se pudo vaciar la cola. Inténtalo de nuevo."
     }
   }
 }

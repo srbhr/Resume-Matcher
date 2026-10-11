@@ -45,6 +45,21 @@ describe('ResumeWizardPage', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
+  it('renders inside the page frame with one PageHeader h1 and no nested main', () => {
+    const { container } = render(<ResumeWizardPage />);
+    expect(container.querySelector('main')).toBeNull();
+    expect(container.firstChild as HTMLElement).toHaveClass('relative', 'isolate', 'bg-canvas');
+    const headings = screen.getAllByRole('heading', { level: 1 });
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent('resumeWizard.title');
+    expect(headings[0]).toHaveClass('font-serif', 'uppercase', 'text-4xl');
+    // The question stays the card's own h2.
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/Hi — I'll help you/);
+    expect(
+      screen.getByRole('button', { name: 'resumeWizard.actions.backToDashboard' })
+    ).toHaveClass('border-ink', 'h-8');
+  });
+
   it('submits the intro answer and shows the next question', async () => {
     mockedPostTurn.mockResolvedValueOnce({
       state: makeState({
@@ -445,6 +460,57 @@ describe('ResumeWizardPage', () => {
     });
   });
 
+  describe('focus', () => {
+    it.each([
+      [
+        'a question draft',
+        { step: 'question', current_question: { text: 'Skills?', section: 'skills' } },
+      ],
+      [
+        'a review draft',
+        { step: 'review', current_question: { text: 'All set?', section: 'review' } },
+      ],
+    ] as const)('does not take focus when %s is restored on page load', async (_name, draft) => {
+      localStorage.setItem(
+        'resume_wizard_draft',
+        JSON.stringify(makeState({ ...draft, asked_count: 2 }))
+      );
+
+      render(<ResumeWizardPage />);
+
+      expect(
+        await screen.findByRole('heading', { level: 2, name: draft.current_question.text })
+      ).toBeInTheDocument();
+      expect(document.body).toHaveFocus();
+    });
+
+    it('still focuses the next question field after Skip', async () => {
+      localStorage.setItem(
+        'resume_wizard_draft',
+        JSON.stringify(
+          makeState({
+            step: 'question',
+            current_question: { text: 'Skills?', section: 'skills' },
+            asked_count: 1,
+          })
+        )
+      );
+      mockedPostTurn.mockResolvedValueOnce({
+        state: makeState({
+          step: 'question',
+          current_question: { text: 'Next?', section: 'education' },
+          asked_count: 2,
+        }),
+      });
+
+      render(<ResumeWizardPage />);
+      fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.skip' }));
+
+      expect(await screen.findByRole('heading', { level: 2, name: 'Next?' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('textbox')).toHaveFocus());
+    });
+  });
+
   it('keep-adding returns to a question step locally without an API call', async () => {
     localStorage.setItem(
       'resume_wizard_draft',
@@ -513,6 +579,11 @@ describe('ResumeWizardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.openCreated' }));
     expect(push).toHaveBeenLastCalledWith('/builder?id=resume_committed');
     expect(mockedFinalize).toHaveBeenCalledTimes(1);
+
+    // The created card sits inside the page frame: nested shadow, success frame kept at 2px.
+    const created = screen.getByText('resumeWizard.created.title').parentElement!;
+    expect(created).toHaveClass('border-2', 'border-success', 'shadow-sw-nested');
+    expect(created).not.toHaveClass('shadow-sw-default');
   });
 
   it('protects updated wizard state when its local backup fails and can retry the backup', async () => {

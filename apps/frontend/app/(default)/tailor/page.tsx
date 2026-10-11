@@ -1,12 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import { Button, buttonClass } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Label, labelClass } from '@/components/ui/label';
+import { Alert } from '@/components/ui/alert';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
+import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
+import { FadePresence } from '@/components/common/presence';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import type { ImprovedResult } from '@/components/common/resume_previewer_context';
+import type { ATSScore, ImprovedResult } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import {
   uploadJobDescriptions,
@@ -17,16 +23,34 @@ import {
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
+import {
+  DEFAULT_TAILOR_LENGTH,
+  TAILOR_BULLET_CAPS,
+  TAILOR_PAGE_LIMITS,
+  buildPreviewLengthOptions,
+  readTailorLength,
+  writeTailorLength,
+  type TailorBulletCap,
+  type TailorLengthSettings,
+  type TailorPageLimit,
+} from '@/lib/utils/tailor-length-settings';
+import type { TemplateType } from '@/lib/types/template-settings';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
+import { ListNumbers, SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
+import { cn } from '@/lib/utils';
+
+// The page is step 1; Generate opens the diff modal, where the user reviews and saves.
+const STEP_KEYS = ['tailor.steps.paste', 'tailor.steps.generate', 'tailor.steps.review'] as const;
+
+const masterLabel = (m: ResumeListItem) => m.title || m.filename || m.resume_id;
 
 export default function TailorPage() {
   const { t, locale } = useTranslations();
@@ -50,11 +74,27 @@ export default function TailorPage() {
   // Diff preview modal state
   const [showDiffModal, setShowDiffModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
+  // The last ATS result stays visible after the diff modal closes; cleared when a new run starts.
+  const [atsResult, setAtsResult] = useState<ATSScore | null>(null);
+  // Template the preview was fitted with; the ATS card warns on two-column layouts.
+  const [atsTemplate, setAtsTemplate] = useState<TemplateType | undefined>(undefined);
   const [diffConfirmError, setDiffConfirmError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
+  // Page limit / bullet cap for tailoring; loaded from storage after mount.
+  const [tailorLength, setTailorLength] = useState<TailorLengthSettings>(DEFAULT_TAILOR_LENGTH);
+
+  useEffect(() => {
+    setTailorLength(readTailorLength());
+  }, []);
+
+  const updateTailorLength = (patch: Partial<TailorLengthSettings>) => {
+    const next = { ...tailorLength, ...patch };
+    setTailorLength(next);
+    writeTailorLength(next);
+  };
   const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
 
   // Elapsed timer for long operations
@@ -236,6 +276,7 @@ export default function TailorPage() {
   };
 
   const runGenerate = async (resumeId: string, description: string, token: number) => {
+    setAtsResult(null);
     try {
       // 1. Upload Job Description
       // The API expects an array of strings
@@ -245,10 +286,13 @@ export default function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
-      const result = await previewImproveResume(resumeId, jobId, selectedPromptId, {
-        maxBulletsPerEntry: 3,
-        pageFit: toPageFitSettings(readStoredTemplateSettings(), locale),
-      });
+      const templateSettings = readStoredTemplateSettings();
+      const result = await previewImproveResume(
+        resumeId,
+        jobId,
+        selectedPromptId,
+        buildPreviewLengthOptions(tailorLength, toPageFitSettings(templateSettings, locale))
+      );
       if (!isCurrent(token)) return;
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
@@ -266,6 +310,8 @@ export default function TailorPage() {
       setDiffConfirmError(null);
       setMissingDiffError(null);
       setPendingResult(result);
+      setAtsResult(result.data.ats_score ?? null);
+      setAtsTemplate(templateSettings.template);
       setShowDiffModal(true);
     } catch (err) {
       if (!isCurrent(token)) return;
@@ -413,120 +459,185 @@ export default function TailorPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F6F5EE] flex flex-col items-center justify-center p-4 md:p-8 font-sans">
-      <div className="w-full max-w-4xl bg-white border border-black shadow-sw-lg p-8 md:p-12 lg:p-14 relative">
-        {/* Back Button */}
-        <Button variant="link" className="absolute top-4 left-4" onClick={() => router.back()}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
+    <PageFrame
+      width="narrow"
+      effect="bitrate"
+      effectIntensity={isLoading ? 'active' : 'idle'}
+      className="my-auto"
+    >
+      <PageHeader className="p-6 md:p-6">
+        <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
+        <PageHeader.Title>{t('tailor.heroTitle')}</PageHeader.Title>
+        <PageHeader.Subtitle>{t('tailor.subtitle')}</PageHeader.Subtitle>
+        <PageHeader.Actions>
+          <Link href="/queue" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+            <ListNumbers aria-hidden="true" />
+            {t('nav.queue')}
+          </Link>
+        </PageHeader.Actions>
+      </PageHeader>
 
-        <div className="mb-8 mt-4 text-center">
-          <h1 className="font-serif text-4xl font-bold uppercase tracking-tight mb-2">
-            {t('tailor.heroTitle')}
-          </h1>
-          <p className="font-mono text-sm text-blue-700 font-bold uppercase">
-            {'// '}
-            {t('tailor.pasteJobDescriptionBelow')}
-          </p>
-        </div>
+      <ol
+        aria-label={t('tailor.steps.label')}
+        className="grid grid-cols-1 divide-y divide-ink border-b border-ink px-6 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+      >
+        {STEP_KEYS.map((key, index) => {
+          const current = index === 0;
+          return (
+            <li
+              key={key}
+              aria-current={current ? 'step' : undefined}
+              className="flex items-center gap-3 py-2 sm:px-4 sm:first:pl-0 sm:last:pr-0"
+            >
+              <span
+                className={cn(
+                  'flex size-6 shrink-0 items-center justify-center border border-ink font-mono text-xs font-bold tabular-nums',
+                  current ? 'bg-ink text-white' : 'text-ink'
+                )}
+              >
+                {index + 1}
+              </span>
+              <span
+                className={cn(
+                  'font-mono text-xs uppercase tracking-wider',
+                  current ? 'font-bold text-ink' : 'text-steel'
+                )}
+              >
+                {t(key)}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
-        {/* LLM Not Configured Warning */}
-        {!statusLoading && !isLlmConfigured && (
-          <div className="mb-6 border-2 border-amber-500 bg-amber-50 p-4 shadow-sw-default">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-mono text-sm font-bold uppercase tracking-wider text-amber-800">
-                  {t('tailor.setupRequiredTitle')}
-                </p>
-                <p className="font-mono text-xs text-amber-700 mt-1">
-                  {t('tailor.noApiKeyMessage')}
-                </p>
-                <Link
-                  href="/settings"
-                  className="inline-flex items-center gap-2 mt-3 text-amber-700 hover:text-amber-900 transition-colors"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span className="font-mono text-xs font-bold uppercase underline">
-                    {t('tailor.configureApiKey')}
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-6">
-          {masters.length > 1 && (
-            <Dropdown
-              label={t('tailor.selectResume')}
-              description={t('tailor.selectResumeDescription')}
-              options={masters.map((m) => ({
-                id: m.resume_id,
-                label: m.title || m.filename || m.resume_id,
-              }))}
-              value={masterResumeId ?? ''}
-              onChange={setMasterResumeId}
-              disabled={isLoading || promptLoading || showDiffModal}
+      <div className="p-6">
+        <div className="space-y-3">
+          {/* LLM Not Configured Warning */}
+          {!statusLoading && !isLlmConfigured && (
+            <LlmSetupAlert
+              titleKey="tailor.setupRequiredTitle"
+              messageKey="tailor.noApiKeyMessage"
+              actionKey="tailor.configureApiKey"
             />
           )}
 
-          <Dropdown
-            options={
-              promptOptions.length > 0
-                ? promptOptions.map((opt) => ({
-                    id: opt.id,
-                    label: t(`tailor.promptOptions.${opt.id}.label`),
-                    description: t(`tailor.promptOptions.${opt.id}.description`),
-                  }))
-                : [
-                    {
-                      id: 'nudge',
-                      label: t('tailor.promptOptions.nudge.label'),
-                      description: t('tailor.promptOptions.nudge.description'),
-                    },
-                    {
-                      id: 'keywords',
-                      label: t('tailor.promptOptions.keywords.label'),
-                      description: t('tailor.promptOptions.keywords.description'),
-                    },
-                    {
-                      id: 'full',
-                      label: t('tailor.promptOptions.full.label'),
-                      description: t('tailor.promptOptions.full.description'),
-                    },
-                  ]
-            }
-            value={selectedPromptId}
-            onChange={(value) => {
-              hasUserSelectedPrompt.current = true;
-              setSelectedPromptId(value);
-            }}
-            label={t('tailor.promptLabel')}
-            description={t('tailor.promptDescription')}
-            disabled={isLoading || promptLoading}
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {masters.length > 1 ? (
+              <Dropdown
+                label={t('tailor.selectResume')}
+                description={t('tailor.selectResumeDescription')}
+                options={masters.map((m) => ({ id: m.resume_id, label: masterLabel(m) }))}
+                value={masterResumeId ?? ''}
+                onChange={setMasterResumeId}
+                disabled={isLoading || promptLoading || showDiffModal}
+              />
+            ) : (
+              (masters.length === 1 || !masterResumeId) && (
+                <div className="space-y-1">
+                  <span className={cn('block', labelClass)}>{t('tailor.tailoringLabel')}</span>
+                  <p className="text-sm text-ink-soft">{t('tailor.selectResumeDescription')}</p>
+                  <p className="flex min-h-10 items-center font-mono text-sm font-bold break-words text-ink">
+                    {masters.length === 1 ? masterLabel(masters[0]) : t('common.loading')}
+                  </p>
+                </div>
+              )
+            )}
 
-          <div className="relative">
-            <Textarea
-              placeholder={t('tailor.jobDescriptionPlaceholder')}
-              className="min-h-[300px] font-mono text-sm bg-background border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              onKeyDown={handleTextareaKeyDown}
+            <Dropdown
+              options={
+                promptOptions.length > 0
+                  ? promptOptions.map((opt) => ({
+                      id: opt.id,
+                      label: t(`tailor.promptOptions.${opt.id}.label`),
+                      description: t(`tailor.promptOptions.${opt.id}.description`),
+                    }))
+                  : [
+                      {
+                        id: 'nudge',
+                        label: t('tailor.promptOptions.nudge.label'),
+                        description: t('tailor.promptOptions.nudge.description'),
+                      },
+                      {
+                        id: 'keywords',
+                        label: t('tailor.promptOptions.keywords.label'),
+                        description: t('tailor.promptOptions.keywords.description'),
+                      },
+                      {
+                        id: 'full',
+                        label: t('tailor.promptOptions.full.label'),
+                        description: t('tailor.promptOptions.full.description'),
+                      },
+                    ]
+              }
+              value={selectedPromptId}
+              onChange={(value) => {
+                hasUserSelectedPrompt.current = true;
+                setSelectedPromptId(value);
+              }}
+              label={t('tailor.promptLabel')}
+              description={t('tailor.promptDescription')}
+              disabled={isLoading || promptLoading}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Dropdown
+              options={TAILOR_PAGE_LIMITS.map((limit) => ({
+                id: String(limit ?? 'none'),
+                label: t(`tailor.length.pageLimitOptions.${limit ?? 'none'}`),
+              }))}
+              value={String(tailorLength.maxPages ?? 'none')}
+              onChange={(value) =>
+                updateTailorLength({
+                  maxPages: (value === 'none' ? null : Number(value)) as TailorPageLimit,
+                })
+              }
+              label={t('tailor.length.pageLimitLabel')}
+              description={t('tailor.length.pageLimitDescription')}
               disabled={isLoading}
             />
-            <div className="absolute bottom-2 right-2 text-xs font-mono text-steel-grey pointer-events-none">
-              {t('tailor.charactersCount', { count: jobDescription.length })}
-            </div>
+            <Dropdown
+              options={TAILOR_BULLET_CAPS.map((cap) => ({
+                id: String(cap ?? 'all'),
+                label: t(`tailor.length.bulletOptions.${cap ?? 'all'}`),
+              }))}
+              value={String(tailorLength.maxBulletsPerEntry ?? 'all')}
+              onChange={(value) =>
+                updateTailorLength({
+                  maxBulletsPerEntry: (value === 'all' ? null : Number(value)) as TailorBulletCap,
+                })
+              }
+              label={t('tailor.length.bulletsLabel')}
+              description={t('tailor.length.bulletsDescription')}
+              disabled={isLoading}
+            />
           </div>
 
-          {error && (
-            <div className="p-4 bg-red-100 border-2 border-red-600 text-red-600 text-sm font-mono flex items-center gap-2">
-              <span>!</span> {error}
+          <div className="space-y-2">
+            <Label htmlFor="job-description">{t('tailor.pasteJobDescription')}</Label>
+            <div className="relative">
+              <Textarea
+                id="job-description"
+                aria-describedby="job-description-hint"
+                placeholder={t('tailor.jobDescriptionPlaceholder')}
+                className="min-h-48 resize-none p-4 pb-8"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                onKeyDown={handleTextareaKeyDown}
+                disabled={isLoading}
+              />
+              <div className="absolute bottom-2 right-2 font-mono text-xs tabular-nums text-steel pointer-events-none">
+                {t('tailor.charactersCount', { count: jobDescription.length })}
+              </div>
             </div>
-          )}
+            <p id="job-description-hint" className="text-sm text-ink-soft">
+              {t('tailor.jobDescriptionHint')}
+            </p>
+          </div>
+
+          <FadePresence show={!!error}>
+            <Alert tone="error">{error}</Alert>
+          </FadePresence>
 
           <Button
             size="lg"
@@ -542,15 +653,13 @@ export default function TailorPage() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <SpinnerGap className="w-5 h-5 animate-spin" />
                 {t('common.processing')}
-                {elapsed > 0 && (
-                  <span className="font-mono text-xs opacity-70 ml-2">{elapsed}s</span>
-                )}
+                {elapsed > 0 && <span className="text-xs tabular-nums">{elapsed}s</span>}
               </>
             ) : statusLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <SpinnerGap className="w-5 h-5 animate-spin" />
                 {t('common.checking')}
               </>
             ) : !isLlmConfigured ? (
@@ -559,15 +668,11 @@ export default function TailorPage() {
               t('tailor.generateTailored')
             )}
           </Button>
+
+          {/* ATS Score Breakdown: the last preview's score, kept after the diff modal closes */}
+          {atsResult && <ATSScoreCard atsScore={atsResult} template={atsTemplate} />}
         </div>
       </div>
-
-      {/* ATS Score Breakdown — shown once a preview result is available */}
-      {pendingResult?.data?.ats_score && (
-        <div className="w-full max-w-4xl mt-6">
-          <ATSScoreCard atsScore={pendingResult.data.ats_score} />
-        </div>
-      )}
 
       {/* Diff preview modal */}
       {showDiffModal && pendingResult && (
@@ -616,6 +721,6 @@ export default function TailorPage() {
         cancelDisabled={isLoading}
         errorMessage={missingDiffError ?? undefined}
       />
-    </div>
+    </PageFrame>
   );
 }

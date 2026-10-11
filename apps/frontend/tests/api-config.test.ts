@@ -24,6 +24,7 @@ const ALL_PROVIDERS: LLMProvider[] = [
   'deepseek',
   'groq',
   'ollama',
+  'claude_cli',
 ];
 
 describe('PROVIDER_INFO', () => {
@@ -42,6 +43,12 @@ describe('PROVIDER_INFO', () => {
     expect(PROVIDER_INFO.openai_compatible.requiresKey).toBe(false);
     expect(PROVIDER_INFO.openai.requiresKey).toBe(true);
     expect(PROVIDER_INFO.anthropic.requiresKey).toBe(true);
+    expect(PROVIDER_INFO.claude_cli.requiresKey).toBe(false);
+  });
+
+  it('flags only the Claude Code CLI as a local CLI provider', () => {
+    const localCli = ALL_PROVIDERS.filter((provider) => PROVIDER_INFO[provider].localCli);
+    expect(localCli).toEqual(['claude_cli']);
   });
 });
 

@@ -38,6 +38,11 @@ uv.lock
 
 # Encryption secret for API keys at rest - NEVER COMMIT
 **/data/.secret_key
+# Sign in with ChatGPT credentials (encrypted) and their refresh lock - NEVER COMMIT
+**/data/chatgpt_credentials.enc
+# save_record() stages the write here; an interrupted process can leave it behind
+**/data/.chatgpt_credentials.enc.*.tmp
+**/data/chatgpt_credentials.lock
 
 # Test artifacts
 .pytest_cache/
@@ -135,3 +140,8 @@ config.json
 
 # Superpowers brainstorming visual-companion scratch (local only)
 /.superpowers/
+
+# Local agent context, not shipped
+/docs/superpowers/
+/docs/agent/
+/docs/portable/

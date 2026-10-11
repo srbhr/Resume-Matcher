@@ -261,7 +261,11 @@ describe('saved uploads with failed HTTP responses', () => {
     render(<ControlledDialog onUploadComplete={onComplete} />);
     chooseResume();
     fireEvent.click(await screen.findByRole('button', { name: 'dashboard.retryProcessing' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('dashboard.status.processing');
+    const pending = await screen.findByRole('status');
+    expect(pending).toHaveTextContent('dashboard.status.processing');
+    // The pending message is the shared info Alert, not a hand-rolled bordered paragraph.
+    expect(pending.className).toMatch(/border-2/);
+    expect(pending.className).toMatch(/bg-info-tint/);
     expect(onComplete).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'dashboard.deleteResume' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'dashboard.retryProcessing' }));
@@ -383,6 +387,22 @@ it.each([
   expect(await screen.findByText(message)).toBeVisible();
 });
 
+it('announces the upload confirmation through one live region, not one nested in another', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({ resume_id: 'resume-1', processing_status: 'ready', is_master: false }),
+      { status: 200, headers: { 'content-type': 'application/json' } }
+    )
+  );
+  render(<ControlledDialog onUploadComplete={vi.fn()} />);
+  chooseResume();
+  const region = (await screen.findByText('dashboard.uploadDialog.success')).closest(
+    '[role="status"]'
+  );
+  expect(region).toHaveClass('border-success');
+  expect(region?.parentElement?.closest('[role="status"]')).toBeNull();
+});
+
 it('confirms a non-default upload as the master when the dashboard will make it the default', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(
     new Response(
@@ -451,4 +471,45 @@ it('serializes saved deletion against retry and ignores completion after unmount
   view.unmount();
   await act(async () => pending.resolve());
   expect(onComplete).not.toHaveBeenCalled();
+});
+
+describe('drop zone keyboard access', () => {
+  it('draws its upload mark with the nested shadow, since it sits inside a dialog', () => {
+    render(<ResumeUploadDialog open onOpenChange={vi.fn()} />);
+
+    const mark = screen
+      .getByRole('button', { name: 'dashboard.uploadDialog.dropzoneTitle' })
+      .querySelector('svg')!.parentElement!;
+    expect(mark).toHaveClass('border', 'border-ink', 'shadow-sw-nested');
+    expect(mark).not.toHaveClass('shadow-sw-default');
+  });
+
+  it('opens the file picker on Enter and Space, and stops being a button once a file is chosen', () => {
+    // The upload never answers, so the chosen file stays in the zone.
+    vi.mocked(fetch).mockReturnValue(new Promise<Response>(() => {}));
+    const pickerClick = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+    render(<ResumeUploadDialog open onOpenChange={vi.fn()} />);
+
+    const zone = screen.getByRole('button', { name: 'dashboard.uploadDialog.dropzoneTitle' });
+    expect(zone).toHaveAttribute('tabindex', '0');
+    // Named and described by its visible copy, so the accepted formats are still announced.
+    expect(zone).toHaveAccessibleDescription('dashboard.uploadDialog.dropzoneSubtitle');
+    expect(zone).not.toHaveAttribute('aria-label');
+
+    fireEvent.keyDown(zone, { key: 'Enter' });
+    expect(pickerClick).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(zone, { key: ' ' });
+    expect(pickerClick).toHaveBeenCalledTimes(2);
+    fireEvent.keyDown(zone, { key: 'a' });
+    expect(pickerClick).toHaveBeenCalledTimes(2);
+
+    chooseResume();
+    expect(
+      screen.queryByRole('button', { name: 'dashboard.uploadDialog.dropzoneTitle' })
+    ).toBeNull();
+    expect(zone).not.toHaveAttribute('role');
+    expect(zone).not.toHaveAttribute('tabindex');
+    fireEvent.keyDown(zone, { key: 'Enter' });
+    expect(pickerClick).toHaveBeenCalledTimes(2);
+  });
 });

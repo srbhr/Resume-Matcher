@@ -12,6 +12,8 @@ from typing import Any, Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.db_url import normalize_database_url, validate_schema_name
+
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 logger = logging.getLogger(__name__)
 _CONFIG_WRITE_LOCK = threading.Lock()
@@ -30,14 +32,25 @@ def get_config_path() -> Path:
     return settings.config_path
 
 
+def normalize_provider(value: Any) -> Any:
+    """Strip and lowercase a provider name so ``Anthropic`` matches ``anthropic``.
+
+    Non-strings pass through for the caller's own validation to reject.
+    """
+    return value.strip().lower() if isinstance(value, str) else value
+
+
 def _read_config_json() -> dict[str, Any]:
     """Raw read of config.json (no key injection)."""
     config_path = get_config_path()
     if config_path.exists():
         try:
-            return json.loads(config_path.read_text())
+            config = json.loads(config_path.read_text())
         except (json.JSONDecodeError, OSError):
             return {}
+        if isinstance(config, dict) and "provider" in config:
+            config["provider"] = normalize_provider(config["provider"])
+        return config
     return {}
 
 
@@ -247,7 +260,7 @@ def _get_llm_api_key_with_fallback() -> str:
 
     # Fallback to config file based on provider
     config_keys = get_api_keys_from_config()
-    provider = os.environ.get("LLM_PROVIDER", "openai")
+    provider = normalize_provider(os.environ.get("LLM_PROVIDER", "openai"))
 
     # Map provider to config key
     provider_map = {
@@ -272,6 +285,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # Keeps DATABASE_URL credentials out of validation errors.
+        hide_input_in_errors=True,
     )
 
     # LLM Configuration
@@ -285,6 +300,8 @@ class Settings(BaseSettings):
         "deepseek",
         "groq",
         "ollama",
+        "claude_cli",
+        "chatgpt",
     ] = "openai"
     llm_model: str = "gpt-5-nano-2025-08-07"
     llm_api_key: str = ""
@@ -294,10 +311,10 @@ class Settings(BaseSettings):
     @field_validator("llm_provider", mode="before")
     @classmethod
     def set_default_provider(cls, v: Any) -> str:
-        """Handle empty string provider by defaulting to openai."""
+        """Default an empty provider to openai and ignore case and padding."""
         if not v or (isinstance(v, str) and not v.strip()):
             return "openai"
-        return v
+        return normalize_provider(v)
 
     @field_validator("log_llm", mode="before")
     @classmethod
@@ -392,6 +409,24 @@ class Settings(BaseSettings):
 
     # Paths
     data_dir: Path = Path(__file__).parent.parent / "data"
+
+    # Optional PostgreSQL backend. Unset: SQLite in data_dir.
+    database_url: str | None = None
+    database_schema: str | None = None
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def parse_database_url(cls, v: Any) -> str | None:
+        if v is None or not str(v).strip():
+            return None
+        return normalize_database_url(str(v))
+
+    @field_validator("database_schema", mode="before")
+    @classmethod
+    def validate_database_schema(cls, v: Any) -> str | None:
+        if v is None or not str(v).strip():
+            return None
+        return validate_schema_name(str(v).strip())
 
     @property
     def db_path(self) -> Path:

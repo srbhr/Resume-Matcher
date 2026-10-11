@@ -14,11 +14,18 @@ const REQUEST_TIMEOUT_MS = Number.isFinite(parsedTimeoutMs)
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  turbopack: {
+    // The `motion/react` entry (`import * as fm`) makes Turbopack keep all of framer-motion
+    // whenever `m` is imported, which also defeats LazyMotion's lazy features chunk (+43 KB gzip
+    // on product routes). The same API straight from `framer-motion` tree-shakes.
+    resolveAlias: { 'motion/react': 'framer-motion' },
+  },
   experimental: {
     proxyTimeout: REQUEST_TIMEOUT_MS,
     // Tree-shake barrel imports — saves ~200-800ms cold start per route
     optimizePackageImports: [
       'lucide-react',
+      '@phosphor-icons/react',
       '@tiptap/react',
       '@tiptap/starter-kit',
       '@tiptap/extension-link',
@@ -35,6 +42,14 @@ const nextConfig: NextConfig = {
       {
         source: '/api/:path*',
         destination: `${BACKEND_ORIGIN}/api/:path*`,
+      },
+      {
+        // Sign in with ChatGPT returns the browser to http://127.0.0.1:<port>/auth/callback
+        // (a fixed path, loopback only). Serving it on the frontend port lets Docker, which
+        // publishes only 3000, finish the flow. The backend still requires a loopback peer,
+        // which is this proxy.
+        source: '/auth/callback',
+        destination: `${BACKEND_ORIGIN}/auth/callback`,
       },
       {
         source: '/docs',

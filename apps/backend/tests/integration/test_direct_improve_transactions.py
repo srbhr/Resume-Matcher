@@ -192,3 +192,27 @@ async def test_direct_success_links_required_records_and_keeps_tracker_best_effo
         assert len(cards) == 1
         assert cards[0]["resume_id"] == result["data"]["resume_id"]
         assert cards[0]["job_id"] == payload["job_id"]
+
+
+async def test_direct_tailoring_puts_the_extracted_company_on_the_tracker_card(
+    isolated_db: Database,
+    direct_case: tuple[AsyncClient, dict[str, str]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, payload = direct_case
+    monkeypatch.setattr(
+        resumes,
+        "extract_job_keywords",
+        AsyncMock(
+            return_value={
+                "keywords": ["Python"],
+                "required_skills": [],
+                "company": "Synthetic Co",
+                "role": "Python engineer",
+            }
+        ),
+    )
+    response = await client.post("/api/v1/resumes/improve", json=payload)
+    assert response.status_code == 200, response.text
+    cards = await isolated_db.list_applications()
+    assert [card["company"] for card in cards] == ["Synthetic Co"]

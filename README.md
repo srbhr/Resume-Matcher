@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.png)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.jpg)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
@@ -149,6 +149,10 @@ Generate tailored cover letters based on the job description and your resume.
 
 Generate structured, resume-grounded interview prep for saved tailored resumes. Use the Builder's Interview Prep tab on demand, or enable automatic generation in Settings.
 
+### Tailoring Queue
+
+Paste several job descriptions on the Tailoring Queue page and they are tailored from your master resume one after another in the background. Role, company and job ID are detected from the text without an AI call, and you can edit them. An optional cooldown between jobs (0 to 60 seconds) lowers the risk of hitting your provider's rate limits. Queued jobs are kept in the database and resume after a restart.
+
 ### Resume Scoring & Keyword Highlighting
 
 Analyze your resume against the job description with a match score, keyword highlighting, and suggestions for improvement.
@@ -197,7 +201,7 @@ For detailed setup instructions, see **[SETUP.md](SETUP.md)** (English) or: [Esp
 | Tool | Version | Installation |
 |------|---------|--------------|
 | Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
+| Node.js | 24+ | [nodejs.org](https://nodejs.org) |
 | uv | Latest | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### Quick Start
@@ -223,16 +227,21 @@ npm run dev
 
 Open **<http://localhost:3000>** and configure your AI provider in Settings.
 
+**Windows 11:** see [Windows 11 Setup](SETUP.md#windows-11-setup) for PowerShell commands.
+
 ### Supported AI Providers
 
 | Provider | Local/Cloud | Notes |
 |----------|-------------|-------|
 | **Ollama** | Local | Free, runs on your machine |
+| **Claude subscription (via Claude Code)** | Cloud (via local CLI) | Runs your installed `claude` CLI, so this app needs no API key and never sees or stores your Claude credentials, but prompts still go to Anthropic through your Claude Code login and count toward your plan's usage limits (Anthropic may draw them from usage credits instead). Anthropic does not officially support third-party apps using Claude Pro/Max subscriptions, so this may stop working if its policy changes; for guaranteed access, use the **Anthropic** provider with an API key. Set `LLM_PROVIDER=claude_cli`. Requires [Claude Code](https://claude.com/claude-code) installed and signed in (`claude auth login`); not available inside the Docker images. |
+| **ChatGPT plan (Sign in with ChatGPT)** | Cloud | Community-built. Uses OpenAI's official [Sign in with ChatGPT for open-source apps](https://developers.openai.com/siwc/token-sharing-open-source) (preview, may change) with ChatGPT Plus or Pro: choose **ChatGPT plan** in Settings and click **Continue with ChatGPT**; no API key needed. Requests go from your machine to OpenAI's Responses API and count toward your plan's limits (on Plus the five-hour limit is shared with your other apps; Pro has none). Sign in from a browser on the machine running the backend; the default Docker setup can't complete the sign-in (see [SETUP.md](SETUP.md#option-c-your-chatgpt-plan-sign-in-with-chatgpt)). For guaranteed access, use the **OpenAI** provider with an API key. Set `LLM_PROVIDER=chatgpt`. |
 | **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
 | **DeepSeek** | Cloud | DeepSeek Chat |
+| **Groq** | Cloud | Llama 3.3 70B, GPT-OSS |
 
 ### Docker Deployment
 
@@ -267,7 +276,7 @@ Endpoints:
 |-----------|------------|
 | Backend | FastAPI, Python 3.13+, LiteLLM |
 | Frontend | Next.js 16, React 19, TypeScript |
-| Database | TinyDB (JSON file storage) |
+| Database | SQLite by default, optional PostgreSQL (SQLAlchemy 2.0) |
 | Styling | Tailwind CSS 4, Swiss International Style |
 | PDF | Headless Chromium via Playwright |
 

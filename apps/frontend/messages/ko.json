@@ -2,6 +2,7 @@
   "common": {
     "save": "저장",
     "saving": "저장 중...",
+    "saved": "저장됨",
     "cancel": "취소",
     "delete": "삭제",
     "edit": "편집",
@@ -39,6 +40,19 @@
     "docs": "문서",
     "launchApp": "앱 실행"
   },
+  "community": {
+    "follow": "@srbhr 팔로우",
+    "star": "스타",
+    "starOnGithub": "GitHub에서 스타 누르기",
+    "sponsor": "후원",
+    "discord": "Discord",
+    "joinDiscord": "Discord 참여",
+    "contributors": "기여자",
+    "settingsPrompt": "Resume Matcher가 마음에 드시나요?",
+    "sponsorProject": "프로젝트 후원하기",
+    "joinTheDiscord": "Discord 참여하기",
+    "aboutTitle": "앱 정보"
+  },
   "nav": {
     "dashboard": "대시보드",
     "builder": "이력서 빌더",
@@ -46,7 +60,8 @@
     "settings": "설정",
     "backToDashboard": "대시보드로 돌아가기",
     "goToSettings": "설정으로 이동",
-    "applicationTracker": "지원 현황 트래커"
+    "applicationTracker": "지원 현황 트래커",
+    "queue": "맞춤화 대기열"
   },
   "dashboard": {
     "title": "대시보드",
@@ -65,6 +80,7 @@
     "downloadPdf": "PDF 다운로드",
     "tailorResume": "채용 공고에 맞춤화",
     "selectModule": "모듈 선택",
+    "modulesHeading": "이력서 모듈",
     "masterResume": "마스터 이력서",
     "tailoredResume": "맞춤화된 이력서",
     "initializeMasterResume": "마스터 이력서 초기화",
@@ -114,6 +130,10 @@
     "masterLimitReached": "마스터 이력서는 최대 {max}개까지"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "아직 생성된 항목이 없습니다",
+      "preview": "미리보기"
+    },
     "title": "이력서 빌더",
     "copySuffix": "(사본)",
     "editMode": "편집 모드",
@@ -191,12 +211,8 @@
       "coverLetter": "자기소개서",
       "outreach": "아웃리치 메일",
       "jdMatch": "채용공고 매칭",
-      "interviewPrep": "면접 준비"
-    },
-    "footer": {
-      "moduleLabel": "이력서 빌더 모듈",
-      "singleColumn": "단일 열",
-      "twoColumn": "2단"
+      "interviewPrep": "면접 준비",
+      "atsCheck": "ATS 검사"
     },
     "pageSize": {
       "usLetter": "US 레터"
@@ -296,6 +312,17 @@
         "keywordsExtracted": "{count}개 키워드 추출됨",
         "matchesFound": "{count}개 일치 항목 발견",
         "matchRateLabel": "일치율:"
+      },
+      "atsScore": {
+        "description": "저장된 이력서를 이 채용공고와 비교해 점수를 매깁니다. PDF 자체가 어떻게 읽히는지는 ATS 검사 탭에서 확인하세요.",
+        "loading": "ATS 점수 불러오는 중…",
+        "notCalculated": "이 이력서의 ATS 점수가 아직 계산되지 않았습니다.",
+        "loadFailed": "저장된 ATS 점수를 불러올 수 없습니다. 다시 계산하거나 페이지를 새로 고치세요.",
+        "lastCalculated": "마지막 계산: {date}",
+        "recalculate": "다시 계산",
+        "recalculating": "계산 중…",
+        "saveFirst": "변경 사항을 저장한 후 다시 계산하세요.",
+        "recalculateFailed": "ATS 점수를 계산할 수 없습니다. 점수 저장 기능 이전에 맞춤 작업한 이력서라면 '이력서 맞춤화' 페이지에서 다시 맞춤 작업을 하세요."
       }
     },
     "genericItemForm": {
@@ -467,7 +494,8 @@
       "coverLetterEditor": "자기소개서 편집기",
       "outreachEditor": "아웃리치 메시지 편집기",
       "jdMatchAnalysis": "채용공고 매칭 분석",
-      "interviewPrep": "면접 준비"
+      "interviewPrep": "면접 준비",
+      "atsCheck": "ATS 판독 검사"
     },
     "alerts": {
       "saveNotAvailable": "저장은 기존 이력서를 편집할 때만 사용할 수 있습니다.",
@@ -516,6 +544,126 @@
       "description": "최신 변경 사항을 서버와 동기화하거나 이 브라우저에 저장하지 못했습니다. 지금 나가면 변경 사항이 사라질 수 있습니다.",
       "leave": "그래도 나가기",
       "stay": "계속 편집"
+    },
+    "atsCheck": {
+      "aboutTitle": "검사 내용",
+      "aboutDescription": "현재 템플릿과 설정으로 이력서를 생성한 뒤, 단순한 ATS 텍스트 추출기와 같은 방식으로 다시 읽습니다. AI는 사용하지 않습니다.",
+      "roundTripTitle": "왕복 검사",
+      "roundTripDescription": "추출한 텍스트를 이력서 데이터와 비교합니다. 이 출력물이 얼마나 충실하게 읽히는지를 측정하며, 특정 ATS의 정확도는 아닙니다.",
+      "tipsTitle": "팁",
+      "tips": {
+        "items": {
+          "singleColumn": "1단 템플릿은 올바른 순서로 읽힙니다.",
+          "standardHeadings": "경력, 학력, 기술 같은 표준 섹션 이름을 사용하세요.",
+          "contactInBody": "연락처는 본문에 두세요."
+        }
+      },
+      "templateLabel": "템플릿: {template}",
+      "runButton": "검사 실행",
+      "rerunButton": "다시 검사",
+      "running": "검사 중...",
+      "emptyState": "검사를 실행하면 현재 템플릿에서 ATS가 이 이력서를 어떻게 읽는지 볼 수 있습니다.",
+      "saveFirst": "검사를 실행하려면 먼저 이력서를 저장하세요.",
+      "unsavedNotice": "저장하지 않은 수정은 포함되지 않습니다. 마지막으로 저장한 버전을 검사합니다.",
+      "error": "검사에 실패했습니다. 백엔드와 프런트엔드가 실행 중인지 확인한 뒤 다시 시도하세요.",
+      "parseability": "판독성",
+      "content": "내용",
+      "extractability": {
+        "full": "텍스트 추출: 전체",
+        "partial": "텍스트 추출: 일부",
+        "none": "텍스트 추출: 없음"
+      },
+      "status": {
+        "pass": "통과",
+        "warn": "주의",
+        "fail": "실패"
+      },
+      "checksTitle": "검사 항목",
+      "contentRecall": "내용 재현율",
+      "orderFidelity": "읽기 순서",
+      "allFieldsFound": "모든 항목이 추출된 텍스트에 있습니다.",
+      "fieldsTruncated": "이 이력서에는 검사 한도를 넘는 항목이 있어 앞쪽 항목만 확인했습니다. 한도를 넘은 항목은 여기에 반영되지 않습니다.",
+      "fieldStatus": {
+        "found": "발견",
+        "garbled": "깨짐",
+        "missing": "누락",
+        "hidden": "숨김"
+      },
+      "previewTitle": "추출된 텍스트",
+      "sectionKinds": {
+        "experience": "경력",
+        "education": "학력",
+        "skills": "기술"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "선택 가능한 텍스트",
+          "pass": "텍스트 {characters}자를 추출했습니다.",
+          "fail": "선택 가능한 텍스트가 없습니다. 스캔본이나 이미지 전용 파일로 보여 ATS가 아무것도 읽지 못합니다."
+        },
+        "garbled_glyphs": {
+          "title": "문자 인코딩",
+          "pass": "읽을 수 없는 문자가 없습니다.",
+          "warn": "{count}자를 디코딩하지 못했습니다.",
+          "fail": "{count}자를 디코딩하지 못해 ATS에는 텍스트가 깨져 보입니다."
+        },
+        "text_coverage": {
+          "title": "텍스트와 이미지",
+          "pass": "모든 페이지에 실제 텍스트가 있습니다.",
+          "warn": "{pages}페이지는 대부분 이미지입니다.",
+          "fail": "모든 페이지가 대부분 이미지입니다."
+        },
+        "multi_column": {
+          "title": "단일 읽기 순서",
+          "pass": "텍스트가 한 단으로 읽힙니다.",
+          "fail": "{pages}페이지에서 2단을 감지했습니다. 많은 ATS가 단을 섞어서 읽습니다.",
+          "templateHint": "이 템플릿은 의도적으로 2단을 사용합니다. ATS 지원에는 1단 템플릿을 선택하세요."
+        },
+        "tables": {
+          "title": "표",
+          "pass": "표가 없습니다.",
+          "warn": "표 {count}개가 있습니다. 일부 ATS는 표 셀을 평탄화하거나 건너뜁니다."
+        },
+        "text_boxes": {
+          "title": "텍스트 상자",
+          "pass": "텍스트 상자가 없습니다.",
+          "warn": "텍스트 상자가 있습니다. 일부 ATS는 이를 건너뜁니다.",
+          "fail": "{characters}자가 많은 ATS가 건너뛰는 텍스트 상자에 있습니다."
+        },
+        "header_footer_content": {
+          "title": "머리글과 바닥글",
+          "pass": "머리글이나 바닥글에 중요한 내용이 없습니다.",
+          "warn": "머리글이나 바닥글에 내용이 있으며, 일부 ATS는 이를 무시합니다.",
+          "fail": "연락처가 머리글이나 바닥글에만 있어 많은 ATS가 무시합니다."
+        },
+        "images": {
+          "title": "이미지",
+          "pass": "이미지가 없습니다.",
+          "warn": "이미지 {count}개가 있습니다. 이미지 속 텍스트는 ATS에 보이지 않습니다."
+        },
+        "page_count": {
+          "title": "분량",
+          "pass": "{pages}페이지.",
+          "warn": "{pages}페이지입니다. 두 페이지 이하로 줄이는 것을 고려하세요."
+        },
+        "contact_info": {
+          "title": "연락처",
+          "pass": "이메일과 전화번호가 상단에 있습니다.",
+          "warn": "연락처가 불완전하거나 텍스트 뒤쪽에 있습니다.",
+          "fail": "추출된 텍스트에서 이메일 주소를 찾지 못했습니다."
+        },
+        "section_headings": {
+          "title": "섹션 제목",
+          "pass": "표준 제목을 찾았습니다: {found}.",
+          "warn": "표준 제목이 없습니다: {missing}.",
+          "fail": "표준 제목이 없습니다: {missing}. 경력, 학력, 기술 같은 이름을 사용하세요."
+        },
+        "dates": {
+          "title": "날짜",
+          "pass": "날짜에서 연도 {years}개를 찾았습니다.",
+          "warn": "인식할 수 있는 날짜가 없습니다."
+        }
+      }
     }
   },
   "enrichment": {
@@ -591,6 +739,23 @@
         "description": "채용 공고를 활용해 전면적으로 맞춤화합니다."
       }
     },
+    "length": {
+      "pageLimitLabel": "페이지 제한",
+      "pageLimitDescription": "가능한 경우 관련성이 낮은 항목부터 줄여 페이지 수에 맞춥니다. 제한 없음을 선택하면 페이지 맞춤을 하지 않습니다.",
+      "pageLimitOptions": {
+        "1": "1페이지",
+        "2": "2페이지",
+        "3": "3페이지",
+        "none": "제한 없음"
+      },
+      "bulletsLabel": "직무별 항목 수",
+      "bulletsDescription": "직무 또는 프로젝트마다 유지할 가장 관련성 높은 항목 수.",
+      "bulletOptions": {
+        "3": "최대 3개",
+        "5": "최대 5개",
+        "all": "전체"
+      }
+    },
     "analyzeJob": "채용 공고 분석",
     "generateTailored": "맞춤화된 이력서 생성",
     "setupRequiredTitle": "[ 설정 필요 ]",
@@ -625,6 +790,18 @@
       "rejectButton": "거부하고 다시 생성",
       "confirmButton": "확인하고 저장"
     },
+    "atsScore": {
+      "title": "ATS 점수 상세",
+      "keywordMatch": "키워드 일치",
+      "skillsCoverage": "기술 커버리지",
+      "titleMatch": "직함 일치",
+      "sectionCompleteness": "섹션 완성도",
+      "dateConsistency": "날짜 형식 일관성",
+      "missingKeywords": "누락된 키워드",
+      "injectableKeywords": "추가 가능(마스터 이력서에 있음)",
+      "recommendations": "추천 사항",
+      "twoColumnWarning": "2단 레이아웃: 많은 ATS가 열을 잘못된 순서로 읽습니다. 지원하기 전에 빌더에서 1단 템플릿으로 변경하세요."
+    },
     "regenerateDialog": {
       "title": "맞춤화된 이력서를 다시 생성하시겠습니까?",
       "description": "현재 미리보기를 폐기하고 새로운 AI 맞춤화 결과를 요청합니다.",
@@ -646,14 +823,23 @@
       "previewUnavailable": "미리보기가 만료되었거나 원본 이력서가 변경되었습니다. 저장하기 전에 새 미리보기를 생성하세요."
     },
     "selectResumeDescription": "글머리 기호는 이 마스터 이력서에서 가져옵니다.",
+    "tailoringLabel": "맞춤화 대상:",
+    "jobDescriptionHint": "담당 업무와 자격 요건을 포함한 채용 공고 전문을 붙여넣으세요(50자 이상).",
+    "steps": {
+      "label": "맞춤화 진행 단계",
+      "paste": "채용 공고 붙여넣기",
+      "generate": "미리보기 생성",
+      "review": "변경 사항 검토 후 저장"
+    },
     "selectionSummary": "글머리 기호 {total}개 중 {kept}개 유지 (직무 또는 프로젝트당 최대 {max}개)",
+    "selectionSummaryAll": "{total}개 중 {kept}개 항목 유지",
     "pageFit": {
-      "fits": "한 페이지에 맞습니다",
-      "trimmed": "한 페이지에 맞추기 위해 {count}개를 추가로 줄였습니다",
-      "over": "여전히 한 페이지를 초과합니다",
+      "fits": "페이지 제한에 맞습니다",
+      "trimmed": "페이지 제한에 맞추기 위해 {count}개를 더 줄였습니다",
+      "over": "페이지 제한을 초과합니다. 선택한 항목은 모두 유지했습니다",
       "unavailable": "페이지 맞춤을 사용할 수 없습니다",
-      "finalOver": "다시 작성한 후 한 페이지를 넘을 수 있습니다",
-      "notRechecked": "다시 작성한 후 한 페이지 맞춤을 다시 확인하지 못했습니다"
+      "finalOver": "다시 작성한 후 페이지 제한을 초과할 수 있습니다",
+      "notRechecked": "다시 작성한 후 페이지 제한 맞춤을 다시 확인하지 못했습니다"
     }
   },
   "settings": {
@@ -668,6 +854,12 @@
     "contentLanguageDescription": "생성되는 콘텐츠(이력서, 자기소개서)의 언어",
     "uiLanguage": "UI 언어",
     "uiLanguageDescription": "사용자 인터페이스의 언어",
+    "languageTitle": "언어",
+    "display": {
+      "title": "화면",
+      "backgroundEffects": "배경 효과",
+      "backgroundEffectsDescription": "페이지 배경과 AI 작업 중에 표시되는 애니메이션 배경입니다. 끄면 단색 배경이 됩니다."
+    },
     "theme": "테마",
     "themeDescription": "선호하는 색상 테마를 선택하세요",
     "lightMode": "라이트",
@@ -721,6 +913,16 @@
     },
     "llmConfiguration": {
       "selectedProvider": "선택됨: {provider}",
+      "claudeCliNote": "이 컴퓨터에 설치되어 로그인된 Claude Code CLI를 실행하므로 여기에서는 API 키가 필요하지 않습니다. Claude Code는 계정을 통해 프롬프트를 Anthropic으로 전송하며 자체 기본 모델을 사용합니다.",
+      "claudeCliName": "Claude 구독(Claude Code 경유)",
+      "claudeCliShortName": "Claude 요금제",
+      "claudeCliWarningTitle": "공식 지원 아님",
+      "claudeCliWarning": "Anthropic은 서드파티 앱이 Claude Pro 또는 Max 구독을 사용하는 것을 공식적으로 지원하지 않으며, 정책이 바뀌면 작동하지 않을 수 있습니다(안정적인 이용을 원하면 Anthropic API 키를 사용하세요). Resume Matcher는 Claude 자격 증명을 보거나 저장하지 않으며, 사용자가 `claude auth login`으로 직접 로그인한 본인의 Claude Code CLI를 실행할 뿐입니다. 요청은 Claude 요금제의 사용 한도에 포함되며, Anthropic이 대신 사용 크레딧에서 차감할 수도 있습니다.",
+      "communityBuilt": "커뮤니티에서 만든 기능입니다.",
+      "chatgptName": "ChatGPT 요금제(Sign in with ChatGPT)",
+      "chatgptShortName": "ChatGPT 요금제",
+      "chatgptWarningTitle": "프리뷰",
+      "chatgptWarning": "OpenAI의 오픈 소스 앱용 공식 Sign in with ChatGPT를 사용합니다. 프리뷰 단계라 변경될 수 있습니다. ChatGPT Plus와 Pro에서 사용할 수 있습니다. 요청은 내 컴퓨터에서 OpenAI API로 직접 전송되며, 로그인 토큰은 이 컴퓨터에 암호화되어 저장됩니다. 사용량은 ChatGPT 요금제 한도에 포함됩니다. Plus에서는 5시간 한도를 같은 요금제를 쓰는 다른 앱과 공유하며, Pro에는 5시간 한도가 없습니다. 안정적으로 이용하려면 OpenAI API 키를 사용하세요.",
       "modelLabel": "모델",
       "defaultModel": "기본값: {model}",
       "apiKeyLabel": "API 키",
@@ -759,11 +961,36 @@
         "health_check_failed": "상태 확인에 실패했습니다.",
         "duplicate_v1_path": "상태 확인에 실패했습니다. 기본 URL에 /v1 경로가 중복되어 있을 수 있습니다.",
         "not_found_404": "상태 확인에 실패했습니다. 404 Not Found - 기본 URL이 제공업체와 일치하는지 확인하세요.",
-        "html_response": "상태 확인에 실패했습니다. 기본 URL이 HTML을 반환했습니다. 콘솔 URL이거나 지원되지 않는 게이트웨이 경로일 수 있습니다."
+        "html_response": "상태 확인에 실패했습니다. 기본 URL이 HTML을 반환했습니다. 콘솔 URL이거나 지원되지 않는 게이트웨이 경로일 수 있습니다.",
+        "claude_cli_not_found": "Claude Code CLI를 찾을 수 없습니다. Claude Code를 설치하고 `claude auth login`을 실행하세요.",
+        "chatgpt_not_connected": "ChatGPT로 로그인하지 않았습니다. 설정에서 ChatGPT 요금제를 선택한 뒤 'ChatGPT로 계속하기'를 누르세요.",
+        "chatgpt_usage_limit": "이 앱의 ChatGPT 요금제 사용 한도에 도달했습니다. ChatGPT 설정의 사용량에서 확인하세요.",
+        "chatgpt_not_eligible": "이 계정에서는 ChatGPT 요금제를 사용할 수 없습니다. ChatGPT Plus 또는 Pro가 필요하며, 그렇지 않으면 OpenAI API 키를 사용하세요."
       },
       "healthWarnings": {
         "empty_content": "상태 확인 시 LLM이 빈 응답을 반환했습니다."
       }
+    },
+    "chatgpt": {
+      "continue": "ChatGPT로 계속하기",
+      "checking": "확인 중",
+      "connected": "연결됨",
+      "notConnected": "연결 안 됨",
+      "disconnect": "연결 해제",
+      "manageUsage": "사용량 관리",
+      "disconnected": "ChatGPT 연결을 해제했습니다.",
+      "revocationUnconfirmed": "이 컴퓨터에서는 로그아웃했지만 OpenAI가 세션 종료를 확인하지 않았습니다. ChatGPT 설정에서 Resume Matcher 연결을 해제할 수도 있습니다.",
+      "returnConnected": "ChatGPT 요금제에 연결했습니다. 모델을 선택한 뒤 저장하세요.",
+      "returnCancelled": "ChatGPT 로그인이 취소되었습니다.",
+      "returnError": "ChatGPT 로그인을 완료하지 못했습니다. 다시 시도하세요.",
+      "planDeclined": "ChatGPT 요금제 사용이 허용되지 않았습니다. 'ChatGPT로 계속하기'를 다시 눌러 허용하거나 OpenAI API 키를 사용하세요.",
+      "sameMachineOnly": "Resume Matcher가 실행 중인 컴퓨터의 브라우저에서 로그인하세요.",
+      "signInFailed": "ChatGPT 로그인을 시작하지 못했습니다. 다시 시도하세요.",
+      "disconnectFailed": "ChatGPT 연결을 해제하지 못했습니다. 다시 시도하세요.",
+      "statusFailed": "ChatGPT 연결 상태를 확인하지 못했습니다.",
+      "modelsFailed": "ChatGPT 모델을 불러오지 못했습니다. 대신 모델 이름을 입력하세요.",
+      "modelHint": "로그인하면 모델 목록을 ChatGPT 계정에서 불러옵니다.",
+      "connectToSave": "이 제공업체를 저장하려면 ChatGPT로 로그인하세요."
     },
     "contentGeneration": {
       "title": "콘텐츠 생성",
@@ -840,6 +1067,7 @@
     "titlePlaceholder": "이력서 제목을 입력하세요...",
     "downloadFailedTitle": "다운로드 실패",
     "renameFailedTitle": "이름 변경 실패",
+    "renameTitle": "이력서 이름 변경",
     "defaultBadge": "기본 마스터",
     "setDefault": "기본 마스터로 설정",
     "setDefaultSuccess": "이 마스터가 이제 맞춤화의 기본 마스터입니다.",
@@ -1009,7 +1237,8 @@
       "experience": "경력",
       "education": "학력",
       "projects": "프로젝트",
-      "skills": "기술"
+      "skills": "기술",
+      "inferredSkill": "추론됨"
     },
     "errors": {
       "turnFailed": "마법사가 답변을 저장하지 못했습니다. 다시 시도하세요.",
@@ -1140,6 +1369,60 @@
       "projectFollowUps": "프로젝트 후속 질문",
       "skillGaps": "역량 격차",
       "talkingPoints": "핵심 포인트"
+    }
+  },
+  "queue": {
+    "title": "맞춤화 대기열",
+    "subtitle": "채용 공고를 대기열에 넣고 백그라운드에서 하나씩 맞춤화합니다",
+    "form": {
+      "title": "공고 추가",
+      "masterDescription": "대기열의 모든 공고는 이 마스터 이력서를 바탕으로 맞춤화됩니다.",
+      "noMaster": "먼저 대시보드에서 마스터 이력서를 업로드하세요.",
+      "jobDescriptionLabel": "채용 공고",
+      "jobDescriptionHint": "직무, 회사, 공고 ID는 AI 호출 없이 본문에서 감지됩니다. 잘못 감지되었다면 수정하세요.",
+      "detectedTitle": "감지된 정보",
+      "roleLabel": "직무",
+      "rolePlaceholder": "예: 프론트엔드 엔지니어",
+      "companyLabel": "회사",
+      "companyPlaceholder": "예: Stripe",
+      "jobReqIdLabel": "공고 ID",
+      "cooldownLabel": "대기 시간(초)",
+      "cooldownHint": "공고마다 잠시 멈춰 제공업체의 요청 한도에 걸릴 위험을 줄입니다.",
+      "submit": "대기열에 추가",
+      "adding": "추가 중...",
+      "added": "대기열에 추가했습니다. 다음 채용 공고를 붙여넣으세요."
+    },
+    "monitor": {
+      "title": "대기열",
+      "count": "공고 수: {count}",
+      "refresh": "새로고침",
+      "clearCompleted": "완료 항목 지우기",
+      "clearAll": "모두 지우기",
+      "emptyTitle": "대기열에 공고가 없습니다",
+      "emptyDescription": "채용 공고를 추가하면 맞춤화를 시작합니다.",
+      "untitled": "직무 미지정",
+      "jobId": "ID {id}",
+      "viewResume": "이력서 보기",
+      "remove": "대기열에서 제거"
+    },
+    "status": {
+      "pending": "대기 중",
+      "processing": "맞춤화 중",
+      "completed": "완료",
+      "failed": "실패"
+    },
+    "errors": {
+      "addFailed": "공고를 추가하지 못했습니다. 다시 시도하세요.",
+      "item": {
+        "not_found": "마스터 이력서 또는 공고가 삭제되었습니다.",
+        "too_large": "채용 공고나 이력서가 너무 길어 맞춤화할 수 없습니다.",
+        "timeout": "맞춤화 시간이 초과되었습니다. 재시도하려면 공고를 다시 추가하세요.",
+        "failed": "맞춤화에 실패했습니다. 설정에서 AI 제공업체를 확인한 뒤 공고를 다시 추가하세요."
+      },
+      "loadFailed": "대기열을 불러오지 못했습니다.",
+      "deleteFailed": "공고를 제거하지 못했습니다. 다시 시도하세요.",
+      "deleteInProgress": "이 공고는 맞춤화 중입니다. 완료된 뒤 제거하세요.",
+      "clearFailed": "대기열을 지우지 못했습니다. 다시 시도하세요."
     }
   }
 }

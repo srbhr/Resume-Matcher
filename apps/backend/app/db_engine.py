@@ -1,21 +1,32 @@
-"""SQLite engine/session plumbing for the SQLAlchemy data layer.
+"""Engine plumbing for the SQLAlchemy data layer: SQLite by default, PostgreSQL optional.
 
 Every ``Database`` instance owns its own engines (one async for the document
 tables, one sync for the encrypted ``api_keys`` table read on the synchronous
 LLM hot path) built from these factories. Keeping construction here lets tests
-spin up fully isolated engines against a temp-file database.
+spin up fully isolated engines against a temp-file database or a scratch schema.
 """
 
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, event
-from sqlalchemy.engine import Engine
+from sqlalchemy import Column, create_engine, event, inspect, text
+from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.schema import CreateColumn
 
-from app.models import Base
+from app.models import Base, Improvement
 
-__all__ = ["Base", "make_async_engine", "make_sync_engine", "init_models_sync"]
+__all__ = [
+    "Base",
+    "PG_LOCK_NAMESPACE",
+    "init_models_sync",
+    "make_async_engine",
+    "make_sync_engine",
+]
+
+# Advisory-lock namespace ("RM"); the second key is hashtext(<schema>).
+PG_LOCK_NAMESPACE = 0x524D
+PG_INIT_LOCK_NAMESPACE = PG_LOCK_NAMESPACE + 1
 
 
 def _apply_sqlite_pragmas(dbapi_connection: Any, _connection_record: Any) -> None:
@@ -40,27 +51,83 @@ def _url(path: Path, *, driver: str) -> str:
     return f"sqlite+{driver}:///{path}" if driver else f"sqlite:///{path}"
 
 
-def make_async_engine(path: Path) -> AsyncEngine:
-    """Create the async engine (``aiosqlite``) for the document tables."""
+def _postgres_options(schema: str | None) -> dict[str, Any]:
+    # READ COMMITTED: reads after the write lock see the previous holder's commit.
+    options: dict[str, Any] = {
+        "future": True,
+        "pool_pre_ping": True,
+        "isolation_level": "READ COMMITTED",
+    }
+    if schema:
+        options["connect_args"] = {"options": f"-c search_path={schema}"}
+    return options
+
+
+def make_async_engine(
+    path: Path | None = None, *, url: str | None = None, schema: str | None = None
+) -> AsyncEngine:
+    """Create the async engine (``aiosqlite`` or ``psycopg``) for the document tables."""
+    if url:
+        return create_async_engine(url, **_postgres_options(schema))
+    if path is None:
+        raise ValueError("make_async_engine needs either a url or a path.")
     engine = create_async_engine(_url(path, driver="aiosqlite"), future=True)
     event.listen(engine.sync_engine, "connect", _apply_sqlite_pragmas)
     return engine
 
 
-def make_sync_engine(path: Path) -> Engine:
+def make_sync_engine(
+    path: Path | None = None, *, url: str | None = None, schema: str | None = None
+) -> Engine:
     """Create the sync engine used for the encrypted api_keys table.
 
     Key reads happen synchronously (``get_llm_config`` → ``load_config_file`` →
     ``resolve_api_key``), so a sync engine avoids threading async through
-    ``llm.py``. It points at the same file as the async engine.
+    ``llm.py``. It points at the same database as the async engine.
     """
+    if url:
+        return create_engine(url, **_postgres_options(schema))
+    if path is None:
+        raise ValueError("make_sync_engine needs either a url or a path.")
     engine = create_engine(_url(path, driver=""), future=True)
     event.listen(engine, "connect", _apply_sqlite_pragmas)
     return engine
 
 
-def init_models_sync(engine: Engine) -> None:
+def _add_missing_column(
+    conn: Connection, column: Column[Any], schema: str | None = None
+) -> None:
+    """Additive migration: add a model column that an existing table lacks.
+
+    ``create_all`` never alters existing tables. The column DDL is rendered by
+    the connection's dialect, so this works on SQLite and PostgreSQL alike.
+    """
+    existing = inspect(conn).get_columns(column.table.name, schema=schema)
+    if column.name in {c["name"] for c in existing}:
+        return
+    table = conn.dialect.identifier_preparer.format_table(column.table)
+    ddl = CreateColumn(column).compile(dialect=conn.dialect)
+    conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {ddl}")
+
+
+def _init_postgres(engine: Engine, schema: str | None) -> None:
+    """Create the schema and tables once, even when several processes start together."""
+    with engine.begin() as conn:
+        conn.execute(
+            text("SELECT pg_advisory_xact_lock(:ns, hashtext(:schema))"),
+            {"ns": PG_INIT_LOCK_NAMESPACE, "schema": schema or "public"},
+        )
+        if schema:
+            conn.exec_driver_sql(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
+        Base.metadata.create_all(conn)
+        _add_missing_column(conn, Improvement.__table__.c.ats_score, schema)
+
+
+def init_models_sync(engine: Engine, schema: str | None = None) -> None:
     """Create all tables (idempotent) using a sync engine connection."""
+    if engine.dialect.name == "postgresql":
+        _init_postgres(engine, schema)
+        return
     Base.metadata.create_all(engine)
 
     # ``create_all`` does not ALTER existing SQLite tables. Keep this additive
@@ -92,6 +159,8 @@ def init_models_sync(engine: Engine) -> None:
                 "CREATE UNIQUE INDEX IF NOT EXISTS ux_resumes_single_default_master "
                 "ON resumes (is_default_master) WHERE is_default_master = 1"
             )
+
+        _add_missing_column(conn, Improvement.__table__.c.ats_score)
 
         preview_columns = (
             conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)")

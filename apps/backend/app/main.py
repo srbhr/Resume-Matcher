@@ -23,6 +23,9 @@ from app.database import DatabaseBusyError, db
 from app.pdf import close_pdf_renderer
 from app.routers import (
     applications_router,
+    ats_router,
+    chatgpt_callback_router,
+    chatgpt_router,
     config_router,
     enrichment_router,
     health_router,
@@ -47,6 +50,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan manager."""
     # Startup
     settings.data_dir.mkdir(parents=True, exist_ok=True)
+    if settings.database_url:
+        from app.db_url import redact
+
+        logger.info("Using PostgreSQL at %s", redact(settings.database_url))
     # Import a legacy TinyDB database into SQLite if present (idempotent).
     # Fail-fast on error: starting with an empty DB would look like data loss.
     from app.scripts.migrate_tinydb_to_sqlite import migrate as migrate_tinydb
@@ -59,10 +66,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from app.config import migrate_legacy_keys
 
     migrate_legacy_keys()
+
+    from app.services.queue_worker import queue_manager
+
+    await queue_manager.start()
     # PDF renderer uses lazy initialization - will initialize on first use
     # await init_pdf_renderer()
     yield
     # Shutdown - wrap each cleanup in try-except to ensure all resources are released
+    try:
+        await queue_manager.stop()
+    except Exception:
+        logger.exception("Error stopping the tailoring queue")
+
     try:
         await drain_processing_cleanup_tasks()
     except Exception:
@@ -118,6 +134,10 @@ app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(enrichment_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
 app.include_router(resume_wizard_router, prefix="/api/v1")
+app.include_router(ats_router, prefix="/api/v1")
+app.include_router(chatgpt_router, prefix="/api/v1")
+# OpenAI redirects to 127.0.0.1:<port>/auth/callback; the path is fixed.
+app.include_router(chatgpt_callback_router)
 
 
 @app.get("/")

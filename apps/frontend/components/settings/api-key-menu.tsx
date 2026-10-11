@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { fetchLlmApiKey, updateLlmApiKey } from '@/lib/api/config';
-import { ChevronDown } from 'lucide-react';
+import { CaretDown } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error';
@@ -89,7 +89,7 @@ export default function ApiKeyMenu(): React.ReactElement {
       >
         <span className="font-semibold">{t('settings.apiKeyMenu.buttonLabel')}</span>
         <span className="font-mono text-xs text-ink-soft">{maskedKey}</span>
-        <ChevronDown className="h-4 w-4" />
+        <CaretDown className="h-4 w-4" />
       </button>
       {isOpen ? (
         <>
@@ -115,14 +115,14 @@ export default function ApiKeyMenu(): React.ReactElement {
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder={t('settings.llmConfiguration.apiKeyPlaceholder')}
-              className="mt-1 w-full rounded-none border-2 border-black bg-background px-3 py-2 text-sm text-black focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+              className="mt-1 w-full rounded-none border-2 border-black bg-canvas px-3 py-2 text-sm text-black focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
             />
             {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}
             <div className="mt-4 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-none border-2 border-black px-3 py-2 text-xs font-semibold text-black hover:bg-background"
+                className="rounded-none border-2 border-black px-3 py-2 text-xs font-semibold text-black hover:bg-canvas"
               >
                 {t('common.cancel')}
               </button>
@@ -132,7 +132,7 @@ export default function ApiKeyMenu(): React.ReactElement {
                 disabled={status === 'saving'}
                 className={`rounded-none border-2 border-black px-4 py-2 text-xs font-semibold transition-all ${
                   status === 'saving'
-                    ? 'bg-steel-grey text-ink-soft cursor-wait'
+                    ? 'bg-steel text-white cursor-wait'
                     : 'bg-blue-700 text-white shadow-sw-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none'
                 }`}
               >

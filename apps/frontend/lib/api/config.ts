@@ -10,7 +10,9 @@ export type LLMProvider =
   | 'gemini'
   | 'deepseek'
   | 'groq'
-  | 'ollama';
+  | 'ollama'
+  | 'claude_cli'
+  | 'chatgpt';
 
 // Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
 // "do not send the parameter" — the default for max compatibility.
@@ -168,6 +170,16 @@ export const PROVIDER_INFO: Record<
      */
     baseUrlI18nKey?: string;
     baseUrlPlaceholder?: string;
+    /**
+     * Served by a CLI installed on the machine running the backend. There is no
+     * key, endpoint, model choice or reasoning effort to configure.
+     */
+    localCli?: boolean;
+    /**
+     * Signs in with ChatGPT (OAuth) instead of taking a key, endpoint or reasoning
+     * effort; the settings page shows the connection panel for it.
+     */
+    chatgptSignIn?: boolean;
   }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
@@ -202,6 +214,26 @@ export const PROVIDER_INFO: Record<
     defaultModel: 'gemma3:4b',
     requiresKey: false,
     defaultBaseUrl: 'http://localhost:11434',
+  },
+  // Runs the `claude` CLI already signed in on this machine. The CLI picks its own
+  // model, so defaultModel is only the sentinel the backend stores. The settings page
+  // shows a translated name (settings.llmConfiguration.claudeCliName); this is the
+  // English fallback.
+  claude_cli: {
+    name: 'Claude subscription (via Claude Code)',
+    defaultModel: 'claude_cli',
+    requiresKey: false,
+    localCli: true,
+  },
+  // OpenAI's official Sign in with ChatGPT for open-source apps (preview). The
+  // backend holds the tokens. The model normally comes from the signed-in
+  // account's catalog; defaultModel (the docs' example slug) is only the fallback.
+  // The settings page shows a translated name (settings.llmConfiguration.chatgptName).
+  chatgpt: {
+    name: 'ChatGPT plan (Sign in with ChatGPT)',
+    defaultModel: 'gpt-6.1-sol',
+    requiresKey: false,
+    chatgptSignIn: true,
   },
 };
 

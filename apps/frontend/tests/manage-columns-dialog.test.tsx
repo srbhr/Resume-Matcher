@@ -49,7 +49,12 @@ vi.mock('@/components/tracker/manage-columns-dialog', async () => {
 const ALL_BUT_SAVED = APPLICATION_STATUS_ORDER.filter((status) => status !== 'saved');
 
 function switchFor(status: ApplicationStatus): HTMLElement {
-  return screen.getByRole('switch', { name: `tracker.columns.${status}` });
+  // The row label wraps the state description, so the switch is named "<stage><state>" (a space appears only where CSS makes the spans block).
+  return screen.getByRole('switch', {
+    name: new RegExp(
+      `^tracker\\.columns\\.${status}\\s*tracker\\.manageDialog\\.(visible|hidden)$`
+    ),
+  });
 }
 
 function rowFor(status: ApplicationStatus): HTMLElement {

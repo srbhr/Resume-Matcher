@@ -81,6 +81,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
   const margins = { top: 25, right: 25, bottom: 25, left: 25 };
 
   // Get today's date formatted
+  // oxlint-disable-next-line react/purity -- server component, rendered once per request
   const today = new Date().toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',

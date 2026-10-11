@@ -1,11 +1,11 @@
-"""SQLAlchemy (SQLite) data layer for Resume Matcher.
+"""SQLAlchemy data layer for Resume Matcher (SQLite, or PostgreSQL via DATABASE_URL).
 
 This is a behavior-preserving replacement for the original TinyDB wrapper. The
 ``Database`` facade keeps the same method names/signatures and returns **plain
 dicts** (never ORM rows), so the ~50 call sites only needed ``await`` added.
 
-Two engines back one SQLite file:
-- an **async** engine (``aiosqlite``) for the document tables and applications;
+Two engines back one database:
+- an **async** engine (``aiosqlite`` / ``psycopg``) for the document tables and applications;
 - a **sync** engine for the encrypted ``api_keys`` table, which is read on the
   synchronous LLM hot path (``get_llm_config`` → ``resolve_api_key``).
 """
@@ -27,8 +27,22 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
-from app.db_engine import init_models_sync, make_async_engine, make_sync_engine
-from app.models import ApiKey, Application, Improvement, Job, Resume, TailoringPreview
+from app.db_engine import (
+    PG_LOCK_NAMESPACE,
+    init_models_sync,
+    make_async_engine,
+    make_sync_engine,
+)
+from app.db_url import validate_schema_name
+from app.models import (
+    ApiKey,
+    Application,
+    Improvement,
+    Job,
+    QueueItem,
+    Resume,
+    TailoringPreview,
+)
 from app.preview import (
     PreviewBusyError,
     PreviewClaim,
@@ -55,6 +69,7 @@ APPLICATION_STATUSES: tuple[str, ...] = (
     "rejected",
 )
 ProcessingFinishOutcome = Literal["committed", "stale", "missing"]
+QueueDeleteOutcome = Literal["deleted", "missing", "in_progress"]
 
 # A user keeps at most this many master resumes (career tracks).
 MAX_MASTER_RESUMES = 5
@@ -68,9 +83,15 @@ class MasterResumeLimitError(Exception):
     """Raised when creating a master would exceed MAX_MASTER_RESUMES."""
 
 
+# lock_not_available (lock_timeout), serialization_failure, deadlock_detected.
+_PG_BUSY_SQLSTATES = frozenset({"55P03", "40001", "40P01"})
+_PG_WRITE_LOCK = text("SELECT pg_advisory_xact_lock(:ns, hashtext(current_schema()))")
+WRITE_LOCK_TIMEOUT_MS = 5000
+
+
 @contextmanager
 def _translate_write_errors() -> Iterator[None]:
-    """Expose only SQLite contention as retryable, for async and sync writers."""
+    """Expose only database contention as retryable, for async and sync writers."""
     try:
         yield
     except OperationalError as error:
@@ -80,7 +101,19 @@ def _translate_write_errors() -> Iterator[None]:
             sqlite3.SQLITE_LOCKED,
         ):
             raise DatabaseBusyError("Database is busy") from error
+        if getattr(error.orig, "sqlstate", None) in _PG_BUSY_SQLSTATES:
+            raise DatabaseBusyError("Database is busy") from error
         raise
+
+
+def _write_lock_statements(postgres: bool, lock_timeout_ms: int) -> list[Any]:
+    """SQL that reserves the single writer: BEGIN IMMEDIATE, or a schema-wide advisory lock."""
+    if not postgres:
+        return [text("BEGIN IMMEDIATE")]
+    return [
+        text(f"SET LOCAL lock_timeout = {int(lock_timeout_ms)}"),
+        _PG_WRITE_LOCK.bindparams(ns=PG_LOCK_NAMESPACE),
+    ]
 
 
 class ResumeNotFoundError(ValueError):
@@ -106,9 +139,22 @@ def _now() -> str:
 class Database:
     """Async SQLAlchemy facade for resume matcher data."""
 
-    def __init__(self, db_path: Path | None = None):
-        self.db_path = db_path or settings.sqlite_path
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(
+        self,
+        db_path: Path | None = None,
+        *,
+        url: str | None = None,
+        schema: str | None = None,
+    ):
+        if db_path is None and url is None and settings.database_url:
+            url, schema = settings.database_url, settings.database_schema
+        self.url = None if db_path is not None else url
+        self.schema = validate_schema_name(schema) if self.url and schema else None
+        self.db_path: Path | None = None
+        if self.url is None:
+            self.db_path = db_path or settings.sqlite_path
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.lock_timeout_ms = WRITE_LOCK_TIMEOUT_MS
         self._async_engine = None
         self._async_session_factory: async_sessionmaker[AsyncSession] | None = None
         self._sync_engine = None
@@ -122,16 +168,17 @@ class Database:
 
         Tables are created via the **sync** engine so both the sync (api_keys)
         and async (docs) paths see them immediately, without needing an event
-        loop. Both engines point at the same file.
+        loop. Both engines point at the same database.
         """
         if self._initialized:
             return
-        self._sync_engine = make_sync_engine(self.db_path)
+        target = {"url": self.url, "schema": self.schema}
+        self._sync_engine = make_sync_engine(self.db_path, **target)
         self._sync_session_factory = sessionmaker(
             self._sync_engine, expire_on_commit=False
         )
-        init_models_sync(self._sync_engine)
-        self._async_engine = make_async_engine(self.db_path)
+        init_models_sync(self._sync_engine, self.schema)
+        self._async_engine = make_async_engine(self.db_path, **target)
         self._async_session_factory = async_sessionmaker(
             self._async_engine, expire_on_commit=False
         )
@@ -143,17 +190,26 @@ class Database:
         assert self._async_session_factory is not None
         return self._async_session_factory
 
+    @property
+    def backend(self) -> Literal["sqlite", "postgresql"]:
+        return "postgresql" if self.url else "sqlite"
+
+    def _write_lock(self) -> list[Any]:
+        return _write_lock_statements(self.url is not None, self.lock_timeout_ms)
+
     @asynccontextmanager
     async def _write_session(self) -> AsyncIterator[AsyncSession]:
-        """Reserve SQLite's writer before reading state that a write depends on.
+        """Reserve the database's single writer before reading state that a write depends on.
 
-        The database reservation serializes across connections and processes,
-        unlike an in-memory lock. Callers commit the complete operation; closing
-        the session rolls back every change if any stage raises.
+        The reservation (SQLite ``BEGIN IMMEDIATE``, or a PostgreSQL advisory lock
+        per schema) serializes across connections and processes, unlike an
+        in-memory lock. Callers commit the complete operation; closing the session
+        rolls back every change if any stage raises.
         """
         with _translate_write_errors():
             async with self._session() as session:
-                await session.execute(text("BEGIN IMMEDIATE"))
+                for statement in self._write_lock():
+                    await session.execute(statement)
                 yield session
 
     @property
@@ -167,7 +223,8 @@ class Database:
         """Reserve a synchronous key-store writer with the same busy contract."""
         with _translate_write_errors():
             with self._sync() as session:
-                session.execute(text("BEGIN IMMEDIATE"))
+                for statement in self._write_lock():
+                    session.execute(statement)
                 yield session
 
     async def close(self) -> None:
@@ -229,6 +286,7 @@ class Database:
             "tailored_resume_id": row.tailored_resume_id,
             "job_id": row.job_id,
             "improvements": row.improvements,
+            "ats_score": row.ats_score,
             "created_at": row.created_at,
         }
 
@@ -245,6 +303,26 @@ class Database:
             "applied_at": row.applied_at,
             "notes": row.notes,
             "position": row.position,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        }
+
+    @staticmethod
+    def _queue_item_to_dict(row: QueueItem) -> dict[str, Any]:
+        return {
+            "item_id": row.item_id,
+            "resume_id": row.resume_id,
+            "job_description": row.job_description,
+            "role": row.role,
+            "company": row.company,
+            "job_req_id": row.job_req_id,
+            "status": row.status,
+            "job_id": row.job_id,
+            "tailored_resume_id": row.tailored_resume_id,
+            "title": row.title,
+            "error": row.error,
+            "rate_limit_seconds": row.rate_limit_seconds,
+            "prompt_id": row.prompt_id,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
         }
@@ -575,10 +653,23 @@ class Database:
     # -- Job operations -----------------------------------------------------
 
     async def create_job(
-        self, content: str, resume_id: str | None = None
+        self,
+        content: str,
+        resume_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Create one job description using the atomic batch writer."""
-        return (await self.create_jobs([content], resume_id))[0]
+        """Create one job description; ``metadata`` is stored with it in one transaction."""
+        row = Job(
+            job_id=str(uuid4()),
+            content=content,
+            resume_id=resume_id,
+            created_at=_now(),
+            metadata_json=copy.deepcopy(metadata) if metadata else {},
+        )
+        async with self._write_session() as session:
+            session.add(row)
+            await session.commit()
+        return self._job_to_dict(row)
 
     async def create_jobs(
         self, contents: list[str], resume_id: str | None = None
@@ -817,6 +908,7 @@ class Database:
         resume_fields: dict[str, Any],
         response_data: dict[str, Any],
         improvements: list[dict[str, Any]],
+        ats_score: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Commit resume, required relation and replay snapshot atomically."""
         async with self._write_session() as session:
@@ -849,6 +941,7 @@ class Database:
                     tailored_resume_id=row.resume_id,
                     job_id=preview.job_id,
                     improvements=improvements,
+                    ats_score=copy.deepcopy(ats_score),
                     created_at=now,
                 )
             )
@@ -871,6 +964,7 @@ class Database:
         job_id: str,
         resume_fields: dict[str, Any],
         improvements: list[dict[str, Any]],
+        ats_score: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Commit a direct tailoring result and its required relation together."""
         row = self._new_resume(**resume_fields)
@@ -884,6 +978,7 @@ class Database:
                     tailored_resume_id=row.resume_id,
                     job_id=job_id,
                     improvements=copy.deepcopy(improvements),
+                    ats_score=copy.deepcopy(ats_score),
                     created_at=_now(),
                 )
             )
@@ -921,6 +1016,18 @@ class Database:
             "created_at": now,
         }
 
+    async def get_improvement_by_job(self, job_id: str) -> dict[str, Any] | None:
+        """Get the latest improvement record tailored against a job, if any."""
+        async with self._session() as session:
+            result = await session.execute(
+                select(Improvement)
+                .where(Improvement.job_id == job_id)
+                .order_by(Improvement.created_at.desc())
+                .limit(1)
+            )
+            row = result.scalars().first()
+            return self._improvement_to_dict(row) if row else None
+
     async def get_improvement_by_tailored_resume(
         self, tailored_resume_id: str
     ) -> dict[str, Any] | None:
@@ -933,6 +1040,26 @@ class Database:
             )
             row = result.scalars().first()
             return self._improvement_to_dict(row) if row else None
+
+    async def set_ats_score(
+        self, tailored_resume_id: str, ats_score: dict[str, Any]
+    ) -> bool:
+        """Store the last calculated ATS score on a tailored resume's job link.
+
+        Returns False when the resume has no improvement (job) link.
+        """
+        async with self._write_session() as session:
+            result = await session.execute(
+                select(Improvement).where(
+                    Improvement.tailored_resume_id == tailored_resume_id
+                )
+            )
+            row = result.scalars().first()
+            if row is None:
+                return False
+            row.ats_score = copy.deepcopy(ats_score)
+            await session.commit()
+            return True
 
     # -- Application (tracker) operations -----------------------------------
 
@@ -1298,6 +1425,7 @@ class Database:
                 select(Resume.resume_id).where(Resume.is_master.is_(True)).limit(1)
             )
             return {
+                "backend": self.backend,
                 "total_resumes": int(resumes or 0),
                 "total_jobs": int(jobs or 0),
                 "total_improvements": int(improvements or 0),
@@ -1311,19 +1439,152 @@ class Database:
         orphaned cards after a full data reset would be a bug). Encrypted
         ``api_keys`` are preserved — matching the pre-existing behavior where a
         reset never wiped the user's stored credentials.
-        """
-        async with self._write_session() as session:
-            await session.execute(delete(TailoringPreview))
-            await session.execute(delete(Application))
-            await session.execute(delete(Improvement))
-            await session.execute(delete(Job))
-            await session.execute(delete(Resume))
-            await session.commit()
 
-        uploads_dir = settings.data_dir / "uploads"
-        if uploads_dir.exists():
-            shutil.rmtree(uploads_dir)
-            uploads_dir.mkdir(parents=True, exist_ok=True)
+        The tailoring worker is stopped while the tables are cleared, so an item
+        that is mid-LLM cannot save a job or resume into them afterwards.
+        """
+        # Imported here because the worker module imports this one.
+        from app.services.queue_worker import queue_manager
+
+        async with queue_manager.paused():
+            async with self._write_session() as session:
+                await session.execute(delete(QueueItem))
+                await session.execute(delete(TailoringPreview))
+                await session.execute(delete(Application))
+                await session.execute(delete(Improvement))
+                await session.execute(delete(Job))
+                await session.execute(delete(Resume))
+                await session.commit()
+
+            uploads_dir = settings.data_dir / "uploads"
+            if uploads_dir.exists():
+                shutil.rmtree(uploads_dir)
+                uploads_dir.mkdir(parents=True, exist_ok=True)
+
+    # -- Tailoring queue -----------------------------------------------------
+
+    async def create_queue_item(
+        self,
+        item_id: str,
+        resume_id: str,
+        job_description: str,
+        role: str = "",
+        company: str = "",
+        job_req_id: str = "",
+        rate_limit_seconds: float = 5.0,
+        prompt_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Persist one pending tailoring request."""
+        now = _now()
+        row = QueueItem(
+            item_id=item_id,
+            resume_id=resume_id,
+            job_description=job_description,
+            role=role,
+            company=company,
+            job_req_id=job_req_id,
+            status="pending",
+            rate_limit_seconds=rate_limit_seconds,
+            prompt_id=prompt_id,
+            created_at=now,
+            updated_at=now,
+        )
+        async with self._write_session() as session:
+            session.add(row)
+            await session.commit()
+        return self._queue_item_to_dict(row)
+
+    async def get_queue_item(self, item_id: str) -> dict[str, Any] | None:
+        """Get one queue item by ID."""
+        async with self._session() as session:
+            row = await session.get(QueueItem, item_id)
+            return self._queue_item_to_dict(row) if row else None
+
+    async def get_queue(
+        self, resume_id: str | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        """List queue items, newest first, optionally for one master resume."""
+        stmt = select(QueueItem)
+        if resume_id:
+            stmt = stmt.where(QueueItem.resume_id == resume_id)
+        stmt = stmt.order_by(
+            QueueItem.created_at.desc(), QueueItem.item_id.desc()
+        ).limit(limit)
+        async with self._session() as session:
+            result = await session.execute(stmt)
+            return [self._queue_item_to_dict(row) for row in result.scalars().all()]
+
+    async def update_queue_item(
+        self, item_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Update a queue item's columns; None when it no longer exists."""
+        async with self._write_session() as session:
+            row = await session.get(QueueItem, item_id)
+            if row is None:
+                return None
+            for key, value in updates.items():
+                if key != "item_id" and hasattr(QueueItem, key):
+                    setattr(row, key, value)
+            row.updated_at = _now()
+            await session.commit()
+            return self._queue_item_to_dict(row)
+
+    async def delete_queue_item(self, item_id: str) -> QueueDeleteOutcome:
+        """Delete one queue item, unless the worker is tailoring it right now."""
+        async with self._write_session() as session:
+            row = await session.get(QueueItem, item_id)
+            if row is None:
+                return "missing"
+            if row.status == "processing":
+                return "in_progress"
+            await session.delete(row)
+            await session.commit()
+            return "deleted"
+
+    async def claim_next_queue_item(self) -> dict[str, Any] | None:
+        """Mark the oldest pending item ``processing`` and return it; None when idle."""
+        async with self._write_session() as session:
+            result = await session.execute(
+                select(QueueItem)
+                .where(QueueItem.status == "pending")
+                .order_by(QueueItem.created_at, QueueItem.item_id)
+                .limit(1)
+            )
+            row = result.scalars().first()
+            if row is None:
+                return None
+            row.status = "processing"
+            row.updated_at = _now()
+            await session.commit()
+            return self._queue_item_to_dict(row)
+
+    async def requeue_interrupted_queue_items(self) -> int:
+        """Return items a previous run left ``processing`` to ``pending``. Returns count."""
+        async with self._write_session() as session:
+            result = await session.execute(
+                update(QueueItem)
+                .where(QueueItem.status == "processing")
+                .values(status="pending", updated_at=_now())
+            )
+            await session.commit()
+            return int(result.rowcount or 0)
+
+    async def clear_queue(
+        self, status: str | None = None, resume_id: str | None = None
+    ) -> int:
+        """Delete queue items, optionally by status and master resume. Returns count.
+
+        The item the worker is tailoring is never cleared; it finishes first.
+        """
+        stmt = delete(QueueItem).where(QueueItem.status != "processing")
+        if status:
+            stmt = stmt.where(QueueItem.status == status)
+        if resume_id:
+            stmt = stmt.where(QueueItem.resume_id == resume_id)
+        async with self._write_session() as session:
+            result = await session.execute(stmt)
+            await session.commit()
+            return int(result.rowcount or 0)
 
 
 # Global database instance

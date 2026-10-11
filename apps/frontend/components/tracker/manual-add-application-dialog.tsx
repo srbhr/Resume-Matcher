@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
+import { SpinnerGap } from '@phosphor-icons/react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -15,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dropdown } from '@/components/ui/dropdown';
+import { Alert } from '@/components/ui/alert';
 import { useTranslations } from '@/lib/i18n';
 import { fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
 import { createApplication, type ApplicationStatus } from '@/lib/api/tracker';
@@ -91,23 +93,24 @@ export function ManualAddApplicationDialog({
     }
   };
 
+  // Only the empty-description error belongs to the field; the alert announces the rest.
+  const descriptionMissing = Boolean(error) && !jobDescription.trim();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t('tracker.manualAdd.title')}</DialogTitle>
           <DialogDescription>{t('tracker.manualAdd.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Label>{t('tracker.manualAdd.resume')}</Label>
-            <Dropdown
-              options={resumes.map((r) => ({ id: r.resume_id, label: resumeLabel(r) }))}
-              value={resumeId}
-              onChange={setResumeId}
-            />
-          </div>
+        <DialogBody className="space-y-4">
+          <Dropdown
+            label={t('tracker.manualAdd.resume')}
+            options={resumes.map((r) => ({ id: r.resume_id, label: resumeLabel(r) }))}
+            value={resumeId}
+            onChange={setResumeId}
+          />
 
           <div className="space-y-1">
             <Label htmlFor="manual-jd">{t('tracker.manualAdd.jobDescription')}</Label>
@@ -118,6 +121,8 @@ export function ManualAddApplicationDialog({
               onKeyDown={handleNotesKeyDown}
               placeholder={t('tracker.manualAdd.jobDescriptionPlaceholder')}
               rows={5}
+              aria-invalid={descriptionMissing}
+              aria-describedby={descriptionMissing ? 'manual-add-error' : undefined}
             />
           </div>
 
@@ -142,25 +147,30 @@ export function ManualAddApplicationDialog({
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>{t('tracker.manualAdd.status')}</Label>
-            <Dropdown
-              options={[
-                { id: 'applied', label: t('tracker.columns.applied') },
-                { id: 'saved', label: t('tracker.columns.saved') },
-              ]}
-              value={status}
-              onChange={(value) => setStatus(value as ApplicationStatus)}
-            />
-          </div>
+          <Dropdown
+            label={t('tracker.manualAdd.status')}
+            options={[
+              { id: 'applied', label: t('tracker.columns.applied') },
+              { id: 'saved', label: t('tracker.columns.saved') },
+            ]}
+            value={status}
+            onChange={(value) => setStatus(value as ApplicationStatus)}
+          />
 
-          {error && <p className="font-mono text-xs text-destructive">{error}</p>}
-        </div>
+          {error && (
+            <Alert id="manual-add-error" tone="error">
+              {error}
+            </Alert>
+          )}
+        </DialogBody>
 
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button type="button" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <SpinnerGap aria-hidden="true" className="animate-spin" />
+                {t('common.saving')}
+              </>
             ) : (
               t('tracker.manualAdd.submit')
             )}

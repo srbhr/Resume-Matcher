@@ -6,6 +6,7 @@ import { useTranslations } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -32,13 +33,13 @@ export function ManageColumnsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-6">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{t('tracker.manageDialog.title')}</DialogTitle>
           <DialogDescription>{t('tracker.manageDialog.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-3 overflow-y-auto py-4">
+        <DialogBody className="space-y-3">
           {APPLICATION_STATUS_ORDER.map((status) => {
             const hidden = hiddenStatuses.has(status);
             // The last stage on the board is locked: hiding it would leave a
@@ -58,17 +59,19 @@ export function ManageColumnsDialog({
                   disabled={lastVisible}
                 />
                 {lastVisible && (
-                  <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-ink-soft">
+                  <p className="mt-1 font-mono text-xs uppercase tracking-wide text-ink-soft">
                     {t('tracker.manageDialog.lastVisibleHint')}
                   </p>
                 )}
               </div>
             );
           })}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>{t('tracker.manageDialog.close')}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            {t('tracker.manageDialog.close')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

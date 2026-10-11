@@ -11,11 +11,20 @@ from urllib.parse import urlsplit
 import litellm
 from litellm import Router
 from litellm.router import RetryPolicy
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.ai_budget import remaining_timeout
 from app.ai_limits import validate_prompt_size
-from app.config import load_config_file, save_config_file, settings
+from app.chatgpt_auth import ChatGPTNotConnectedError
+from app.chatgpt_auth import is_connected as chatgpt_is_connected
+from app.chatgpt_inference import ChatGPTPlanError, chatgpt_acompletion
+from app.claude_cli import ClaudeCliNotFoundError, claude_acompletion
+from app.config import (
+    load_config_file,
+    normalize_provider,
+    save_config_file,
+    settings,
+)
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -100,6 +109,11 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
     api_version: str | None = None
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def _normalize_provider(cls, value: Any) -> Any:
+        return normalize_provider(value)
 
 
 def _is_azure_openai_foundry_endpoint(
@@ -302,6 +316,152 @@ def _openai_compatible_supports_json_mode(config: LLMConfig) -> bool:
         return False
     host = (urlsplit(config.api_base.strip()).hostname or "").lower()
     return _uses_opencode_zen_hy3(config) or host in JSON_MODE_VERIFIED_HOSTS
+
+
+OPENAI_API_HOST = "api.openai.com"
+
+
+def _is_native_openai(config: LLMConfig) -> bool:
+    """Return True when ``config`` targets OpenAI itself.
+
+    The ``openai`` provider is also how users point at llama.cpp, vLLM and other
+    compatible servers via ``api_base`` (issue #751), so the provider name alone
+    does not mean the request reaches OpenAI.
+    """
+    if config.provider != "openai":
+        return False
+    api_base = config.api_base if isinstance(config.api_base, str) else ""
+    if not api_base.strip():
+        return True
+    return (urlsplit(api_base.strip()).hostname or "").lower() == OPENAI_API_HOST
+
+
+def _output_token_kwarg(config: LLMConfig, max_tokens: int) -> dict[str, int]:
+    """Build the kwarg that caps output tokens for ``config``'s provider.
+
+    OpenAI's chat models take ``max_completion_tokens`` (reasoning-era models
+    reject ``max_tokens``; gpt-4o and gpt-4.1 accept either). LiteLLM only remaps
+    ``max_tokens`` to it for model names it recognises, so an unknown or new
+    OpenAI model received the raw ``max_tokens`` and failed with "Unsupported
+    parameter: 'max_tokens'" (issue #1030). Deciding by provider avoids keeping a
+    list of model names. Every other provider keeps the portable ``max_tokens``.
+
+    The ChatGPT plan route rejects ``max_output_tokens`` (and every other
+    output cap), so ``chatgpt`` gets no output-token parameter at all.
+    """
+    if config.provider == "chatgpt":
+        return {}
+    if _is_native_openai(config):
+        return {"max_completion_tokens": max_tokens}
+    return {"max_tokens": max_tokens}
+
+
+#: Thinking budget (tokens) LiteLLM maps each ``reasoning_effort`` to on
+#: Anthropic's extended-thinking API. Anthropic rejects a request unless
+#: ``max_tokens`` exceeds the budget, and LiteLLM only raises ``max_tokens``
+#: itself when the caller sends none.
+_ANTHROPIC_THINKING_BUDGETS: dict[str, int] = {
+    "minimal": 1024,
+    "low": 1024,
+    "medium": 2048,
+    "high": 4096,
+}
+
+
+def _reasoning_effort_kwarg(
+    config: LLMConfig, reasoning_effort: str | None, max_tokens: int
+) -> dict[str, str]:
+    """Build the ``reasoning_effort`` kwarg, or nothing when it would 400.
+
+    A stored effort can outlive the model it was set for (the gpt-5 migration
+    persists ``minimal``). On Anthropic it becomes a thinking budget of at least
+    1024 tokens, so a call capped at or below that budget (the 64-token health
+    probe, short cover-letter calls) is rejected with "`max_tokens` must be
+    greater than `thinking.budget_tokens`". Such a call cannot hold the thinking
+    anyway, so it runs without it. Other providers pass the effort through.
+    """
+    if not reasoning_effort:
+        return {}
+    if config.provider == "anthropic" and max_tokens <= (
+        _ANTHROPIC_THINKING_BUDGETS.get(reasoning_effort, 0)
+    ):
+        logging.info(
+            "Omitting reasoning_effort=%s: max_tokens=%d is not above the "
+            "Anthropic thinking budget",
+            reasoning_effort,
+            max_tokens,
+        )
+        return {}
+    return {"reasoning_effort": reasoning_effort}
+
+
+def _apply_reasoning_effort(
+    config: LLMConfig,
+    kwargs: dict[str, Any],
+    reasoning_effort: str | None,
+    max_tokens: int,
+) -> None:
+    """Add ``reasoning_effort`` to ``kwargs`` and drop what it conflicts with.
+
+    Anthropic rejects extended thinking alongside a temperature other than 1,
+    so a request that carries the effort there goes out without ``temperature``.
+    """
+    effort_kwarg = _reasoning_effort_kwarg(config, reasoning_effort, max_tokens)
+    kwargs.update(effort_kwarg)
+    if effort_kwarg and config.provider == "anthropic":
+        kwargs.pop("temperature", None)
+
+
+_MAX_TOKENS_REJECTED_RE = re.compile(
+    r"'max_tokens' is not supported|unsupported parameter:?\s*'max_tokens'"
+)
+
+
+def _is_max_tokens_unsupported(error: Exception) -> bool:
+    """Return True if a 400 says ``max_tokens`` is unsupported in favour of
+    ``max_completion_tokens`` (issue #1030).
+
+    Matches OpenAI's "Unsupported parameter: 'max_tokens' is not supported with
+    this model. Use 'max_completion_tokens' instead." as relayed by Azure,
+    OpenRouter and compatible servers. Both parameter names must appear and
+    ``max_tokens`` must be the rejected one, so the reverse rejection and
+    unrelated 400s do not match.
+    """
+    msg = str(error).lower()
+    return "max_completion_tokens" in msg and bool(_MAX_TOKENS_REJECTED_RE.search(msg))
+
+
+async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -> Any:
+    """Route a completion to the local Claude Code CLI or to LiteLLM.
+
+    When ``config.provider == "claude_cli"`` the request is served by the
+    machine's installed ``claude`` CLI (no API key configured here; the CLI
+    itself still calls Anthropic); otherwise it goes through ``transport`` — the LiteLLM ``Router`` for
+    completions, or the ``litellm`` module for the health check.
+
+    Providers other than native OpenAI send ``max_tokens`` (see
+    ``_output_token_kwarg``), but an OpenAI-style one fronting a reasoning model
+    rejects it. When the 400 says exactly that, retry once with
+    ``max_completion_tokens``; every other error propagates unchanged.
+    """
+    if config.provider == "claude_cli":
+        return await claude_acompletion(**kwargs)
+    if config.provider == "chatgpt":
+        # Signed-in ChatGPT plan: the Responses API with the sign-in token.
+        # ``kwargs["model"]`` is the Router alias here, so pass the real slug.
+        return await chatgpt_acompletion(config.model, **kwargs)
+    try:
+        return await transport.acompletion(**kwargs)
+    except litellm.BadRequestError as e:
+        if "max_tokens" not in kwargs or not _is_max_tokens_unsupported(e):
+            raise
+        logging.warning(
+            "Provider %s rejected max_tokens; retrying once with max_completion_tokens",
+            config.provider,
+        )
+        retry_kwargs = {k: v for k, v in kwargs.items() if k != "max_tokens"}
+        retry_kwargs["max_completion_tokens"] = kwargs["max_tokens"]
+        return await transport.acompletion(**retry_kwargs)
 
 
 def _extract_text_parts(
@@ -589,7 +749,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 # default), because the env var may hold a real paid-API key that would then
 # leak to a local/compatible endpoint the user set up expecting no auth.
 _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
-    {"openai_compatible", "ollama"}
+    {"openai_compatible", "ollama", "claude_cli", "chatgpt"}
 )
 
 
@@ -668,7 +828,7 @@ def get_llm_config() -> LLMConfig:
         provider=provider,
         model=model,
         api_key=api_key,
-        api_base=stored.get("api_base", settings.llm_api_base),
+        api_base=stored.get("api_base") or settings.llm_api_base or None,
         api_version=stored.get("api_version"),
         reasoning_effort=reasoning_effort,
     )
@@ -720,6 +880,13 @@ def get_model_name(config: LLMConfig) -> str:
             return config.model
         return f"openrouter/{config.model}"
 
+    # Groq models can have publisher namespaces (e.g., openai/gpt-oss-120b, meta-llama/...)
+    # Always ensure groq/ prefix so LiteLLM doesn't mistake publisher prefixes for the target provider.
+    if config.provider == "groq":
+        if config.model.startswith("groq/"):
+            return config.model
+        return f"groq/{config.model}"
+
     # For other providers, don't add prefix if model already has a known prefix
     known_prefixes = [
         "openrouter/",
@@ -756,6 +923,8 @@ class _PolicyRouter(Router):
     ``InternalServerError`` even though ``RetryPolicy`` exposes the matching
     field. Its ``None`` result falls back to the Router-wide retry count.
     Keep that compatibility correction confined to the omitted exception.
+    LiteLLM 1.103+ dispatches it natively with the same count of 2, so the
+    override is now a version-independent guard rather than a correction.
     """
 
     async def make_call(
@@ -826,16 +995,24 @@ def _build_router(config: LLMConfig) -> Router:
     )
 
 
-def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
+def get_router(config: LLMConfig | None = None) -> tuple[Router | None, LLMConfig]:
     """Get or rebuild the LiteLLM Router.
 
     The Router is cached and only rebuilt when the underlying config changes.
-    Returns the Router and the config it was built from.
+    Returns the Router and the config it was built from. The Router is ``None``
+    for ``claude_cli``: that provider is served by the local ``claude`` binary
+    (see ``_route_acompletion``) and has no LiteLLM deployment — LiteLLM rejects
+    the bare ``claude_cli`` model name when the Router is constructed. It is
+    also ``None`` for ``chatgpt``, whose bearer token is per call and comes from
+    the Sign in with ChatGPT store, not from a Router deployment.
     """
     global _router, _router_config_key
 
     if config is None:
         config = get_llm_config()
+
+    if config.provider in ("claude_cli", "chatgpt"):
+        return None, config
 
     key = _config_fingerprint(config)
     with _router_lock:
@@ -848,6 +1025,13 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
         router = _router
 
     return router, config
+
+
+#: ChatGPT plan errors the settings page explains (docs: "Errors and recovery").
+_CHATGPT_ERROR_CODES: dict[str, str] = {
+    "subscription_sharing_usage_limit_exceeded": "chatgpt_usage_limit",
+    "subscription_sharing_user_not_eligible": "chatgpt_not_eligible",
+}
 
 
 async def check_llm_health(
@@ -864,12 +1048,22 @@ async def check_llm_health(
     # servers often run without auth, so a blank key is acceptable for those
     # providers — a sentinel is passed downstream (see _effective_api_key)
     # to satisfy the OpenAI client's non-empty-string validation.
-    if config.provider not in ("ollama", "openai_compatible") and not config.api_key:
+    if (
+        config.provider not in ("ollama", "openai_compatible", "claude_cli", "chatgpt")
+        and not config.api_key
+    ):
         return {
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
             "error_code": "api_key_missing",
+        }
+    if config.provider == "chatgpt" and not chatgpt_is_connected():
+        return {
+            "healthy": False,
+            "provider": config.provider,
+            "model": config.model,
+            "error_code": "chatgpt_not_connected",
         }
 
     model_name = get_model_name(config)
@@ -882,7 +1076,7 @@ async def check_llm_health(
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 64,
+            **_output_token_kwarg(config, 64),
             "api_key": _effective_api_key(config.provider, config.api_key),
             "api_base": _normalize_api_base(
                 config.provider, config.api_base, config.model
@@ -892,10 +1086,9 @@ async def check_llm_health(
         api_version = _azure_foundry_api_version(config)
         if api_version:
             kwargs["api_version"] = api_version
-        if config.reasoning_effort:
-            kwargs["reasoning_effort"] = config.reasoning_effort
+        _apply_reasoning_effort(config, kwargs, config.reasoning_effort, 64)
 
-        response = await litellm.acompletion(**kwargs)
+        response = await _route_acompletion(config, litellm, **kwargs)
         content = _extract_choice_text(response.choices[0])
         if not content:
             # LLM-003: Empty response (even after reasoning_content / thinking
@@ -954,7 +1147,13 @@ async def check_llm_health(
         # Provide a minimal, actionable client-facing hint without leaking secrets.
         error_code = "health_check_failed"
         message = str(e)
-        if "404" in message and "/v1/v1/" in message:
+        if isinstance(e, ClaudeCliNotFoundError):
+            error_code = "claude_cli_not_found"
+        elif isinstance(e, ChatGPTNotConnectedError):
+            error_code = "chatgpt_not_connected"
+        elif isinstance(e, ChatGPTPlanError):
+            error_code = _CHATGPT_ERROR_CODES.get(e.code, error_code)
+        elif "404" in message and "/v1/v1/" in message:
             error_code = "duplicate_v1_path"
         elif "404" in message:
             error_code = "not_found_404"
@@ -1000,7 +1199,7 @@ async def complete(
         kwargs: dict[str, Any] = {
             "model": "primary",
             "messages": messages,
-            "max_tokens": max_tokens,
+            **_output_token_kwarg(config, max_tokens),
             "timeout": remaining_timeout(
                 _calculate_timeout("completion", max_tokens, config.provider)
             ),
@@ -1009,10 +1208,9 @@ async def complete(
             model_name, temperature, reasoning_effort=config.reasoning_effort
         ):
             kwargs["temperature"] = temperature
-        if config.reasoning_effort:
-            kwargs["reasoning_effort"] = config.reasoning_effort
+        _apply_reasoning_effort(config, kwargs, config.reasoning_effort, max_tokens)
 
-        response = await router.acompletion(**kwargs)
+        response = await _route_acompletion(config, router, **kwargs)
 
         content = _extract_choice_text(response.choices[0])
         if not content:
@@ -1221,8 +1419,8 @@ def _supports_temperature(
     narrowly scoped fallbacks for known restrictions:
       - Anthropic claude-opus-4.*: temperature is deprecated
       - Moonshot kimi-k2.6: only temperature=1 allowed
-      - Reasoning GPT-5 models: non-default values require both registry
-        support for no-reasoning mode and an omitted reasoning effort
+      - Reasoning GPT-5 models: non-default values require registry
+        support for no-reasoning mode and an effective effort of "none"
 
     Queries LiteLLM's model info for every provider so that capability is
     determined from the registry rather than a provider-wide exemption.
@@ -1268,7 +1466,10 @@ def _supports_temperature(
         return False
 
     # GPT-5 reasoning models allow flexible sampling only when the model map
-    # advertises a no-reasoning mode and the application omits reasoning_effort.
+    # advertises a no-reasoning mode and the effective effort is "none": the
+    # configured reasoning_effort, or the model's default_reasoning_effort when
+    # the request omits it. Supporting "none" is not defaulting to it (gpt-5.5
+    # supports it but defaults to reasoning); this mirrors LiteLLM's own gate.
     # LiteLLM routes the exact gpt-5-chat* family through its regular chat
     # transform (versioned names such as gpt-5.1-chat remain reasoning models),
     # so preserve sampling for that family even though its current registry
@@ -1291,13 +1492,13 @@ def _supports_temperature(
         )
         return False
     if is_reasoning_gpt5 and reasoning_capability is True and temperature != 1.0:
-        if not isinstance(info.get("supports_none_reasoning_effort"), bool):
-            logging.warning(
-                "Missing or invalid no-reasoning capability for %s; omitting temperature",
-                model_name,
-            )
+        effective_effort = (
+            reasoning_effort
+            if reasoning_effort is not None
+            else info.get("default_reasoning_effort")
+        )
         supports_no_reasoning = info.get("supports_none_reasoning_effort") is True
-        if not supports_no_reasoning or reasoning_effort is not None:
+        if not supports_no_reasoning or effective_effort != "none":
             return False
 
     return True
@@ -1543,9 +1744,13 @@ async def complete_json(
     # Unknown compatible servers may reject response_format. Use JSON mode
     # when LiteLLM advertises it or when the endpoint is explicitly known to
     # support it; prompt-only JSON remains the portable default.
-    use_json_mode = _supports_json_mode(
-        model_name
-    ) or _openai_compatible_supports_json_mode(config)
+    #
+    # The ChatGPT plan route has no JSON mode to opt into: never send it, even
+    # when the slug is in LiteLLM's registry. The prompt plus extraction and
+    # retries below carry JSON for that provider, as for claude_cli.
+    use_json_mode = config.provider != "chatgpt" and (
+        _supports_json_mode(model_name) or _openai_compatible_supports_json_mode(config)
+    )
     json_mode_failed = False
 
     for attempt in range(retries + 1):
@@ -1553,7 +1758,7 @@ async def complete_json(
             kwargs: dict[str, Any] = {
                 "model": "primary",
                 "messages": messages,
-                "max_tokens": max_tokens,
+                **_output_token_kwarg(config, max_tokens),
                 "timeout": remaining_timeout(
                     _calculate_timeout("json", max_tokens, config.provider)
                 ),
@@ -1590,8 +1795,8 @@ async def complete_json(
             # no_think setting. Scope it to structured-output requests only.
             if _uses_opencode_zen_hy3(config):
                 kwargs["extra_body"] = {"reasoning_effort": "no_think"}
-            elif reasoning_effort:
-                kwargs["reasoning_effort"] = reasoning_effort
+            else:
+                _apply_reasoning_effort(config, kwargs, reasoning_effort, max_tokens)
 
             # JSON-012: Fallback to prompt-only JSON mode after JSON-mode failure.
             # LiteLLM registry may report support for models that the upstream
@@ -1599,7 +1804,7 @@ async def complete_json(
             if use_json_mode and not json_mode_failed:
                 kwargs["response_format"] = {"type": "json_object"}
 
-            response = await router.acompletion(**kwargs)
+            response = await _route_acompletion(config, router, **kwargs)
             # Never parse ``reasoning_content`` as JSON.  If the model has
             # consumed its budget on reasoning but produced no final answer,
             # treat it as an empty completion and retry with the full budget.

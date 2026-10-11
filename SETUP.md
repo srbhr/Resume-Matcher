@@ -10,6 +10,7 @@ Welcome! This guide will walk you through setting up Resume Matcher on your loca
 
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
+- [Windows 11 Setup](#windows-11-setup)
 - [Step-by-Step Setup](#step-by-step-setup)
   - [1. Clone the Repository](#1-clone-the-repository)
   - [2. Backend Setup](#2-backend-setup)
@@ -17,8 +18,10 @@ Welcome! This guide will walk you through setting up Resume Matcher on your loca
 - [Configuring Your AI Provider](#configuring-your-ai-provider)
   - [Option A: Cloud Providers](#option-a-cloud-providers)
   - [Option B: Local AI with Ollama](#option-b-local-ai-with-ollama-free)
+  - [Option C: Your ChatGPT plan (Sign in with ChatGPT)](#option-c-your-chatgpt-plan-sign-in-with-chatgpt)
 - [Docker Deployment](#docker-deployment)
 - [Accessing the Application](#accessing-the-application)
+- [Use Resume Matcher from Claude Code or Claude Desktop (MCP)](#use-resume-matcher-from-claude-code-or-claude-desktop-mcp)
 - [Common Commands Reference](#common-commands-reference)
 - [Troubleshooting](#troubleshooting)
 - [Project Structure Overview](#project-structure-overview)
@@ -33,7 +36,7 @@ Before you begin, make sure you have the following installed on your system:
 | Tool | Minimum Version | How to Check | Installation |
 |------|-----------------|--------------|--------------|
 | **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
+| **Node.js** | 24+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Comes with Node.js |
 | **uv** | Latest | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | **Git** | Any | `git --version` | [git-scm.com](https://git-scm.com) |
@@ -79,6 +82,65 @@ npm run dev                  # Start the dev server
 Open your browser to **<http://localhost:3000>** and you're ready to go!
 
 > **Note:** You'll need to configure an AI provider before using the app. See [Configuring Your AI Provider](#configuring-your-ai-provider) below.
+
+---
+
+## Windows 11 Setup
+
+The commands above and in the rest of this guide use macOS/Linux shell syntax. On Windows 11, use the **PowerShell** (or Windows Terminal) commands in this section instead.
+
+### 1. Install the prerequisites
+
+Install the tools from [Prerequisites](#prerequisites) with `winget` (built into Windows 11), then **close and reopen PowerShell** so they are on your `PATH`:
+
+```powershell
+winget install --id Git.Git -e
+winget install --id Python.Python.3.13 -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id astral-sh.uv -e
+```
+
+You can also use the installers from the links in the [Prerequisites](#prerequisites) table.
+
+### 2. Download the code
+
+Either clone with Git:
+
+```powershell
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+```
+
+Or, without Git, open the [repository page](https://github.com/srbhr/Resume-Matcher), click **Code → Download ZIP**, extract the ZIP, and `cd` into the extracted folder in PowerShell.
+
+### 3. Start the backend (PowerShell window 1)
+
+```powershell
+cd apps\backend
+Copy-Item .env.example .env   # Create config from template
+notepad .env                  # Edit the config (see below)
+uv sync                       # Install Python dependencies
+uv run app
+```
+
+In `.env`, change `HOST=0.0.0.0` to `HOST=127.0.0.1` so the backend is only reachable from your own machine. The default listens on every network interface, and the API has no authentication, so other devices on your network could use your configured AI provider. Optionally set your AI provider here, and set `RELOAD=true` to auto-reload on code changes.
+
+### 4. Start the frontend (PowerShell window 2)
+
+A new PowerShell window opens in your home folder, so first change to the folder where you cloned or extracted Resume Matcher (replace the path with your own):
+
+```powershell
+cd C:\path\to\Resume-Matcher
+cd apps\frontend
+npm install
+npm run dev
+```
+
+Open **<http://localhost:3000>** in your browser.
+
+> **PDF export:** Resume Matcher renders PDFs with headless Chromium. If Playwright's browser is not installed, the backend falls back to an installed Microsoft Edge or Google Chrome (Edge ships with Windows 11). You can also install Playwright's Chromium from `apps\backend` with `uv run playwright install chromium`.
+
+> **Prefer Docker?** Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) and follow [Docker Deployment](#docker-deployment). To set variables like `PORT` in PowerShell, use `$env:PORT="4000"; docker compose up -d`. For the [optional PostgreSQL setup](#optional-postgresql), run `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; outside Docker, set `DATABASE_URL` in `apps\backend\.env`.
 
 ---
 
@@ -256,6 +318,26 @@ ollama serve
 
 Ollama typically starts automatically after installation.
 
+### Option C: Your ChatGPT plan (Sign in with ChatGPT)
+
+A community-built provider that uses OpenAI's official [Sign in with ChatGPT for open-source apps](https://developers.openai.com/siwc/token-sharing-open-source) (a preview, so it may change). It works with ChatGPT Plus and Pro, needs no API key, and sends requests from your machine straight to OpenAI's Responses API. Usage counts toward your ChatGPT plan's limits: on Plus, the five-hour limit is shared with your other apps that use your plan; Pro has no five-hour limit. For guaranteed access, use an OpenAI API key instead.
+
+1. Start the backend and frontend, then open **Settings** in a browser **on the same machine as the backend**.
+2. Choose **ChatGPT plan** and click **Continue with ChatGPT**.
+3. Sign in at OpenAI and allow Resume Matcher to use your ChatGPT plan. The first time, OpenAI registers the app for your account; later sign-ins reuse that registration.
+4. You return to Settings. Pick one of your account's models and click **Save**.
+
+OpenAI sends the browser back to `http://127.0.0.1:<port>/auth/callback`, where `<port>` is the port you opened Resume Matcher on (`3000` by default). The frontend forwards that path to the backend, and the backend accepts the callback only from the machine it runs on. So the browser must run on the machine that runs Resume Matcher, and you must open it as `http://localhost:<port>` or `http://127.0.0.1:<port>`. Tokens are stored encrypted in the backend data directory (`chatgpt_credentials.enc`). **Disconnect** revokes the session at OpenAI and deletes the tokens; **Manage usage** opens your ChatGPT usage settings.
+
+**Docker:** sign-in works with the default setup, which publishes only port 3000: open Resume Matcher at `http://localhost:3000` (or the `PORT` you published) on the machine that runs the container. OpenAI returns the browser to that same port, and the frontend forwards `/auth/callback` to the backend inside the container. It does not work from another computer or through a reverse-proxy domain, because OpenAI only allows `http://127.0.0.1` redirects.
+
+The equivalent `.env` (you still sign in from Settings):
+
+```env
+LLM_PROVIDER=chatgpt
+LLM_MODEL=gpt-6.1-sol  # replace with a model from your account's list in Settings
+```
+
 ---
 
 ## Docker Deployment
@@ -349,6 +431,35 @@ LOG_LEVEL=INFO LOG_LLM=DEBUG docker compose up -d
 > allow a message for it to appear. If you set `LITELLM_LOG` from LiteLLM docs,
 > make sure `LOG_LLM` is set to an equal or lower level.
 
+### Optional: PostgreSQL
+
+SQLite is the default and needs no setup. For backups, or to keep the database on a separate server you control, you can use PostgreSQL instead.
+
+> **Security:** Resume Matcher has no user accounts or authentication, and PostgreSQL doesn't add any. Run it only for yourself or on a trusted private network, never exposed publicly. For anything beyond local use, connect with a least-privilege database role (the Compose file's `resume` user is a superuser).
+
+To start it with Docker Compose:
+
+```bash
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+`POSTGRES_PASSWORD` is copied into `DATABASE_URL` as-is, so use a URL-safe password (letters, digits, `-._~`); `openssl rand -hex 32` generates one. Don't use a guessable value. Keep the password: PostgreSQL stores it in the `postgres-data` volume on first start, and every later `docker compose` command needs the same value (export it again, or put `POSTGRES_PASSWORD=...` in a `.env` file next to `docker-compose.yml`).
+
+Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`, percent-encoding any special characters in the password. For a remote database add `?sslmode=require` to the URL. Tables are created on startup.
+
+To move existing data from a local install, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set. Its default `--source` is `apps/backend/data/resume_matcher.db`, which only exists for local installs; pass `--source <file>` for another SQLite file. It refuses to write into a non-empty database. Stop the app first: writes made after the copy starts are not copied.
+
+A Docker install keeps its SQLite database in the `resume-data` volume, not on the host. Stop the app, then run the script inside the container, where that volume is the default source (with the same `POSTGRES_PASSWORD` set as above):
+
+```bash
+docker compose stop
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+Alternatively copy the file out of the stopped container (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) and pass it with `--source ./resume_matcher.db` from a host that can reach the database. Keep `data/.secret_key` (it stays in the volume): it decrypts your stored API keys.
+
 ### Important Notes
 
 - **API keys are best configured through the UI** at `http://localhost:3000/settings`
@@ -377,6 +488,49 @@ Once the container is running, open your browser:
 4. Click "Save Configuration"
 5. Click "Test Connection" to verify it works
 6. Return to Dashboard and upload your first resume!
+
+---
+
+## Use Resume Matcher from Claude Code or Claude Desktop (MCP)
+
+Resume Matcher ships an [MCP](https://modelcontextprotocol.io) server that lets Claude Code, Claude Desktop, Cursor or Codex drive it directly. It runs over stdio and needs **no LLM API key**: Claude writes the content, and Resume Matcher stores, validates, scores and renders it. It shares the web app's database, so whatever Claude saves shows up in the UI.
+
+**Prerequisite:** a local (non-Docker) install. Clone the repo and run `cd apps/backend && uv sync` (see [Backend Setup](#2-backend-setup)).
+
+### Claude Code
+
+```bash
+claude mcp add resume-matcher -- uv run --directory /abs/path/to/Resume-Matcher/apps/backend resume-matcher-mcp
+```
+
+### Claude Desktop
+
+Add this to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`, Windows: `%APPDATA%\Claude\claude_desktop_config.json`), then restart Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "resume-matcher": {
+      "command": "/absolute/path/to/uv",
+      "args": ["run", "--directory", "/abs/path/to/Resume-Matcher/apps/backend", "resume-matcher-mcp"]
+    }
+  }
+}
+```
+
+Use the **absolute path** of `uv` for `command` (find it with `which uv` on macOS/Linux or `where.exe uv` on Windows). Claude Desktop does not inherit your shell `PATH`, so a bare `uv` is not found. On Windows, double the backslashes in JSON paths.
+
+### Other MCP clients
+
+Cursor, Codex and other clients use the same command (`uv`) and args (`run --directory <path>/apps/backend resume-matcher-mcp`).
+
+### Notes
+
+- **Same checkout, same data.** Run the web app from the same checkout so both use the same database. `DATA_DIR` moves the SQLite file; `DATABASE_URL` selects [PostgreSQL](#optional-postgresql) instead.
+- **Frontend for PDF and verify.** PDF export, `verify_resume`, `tailor_and_verify` and `parse_check_resume` need the frontend running (default <http://localhost:3000>, set with `FRONTEND_BASE_URL`). The other tools work without it.
+- **Docker is not supported yet.** The app's database lives inside the Docker volume, so a server started on the host would see an empty database.
+
+The server exposes tools to list and read resumes and jobs, create a master resume, add a job, tailor and verify a resume (`tailor_and_verify`), parse-check and score it for ATS, export a PDF (`export_resume_pdf`) and track job applications. Your client lists them once connected, and the server's built-in instructions walk Claude through the workflow.
 
 ---
 
@@ -561,7 +715,6 @@ Resume-Matcher/
 │       ├── .env.sample          # Environment template
 │       └── package.json         # Node.js dependencies
 │
-├── docs/                        # Additional documentation
 ├── docker-compose.yml           # Docker configuration
 ├── Dockerfile                   # Container build instructions
 └── README.md                    # Project overview
@@ -575,15 +728,7 @@ Stuck? Here are your options:
 
 - **Discord Community:** [dsc.gg/resume-matcher](https://dsc.gg/resume-matcher) - Active community for questions and discussions
 - **GitHub Issues:** [Open an issue](https://github.com/srbhr/Resume-Matcher/issues) for bugs or feature requests
-- **Documentation:** Check the [docs/agent/](docs/agent/) folder for detailed guides
-
-### Useful Documentation
-
-| Document | Description |
-|----------|-------------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Backend architecture and API details |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | User flow and component architecture |
-| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI design system (Swiss International Style) — portable pack |
+- **Documentation:** Browse the [online docs](https://resumematcher.fyi/docs/) for detailed guides
 
 ---
 

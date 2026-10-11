@@ -2,6 +2,7 @@
   "common": {
     "save": "Salvar",
     "saving": "Salvando...",
+    "saved": "Salvo",
     "cancel": "Cancelar",
     "delete": "Excluir",
     "edit": "Editar",
@@ -39,6 +40,19 @@
     "docs": "Documentação",
     "launchApp": "Abrir App"
   },
+  "community": {
+    "follow": "Seguir @srbhr",
+    "star": "Dar estrela",
+    "starOnGithub": "Dar estrela no GitHub",
+    "sponsor": "Patrocinar",
+    "discord": "Discord",
+    "joinDiscord": "Entrar no Discord",
+    "contributors": "Colaboradores",
+    "settingsPrompt": "Gostando do Resume Matcher?",
+    "sponsorProject": "Patrocine o projeto",
+    "joinTheDiscord": "Entre no Discord",
+    "aboutTitle": "Sobre"
+  },
   "nav": {
     "dashboard": "Painel",
     "builder": "Criar Currículo",
@@ -46,7 +60,8 @@
     "settings": "Configurações",
     "backToDashboard": "Voltar ao Painel",
     "goToSettings": "Ir para Configurações",
-    "applicationTracker": "Acompanhamento de candidaturas"
+    "applicationTracker": "Acompanhamento de candidaturas",
+    "queue": "Fila de personalização"
   },
   "dashboard": {
     "title": "Painel",
@@ -65,6 +80,7 @@
     "downloadPdf": "Baixar PDF",
     "tailorResume": "Personalizar para Vaga",
     "selectModule": "Selecionar Módulo",
+    "modulesHeading": "Módulos de currículo",
     "masterResume": "Currículo Principal",
     "tailoredResume": "Currículo Personalizado",
     "initializeMasterResume": "Inicializar Currículo Principal",
@@ -114,6 +130,10 @@
     "masterLimitReached": "Até {max} currículos principais"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "Nada foi gerado ainda",
+      "preview": "Pré-visualização"
+    },
     "title": "Criar Currículo",
     "copySuffix": "(Cópia)",
     "editMode": "Modo Edição",
@@ -213,12 +233,8 @@
       "coverLetter": "CARTA DE APRESENTAÇÃO",
       "outreach": "MENSAGEM DE CONTATO",
       "jdMatch": "ANÁLISE DE VAGA",
-      "interviewPrep": "PREPARAÇÃO"
-    },
-    "footer": {
-      "moduleLabel": "Módulo de Criação de Currículo",
-      "singleColumn": "Coluna Única",
-      "twoColumn": "Duas Colunas"
+      "interviewPrep": "PREPARAÇÃO",
+      "atsCheck": "VERIFICAÇÃO ATS"
     },
     "pageSize": {
       "usLetter": "Carta US"
@@ -318,6 +334,17 @@
         "keywordsExtracted": "{count} palavras-chave extraídas",
         "matchesFound": "{count} correspondências encontradas",
         "matchRateLabel": "Taxa de Correspondência:"
+      },
+      "atsScore": {
+        "description": "Pontua o currículo salvo em relação a esta descrição da vaga. A aba VERIFICAÇÃO ATS testa como o próprio PDF é lido.",
+        "loading": "Carregando a pontuação ATS…",
+        "notCalculated": "A pontuação ATS deste currículo ainda não foi calculada.",
+        "loadFailed": "Não foi possível carregar a pontuação ATS salva. Tente Recalcular ou recarregue a página.",
+        "lastCalculated": "Último cálculo: {date}",
+        "recalculate": "Recalcular",
+        "recalculating": "Calculando…",
+        "saveFirst": "Salve suas alterações e depois recalcule.",
+        "recalculateFailed": "Não foi possível calcular a pontuação ATS. Se este currículo foi adaptado antes de as pontuações serem salvas, adapte-o novamente na página Personalizar Currículo."
       }
     },
     "genericItemForm": {
@@ -489,7 +516,8 @@
       "coverLetterEditor": "Editor de Carta de Apresentação",
       "outreachEditor": "Editor de Mensagem de Contato",
       "jdMatchAnalysis": "Análise de Correspondência de Vaga",
-      "interviewPrep": "Preparação para entrevista"
+      "interviewPrep": "Preparação para entrevista",
+      "atsCheck": "Verificação de leitura ATS"
     },
     "alerts": {
       "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
@@ -516,6 +544,126 @@
       "description": "Não foi possível sincronizar as alterações mais recentes com o servidor nem salvá-las neste navegador. Sair agora pode perder essas alterações.",
       "leave": "Sair mesmo assim",
       "stay": "Continuar editando"
+    },
+    "atsCheck": {
+      "aboutTitle": "O que é verificado",
+      "aboutDescription": "Geramos seu currículo com o modelo e as configurações atuais e depois o lemos como um extrator de texto de ATS simples faria. Nenhuma IA é usada.",
+      "roundTripTitle": "Ida e volta",
+      "roundTripDescription": "Compara o texto extraído com os dados do seu currículo. Mede a fidelidade de leitura desta versão, não a precisão de um ATS específico.",
+      "tipsTitle": "Dicas",
+      "tips": {
+        "items": {
+          "singleColumn": "Modelos de uma coluna são lidos na ordem certa.",
+          "standardHeadings": "Use nomes de seção padrão como Experiência, Formação e Habilidades.",
+          "contactInBody": "Mantenha seus dados de contato no texto principal."
+        }
+      },
+      "templateLabel": "Modelo: {template}",
+      "runButton": "VERIFICAR",
+      "rerunButton": "VERIFICAR NOVAMENTE",
+      "running": "VERIFICANDO...",
+      "emptyState": "Execute uma verificação para ver como um ATS lê este currículo com o modelo atual.",
+      "saveFirst": "Salve o currículo antes de executar uma verificação.",
+      "unsavedNotice": "Alterações não salvas não são incluídas. A verificação usa a última versão salva.",
+      "error": "A verificação falhou. Confira se o backend e o frontend estão rodando e tente de novo.",
+      "parseability": "Legibilidade",
+      "content": "Conteúdo",
+      "extractability": {
+        "full": "Extração de texto: completa",
+        "partial": "Extração de texto: parcial",
+        "none": "Extração de texto: nenhuma"
+      },
+      "status": {
+        "pass": "OK",
+        "warn": "ALERTA",
+        "fail": "FALHA"
+      },
+      "checksTitle": "Verificações",
+      "contentRecall": "Conteúdo recuperado",
+      "orderFidelity": "Ordem de leitura",
+      "allFieldsFound": "Todos os campos aparecem no texto extraído.",
+      "fieldsTruncated": "Este currículo tem mais campos do que a verificação cobre, então apenas os primeiros foram verificados. Os campos além do limite não aparecem aqui.",
+      "fieldStatus": {
+        "found": "Encontrado",
+        "garbled": "Ilegível",
+        "missing": "Ausente",
+        "hidden": "Oculto"
+      },
+      "previewTitle": "Texto extraído",
+      "sectionKinds": {
+        "experience": "Experiência",
+        "education": "Formação",
+        "skills": "Habilidades"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "Texto selecionável",
+          "pass": "{characters} caracteres de texto foram extraídos.",
+          "fail": "Não há texto selecionável. O arquivo parece digitalizado ou só imagem, então um ATS não lê nada."
+        },
+        "garbled_glyphs": {
+          "title": "Codificação de caracteres",
+          "pass": "Nenhum caractere ilegível.",
+          "warn": "{count} caracteres não puderam ser decodificados.",
+          "fail": "{count} caracteres não puderam ser decodificados, então o texto fica corrompido para um ATS."
+        },
+        "text_coverage": {
+          "title": "Texto ou imagens",
+          "pass": "Todas as páginas têm texto real.",
+          "warn": "As páginas {pages} são quase só imagens.",
+          "fail": "Todas as páginas são quase só imagens."
+        },
+        "multi_column": {
+          "title": "Ordem de leitura única",
+          "pass": "O texto é lido em uma coluna.",
+          "fail": "Duas colunas detectadas na página {pages}. Muitos ATS misturam as colunas.",
+          "templateHint": "Este modelo usa duas colunas por design. Escolha um modelo de uma coluna para candidaturas com ATS."
+        },
+        "tables": {
+          "title": "Tabelas",
+          "pass": "Nenhuma tabela.",
+          "warn": "{count} tabelas encontradas. Alguns ATS achatam ou ignoram as células."
+        },
+        "text_boxes": {
+          "title": "Caixas de texto",
+          "pass": "Nenhuma caixa de texto.",
+          "warn": "Há caixas de texto. Alguns ATS as ignoram.",
+          "fail": "{characters} caracteres estão em caixas de texto que muitos ATS ignoram."
+        },
+        "header_footer_content": {
+          "title": "Cabeçalhos e rodapés",
+          "pass": "Nada importante em cabeçalhos ou rodapés.",
+          "warn": "Há conteúdo em cabeçalhos ou rodapés, que alguns ATS ignoram.",
+          "fail": "Seus dados de contato aparecem só no cabeçalho ou rodapé, que muitos ATS ignoram."
+        },
+        "images": {
+          "title": "Imagens",
+          "pass": "Nenhuma imagem.",
+          "warn": "{count} imagens encontradas. O texto dentro de imagens é invisível para um ATS."
+        },
+        "page_count": {
+          "title": "Tamanho",
+          "pass": "{pages} página(s).",
+          "warn": "{pages} páginas. Considere reduzir para duas páginas ou menos."
+        },
+        "contact_info": {
+          "title": "Dados de contato",
+          "pass": "E-mail e telefone encontrados no topo.",
+          "warn": "Os dados de contato estão incompletos ou aparecem tarde no texto.",
+          "fail": "Nenhum e-mail encontrado no texto extraído."
+        },
+        "section_headings": {
+          "title": "Títulos de seção",
+          "pass": "Títulos padrão encontrados: {found}.",
+          "warn": "Falta o título padrão: {missing}.",
+          "fail": "Faltam títulos padrão: {missing}. Use nomes como Experiência, Formação e Habilidades."
+        },
+        "dates": {
+          "title": "Datas",
+          "pass": "{years} anos encontrados nas datas.",
+          "warn": "Nenhuma data reconhecível."
+        }
+      }
     }
   },
   "enrichment": {
@@ -591,6 +739,23 @@
         "description": "Personalização abrangente usando a descrição da vaga."
       }
     },
+    "length": {
+      "pageLimitLabel": "Limite de páginas",
+      "pageLimitDescription": "Remove os tópicos menos relevantes para caber quando possível. Sem limite desativa o ajuste de páginas.",
+      "pageLimitOptions": {
+        "1": "1 página",
+        "2": "2 páginas",
+        "3": "3 páginas",
+        "none": "Sem limite"
+      },
+      "bulletsLabel": "Tópicos por cargo",
+      "bulletsDescription": "Tópicos mais relevantes mantidos para cada cargo ou projeto.",
+      "bulletOptions": {
+        "3": "Até 3",
+        "5": "Até 5",
+        "all": "Todos"
+      }
+    },
     "analyzeJob": "Analisar Vaga",
     "generateTailored": "Gerar Currículo Personalizado",
     "setupRequiredTitle": "[ CONFIGURAÇÃO NECESSÁRIA ]",
@@ -625,6 +790,18 @@
       "rejectButton": "Rejeitar e regenerar",
       "confirmButton": "Confirmar e salvar"
     },
+    "atsScore": {
+      "title": "Detalhamento da pontuação ATS",
+      "keywordMatch": "Correspondência de palavras-chave",
+      "skillsCoverage": "Cobertura de habilidades",
+      "titleMatch": "Correspondência de cargo",
+      "sectionCompleteness": "Completude das seções",
+      "dateConsistency": "Consistência de datas",
+      "missingKeywords": "Palavras-chave ausentes",
+      "injectableKeywords": "Seguras para adicionar (no seu currículo principal)",
+      "recommendations": "Recomendações",
+      "twoColumnWarning": "Layout em duas colunas: muitos ATS leem as colunas fora de ordem. Mude para um modelo de uma coluna no editor antes de se candidatar."
+    },
     "regenerateDialog": {
       "title": "Regenerar o currículo personalizado?",
       "description": "Isso descartará a prévia atual e solicitará um novo resultado de personalização por IA.",
@@ -646,14 +823,23 @@
       "previewUnavailable": "Esta prévia expirou ou o currículo original mudou. Gere uma nova prévia antes de salvar."
     },
     "selectResumeDescription": "Os marcadores são extraídos deste currículo principal.",
+    "tailoringLabel": "Personalizando:",
+    "jobDescriptionHint": "Cole o anúncio completo da vaga, com responsabilidades e requisitos (mínimo de 50 caracteres).",
+    "steps": {
+      "label": "Como funciona a personalização",
+      "paste": "Cole a descrição da vaga",
+      "generate": "Gere uma prévia",
+      "review": "Revise as alterações e salve"
+    },
     "selectionSummary": "{kept} de {total} marcadores mantidos (até {max} por cargo ou projeto)",
+    "selectionSummaryAll": "{kept} de {total} tópicos mantidos",
     "pageFit": {
-      "fits": "Cabe em uma página",
-      "trimmed": "Marcadores extras removidos para caber em uma página: {count}",
-      "over": "Ainda excede uma página",
+      "fits": "Cabe no limite de páginas",
+      "trimmed": "Mais {count} removidos para caber no limite de páginas",
+      "over": "Acima do limite de páginas; todos os tópicos selecionados foram mantidos",
       "unavailable": "Ajuste de página indisponível",
-      "finalOver": "Pode passar de uma página após a reescrita",
-      "notRechecked": "Ajuste a uma página não verificado após a reescrita"
+      "finalOver": "Pode passar do limite de páginas após a reescrita",
+      "notRechecked": "Ajuste ao limite de páginas não verificado após a reescrita"
     }
   },
   "settings": {
@@ -668,15 +854,21 @@
     "contentLanguageDescription": "Idioma para conteúdo gerado (currículos, cartas de apresentação)",
     "uiLanguage": "Idioma da Interface",
     "uiLanguageDescription": "Idioma da interface do usuário",
+    "languageTitle": "Idioma",
+    "display": {
+      "title": "Exibição",
+      "backgroundEffects": "Efeitos de fundo",
+      "backgroundEffectsDescription": "Fundos animados atrás das páginas e enquanto a IA trabalha. Desative para ter um fundo liso."
+    },
     "theme": "Tema",
     "themeDescription": "Escolha seu tema de cores preferido",
     "lightMode": "Claro",
     "darkMode": "Escuro",
     "systemMode": "Sistema",
-    "dangerZone": "Zona de Perigo",
-    "clearApiKeys": "Limpar Chaves de API",
+    "dangerZone": "Zona de perigo",
+    "clearApiKeys": "Limpar chaves de API",
     "clearApiKeysDescription": "Remove todas as chaves de API armazenadas da configuração. Esta ação não pode ser desfeita.",
-    "resetDatabase": "Redefinir Banco de Dados",
+    "resetDatabase": "Redefinir banco de dados",
     "resetDatabaseDescription": "Exclui TODOS os dados incluindo currículos, vagas e conteúdo gerado. Esta ação não pode ser desfeita.",
     "llmConfigurationTitle": "Configuração de LLM",
     "providerLabel": "Provedor",
@@ -708,7 +900,7 @@
       "description": "> Nenhuma chave de API configurada. Adicione a chave de API do seu provedor de LLM abaixo para habilitar a personalização de currículo."
     },
     "systemStatus": {
-      "title": "Status do Sistema",
+      "title": "Status do sistema",
       "refresh": "Atualizar",
       "unableToConnect": "Não foi possível alcançar o servidor",
       "expectedAt": "Esperado em: {apiUrl}",
@@ -721,6 +913,16 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECIONADO: {provider}",
+      "claudeCliNote": "Executa a CLI do Claude Code instalada e conectada nesta máquina, então nenhuma chave de API é necessária aqui. O Claude Code ainda envia seus prompts à Anthropic pela sua conta e usa o próprio modelo padrão.",
+      "claudeCliName": "Assinatura do Claude (via Claude Code)",
+      "claudeCliShortName": "Plano Claude",
+      "claudeCliWarningTitle": "Sem suporte oficial",
+      "claudeCliWarning": "A Anthropic não oferece suporte oficial a aplicativos de terceiros que usam as assinaturas Claude Pro ou Max, então isso pode deixar de funcionar se a política mudar; para acesso garantido, use uma chave de API da Anthropic. O Resume Matcher nunca vê nem armazena suas credenciais do Claude: ele executa a sua própria CLI do Claude Code, na qual você mesmo faz login com `claude auth login`. As solicitações contam para os limites de uso do seu plano Claude, e a Anthropic pode descontá-las de créditos de uso em vez disso.",
+      "communityBuilt": "Recurso criado pela comunidade.",
+      "chatgptName": "Plano do ChatGPT (Sign in with ChatGPT)",
+      "chatgptShortName": "Plano ChatGPT",
+      "chatgptWarningTitle": "Prévia",
+      "chatgptWarning": "Usa o Sign in with ChatGPT oficial da OpenAI para apps de código aberto, que está em prévia e pode mudar. Funciona com ChatGPT Plus e Pro. As solicitações vão do seu computador diretamente para a API da OpenAI, e os tokens de login ficam criptografados neste computador. O uso conta para os limites do seu plano do ChatGPT: no Plus, o limite de cinco horas é compartilhado com seus outros apps que usam seu plano; o Pro não tem limite de cinco horas. Para acesso garantido, use uma chave de API da OpenAI.",
       "modelLabel": "Modelo",
       "defaultModel": "PADRÃO: {model}",
       "apiKeyLabel": "Chave de API",
@@ -759,14 +961,39 @@
         "health_check_failed": "Falha na verificação de integridade.",
         "duplicate_v1_path": "Falha na verificação de integridade. A URL base pode conter um caminho /v1 duplicado.",
         "not_found_404": "Falha na verificação de integridade. 404 Não encontrado - verifique se a URL base corresponde ao provedor.",
-        "html_response": "Falha na verificação de integridade. A URL base retornou HTML; pode ser uma URL de console ou um caminho de gateway não suportado."
+        "html_response": "Falha na verificação de integridade. A URL base retornou HTML; pode ser uma URL de console ou um caminho de gateway não suportado.",
+        "claude_cli_not_found": "CLI do Claude Code não encontrada. Instale o Claude Code e execute `claude auth login`.",
+        "chatgpt_not_connected": "Você não entrou com o ChatGPT. Selecione Plano ChatGPT em Configurações e continue com o ChatGPT.",
+        "chatgpt_usage_limit": "O limite de uso do seu plano do ChatGPT para este app foi atingido. Confira em Uso, nas configurações do ChatGPT.",
+        "chatgpt_not_eligible": "O uso do plano do ChatGPT não está disponível para esta conta. É preciso ter ChatGPT Plus ou Pro; caso contrário, use uma chave de API da OpenAI."
       },
       "healthWarnings": {
         "empty_content": "O LLM retornou conteúdo vazio na verificação de integridade."
       }
     },
+    "chatgpt": {
+      "continue": "Continuar com o ChatGPT",
+      "checking": "Verificando",
+      "connected": "Conectado",
+      "notConnected": "Não conectado",
+      "disconnect": "Desconectar",
+      "manageUsage": "Gerenciar uso",
+      "disconnected": "Desconectado do ChatGPT.",
+      "revocationUnconfirmed": "Você saiu neste computador, mas a OpenAI não confirmou o fim da sessão. Você também pode desconectar o Resume Matcher nas configurações do ChatGPT.",
+      "returnConnected": "Conectado ao seu plano do ChatGPT. Escolha um modelo e salve.",
+      "returnCancelled": "O login com o ChatGPT foi cancelado.",
+      "returnError": "O login com o ChatGPT não foi concluído. Tente novamente.",
+      "planDeclined": "O uso do plano do ChatGPT não foi permitido. Continue com o ChatGPT de novo e permita, ou use uma chave de API da OpenAI.",
+      "sameMachineOnly": "Entre em um navegador no computador que está executando o Resume Matcher.",
+      "signInFailed": "Não foi possível iniciar o login com o ChatGPT. Tente novamente.",
+      "disconnectFailed": "Não foi possível desconectar o ChatGPT. Tente novamente.",
+      "statusFailed": "Não foi possível verificar a conexão com o ChatGPT.",
+      "modelsFailed": "Não foi possível carregar seus modelos do ChatGPT. Digite o nome de um modelo.",
+      "modelHint": "Depois que você entrar, os modelos vêm da sua conta do ChatGPT.",
+      "connectToSave": "Entre com o ChatGPT para salvar este provedor."
+    },
     "contentGeneration": {
-      "title": "Geração de Conteúdo",
+      "title": "Geração de conteúdo",
       "description": "Habilite geração de conteúdo adicional durante a personalização de currículo. Quando habilitado, estes documentos serão gerados automaticamente junto com seu currículo personalizado.",
       "coverLetter": {
         "label": "Carta de Apresentação",
@@ -840,6 +1067,7 @@
     "titlePlaceholder": "Digite o título do currículo...",
     "downloadFailedTitle": "Falha no download",
     "renameFailedTitle": "Falha ao renomear",
+    "renameTitle": "Renomear currículo",
     "defaultBadge": "Principal padrão",
     "setDefault": "Definir como principal padrão",
     "setDefaultSuccess": "Este currículo principal agora é o padrão para personalização.",
@@ -1009,7 +1237,8 @@
       "experience": "Experiência",
       "education": "Formação",
       "projects": "Projetos",
-      "skills": "Habilidades"
+      "skills": "Habilidades",
+      "inferredSkill": "inferida"
     },
     "errors": {
       "turnFailed": "O assistente não conseguiu salvar essa resposta. Tente novamente.",
@@ -1140,6 +1369,60 @@
       "projectFollowUps": "Perguntas sobre projetos",
       "skillGaps": "Lacunas de habilidades",
       "talkingPoints": "Pontos de conversa"
+    }
+  },
+  "queue": {
+    "title": "Fila de personalização",
+    "subtitle": "Coloque vagas na fila e personalize uma após a outra em segundo plano",
+    "form": {
+      "title": "Adicionar uma vaga",
+      "masterDescription": "Cada vaga na fila é personalizada a partir deste currículo principal.",
+      "noMaster": "Envie primeiro um currículo principal no painel.",
+      "jobDescriptionLabel": "Descrição da vaga",
+      "jobDescriptionHint": "Cargo, empresa e ID da vaga são detectados no texto sem chamar a IA. Corrija-os se estiverem errados.",
+      "detectedTitle": "Dados detectados",
+      "roleLabel": "Cargo",
+      "rolePlaceholder": "ex.: Engenheiro frontend",
+      "companyLabel": "Empresa",
+      "companyPlaceholder": "ex.: Stripe",
+      "jobReqIdLabel": "ID da vaga",
+      "cooldownLabel": "Pausa (segundos)",
+      "cooldownHint": "Pausa após cada vaga para reduzir o risco de atingir o limite de uso do seu provedor.",
+      "submit": "Adicionar à fila",
+      "adding": "Adicionando...",
+      "added": "Adicionada à fila. Cole a próxima descrição de vaga."
+    },
+    "monitor": {
+      "title": "Fila",
+      "count": "Vagas: {count}",
+      "refresh": "Atualizar",
+      "clearCompleted": "Limpar concluídas",
+      "clearAll": "Limpar tudo",
+      "emptyTitle": "Nenhuma vaga na fila",
+      "emptyDescription": "Adicione uma descrição de vaga para começar a personalizar.",
+      "untitled": "Cargo sem título",
+      "jobId": "ID {id}",
+      "viewResume": "Ver currículo",
+      "remove": "Remover da fila"
+    },
+    "status": {
+      "pending": "Na fila",
+      "processing": "Personalizando",
+      "completed": "Concluído",
+      "failed": "Falhou"
+    },
+    "errors": {
+      "addFailed": "Não foi possível adicionar a vaga. Tente novamente.",
+      "item": {
+        "not_found": "O currículo principal ou a vaga foi excluído.",
+        "too_large": "A descrição da vaga ou o currículo é longo demais para personalizar.",
+        "timeout": "A personalização excedeu o tempo limite. Adicione a vaga de novo para tentar outra vez.",
+        "failed": "A personalização falhou. Verifique seu provedor de IA nas Configurações e adicione a vaga de novo."
+      },
+      "loadFailed": "Não foi possível carregar a fila.",
+      "deleteFailed": "Não foi possível remover a vaga. Tente novamente.",
+      "deleteInProgress": "Esta vaga está sendo personalizada. Remova-a quando terminar.",
+      "clearFailed": "Não foi possível limpar a fila. Tente novamente."
     }
   }
 }

@@ -2,55 +2,58 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { CommunityLinks } from '@/components/common/community-links';
+import { BackgroundEffect } from '@/components/effects/background-effect';
+import { buttonClass } from '@/components/ui/button';
+import { useBlockDissolveNavigate } from '@/lib/effects/use-block-dissolve-navigate';
 import { useTranslations } from '@/lib/i18n';
 
 export default function Hero() {
   const { t } = useTranslations();
-
-  // Hover translates DOWN-RIGHT (+1, +1) for the press-in effect — matches
-  // every other button in the codebase. The previous version translated
-  // UP-LEFT (-1, -1) which was the inverse and looked broken next to the
-  // rest of the design system.
-  const buttonClass =
-    'group relative border border-black bg-transparent px-8 py-3 font-mono text-sm font-bold uppercase text-blue-700 transition-[transform,box-shadow,background-color,color] duration-150 ease-out hover:bg-blue-700 hover:text-background hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-sw-default active:translate-x-0 active:translate-y-0 active:shadow-none cursor-pointer';
+  const dashboardLink = useBlockDissolveNavigate();
 
   return (
-    <section
-      className="h-screen w-full p-4 md:p-12 lg:p-24 bg-background"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
-      <div className="flex h-full w-full flex-col items-center justify-center border border-black text-blue-700 bg-background shadow-sw-xl">
-        <h1 className="mb-12 text-center font-mono text-6xl font-bold uppercase leading-none tracking-tighter md:text-8xl lg:text-9xl selection:bg-blue-700 selection:text-white">
+    <section className="relative isolate h-screen w-full bg-canvas p-4 md:p-12 lg:p-24">
+      <BackgroundEffect />
+      <div className="flex h-full w-full flex-col items-center justify-center border border-ink text-primary bg-canvas shadow-sw-xl">
+        <h1 className="hero-enter mb-12 text-center font-mono text-6xl font-bold uppercase leading-none tracking-tighter md:text-8xl lg:text-9xl selection:bg-primary selection:text-white">
           {t('home.brandLine1')}
           <br />
           {t('home.brandLine2')}
         </h1>
 
-        <div className="flex flex-col gap-4 md:flex-row md:gap-12">
+        <div className="hero-enter hero-enter-delay-2 flex flex-col gap-4 md:flex-row md:gap-12">
           <a
             href="https://github.com/srbhr/Resume-Matcher"
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonClass}
+            className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
             GitHub
           </a>
           <a
-            href="https://resumematcher.fyi"
+            href="https://resumematcher.fyi/docs/"
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonClass}
+            className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
             {t('home.docs')}
           </a>
-          <Link href="/dashboard" className={buttonClass}>
+          <Link
+            href="/dashboard"
+            className={buttonClass({ size: 'lg' })}
+            onClick={dashboardLink.onClick}
+            onMouseEnter={dashboardLink.prepare}
+            onFocus={dashboardLink.prepare}
+          >
             {t('home.launchApp')}
           </Link>
         </div>
+
+        <CommunityLinks
+          variant="hero"
+          className="hero-enter hero-enter-delay-2 mt-8 justify-center"
+        />
       </div>
     </section>
   );

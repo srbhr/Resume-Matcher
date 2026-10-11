@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react';
-import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
@@ -12,20 +11,22 @@ import { CoverLetterPreview } from './cover-letter-preview';
 import { OutreachPreview } from './outreach-preview';
 import { GeneratePrompt } from './generate-prompt';
 import { InterviewPrepView } from './interview-prep-view';
+import { CommunityLinks } from '@/components/common/community-links';
 import { Button } from '@/components/ui/button';
 import { RetroTabs } from '@/components/ui/retro-tabs';
+import { PageHeader } from '@/components/ui/page-header';
+import { PanelHeader } from '@/components/ui/panel-header';
+import { StatusIndicator } from '@/components/ui/status-indicator';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Alert } from '@/components/ui/alert';
 import { ConfirmDialog, type ConfirmDialogProps } from '@/components/ui/confirm-dialog';
 import {
-  Download,
-  Save,
-  AlertTriangle,
+  DownloadSimple,
+  FloppyDisk,
   ArrowLeft,
-  RotateCcw,
-  Copy,
-  Check,
-  Sparkles,
-  Loader2,
-} from 'lucide-react';
+  ArrowCounterClockwise,
+  SpinnerGap,
+} from '@phosphor-icons/react';
 import {
   useResumePreview,
   type InterviewPrepData,
@@ -46,10 +47,12 @@ import {
   fetchJobDescription,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
+import { AtsCheckView } from './ats-check-view';
+import { AtsScorePanel } from './ats-score-panel';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
-import { type TemplateSettings } from '@/lib/types/template-settings';
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
 import {
   TEMPLATE_SETTINGS_STORAGE_KEY,
   readStoredTemplateSettings,
@@ -77,10 +80,17 @@ import {
   type AttachmentDraftEnvelope,
 } from '@/lib/utils/attachment-draft-storage';
 
-type TabId = 'resume' | 'cover-letter' | 'outreach' | 'interview-prep' | 'jd-match';
+type TabId = 'resume' | 'cover-letter' | 'outreach' | 'interview-prep' | 'jd-match' | 'ats-check';
 type JobContextStatus = 'idle' | 'loading' | 'available' | 'missing';
 
-const TAB_IDS: TabId[] = ['resume', 'cover-letter', 'outreach', 'interview-prep', 'jd-match'];
+const TAB_IDS: TabId[] = [
+  'resume',
+  'cover-letter',
+  'outreach',
+  'interview-prep',
+  'jd-match',
+  'ats-check',
+];
 const RESUME_AUTOSAVE_DEBOUNCE_MS = 2500;
 const RESUME_AUTOSAVE_MAX_WAIT_MS = 12000;
 // Floor for the computed delay. Without it, once an unsynced streak exceeds the
@@ -213,9 +223,15 @@ const ResumeBuilderContent = () => {
   const [hasCurrentLocalDraft, setHasCurrentLocalDraft] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
-  const [templateSettings, setTemplateSettings] = useState<TemplateSettings>(
-    readStoredTemplateSettings
-  );
+  // Start from defaults so server and client render the same markup; stored
+  // settings load after hydration.
+  const [templateSettings, setTemplateSettings] =
+    useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
+  const [templateSettingsLoaded, setTemplateSettingsLoaded] = useState(false);
+  useEffect(() => {
+    setTemplateSettings(readStoredTemplateSettings());
+    setTemplateSettingsLoaded(true);
+  }, []);
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
   const improvedCoverLetter = improvedData?.data?.cover_letter;
@@ -281,7 +297,6 @@ const ResumeBuilderContent = () => {
   const coverLetterSaveCountRef = useRef(0);
   const outreachSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const outreachSaveCountRef = useRef(0);
-  const [isCopied, setIsCopied] = useState(false);
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
 
   // On-demand generation state
@@ -394,8 +409,9 @@ const ResumeBuilderContent = () => {
 
   // Save template settings to localStorage when they change
   useEffect(() => {
+    if (!templateSettingsLoaded) return;
     safeStorage.set(TEMPLATE_SETTINGS_STORAGE_KEY, JSON.stringify(templateSettings));
-  }, [templateSettings]);
+  }, [templateSettings, templateSettingsLoaded]);
 
   // Warn user before leaving with unsaved changes
   useEffect(() => {
@@ -1161,16 +1177,6 @@ const ResumeBuilderContent = () => {
     }
   }
 
-  const handleCopyOutreach = async () => {
-    try {
-      await navigator.clipboard.writeText(outreachMessage);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  };
-
   // On-demand generation handlers
   const doGenerateCoverLetter = async () => {
     if (!resumeId || loadingState !== 'loaded') return;
@@ -1338,217 +1344,183 @@ const ResumeBuilderContent = () => {
 
   const resumeSaveStatus = (() => {
     if (isSaving || isAutoSaving) {
-      return { label: t('builder.autoSave.saving'), tone: 'blue' as const };
+      return { label: t('builder.autoSave.saving'), tone: 'active' as const };
     }
     if (autoSaveError) {
-      return { label: autoSaveError, tone: 'red' as const };
+      return { label: autoSaveError, tone: 'error' as const };
     }
     if (hasUnsavedChanges) {
       return hasCurrentLocalDraft
-        ? { label: t('builder.autoSave.localDraft'), tone: 'amber' as const }
-        : { label: t('builder.autoSave.localDraftUnavailable'), tone: 'red' as const };
+        ? { label: t('builder.autoSave.localDraft'), tone: 'warning' as const }
+        : { label: t('builder.autoSave.localDraftUnavailable'), tone: 'error' as const };
     }
     if (resumeId && lastAutoSavedAt) {
-      return { label: t('builder.autoSave.saved'), tone: 'green' as const };
+      return { label: t('builder.autoSave.saved'), tone: 'ready' as const };
     }
     return null;
   })();
 
-  // Swiss tokens rather than raw Tailwind palette classes, matching the tone
-  // set used by StatCard in diff-preview-modal.tsx (L-09).
-  const resumeSaveStatusStyles = {
-    amber: 'border-warning bg-[#FFF7ED] text-warning',
-    blue: 'border-primary bg-[#EFF6FF] text-primary',
-    green: 'border-success bg-[#F0FDF4] text-success',
-    red: 'border-destructive bg-[#FEF2F2] text-destructive',
-  };
-  const ResumeSaveStatusIcon = resumeSaveStatus?.tone === 'green' ? Check : AlertTriangle;
+  const nothingYet = <EmptyState className="px-6" title={t('builder.panels.nothingYet')} />;
 
   return (
-    <div className="h-screen w-full bg-background flex justify-center items-center p-4 md:p-8">
+    <div className="h-screen w-full bg-canvas flex justify-center items-center p-2 md:p-4">
       {/* Main Container */}
-      <div className="w-full h-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-background shadow-sw-lg flex flex-col">
-        {/* Header Section */}
-        <div className="border-b border-black p-6 md:p-8 bg-background no-print">
-          {/* Top Row: Back button and Actions */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <div>
-              <Button variant="link" onClick={handleBackToDashboard} className="mb-2 -ml-1">
-                <ArrowLeft className="w-4 h-4" />
-                {t('nav.backToDashboard')}
-              </Button>
-              <h1 className="font-serif text-3xl md:text-5xl text-black tracking-tight leading-[0.95] uppercase">
-                {t('nav.builder')}
-              </h1>
-              <div className="mt-3 flex items-center gap-3">
-                <p className="text-sm font-mono text-blue-700 uppercase tracking-wide font-bold">
-                  {'// '}
-                  {resumeId ? t('builder.editMode') : t('builder.createAndPreview')}
-                </p>
-                {resumeSaveStatus && (
-                  <span
-                    className={`flex items-center gap-1 text-xs font-mono px-2 py-1 border ${resumeSaveStatusStyles[resumeSaveStatus.tone]}`}
-                  >
-                    <ResumeSaveStatusIcon className="w-3 h-3" />
-                    {resumeSaveStatus.label}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-4 md:mt-0">
-              {/* Resume tab actions */}
-              {activeTab === 'resume' && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleStartRegenerate}
-                    disabled={!resumeId || isSaving}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {t('builder.regenerate.buttonLabel')}
-                  </Button>
-                  <Button
-                    variant="warning"
-                    size="sm"
-                    onClick={handleReset}
-                    disabled={!hasUnsavedChanges}
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    {t('common.reset')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!resumeId || isSaving || loadingState !== 'loaded'}
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSaving
-                      ? t('common.saving')
-                      : autoSaveError
-                        ? t('builder.autoSave.retrySave')
-                        : hasUnsavedChanges
-                          ? t('builder.autoSave.saveNow')
-                          : t('builder.autoSave.savedButton')}
-                  </Button>
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={handleDownload}
-                    disabled={!resumeId || isDownloading}
-                  >
-                    <Download className="w-4 h-4" />
-                    {isDownloading ? t('common.generating') : t('common.download')}
-                  </Button>
-                </>
+      <div className="w-full h-full border border-ink bg-canvas shadow-sw-lg flex flex-col">
+        {/* Header: one compact toolbar row (owner F2, builder only) */}
+        <PageHeader className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+            <Button variant="outline" size="sm" onClick={handleBackToDashboard}>
+              <ArrowLeft aria-hidden="true" />
+              {t('nav.backToDashboard')}
+            </Button>
+            <PageHeader.Title className="text-2xl leading-tight md:text-3xl">
+              {t('nav.builder')}
+            </PageHeader.Title>
+            <p className="font-mono text-xs font-bold uppercase tracking-wide text-steel">
+              {'// '}
+              {resumeId ? t('builder.editMode') : t('builder.createAndPreview')}
+            </p>
+            <span role="status">
+              {resumeSaveStatus && (
+                <StatusIndicator tone={resumeSaveStatus.tone} live={false}>
+                  {resumeSaveStatus.label}
+                </StatusIndicator>
               )}
+            </span>
+          </div>
 
-              {/* Cover letter tab actions */}
-              {activeTab === 'cover-letter' && coverLetter && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerateCoverLetter}
-                    disabled={isGeneratingCoverLetter}
-                  >
-                    {isGeneratingCoverLetter ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    {t('coverLetter.regenerate')}
-                  </Button>
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={handleDownloadCoverLetter}
-                    disabled={!resumeId || isDownloading}
-                  >
-                    <Download className="w-4 h-4" />
-                    {isDownloading ? t('common.generating') : t('common.download')}
-                  </Button>
-                </>
-              )}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Community links: quiet ghost actions, left of the tab's own actions */}
+            <CommunityLinks variant="builder" />
 
-              {/* Outreach tab actions */}
-              {activeTab === 'outreach' && outreachMessage && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerateOutreach}
-                    disabled={isGeneratingOutreach}
-                  >
-                    {isGeneratingOutreach ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    {t('outreach.regenerate')}
-                  </Button>
-                  <Button variant="success" size="sm" onClick={handleCopyOutreach}>
-                    {isCopied ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        {t('outreach.copied')}
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        {t('outreach.copyToClipboard')}
-                      </>
-                    )}
-                  </Button>
-                </>
-              )}
-
-              {/* Interview prep tab actions */}
-              {activeTab === 'interview-prep' && interviewPrep && (
+            {/* Resume tab actions */}
+            {activeTab === 'resume' && (
+              <>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleGenerateInterviewPrep}
-                  disabled={!canGenerateInterviewPrep || isGeneratingInterviewPrep}
+                  onClick={handleStartRegenerate}
+                  disabled={!resumeId || isSaving}
                 >
-                  {isGeneratingInterviewPrep ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4" />
-                  )}
-                  {t('interviewPrep.regenerate')}
+                  {t('builder.regenerate.buttonLabel')}
                 </Button>
-              )}
-            </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReset}
+                  disabled={!hasUnsavedChanges}
+                >
+                  <ArrowCounterClockwise aria-hidden="true" />
+                  {t('common.reset')}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={!resumeId || isSaving || loadingState !== 'loaded'}
+                >
+                  <FloppyDisk aria-hidden="true" />
+                  {isSaving
+                    ? t('common.saving')
+                    : autoSaveError
+                      ? t('builder.autoSave.retrySave')
+                      : hasUnsavedChanges
+                        ? t('builder.autoSave.saveNow')
+                        : t('builder.autoSave.savedButton')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownload}
+                  disabled={!resumeId || isDownloading}
+                >
+                  <DownloadSimple aria-hidden="true" />
+                  {isDownloading ? t('common.generating') : t('common.download')}
+                </Button>
+              </>
+            )}
+
+            {/* Cover letter tab actions */}
+            {activeTab === 'cover-letter' && coverLetter && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateCoverLetter}
+                  disabled={isGeneratingCoverLetter}
+                >
+                  {isGeneratingCoverLetter && (
+                    <SpinnerGap aria-hidden="true" className="animate-spin" />
+                  )}
+                  {t('coverLetter.regenerate')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadCoverLetter}
+                  disabled={!resumeId || isDownloading}
+                >
+                  <DownloadSimple aria-hidden="true" />
+                  {isDownloading ? t('common.generating') : t('common.download')}
+                </Button>
+              </>
+            )}
+
+            {/* Outreach tab actions (Copy lives in the editor) */}
+            {activeTab === 'outreach' && outreachMessage && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateOutreach}
+                disabled={isGeneratingOutreach}
+              >
+                {isGeneratingOutreach && <SpinnerGap aria-hidden="true" className="animate-spin" />}
+                {t('outreach.regenerate')}
+              </Button>
+            )}
+
+            {/* Interview prep tab actions */}
+            {activeTab === 'interview-prep' && interviewPrep && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateInterviewPrep}
+                disabled={!canGenerateInterviewPrep || isGeneratingInterviewPrep}
+              >
+                {isGeneratingInterviewPrep && (
+                  <SpinnerGap aria-hidden="true" className="animate-spin" />
+                )}
+                {t('interviewPrep.regenerate')}
+              </Button>
+            )}
           </div>
-        </div>
+        </PageHeader>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px] flex-1 min-h-0">
-          {/* Left Panel: Editor */}
-          <div className="bg-background p-6 md:p-8 overflow-y-auto no-print">
-            <div className="max-w-3xl mx-auto space-y-6">
-              <div className="flex items-center gap-2 border-b-2 border-black pb-2">
-                <div className="w-3 h-3 bg-blue-700"></div>
-                <h2 className="font-mono text-lg font-bold uppercase tracking-wider">
-                  {activeTab === 'resume' && t('builder.leftPanel.editorPanel')}
-                  {activeTab === 'cover-letter' && t('builder.leftPanel.coverLetterEditor')}
-                  {activeTab === 'outreach' && t('builder.leftPanel.outreachEditor')}
-                  {activeTab === 'interview-prep' && t('builder.leftPanel.interviewPrep')}
-                  {activeTab === 'jd-match' && t('builder.leftPanel.jdMatchAnalysis')}
-                </h2>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 bg-ink gap-px flex-1 min-h-0">
+          {/* Left Panel: editor and generate controls */}
+          <div className="bg-canvas p-3 md:p-4 overflow-y-auto no-print">
+            <div className="max-w-3xl space-y-6">
+              <PanelHeader
+                tone="input"
+                title={
+                  activeTab === 'resume'
+                    ? t('builder.leftPanel.editorPanel')
+                    : activeTab === 'cover-letter'
+                      ? t('builder.leftPanel.coverLetterEditor')
+                      : activeTab === 'outreach'
+                        ? t('builder.leftPanel.outreachEditor')
+                        : activeTab === 'interview-prep'
+                          ? t('builder.leftPanel.interviewPrep')
+                          : activeTab === 'jd-match'
+                            ? t('builder.leftPanel.jdMatchAnalysis')
+                            : t('builder.leftPanel.atsCheck')
+                }
+              />
 
               {/* Resume Editor */}
               {activeTab === 'resume' &&
                 (loadingState === 'error' ? (
-                  <div
-                    role="alert"
-                    className="border border-destructive bg-[#FEF2F2] p-4 font-mono text-xs text-destructive"
-                  >
-                    {t('builder.alerts.loadFailed')}
-                  </div>
+                  <Alert tone="error">{t('builder.alerts.loadFailed')}</Alert>
                 ) : (
                   <>
                     <FormattingControls
@@ -1595,24 +1567,37 @@ const ResumeBuilderContent = () => {
                   />
                 ))}
 
-              {/* Interview Prep Read-Only View */}
-              {activeTab === 'interview-prep' && (
-                <InterviewPrepView
-                  interviewPrep={interviewPrep}
-                  isGenerating={isGeneratingInterviewPrep}
-                  error={interviewPrepError}
-                  onGenerate={handleGenerateInterviewPrep}
-                  isTailoredResume={isTailoredResume}
-                  canGenerate={canGenerateInterviewPrep}
-                  unavailableMessage={interviewPrepUnavailableMessage}
-                  className="p-0"
-                />
-              )}
+              {/* Interview Prep: generate controls here, the output renders on the right */}
+              {activeTab === 'interview-prep' &&
+                (interviewPrep ? (
+                  <p className="max-w-[60ch] text-sm text-ink-soft text-pretty">
+                    {t('builder.generatePrompt.interviewPrepFooter')}
+                  </p>
+                ) : (
+                  <InterviewPrepView
+                    interviewPrep={null}
+                    isGenerating={isGeneratingInterviewPrep}
+                    error={interviewPrepError}
+                    onGenerate={handleGenerateInterviewPrep}
+                    isTailoredResume={isTailoredResume}
+                    canGenerate={canGenerateInterviewPrep}
+                    unavailableMessage={interviewPrepUnavailableMessage}
+                  />
+                ))}
 
               {/* JD Match Info Panel */}
               {activeTab === 'jd-match' && (
                 <div className="space-y-4">
-                  <div className="border-2 border-black bg-white p-4">
+                  {resumeId && jobContextStatus === 'available' && (
+                    <AtsScorePanel
+                      key={resumeId}
+                      resumeId={resumeId}
+                      hasUnsavedChanges={hasUnsavedChanges}
+                      template={templateSettings.template}
+                    />
+                  )}
+
+                  <div className="border-2 border-ink bg-white p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.aboutTitle')}
                     </h3>
@@ -1621,7 +1606,7 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-background p-4">
+                  <div className="border-2 border-ink bg-canvas p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.highlightedKeywordsTitle')}
                     </h3>
@@ -1635,7 +1620,7 @@ const ResumeBuilderContent = () => {
                         return (
                           <>
                             {parts[0]}
-                            <mark className="bg-yellow-200 px-1">
+                            <mark className="bg-highlight px-1">
                               {t('builder.jdMatch.highlightColor')}
                             </mark>
                             {parts.slice(1).join('__COLOR__')}
@@ -1645,7 +1630,7 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-white p-4">
+                  <div className="border-2 border-ink bg-white p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.tipsTitle')}
                     </h3>
@@ -1657,14 +1642,53 @@ const ResumeBuilderContent = () => {
                   </div>
                 </div>
               )}
+
+              {/* ATS Check Info Panel */}
+              {activeTab === 'ats-check' && (
+                <div className="space-y-4">
+                  <div className="border-2 border-ink bg-white p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.atsCheck.aboutTitle')}
+                    </h3>
+                    <p className="text-sm text-ink-soft leading-relaxed">
+                      {t('builder.atsCheck.aboutDescription')}
+                    </p>
+                  </div>
+                  <div className="border-2 border-ink bg-canvas p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.atsCheck.roundTripTitle')}
+                    </h3>
+                    <p className="text-sm text-ink-soft leading-relaxed">
+                      {t('builder.atsCheck.roundTripDescription')}
+                    </p>
+                  </div>
+                  <div className="border-2 border-ink bg-white p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.atsCheck.tipsTitle')}
+                    </h3>
+                    <ul className="text-sm text-ink-soft space-y-1 list-disc list-inside">
+                      <li>{t('builder.atsCheck.tips.items.singleColumn')}</li>
+                      <li>{t('builder.atsCheck.tips.items.standardHeadings')}</li>
+                      <li>{t('builder.atsCheck.tips.items.contactInBody')}</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Right Panel: Preview with Tabs */}
-          <div className="bg-secondary overflow-hidden flex flex-col no-print">
-            {/* Tabs Header */}
-            <div className="px-6 pt-3 shrink-0 bg-secondary">
+          {/* Right Panel: output only */}
+          <div className="bg-panel overflow-hidden flex flex-col no-print">
+            {/* Panel caption and tabs */}
+            <div className="px-3 pt-3 md:px-4 shrink-0 bg-panel">
+              <PanelHeader
+                tone="output"
+                title={t('builder.panels.preview')}
+                titleId="builder-preview-heading"
+              />
               <RetroTabs
+                idPrefix="builder"
+                aria-labelledby="builder-preview-heading"
                 tabs={[
                   { id: 'resume', label: t('builder.previewTabs.resume') },
                   {
@@ -1687,14 +1711,24 @@ const ResumeBuilderContent = () => {
                     label: t('builder.previewTabs.jdMatch'),
                     disabled: !jobDescription,
                   },
+                  {
+                    id: 'ats-check',
+                    label: t('builder.previewTabs.atsCheck'),
+                    disabled: !resumeId,
+                  },
                 ]}
                 activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as TabId)}
               />
             </div>
 
-            {/* Preview Content */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Preview Content: the active tab's panel */}
+            <div
+              id={`builder-panel-${activeTab}`}
+              role="tabpanel"
+              aria-labelledby={`builder-tab-${activeTab}`}
+              className="flex-1 overflow-y-auto"
+            >
               {/* Resume Preview */}
               {activeTab === 'resume' && (
                 <PaginatedPreview
@@ -1714,12 +1748,7 @@ const ResumeBuilderContent = () => {
                     />
                   </div>
                 ) : (
-                  <GeneratePrompt
-                    type="cover-letter"
-                    isGenerating={isGeneratingCoverLetter}
-                    onGenerate={handleGenerateCoverLetter}
-                    isTailoredResume={isTailoredResume}
-                  />
+                  nothingYet
                 ))}
 
               {/* Outreach Preview */}
@@ -1729,63 +1758,40 @@ const ResumeBuilderContent = () => {
                     <OutreachPreview content={outreachMessage} />
                   </div>
                 ) : (
-                  <GeneratePrompt
-                    type="outreach"
-                    isGenerating={isGeneratingOutreach}
-                    onGenerate={handleGenerateOutreach}
-                    isTailoredResume={isTailoredResume}
-                  />
+                  nothingYet
                 ))}
 
-              {/* Interview Prep Preview */}
-              {activeTab === 'interview-prep' && (
-                <InterviewPrepView
-                  interviewPrep={interviewPrep}
-                  isGenerating={isGeneratingInterviewPrep}
-                  error={interviewPrepError}
-                  onGenerate={handleGenerateInterviewPrep}
-                  isTailoredResume={isTailoredResume}
-                  canGenerate={canGenerateInterviewPrep}
-                  unavailableMessage={interviewPrepUnavailableMessage}
-                />
-              )}
+              {/* Interview Prep Output */}
+              {activeTab === 'interview-prep' &&
+                (interviewPrep ? (
+                  <InterviewPrepView
+                    interviewPrep={interviewPrep}
+                    isGenerating={isGeneratingInterviewPrep}
+                    error={interviewPrepError}
+                    onGenerate={handleGenerateInterviewPrep}
+                    isTailoredResume={isTailoredResume}
+                    canGenerate={canGenerateInterviewPrep}
+                    unavailableMessage={interviewPrepUnavailableMessage}
+                  />
+                ) : (
+                  nothingYet
+                ))}
 
               {/* JD Match Comparison */}
               {activeTab === 'jd-match' && jobDescription && (
                 <JDComparisonView jobDescription={jobDescription} resumeData={resumeData} />
               )}
-            </div>
-          </div>
-        </div>
 
-        {/* Footer */}
-        <div className="p-4 bg-background flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black no-print">
-          <span className="uppercase font-bold flex items-center gap-2">
-            <Image
-              src="/logo.svg"
-              alt="Resume Matcher"
-              width={20}
-              height={20}
-              className="w-5 h-5"
-            />
-            {t('builder.footer.moduleLabel')}
-          </span>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-700"></div>
-              <span className="uppercase">
-                {templateSettings.template === 'swiss-single' ||
-                templateSettings.template === 'modern' ||
-                templateSettings.template === 'latex' ||
-                templateSettings.template === 'clean'
-                  ? t('builder.footer.singleColumn')
-                  : t('builder.footer.twoColumn')}
-              </span>
+              {/* ATS Parse Check */}
+              {activeTab === 'ats-check' && (
+                <AtsCheckView
+                  resumeId={resumeId}
+                  settings={templateSettings}
+                  locale={uiLanguage}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                />
+              )}
             </div>
-            <span className="text-steel-grey">|</span>
-            <span className="uppercase">
-              {templateSettings.pageSize === 'A4' ? 'A4' : t('builder.pageSize.usLetter')}
-            </span>
           </div>
         </div>
       </div>
@@ -1810,6 +1816,7 @@ const ResumeBuilderContent = () => {
       <ConfirmDialog
         open={pendingDraftRestore !== null || pendingAttachmentDraftRestore !== null}
         onOpenChange={() => undefined}
+        dismissible={false}
         title={t('builder.draftRecovery.title')}
         description={t(
           resumeId ? 'builder.draftRecovery.description' : 'builder.draftRecovery.newDescription'

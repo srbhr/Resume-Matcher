@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { ZoomIn, ZoomOut, Eye, EyeOff, FileText } from 'lucide-react';
+import {
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  Eye,
+  EyeSlash,
+  FileText,
+} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
@@ -18,6 +24,8 @@ interface PaginatedPreviewProps {
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 1.5;
+// Opening zoom, and the ceiling for fit-to-width: a panel with room for at least 85% of the page opens here.
+const DEFAULT_ZOOM = 0.85;
 const ZOOM_STEP = 0.1;
 
 /**
@@ -30,7 +38,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
   const { contentLanguage } = useLanguage();
   const measurementRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(0.6);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [showMargins, setShowMargins] = useState(false);
   const [autoZoom, setAutoZoom] = useState(true);
   const resumeSettings: TemplateSettings = {
@@ -81,7 +89,8 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
     const containerWidth = containerRef.current.clientWidth - 48; // Padding
     const pageWidthPx = mmToPx(PAGE_DIMENSIONS[settings.pageSize].width);
     const optimalZoom = Math.min(containerWidth / pageWidthPx, MAX_ZOOM);
-    setZoom(Math.max(MIN_ZOOM, Math.min(optimalZoom, 0.75))); // Cap at 75% for usability
+    // Fit to the panel, but never open larger than the default zoom.
+    setZoom(Math.max(MIN_ZOOM, Math.min(optimalZoom, DEFAULT_ZOOM)));
   }, [settings.pageSize, autoZoom]);
 
   // Auto-zoom on mount and when page size changes
@@ -111,53 +120,54 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Controls bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-steel-grey bg-secondary shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-steel bg-panel shrink-0">
         <div className="flex items-center gap-2">
           {/* Zoom controls */}
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={handleZoomOut}
             disabled={zoom <= MIN_ZOOM}
-            className="h-8 w-8"
+            className="hover:bg-panel-hover"
             aria-label={t('preview.zoomOut')}
             title={t('preview.zoomOut')}
           >
-            <ZoomOut className="w-4 h-4" />
+            <MagnifyingGlassMinus aria-hidden="true" />
           </Button>
-          <span className="font-mono text-xs w-12 text-center text-ink-soft">
+          <span className="font-mono text-xs w-12 text-center text-ink-soft tabular-nums">
             {Math.round(zoom * 100)}%
           </span>
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={handleZoomIn}
             disabled={zoom >= MAX_ZOOM}
-            className="h-8 w-8"
+            className="hover:bg-panel-hover"
             aria-label={t('preview.zoomIn')}
             title={t('preview.zoomIn')}
           >
-            <ZoomIn className="w-4 h-4" />
+            <MagnifyingGlassPlus aria-hidden="true" />
           </Button>
 
-          <div className="w-px h-5 bg-steel-grey mx-2" />
+          <div aria-hidden="true" className="w-px h-4 bg-steel mx-2" />
 
           {/* Margin toggle */}
           <Button
             variant={showMargins ? 'secondary' : 'ghost'}
             size="sm"
             onClick={toggleMargins}
-            className="h-8 gap-1.5"
+            aria-pressed={showMargins}
+            className="hover:bg-panel-hover"
           >
-            {showMargins ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            {showMargins ? <Eye aria-hidden="true" /> : <EyeSlash aria-hidden="true" />}
             <span className="font-mono text-xs uppercase">{t('preview.margins')}</span>
           </Button>
         </div>
 
         {/* Page count */}
         <div className="flex items-center gap-2 text-ink-soft">
-          <FileText className="w-4 h-4" />
-          <span className="font-mono text-xs uppercase">
+          <FileText aria-hidden="true" className="size-4" />
+          <span className="font-mono text-xs uppercase tabular-nums">
             {isCalculating
               ? t('preview.calculating')
               : pages.length === 1
@@ -168,7 +178,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
       </div>
 
       {/* Scrollable preview area */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-[#D5D5D0] p-6">
+      <div ref={containerRef} className="flex-1 overflow-auto bg-panel-hover p-6">
         {/* Hidden measurement container - renders content at actual size */}
         <div
           ref={measurementRef}
@@ -179,6 +189,9 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             top: 0,
           }}
           aria-hidden="true"
+          // aria-hidden alone leaves the template's links tabbable; inert removes
+          // them from the tab order without changing layout, so measuring is unaffected.
+          inert
         >
           <Resume
             resumeData={resumeData}
@@ -197,11 +210,11 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             <React.Fragment key={page.pageNumber}>
               {index > 0 && (
                 <div className="flex items-center gap-2 py-2">
-                  <div className="h-px w-8 bg-steel-grey" />
-                  <span className="font-mono text-[10px] text-steel-grey uppercase tracking-wider">
+                  <div aria-hidden="true" className="h-px w-8 bg-steel" />
+                  <span className="font-mono text-xs text-ink-soft uppercase tracking-wider">
                     {t('preview.pageBreak')}
                   </span>
-                  <div className="h-px w-8 bg-steel-grey" />
+                  <div aria-hidden="true" className="h-px w-8 bg-steel" />
                 </div>
               )}
               <PageContainer

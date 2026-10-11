@@ -247,11 +247,12 @@ class TestSupportsTemperature:
     def test_gpt51_and_gpt52_allow_sampling_with_reasoning_omitted(
         self, mock_get_model_info: MagicMock
     ) -> None:
-        """Models with a no-reasoning mode preserve non-default sampling."""
+        """Models defaulting to no reasoning preserve non-default sampling."""
         mock_get_model_info.return_value = {
             "supported_openai_params": ["temperature", "max_tokens"],
             "supports_reasoning": True,
             "supports_none_reasoning_effort": True,
+            "default_reasoning_effort": "none",
         }
 
         assert _supports_temperature("gpt-5.1", 0.7) is True
@@ -266,11 +267,40 @@ class TestSupportsTemperature:
             "supported_openai_params": ["temperature", "max_tokens"],
             "supports_reasoning": True,
             "supports_none_reasoning_effort": True,
+            "default_reasoning_effort": "none",
         }
 
         assert _supports_temperature("gpt-5.1", 0.7, "medium") is False
         assert _supports_temperature("openai/gpt-5.2", 0.1, "minimal") is False
         assert _supports_temperature("gpt-5.1", 1.0, "medium") is True
+
+    @patch("app.llm.litellm.get_model_info")
+    def test_gpt5_supporting_none_but_defaulting_to_reasoning_omits_sampling(
+        self, mock_get_model_info: MagicMock
+    ) -> None:
+        """Supporting a none mode is not defaulting to it (gpt-5.5 shape)."""
+        mock_get_model_info.return_value = {
+            "supported_openai_params": ["temperature", "max_tokens"],
+            "supports_reasoning": True,
+            "supports_none_reasoning_effort": True,
+        }
+        assert _supports_temperature("openai/gpt-5.5", 0.7) is False
+        assert _supports_temperature("openai/gpt-5.5", 1.0) is True
+
+        mock_get_model_info.return_value["default_reasoning_effort"] = "medium"
+        assert _supports_temperature("openai/gpt-5.5", 0.7) is False
+
+    @patch("app.llm.litellm.get_model_info")
+    def test_gpt5_chat_latest_without_none_mode_omits_sampling(
+        self, mock_get_model_info: MagicMock
+    ) -> None:
+        """Versioned chat aliases that declare no none mode stay restricted."""
+        mock_get_model_info.return_value = {
+            "supported_openai_params": ["temperature", "max_tokens"],
+            "supports_reasoning": True,
+        }
+        assert _supports_temperature("openai/gpt-5.1-chat-latest", 0.7) is False
+        assert _supports_temperature("openai/gpt-5.1-chat-latest", 1.0) is True
 
     def test_ollama_gpt5_name_unaffected(self) -> None:
         """An Ollama model merely named gpt-5-* is local, not real gpt-5.
@@ -362,6 +392,7 @@ class TestGetRetryTemperature:
             "supported_openai_params": ["temperature", "max_tokens"],
             "supports_reasoning": True,
             "supports_none_reasoning_effort": True,
+            "default_reasoning_effort": "none",
         }
 
         assert _get_retry_temperature("openai/gpt-5.1", 0) == 0.1
@@ -1153,3 +1184,607 @@ class TestJsonModeVerifiedHosts:
             assert _openai_compatible_supports_json_mode(
                 _compatible(model="step-2", api_base="https://api.example.com/v1")
             )
+
+
+class TestGetLlmConfigApiBase:
+    """Present-but-null api_base must fall back to the env default (issue #909 #3).
+
+    ``stored.get("api_base", default)`` returns None when the key is present
+    with a null value — which is exactly what an explicit "clear the Base URL"
+    writes. The router's ``_effective_api_base`` already handles this; the
+    runtime path in llm.py must agree so a cleared Base URL falls back to
+    LLM_API_BASE instead of reaching LiteLLM as None.
+    """
+
+    def test_present_null_api_base_falls_back_to_env_default(self, monkeypatch):
+        from app.llm import get_llm_config
+
+        class FakeSettings:
+            llm_provider = "openai"
+            llm_model = "gpt-4o"
+            llm_api_key = "env-key"
+            llm_api_base = "https://env-default.example/v1"
+            reasoning_effort = None
+
+        monkeypatch.setattr("app.llm.load_config_file", lambda: {"api_base": None})
+        monkeypatch.setattr("app.llm.settings", FakeSettings())
+
+        config = get_llm_config()
+
+        assert config.api_base == "https://env-default.example/v1"
+
+    def test_explicit_stored_api_base_wins_over_env_default(self, monkeypatch):
+        from app.llm import get_llm_config
+
+        class FakeSettings:
+            llm_provider = "openai"
+            llm_model = "gpt-4o"
+            llm_api_key = "env-key"
+            llm_api_base = "https://env-default.example/v1"
+            reasoning_effort = None
+
+        monkeypatch.setattr(
+            "app.llm.load_config_file",
+            lambda: {"api_base": "https://stored.example/v1"},
+        )
+        monkeypatch.setattr("app.llm.settings", FakeSettings())
+
+        config = get_llm_config()
+
+        assert config.api_base == "https://stored.example/v1"
+
+    def test_absent_api_base_key_uses_env_default(self, monkeypatch):
+        from app.llm import get_llm_config
+
+        class FakeSettings:
+            llm_provider = "openai"
+            llm_model = "gpt-4o"
+            llm_api_key = "env-key"
+            llm_api_base = "https://env-default.example/v1"
+            reasoning_effort = None
+
+        monkeypatch.setattr("app.llm.load_config_file", lambda: {})
+        monkeypatch.setattr("app.llm.settings", FakeSettings())
+
+        config = get_llm_config()
+
+        assert config.api_base == "https://env-default.example/v1"
+
+
+# ---------------------------------------------------------------------------
+# Output-token parameter name (issue #1030)
+# ---------------------------------------------------------------------------
+
+MAX_TOKENS_REJECTION = (
+    "OpenAIException - Unsupported parameter: 'max_tokens' is not supported "
+    "with this model. Use 'max_completion_tokens' instead."
+)
+
+
+def _text_response(text: str = "pong") -> MagicMock:
+    choice = MagicMock()
+    choice.message.content = text
+    response = MagicMock()
+    response.choices = [choice]
+    return response
+
+
+def _bad_request(message: str, provider: str = "openai") -> Exception:
+    import litellm
+
+    return litellm.BadRequestError(message, model="some-model", llm_provider=provider)
+
+
+class TestOutputTokenParameter:
+    """LiteLLM only remaps ``max_tokens`` -> ``max_completion_tokens`` for model
+    names it recognises, so an unknown or new OpenAI model got the raw
+    ``max_tokens`` and OpenAI rejected it (issue #1030). The native OpenAI
+    provider now always sends ``max_completion_tokens``.
+    """
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "model", ["gpt-4o", "gpt-6.1-sol", "o5-mini", "gpt-5-chat-latest"]
+    )
+    async def test_health_check_openai_sends_max_completion_tokens(self, model):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(provider="openai", model=model, api_key="sk-test")
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 64
+        assert "max_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("provider", "model", "api_base"),
+        [
+            ("anthropic", "claude-sonnet-4-5", None),
+            ("gemini", "gemini-2.5-flash", None),
+            ("deepseek", "deepseek-chat", None),
+            ("openrouter", "openai/gpt-5", None),
+            ("openai_compatible", "local-model", "http://localhost:8080/v1"),
+            # A custom endpoint behind the openai provider (llama.cpp, vLLM,
+            # an older compatible server) keeps the portable max_tokens.
+            ("openai", "local-model", "http://localhost:8080/v1"),
+        ],
+    )
+    async def test_health_check_other_providers_keep_max_tokens(
+        self, provider, model, api_base
+    ):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider=provider, model=model, api_key="key", api_base=api_base
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            await check_llm_health(config)
+
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_tokens"] == 64
+        assert "max_completion_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    async def test_health_check_openai_with_explicit_openai_base(self):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="openai",
+            model="o5-mini",
+            api_key="sk-test",
+            api_base="https://api.openai.com/v1",
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            await check_llm_health(config)
+
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 64
+        assert "max_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_keeps_the_clamped_value_under_the_new_key(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(provider="openai", model="o5-mini", api_key="sk-test")
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        with patch("app.llm._calculate_timeout", return_value=90) as calc_timeout:
+            await complete(prompt="Hi", max_tokens=2048)
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 2048
+        assert "max_tokens" not in kwargs
+        # The timeout scaling still sees the plain token budget.
+        calc_timeout.assert_called_once_with("completion", 2048, "openai")
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_complete_json_openai_sends_max_completion_tokens(
+        self, mock_get_router, _mock_supports_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(provider="openai", model="o5-mini", api_key="sk-test")
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response('{"ok": true}'))
+        mock_get_router.return_value = (router, config)
+
+        result = await complete_json(
+            prompt="Extract", max_tokens=3000, schema_type="keywords"
+        )
+
+        assert result == {"ok": True}
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 3000
+        assert "max_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("provider", ["anthropic", "gemini"])
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_other_providers_keep_max_tokens(
+        self, mock_get_router, _mock_supports_temp, provider
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(provider=provider, model="some-model", api_key="key")
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        await complete(prompt="Hi", max_tokens=2048)
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["max_tokens"] == 2048
+        assert "max_completion_tokens" not in kwargs
+
+    def test_litellm_passes_max_completion_tokens_through_for_openai(self):
+        """Pin the LiteLLM behaviour the fix relies on: known and unknown models
+        alike keep ``max_completion_tokens`` for the openai provider."""
+        from litellm.utils import get_optional_params
+
+        for model in ("gpt-4o", "gpt-4.1", "gpt-5", "o5-mini", "gpt-5-chat-latest"):
+            params = get_optional_params(
+                model=model, custom_llm_provider="openai", max_completion_tokens=64
+            )
+            assert params["max_completion_tokens"] == 64, model
+            assert "max_tokens" not in params, model
+
+
+class TestReasoningEffortThinkingBudget:
+    """A stored reasoning_effort outlives the model it was set for (the gpt-5
+    migration persists ``minimal``). On Anthropic LiteLLM turns it into a
+    thinking budget of at least 1024 tokens, and Anthropic rejects any call
+    whose ``max_tokens`` does not exceed it. The 64-token health probe always
+    did, so /status reported llm_healthy:false.
+    """
+
+    @pytest.mark.asyncio
+    async def test_health_probe_omits_reasoning_effort_on_anthropic(self):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="sk-ant-test",
+            reasoning_effort="minimal",
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_tokens"] == 64
+        assert "reasoning_effort" not in kwargs
+
+    @pytest.mark.asyncio
+    async def test_health_probe_still_sends_reasoning_effort_to_openai(self):
+        """gpt-5 needs ``minimal`` or its 64 tokens go to hidden reasoning."""
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="openai",
+            model="gpt-5-nano-2025-08-07",
+            api_key="sk-test",
+            reasoning_effort="minimal",
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            await check_llm_health(config)
+
+        assert acompletion.call_args.kwargs["reasoning_effort"] == "minimal"
+
+    @pytest.mark.parametrize(
+        ("effort", "max_tokens", "sent"),
+        [
+            ("minimal", 64, False),
+            ("minimal", 1024, False),
+            ("minimal", 1025, True),
+            ("low", 500, False),
+            ("medium", 2048, False),
+            ("medium", 4096, True),
+            ("high", 4096, False),
+            ("high", 8192, True),
+        ],
+    )
+    def test_anthropic_sends_effort_only_above_the_thinking_budget(
+        self, effort, max_tokens, sent
+    ):
+        from app.llm import _reasoning_effort_kwarg
+
+        config = LLMConfig(provider="anthropic", model="claude-sonnet-4-5", api_key="k")
+
+        result = _reasoning_effort_kwarg(config, effort, max_tokens)
+
+        assert result == ({"reasoning_effort": effort} if sent else {})
+
+    def test_effort_is_omitted_when_unset_and_passed_through_elsewhere(self):
+        from app.llm import _reasoning_effort_kwarg
+
+        anthropic = LLMConfig(provider="anthropic", model="m", api_key="k")
+        openai = LLMConfig(provider="openai", model="gpt-5-mini", api_key="k")
+
+        assert _reasoning_effort_kwarg(anthropic, None, 4096) == {}
+        assert _reasoning_effort_kwarg(openai, "minimal", 64) == {
+            "reasoning_effort": "minimal"
+        }
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_omits_effort_when_max_tokens_is_below_the_budget(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="k",
+            reasoning_effort="medium",
+        )
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        await complete(prompt="Hi", max_tokens=500)
+        assert "reasoning_effort" not in router.acompletion.call_args.kwargs
+
+        await complete(prompt="Hi", max_tokens=4096)
+        assert router.acompletion.call_args.kwargs["reasoning_effort"] == "medium"
+
+
+class TestThinkingDropsTemperature:
+    """Anthropic rejects extended thinking with a temperature other than 1, so
+    a request that carries ``reasoning_effort`` must go out without it.
+    """
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_drops_temperature_when_thinking_is_sent(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="k",
+            reasoning_effort="minimal",
+        )
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        await complete(prompt="Hi", max_tokens=4096, temperature=0.1)
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["reasoning_effort"] == "minimal"
+        assert "temperature" not in kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_json_drops_temperature_when_thinking_is_sent(
+        self, mock_get_router, _mock_supports_temp, _mock_supports_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="k",
+            reasoning_effort="minimal",
+        )
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response('{"ok": true}'))
+        mock_get_router.return_value = (router, config)
+
+        await complete_json(prompt="Extract", max_tokens=4096, schema_type="keywords")
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["reasoning_effort"] == "minimal"
+        assert "temperature" not in kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_temperature_is_kept_when_thinking_is_not_sent(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        """Below the thinking budget the effort is omitted, so temperature stays;
+        other providers keep both."""
+        from app.llm import complete
+
+        for provider, max_tokens in (("anthropic", 500), ("openai", 4096)):
+            config = LLMConfig(
+                provider=provider,
+                model="some-model",
+                api_key="k",
+                reasoning_effort="minimal",
+            )
+            router = MagicMock()
+            router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+            mock_get_router.return_value = (router, config)
+
+            await complete(prompt="Hi", max_tokens=max_tokens, temperature=0.1)
+
+            kwargs = router.acompletion.call_args.kwargs
+            assert kwargs["temperature"] == 0.1
+            assert ("reasoning_effort" in kwargs) is (provider == "openai")
+
+
+class TestMaxTokensRejectionFallback:
+    """Azure, OpenRouter and compatible servers that front a reasoning model
+    reject ``max_tokens`` with a 400 that names ``max_completion_tokens``. The
+    call is retried exactly once with the kwarg swapped (issue #1030)."""
+
+    @staticmethod
+    def _config(provider: str) -> LLMConfig:
+        return LLMConfig(provider=provider, model="some-model", api_key="key")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "provider", ["azure_foundry", "openai_compatible", "openrouter", "openai"]
+    )
+    async def test_retries_once_with_max_completion_tokens(self, provider):
+        from app.llm import _route_acompletion
+
+        response = _text_response()
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), response]
+        )
+
+        result = await _route_acompletion(
+            self._config(provider),
+            transport,
+            model="primary",
+            messages=[],
+            max_tokens=4096,
+            timeout=30,
+        )
+
+        assert result is response
+        assert transport.acompletion.await_count == 2
+        first, second = (c.kwargs for c in transport.acompletion.call_args_list)
+        assert first["max_tokens"] == 4096
+        assert "max_completion_tokens" not in first
+        assert second["max_completion_tokens"] == 4096
+        assert "max_tokens" not in second
+        # Everything else is passed through untouched.
+        assert second["model"] == "primary"
+        assert second["timeout"] == 30
+
+    @pytest.mark.asyncio
+    async def test_other_bad_requests_are_reraised_without_retry(self):
+        from app.llm import _route_acompletion
+
+        error = _bad_request(
+            "OpenAIException - This model's maximum context length is 8192 "
+            "tokens. However, you requested 9000 tokens (max_tokens)."
+        )
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=error)
+
+        with pytest.raises(type(error)) as exc_info:
+            await _route_acompletion(
+                self._config("azure_foundry"), transport, max_tokens=4096
+            )
+
+        assert exc_info.value is error
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_reverse_rejection_is_not_retried(self):
+        """A server that rejects ``max_completion_tokens`` and asks for
+        ``max_tokens`` must not be answered with another swap."""
+        from app.llm import _route_acompletion
+
+        error = _bad_request(
+            "Unsupported parameter: 'max_completion_tokens' is not supported "
+            "with this model. Use 'max_tokens' instead."
+        )
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=error)
+
+        with pytest.raises(type(error)):
+            await _route_acompletion(
+                self._config("openai_compatible"),
+                transport,
+                max_completion_tokens=4096,
+            )
+
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_no_retry_when_max_tokens_was_not_sent(self):
+        from app.llm import _route_acompletion
+
+        error = _bad_request(MAX_TOKENS_REJECTION)
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=error)
+
+        with pytest.raises(type(error)):
+            await _route_acompletion(
+                self._config("openai_compatible"),
+                transport,
+                max_completion_tokens=4096,
+            )
+
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_retries_only_once(self):
+        from app.llm import _route_acompletion
+
+        second = _bad_request(MAX_TOKENS_REJECTION)
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), second]
+        )
+
+        with pytest.raises(type(second)) as exc_info:
+            await _route_acompletion(
+                self._config("azure_foundry"), transport, max_tokens=4096
+            )
+
+        assert exc_info.value is second
+        assert transport.acompletion.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_non_bad_request_errors_are_not_retried(self):
+        from app.llm import _route_acompletion
+
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=ValueError(MAX_TOKENS_REJECTION))
+
+        with pytest.raises(ValueError):
+            await _route_acompletion(
+                self._config("azure_foundry"), transport, max_tokens=4096
+            )
+
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_health_check_recovers_for_openai_compatible(self):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="openai_compatible",
+            model="reasoning-model",
+            api_key="key",
+            api_base="https://compat.example/v1",
+        )
+        acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), _text_response()]
+        )
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        assert acompletion.await_count == 2
+        assert acompletion.call_args.kwargs["max_completion_tokens"] == 64
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_recovers_for_azure(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = self._config("azure_foundry")
+        router = MagicMock()
+        router.acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), _text_response("Hello")]
+        )
+        mock_get_router.return_value = (router, config)
+
+        result = await complete(prompt="Hi", max_tokens=2048)
+
+        assert result == "Hello"
+        assert router.acompletion.await_count == 2
+        assert router.acompletion.call_args.kwargs["max_completion_tokens"] == 2048

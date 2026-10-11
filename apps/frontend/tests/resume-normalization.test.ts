@@ -246,6 +246,107 @@ describe('normalization robustness — sections and education', () => {
     ).not.toThrow();
   });
 
+  it('drops null and primitive customSections entries from the save payload', () => {
+    const out = normalizeResumeForSave(
+      malformed({
+        customSections: {
+          broken: null,
+          primitive: 'nope',
+          array: ['not', 'a', 'section'],
+          ok: { sectionType: 'stringList', strings: ['Real'] },
+        },
+      })
+    );
+
+    // Invalid entries must not reach the backend (CustomSection validation
+    // fails on them) nor crash consumers doing Object.entries -> .sectionType.
+    expect(out.customSections?.broken).toBeUndefined();
+    expect(out.customSections?.primitive).toBeUndefined();
+    expect(out.customSections?.array).toBeUndefined();
+    expect(out.customSections?.ok).toEqual({ sectionType: 'stringList', strings: ['Real'] });
+  });
+
+  it('drops customSections entries whose sectionType is missing', () => {
+    const out = normalizeResumeForSave(
+      malformed({
+        customSections: {
+          noType: { foo: 'bar' },
+          empty: {},
+          ok: { sectionType: 'itemList', items: [{ id: 1, title: 'Real' }] },
+        },
+      })
+    );
+
+    expect(out.customSections?.noType).toBeUndefined();
+    expect(out.customSections?.empty).toBeUndefined();
+    expect(out.customSections?.ok).toEqual({
+      sectionType: 'itemList',
+      items: [{ id: 1, title: 'Real', description: [] }],
+    });
+  });
+
+  it('drops customSections entries with an invalid sectionType', () => {
+    const out = normalizeResumeForSave(
+      malformed({
+        customSections: {
+          bogus: { sectionType: 'bogus', items: [] },
+          ok: { sectionType: 'stringList', strings: ['Real'] },
+        },
+      })
+    );
+
+    expect(out.customSections?.bogus).toBeUndefined();
+    expect(out.customSections?.ok).toEqual({ sectionType: 'stringList', strings: ['Real'] });
+  });
+
+  it('keeps every SectionType union member with content intact', () => {
+    const out = normalizeResumeForSave(
+      malformed({
+        customSections: {
+          info: { sectionType: 'personalInfo', text: 'Header' },
+          text: { sectionType: 'text', text: 'Body' },
+          item: {
+            sectionType: 'itemList',
+            items: [{ id: 1, title: 'A', description: ['', 'Kept'] }],
+          },
+          list: { sectionType: 'stringList', strings: ['One', '  Two  '] },
+        },
+      })
+    );
+
+    expect(out.customSections?.info).toEqual({ sectionType: 'personalInfo', text: 'Header' });
+    expect(out.customSections?.text).toEqual({ sectionType: 'text', text: 'Body' });
+    expect(out.customSections?.item).toEqual({
+      sectionType: 'itemList',
+      items: [{ id: 1, title: 'A', description: ['Kept'] }],
+    });
+    expect(out.customSections?.list).toEqual({
+      sectionType: 'stringList',
+      strings: ['One', 'Two'],
+    });
+  });
+
+  it('drops a non-string text from a customSections entry so renderers cannot throw on .trim()', () => {
+    const out = normalizeResumeForRender(
+      malformed({
+        customSections: {
+          numeric: { sectionType: 'text', text: 42 },
+          object: { sectionType: 'text', text: { nested: 'x' } },
+          ok: { sectionType: 'text', text: 'Body' },
+        },
+      })
+    );
+
+    // The renderer calls `customSection.text?.trim()`; none of these may be a
+    // non-string any more.
+    for (const key of ['numeric', 'object']) {
+      expect(out.customSections?.[key].sectionType).toBe('text');
+      expect(out.customSections?.[key].text).toBeUndefined();
+      expect(() => out.customSections?.[key].text?.trim()).not.toThrow();
+    }
+    expect(out.customSections?.ok).toEqual({ sectionType: 'text', text: 'Body' });
+  });
+
   it('drops null and primitive education entries', () => {
     const out = normalizeResumeForSave(
       malformed({ education: [null, { id: 1, institution: 'MIT' }, 'nope'] })

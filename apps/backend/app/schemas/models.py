@@ -8,6 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.ai_limits import validate_source_size
+from app.config import normalize_provider
 from app.schemas.refinement import RefinementStats
 
 _TEXT_VALUE_KEYS = (
@@ -595,12 +596,15 @@ class ImproveResumeRequest(BaseModel):
     prompt_id: str | None = None
     max_bullets_per_entry: int | None = Field(None, ge=1, le=10)
     page_fit: PageFitSettings | None = None
+    # Page budget for page_fit; ignored without page_fit.
+    max_pages: int = Field(1, ge=1, le=5)
 
 
 class BulletSelectionSummary(BaseModel):
     """What the harness kept/dropped when tailoring from a long master."""
 
-    max_per_entry: int
+    max_per_entry: int | None  # None = no per-entry cap
+    max_pages: int | None = None  # page limit used for page fit; None = no fit
     bullets_before: int
     bullets_after: int
     trimmed_for_fit: int = 0
@@ -661,11 +665,25 @@ class ATSSubScores(BaseModel):
     skills_coverage: float = Field(
         default=0.0, ge=0.0, le=100.0, description="JD skills matched in resume (0–100)"
     )
+    title_match: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=100.0,
+        description="Posting's exact job title in headline/summary (0–100); "
+        "None when the posting has no title",
+    )
     section_completeness: float = Field(
         default=0.0,
         ge=0.0,
         le=100.0,
-        description="Key resume sections present (0–100)",
+        description="Contact info + visible key resume sections present (0–100)",
+    )
+    date_consistency: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=100.0,
+        description="Share of dates in the dominant format (0–100); "
+        "None when the resume has fewer than two dates",
     )
 
 
@@ -691,6 +709,13 @@ class ATSScore(BaseModel):
         default_factory=list,
         description="Actionable suggestions to improve the ATS score",
     )
+
+
+class ATSScoreRecord(BaseModel):
+    """Last calculated ATS score of a saved tailored resume."""
+
+    score: ATSScore
+    calculated_at: str = Field(description="UTC ISO-8601 time of the calculation")
 
 
 class ImproveResumeData(BaseModel):
@@ -722,7 +747,7 @@ class ImproveResumeData(BaseModel):
     # ATS score breakdown
     ats_score: "ATSScore | None" = None
 
-    # Harness bullet selection summary (None unless max_bullets_per_entry was requested)
+    # Harness bullet selection summary (None unless max_bullets_per_entry or page_fit was requested)
     bullet_selection: BulletSelectionSummary | None = None
 
     # Warning and status fields for transparency
@@ -775,6 +800,11 @@ class LLMConfigRequest(BaseModel):
     # Strictly typed so invalid values are rejected at the boundary (422)
     # rather than corrupting config.json and crashing later reads.
     reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def _normalize_provider(cls, value: Any) -> Any:
+        return normalize_provider(value)
 
 
 class LLMConfigResponse(BaseModel):
@@ -993,3 +1023,55 @@ class ImproveDiffResult(BaseModel):
 
     changes: list[ResumeChange] = Field(default_factory=list)
     strategy_notes: str = Field(default="")
+
+
+# Single Queue Models
+MAX_QUEUE_COOLDOWN_SECONDS = 60
+
+
+class JobQueueAddRequest(BaseModel):
+    """Request to queue a single job description for background tailoring."""
+
+    resume_id: str
+    job_description: str
+    role: str | None = None
+    company: str | None = None
+    job_req_id: str | None = None
+    # Cooldown after this item; bounded so one request cannot stall the worker.
+    rate_limit_seconds: float = Field(
+        default=5.0, ge=0, le=MAX_QUEUE_COOLDOWN_SECONDS, allow_inf_nan=False
+    )
+    prompt_id: str | None = None
+
+
+class JobQueueItemResponse(BaseModel):
+    """Item in the tailoring queue."""
+
+    item_id: str
+    resume_id: str
+    job_description_snippet: str
+    role: str
+    company: str
+    job_req_id: str
+    status: str
+    tailored_resume_id: str | None = None
+    title: str | None = None
+    job_id: str | None = None
+    error: str | None = None
+    rate_limit_seconds: float
+    created_at: str
+    updated_at: str
+
+
+class JobMetadataParseRequest(BaseModel):
+    """Request to parse metadata (role, company, id) from job description."""
+
+    job_description: str
+
+
+class JobMetadataParseResponse(BaseModel):
+    """Extracted metadata from a job description."""
+
+    role: str
+    company: str
+    job_req_id: str

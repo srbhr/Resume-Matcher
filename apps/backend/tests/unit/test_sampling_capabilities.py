@@ -16,6 +16,7 @@ def test_unknown_reasoning_capability_omits_flexible_sampling(
         "supported_openai_params": ["temperature"],
         "supports_reasoning": reasoning_capability,
         "supports_none_reasoning_effort": True,
+        "default_reasoning_effort": "none",
     }
     with patch("app.llm.litellm.get_model_info", return_value=model_info):
         assert not _supports_temperature("gpt-5.1", 0.7, reasoning_effort=None)

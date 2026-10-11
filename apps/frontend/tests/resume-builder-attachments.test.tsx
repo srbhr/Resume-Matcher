@@ -173,6 +173,11 @@ describe('builder attachment ownership', () => {
       currentSearch = `id=a&tab=${kind}`;
       const Builder = await importBuilder();
       const view = render(<Builder />);
+      // Generate handlers ignore clicks until the resume load settles.
+      expect(fetchResume).toHaveBeenCalledWith('a');
+      await act(async () => {
+        await fetchResume.mock.results[0].value;
+      });
       const buttons = await screen.findAllByRole('button', { name: `generate-${kind}` });
       if (kind === 'interview-prep') {
         await waitFor(() => expect(fetchJobDescription).toHaveBeenCalledWith('a'));
@@ -213,6 +218,80 @@ describe('builder attachment ownership', () => {
 
     expect(screen.queryByText('builder.alerts.coverLetterGenerateFailed')).toBeNull();
     expect(screen.getAllByRole('button', { name: 'generate-cover-letter' })).not.toHaveLength(0);
+  });
+});
+
+describe('builder panels', () => {
+  it.each(['cover-letter', 'outreach', 'interview-prep'] as const)(
+    'renders the %s generate controls in one panel and keeps the output panel empty',
+    async (tab) => {
+      fetchResume.mockResolvedValue(response());
+      currentSearch = `id=a&tab=${tab}`;
+      const Builder = await importBuilder();
+      render(<Builder />);
+      await act(async () => {
+        await fetchResume.mock.results[0].value;
+      });
+
+      expect(screen.getAllByRole('button', { name: `generate-${tab}` })).toHaveLength(1);
+      const generate = screen.getByRole('button', { name: `generate-${tab}` });
+      const output = screen.getByRole('tabpanel');
+      // The generate control lives in the editor column (left, before the tab strip)…
+      expect(output).not.toContainElement(generate);
+      expect(
+        screen.getByRole('tablist').compareDocumentPosition(generate) &
+          Node.DOCUMENT_POSITION_PRECEDING
+      ).toBeTruthy();
+      // …and the output panel only says nothing has been generated yet.
+      expect(within(output).getByText('builder.panels.nothingYet')).toBeInTheDocument();
+    }
+  );
+});
+
+describe('builder preview tabs', () => {
+  it('names the tab strip after the Preview heading and points only the selected tab at the panel', async () => {
+    fetchResume.mockResolvedValue(response());
+    const Builder = await importBuilder();
+    render(<Builder />);
+    await act(async () => {
+      await fetchResume.mock.results[0].value;
+    });
+
+    const tablist = screen.getByRole('tablist', { name: 'builder.panels.preview' });
+    const heading = screen.getByRole('heading', { name: 'builder.panels.preview' });
+    expect(tablist).toHaveAttribute('aria-labelledby', heading.id);
+
+    const panel = screen.getByRole('tabpanel');
+    const tabs = within(tablist).getAllByRole('tab');
+    const selected = tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true');
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toHaveAttribute('aria-controls', panel.id);
+    for (const tab of tabs.filter((tab) => tab !== selected[0])) {
+      expect(tab).not.toHaveAttribute('aria-controls');
+    }
+  });
+});
+
+describe('builder footer', () => {
+  it('has no footer bar: the page frame ends with the panel grid', async () => {
+    fetchResume.mockResolvedValue(response());
+    const Builder = await importBuilder();
+    const { container } = render(<Builder />);
+    await act(async () => {
+      await fetchResume.mock.results[0].value;
+    });
+
+    // The module label and its logo are gone with the bar.
+    expect(screen.queryByText('builder.footer.moduleLabel')).not.toBeInTheDocument();
+    expect(screen.queryByAltText('Resume Matcher')).not.toBeInTheDocument();
+
+    // The frame's last child is the content grid, which takes the freed height (flex-1) so the
+    // panels fill the frame down to its border with no gap left behind.
+    const frame = container.querySelector('.shadow-sw-lg') as HTMLElement;
+    expect(frame).toHaveClass('flex', 'flex-col', 'h-full');
+    const grid = frame.lastElementChild as HTMLElement;
+    expect(grid).toHaveClass('grid', 'flex-1', 'min-h-0');
+    expect(frame.querySelector(':scope > .border-t')).toBeNull();
   });
 });
 

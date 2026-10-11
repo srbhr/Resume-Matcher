@@ -1,4 +1,5 @@
 import type {
+  ATSScore,
   ImprovedResult,
   InterviewPrepData,
 } from '@/components/common/resume_previewer_context';
@@ -89,7 +90,10 @@ export interface PageFitSettings {
 
 /** Summary of harness-steered bullet selection returned by improve/preview. */
 export interface BulletSelectionSummary {
-  max_per_entry: number;
+  /** Null when no per-entry bullet cap was applied. */
+  max_per_entry: number | null;
+  /** Page limit page fit aimed for; null/absent when page fit was not requested. */
+  max_pages?: number | null;
   bullets_before: number;
   bullets_after: number;
   trimmed_for_fit: number;
@@ -248,7 +252,7 @@ export async function previewImproveResume(
   resumeId: string,
   jobId: string,
   promptId?: string,
-  options?: { maxBulletsPerEntry?: number; pageFit?: PageFitSettings }
+  options?: { maxBulletsPerEntry?: number; pageFit?: PageFitSettings; maxPages?: number }
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
@@ -258,6 +262,7 @@ export async function previewImproveResume(
       ? { max_bullets_per_entry: options.maxBulletsPerEntry }
       : {}),
     ...(options?.pageFit !== undefined ? { page_fit: options.pageFit } : {}),
+    ...(options?.maxPages !== undefined ? { max_pages: options.maxPages } : {}),
   });
 }
 
@@ -518,6 +523,33 @@ export async function retryProcessing(
   return res.json();
 }
 
+/** Last calculated ATS score of a saved tailored resume. */
+export interface ATSScoreRecord {
+  score: ATSScore;
+  /** UTC ISO-8601 time of the calculation. */
+  calculated_at: string;
+}
+
+/** Last calculated ATS score, or null when it was never calculated. */
+export async function fetchLastAtsScore(resumeId: string): Promise<ATSScoreRecord | null> {
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/ats-score`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch ATS score (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Recalculates the ATS score from the saved resume and stores it as the last score. */
+export async function recalculateAtsScore(resumeId: string): Promise<ATSScoreRecord> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/ats-score`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to recalculate ATS score (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
 /** Fetches the job description used to tailor a resume */
 export async function fetchJobDescription(
   resumeId: string
@@ -526,6 +558,103 @@ export async function fetchJobDescription(
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to fetch job description (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+export type QueueItemStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface QueueItem {
+  item_id: string;
+  resume_id: string;
+  job_description_snippet: string;
+  role: string;
+  company: string;
+  job_req_id: string;
+  status: QueueItemStatus;
+  tailored_resume_id: string | null;
+  title: string | null;
+  job_id: string | null;
+  /** Failure code when status is 'failed': not_found, too_large, timeout or failed. */
+  error: string | null;
+  rate_limit_seconds: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobMetadata {
+  role: string;
+  company: string;
+  job_req_id: string;
+}
+
+/** Queue an individual job description for sequential background tailoring */
+export async function addJobToQueue(
+  resumeId: string,
+  jobDescription: string,
+  rateLimitSeconds: number = 5,
+  role?: string,
+  company?: string,
+  jobReqId?: string,
+  promptId?: string
+): Promise<QueueItem> {
+  const res = await apiPost('/jobs/queue', {
+    resume_id: resumeId,
+    job_description: jobDescription,
+    rate_limit_seconds: rateLimitSeconds,
+    role: role || undefined,
+    company: company || undefined,
+    job_req_id: jobReqId || undefined,
+    prompt_id: promptId || undefined,
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to queue job (${res.status}): ${errorText}`);
+  }
+  return res.json();
+}
+
+/** Fetch all queue items for a resume */
+export async function fetchJobQueue(resumeId?: string): Promise<QueueItem[]> {
+  const path = resumeId ? `/jobs/queue?resume_id=${encodeURIComponent(resumeId)}` : '/jobs/queue';
+  const res = await apiFetch(path);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch job queue (${res.status})`);
+  }
+  return res.json();
+}
+
+/** The worker is tailoring this item right now; it can be removed once it finishes. */
+export class QueueItemInProgressError extends Error {}
+
+/** Delete a specific item from the queue */
+export async function deleteQueueItem(itemId: string): Promise<void> {
+  const res = await apiDelete(`/jobs/queue/${encodeURIComponent(itemId)}`);
+  if (res.status === 409) {
+    throw new QueueItemInProgressError('Queue item is being tailored');
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to delete queue item (${res.status})`);
+  }
+}
+
+/** Clear one master resume's queue items, optionally only those in one status */
+export async function clearQueueItems(resumeId: string, status?: QueueItemStatus): Promise<void> {
+  const params = new URLSearchParams({ resume_id: resumeId });
+  if (status) params.set('status', status);
+  const res = await apiDelete(`/jobs/queue?${params}`);
+  if (!res.ok) {
+    throw new Error(`Failed to clear queue (${res.status})`);
+  }
+}
+
+/** Instantly parse job metadata using heuristics without LLM calls */
+export async function parseJobMetadata(jobDescription: string): Promise<JobMetadata> {
+  const res = await apiPost('/jobs/parse-metadata', {
+    job_description: jobDescription,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to detect job details (${res.status})`);
   }
   return res.json();
 }

@@ -23,19 +23,14 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ value, onChange }) => 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label
-          htmlFor="summary"
-          className="font-mono text-xs uppercase tracking-wider text-steel-grey"
-        >
-          {t('resume.sections.summary')}
-        </Label>
+        <Label htmlFor="summary">{t('resume.sections.summary')}</Label>
         <Textarea
           id="summary"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={t('builder.placeholders.summary')}
-          className="min-h-[150px] text-black rounded-none border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700 bg-white"
+          className="min-h-[150px]"
         />
       </div>
     </div>

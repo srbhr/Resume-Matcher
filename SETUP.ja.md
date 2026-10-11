@@ -10,6 +10,7 @@
 
 - [前提条件](#prerequisites)
 - [クイックスタート](#quick-start)
+- [Windows 11 でのセットアップ](#windows-11-setup)
 - [手順どおりにセットアップ](#step-by-step-setup)
   - [1. リポジトリをクローン](#1-clone-the-repository)
   - [2. バックエンドのセットアップ](#2-backend-setup)
@@ -17,8 +18,10 @@
 - [AI プロバイダの設定](#configuring-your-ai-provider)
   - [オプション A: クラウドプロバイダ](#option-a-cloud-providers)
   - [オプション B: Ollama によるローカル AI（無料）](#option-b-local-ai-with-ollama-free)
+  - [オプション C: ChatGPT プラン（Sign in with ChatGPT）](#option-c-your-chatgpt-plan-sign-in-with-chatgpt)
 - [Docker デプロイ](#docker-deployment)
 - [アプリへのアクセス](#accessing-the-application)
+- [Claude Code / Claude Desktop から Resume Matcher を使う（MCP）](#use-resume-matcher-from-claude-code-or-claude-desktop-mcp)
 - [よく使うコマンド](#common-commands-reference)
 - [トラブルシューティング](#troubleshooting)
 - [プロジェクト構成](#project-structure-overview)
@@ -34,7 +37,7 @@
 | ツール | 最低バージョン | 確認方法 | インストール |
 |------|----------------|----------|--------------|
 | **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
+| **Node.js** | 24+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Node.js に同梱 |
 | **uv** | 最新 | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | **Git** | 任意 | `git --version` | [git-scm.com](https://git-scm.com) |
@@ -81,6 +84,66 @@ npm run dev                  # 開発サーバを起動
 ブラウザで **<http://localhost:3000>** を開けば OK です。
 
 > **注意:** 利用前に AI プロバイダの設定が必要です。下の [AI プロバイダの設定](#configuring-your-ai-provider) を参照してください。
+
+---
+
+<a id="windows-11-setup"></a>
+## Windows 11 でのセットアップ
+
+上記および本ガイドの他の箇所のコマンドは macOS/Linux のシェル構文です。Windows 11 では、代わりにこのセクションの **PowerShell**（または Windows Terminal）のコマンドを使ってください。
+
+### 1. 前提ツールをインストール
+
+[前提条件](#prerequisites) のツールを `winget`（Windows 11 に標準搭載）でインストールし、`PATH` に反映されるよう **PowerShell を閉じて開き直します**：
+
+```powershell
+winget install --id Git.Git -e
+winget install --id Python.Python.3.13 -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id astral-sh.uv -e
+```
+
+[前提条件](#prerequisites) の表にあるリンクのインストーラーを使うこともできます。
+
+### 2. コードを取得
+
+Git でクローンします：
+
+```powershell
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+```
+
+Git を使わない場合は、[リポジトリのページ](https://github.com/srbhr/Resume-Matcher) を開いて **Code → Download ZIP** をクリックし、ZIP を展開して、PowerShell で展開したフォルダへ `cd` します。
+
+### 3. バックエンドを起動（PowerShell ウィンドウ 1）
+
+```powershell
+cd apps\backend
+Copy-Item .env.example .env   # テンプレートから設定を作成
+notepad .env                  # 設定を編集（下記参照）
+uv sync                       # Python 依存関係をインストール
+uv run app
+```
+
+`.env` で `HOST=0.0.0.0` を `HOST=127.0.0.1` に変更し、バックエンドを自分のマシンからのみ到達できるようにします。既定ではすべてのネットワークインターフェースで待ち受け、API には認証がないため、同じネットワーク上の他のデバイスから、設定済みの AI プロバイダを使われてしまう可能性があります。ここで AI プロバイダを設定することもでき、`RELOAD=true` を設定するとコード変更時に自動リロードされます。
+
+### 4. フロントエンドを起動（PowerShell ウィンドウ 2）
+
+新しい PowerShell ウィンドウはホームフォルダで開くため、まず Resume Matcher をクローンまたは展開したフォルダへ移動します（パスはご自身のものに置き換えてください）：
+
+```powershell
+cd C:\path\to\Resume-Matcher
+cd apps\frontend
+npm install
+npm run dev
+```
+
+ブラウザで **<http://localhost:3000>** を開きます。
+
+> **PDF エクスポート:** Resume Matcher はヘッドレス Chromium で PDF を生成します。Playwright のブラウザがインストールされていない場合、バックエンドはインストール済みの Microsoft Edge または Google Chrome にフォールバックします（Edge は Windows 11 に標準搭載です）。`apps\backend` で `uv run playwright install chromium` を実行して、Playwright の Chromium をインストールすることもできます。
+
+> **Docker を使いたい場合:** [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) をインストールし、[Docker デプロイ](#docker-deployment) に従ってください。PowerShell で `PORT` などの変数を設定するには、`$env:PORT="4000"; docker compose up -d` を使います。[オプションの PostgreSQL 構成](#optional-postgresql) では、`$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d` を実行します。Docker を使わない場合は、`apps\backend\.env` に `DATABASE_URL` を設定します。
 
 ---
 
@@ -264,6 +327,27 @@ ollama serve
 
 通常はインストール後に自動起動します。
 
+<a id="option-c-your-chatgpt-plan-sign-in-with-chatgpt"></a>
+### オプション C: ChatGPT プラン（Sign in with ChatGPT）
+
+OpenAI 公式の [Sign in with ChatGPT for open-source apps](https://developers.openai.com/siwc/token-sharing-open-source)（プレビュー版のため変更される可能性があります）を利用する、コミュニティが開発したプロバイダです。ChatGPT Plus と Pro で使え、API キーは不要で、リクエストはお使いのマシンから OpenAI の Responses API に直接送信されます。利用量は ChatGPT プランの上限に含まれます。Plus では 5 時間の上限を、プランを使う他のアプリと共有します。Pro には 5 時間の上限はありません。確実に利用するには、代わりに OpenAI の API キーを使用してください。
+
+1. バックエンドとフロントエンドを起動し、**バックエンドと同じマシン上の**ブラウザで **Settings** を開きます。
+2. **ChatGPT plan** を選び、**Continue with ChatGPT** をクリックします。
+3. OpenAI でサインインし、Resume Matcher が ChatGPT プランを使うことを許可します。初回は OpenAI がアカウントにアプリを登録し、以降のサインインではその登録が再利用されます。
+4. Settings に戻ります。アカウントで利用できるモデルを選び、**Save** をクリックします。
+
+OpenAI はブラウザを `http://127.0.0.1:<port>/auth/callback` に戻します。`<port>` は Resume Matcher を開いたポート（既定は `3000`）です。フロントエンドがこのパスをバックエンドに転送し、バックエンドはこのコールバックを自身が動作しているマシンからのみ受け付けます。そのため、ブラウザは Resume Matcher を実行しているマシン上で動作している必要があり、`http://localhost:<port>` または `http://127.0.0.1:<port>` として開いてください。トークンは暗号化してバックエンドのデータディレクトリ（`chatgpt_credentials.enc`）に保存されます。**Disconnect** は OpenAI 側でセッションを取り消してトークンを削除し、**Manage usage** は ChatGPT の使用状況設定を開きます。
+
+**Docker:** サインインは、ポート 3000 のみを公開する既定の構成で動作します。コンテナを実行しているマシン上で、Resume Matcher を `http://localhost:3000`（または公開した `PORT`）で開いてください。OpenAI は同じポートにブラウザを戻し、フロントエンドが `/auth/callback` をコンテナ内のバックエンドに転送します。OpenAI は `http://127.0.0.1` へのリダイレクトしか許可しないため、別のコンピューターやリバースプロキシのドメイン経由では動作しません。
+
+同等の `.env`（サインインは引き続き Settings から行います）：
+
+```env
+LLM_PROVIDER=chatgpt
+LLM_MODEL=gpt-6.1-sol  # Settings のアカウントのモデル一覧にあるモデルに置き換えてください
+```
+
 ---
 
 <a id="docker-deployment"></a>
@@ -283,6 +367,36 @@ docker-compose logs -f
 # コンテナ停止
 docker-compose down
 ```
+
+<a id="optional-postgresql"></a>
+### オプション: PostgreSQL
+
+SQLite が既定で、セットアップは不要です。バックアップが必要な場合や、自分で管理する別のサーバーにデータベースを置きたい場合は、代わりに PostgreSQL を使えます。
+
+> **セキュリティ:** Resume Matcher にはユーザーアカウントも認証もなく、PostgreSQL を使ってもそれらは追加されません。自分だけで使うか、信頼できるプライベートネットワーク内でのみ実行し、インターネットなどに公開しないでください。ローカル以外の用途では、最小権限のデータベースロールで接続してください（Compose ファイルの `resume` ユーザーはスーパーユーザーです）。
+
+Docker Compose で起動するには：
+
+```bash
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+`POSTGRES_PASSWORD` はそのまま `DATABASE_URL` にコピーされるため、URL で安全に使えるパスワード（英字、数字、`-._~`）にしてください。`openssl rand -hex 32` で生成できます。推測されやすい値は使わないでください。パスワードは必ず保管してください。PostgreSQL は初回起動時にこれを `postgres-data` ボリュームに保存し、以降の `docker compose` コマンドでも同じ値が必要です（再度 `export` するか、`docker-compose.yml` と同じ場所の `.env` ファイルに `POSTGRES_PASSWORD=...` と記述します）。
+
+Docker を使わない場合は、`apps/backend/.env` に `DATABASE_URL=postgresql://user:password@host:5432/dbname`（必要に応じて `DATABASE_SCHEMA` も）を設定し、パスワード中の特殊文字はパーセントエンコードします。リモートデータベースの場合は URL に `?sslmode=require` を付けます。テーブルは起動時に作成されます。
+
+ローカルインストールの既存データを移行するには、`DATABASE_URL` を設定した状態で `apps/backend` から `uv run python -m app.scripts.copy_sqlite_to_postgres` を実行します。既定の `--source` は `apps/backend/data/resume_matcher.db` で、これはローカルインストールにのみ存在します。別の SQLite ファイルを使う場合は `--source <file>` を指定してください。空でないデータベースには書き込みません。先にアプリを停止してください。コピー開始後に行われた書き込みはコピーされません。
+
+Docker インストールでは SQLite データベースはホストではなく `resume-data` ボリューム内にあります。アプリを停止してから、そのボリュームが既定のソースとなるコンテナ内でスクリプトを実行します（上記と同じ `POSTGRES_PASSWORD` を設定しておきます）：
+
+```bash
+docker compose stop
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+別の方法として、停止したコンテナからファイルをコピーし（`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`）、データベースに到達できるホストから `--source ./resume_matcher.db` で指定します。`data/.secret_key`（ボリューム内に残ります）は必ず保持してください。保存済みの API キーの復号に使われます。
 
 ### Docker の注意点
 
@@ -315,6 +429,50 @@ docker-compose down
 4. "Save Configuration" をクリック
 5. "Test Connection" をクリックして確認
 6. Dashboard に戻り、最初の履歴書をアップロード
+
+---
+
+<a id="use-resume-matcher-from-claude-code-or-claude-desktop-mcp"></a>
+## Claude Code / Claude Desktop から Resume Matcher を使う（MCP）
+
+Resume Matcher には [MCP](https://modelcontextprotocol.io) サーバが付属しており、Claude Code、Claude Desktop、Cursor、Codex から直接操作できます。stdio で動作し、**LLM の API キーは不要**です。コンテンツは Claude が書き、Resume Matcher が保存・検証・採点・レンダリングを行います。Web アプリとデータベースを共有するため、Claude が保存した内容は UI にも表示されます。
+
+**前提:** ローカル（Docker 以外）のインストールが必要です。リポジトリをクローンして `cd apps/backend && uv sync` を実行してください（[バックエンドのセットアップ](#2-backend-setup) を参照）。
+
+### Claude Code
+
+```bash
+claude mcp add resume-matcher -- uv run --directory /abs/path/to/Resume-Matcher/apps/backend resume-matcher-mcp
+```
+
+### Claude Desktop
+
+`claude_desktop_config.json`（macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`、Windows: `%APPDATA%\Claude\claude_desktop_config.json`）に次を追加し、Claude Desktop を再起動します：
+
+```json
+{
+  "mcpServers": {
+    "resume-matcher": {
+      "command": "/absolute/path/to/uv",
+      "args": ["run", "--directory", "/abs/path/to/Resume-Matcher/apps/backend", "resume-matcher-mcp"]
+    }
+  }
+}
+```
+
+`command` には `uv` の**絶対パス**を指定してください（macOS/Linux では `which uv`、Windows では `where.exe uv` で確認できます）。Claude Desktop はシェルの `PATH` を継承しないため、`uv` だけでは見つかりません。Windows では、JSON 内のパスのバックスラッシュを二重にしてください。
+
+### その他の MCP クライアント
+
+Cursor、Codex などのクライアントも同じコマンド（`uv`）と引数（`run --directory <path>/apps/backend resume-matcher-mcp`）を使います。
+
+### 補足
+
+- **同じチェックアウト、同じデータ。** 両方が同じデータベースを使うよう、Web アプリも同じチェックアウトから実行してください。`DATA_DIR` で SQLite ファイルの場所を変更できます。`DATABASE_URL` を設定すると、代わりに [PostgreSQL](#optional-postgresql) を使います。
+- **PDF と verify にはフロントエンドが必要。** PDF エクスポート、`verify_resume`、`tailor_and_verify`、`parse_check_resume` には、フロントエンドが起動している必要があります（既定は <http://localhost:3000>、`FRONTEND_BASE_URL` で変更できます）。その他のツールはフロントエンドなしで動作します。
+- **Docker にはまだ対応していません。** アプリのデータベースは Docker ボリューム内にあるため、ホスト上で起動したサーバからは空のデータベースに見えます。
+
+サーバーには、履歴書と求人票の一覧・取得、マスター履歴書の作成、求人票の登録、履歴書の調整と検証（`tailor_and_verify`）、ATS 向けのパースチェックとスコア算出、PDF の書き出し（`export_resume_pdf`）、応募状況の管理を行うツールが用意されています。接続するとクライアントにツール一覧が表示され、サーバー組み込みの指示が Claude に作業の流れを案内します。
 
 ---
 
@@ -474,7 +632,6 @@ Resume-Matcher/
 │     ├─ lib/                  # Utilities and API client
 │     ├─ .env.sample           # Environment template
 │     └─ package.json          # Node.js dependencies
-├─ docs/                        # Additional documentation
 ├─ docker-compose.yml           # Docker configuration
 ├─ Dockerfile                   # Container build instructions
 └─ README.md                    # Project overview
@@ -489,15 +646,7 @@ Resume-Matcher/
 
 - **Discord:** [dsc.gg/resume-matcher](https://dsc.gg/resume-matcher) - 質問・議論に活発です
 - **GitHub Issues:** [Issue を作成](https://github.com/srbhr/Resume-Matcher/issues)（バグ報告や要望）
-- **ドキュメント:** 詳細は [docs/agent/](docs/agent/) を参照
-
-### 参考ドキュメント
-
-| ドキュメント | 内容 |
-|-------------|------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | バックエンドのアーキテクチャと API 詳細 |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | ユーザーフローとコンポーネント構成 |
-| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI デザインシステム（Swiss International Style）— ポータブルパック |
+- **ドキュメント:** 詳細は[オンラインドキュメント](https://resumematcher.fyi/docs/)を参照
 
 ---
 

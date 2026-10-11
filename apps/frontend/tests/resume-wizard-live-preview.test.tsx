@@ -12,7 +12,21 @@ describe('LivePreview', () => {
     render(
       <LivePreview resumeData={createInitialResumeWizardState().resume_data} inferredSkills={[]} />
     );
-    expect(screen.getByText('resumeWizard.preview.empty')).toBeInTheDocument();
+    const empty = screen.getByText('resumeWizard.preview.empty');
+    // An empty state (EmptyState plain), not a live "active" status.
+    expect(empty).toHaveClass('text-ink');
+    expect(empty).not.toHaveClass('text-primary');
+    expect(empty.parentElement).toHaveClass('py-6', 'items-start');
+    expect(screen.getByRole('complementary').querySelector('.bg-primary')).toBeNull();
+  });
+
+  it('is a nested card: nested shadow, never a solid one', () => {
+    render(
+      <LivePreview resumeData={createInitialResumeWizardState().resume_data} inferredSkills={[]} />
+    );
+    const card = screen.getByRole('complementary');
+    expect(card).toHaveClass('border-2', 'border-ink', 'shadow-sw-nested');
+    expect(card).not.toHaveClass('shadow-sw-default');
   });
 
   it('renders name, experience and skills as content (not counts)', () => {
@@ -41,5 +55,31 @@ describe('LivePreview', () => {
 
     expect(screen.getAllByText(/^react$/i)).toHaveLength(1);
     expect(screen.getByText('Node.js')).toBeInTheDocument();
+  });
+
+  it('marks inferred skills with a hidden icon, not a text glyph', () => {
+    const data = createInitialResumeWizardState().resume_data;
+    data.personalInfo = { name: 'Priya' };
+
+    render(<LivePreview resumeData={data} inferredSkills={['Node.js']} />);
+
+    const chip = screen.getByText('Node.js');
+    expect(chip).toHaveClass('border-success', 'text-success');
+    expect(chip.textContent).not.toContain('✓');
+    expect(chip.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('names inferred skills in text so colour and an icon are not the only cue', () => {
+    const data = createInitialResumeWizardState().resume_data;
+    data.personalInfo = { name: 'Priya' };
+    data.additional = { technicalSkills: ['SQL'] };
+
+    render(<LivePreview resumeData={data} inferredSkills={['Node.js']} />);
+
+    const inferred = screen.getByText('Node.js');
+    expect(inferred).toHaveTextContent('resumeWizard.preview.inferredSkill');
+    expect(within(inferred).getByText('resumeWizard.preview.inferredSkill')).toHaveClass('sr-only');
+    expect(screen.getAllByText('resumeWizard.preview.inferredSkill')).toHaveLength(1);
+    expect(screen.getByText('SQL')).not.toHaveTextContent('resumeWizard.preview.inferredSkill');
   });
 });

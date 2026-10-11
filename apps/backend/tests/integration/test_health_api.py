@@ -158,3 +158,28 @@ class TestStatusEndpoint:
             resp = await client.get("/api/v1/status")
         assert resp.status_code == 200
         assert resp.json()["llm_configured"] is True
+
+    @patch("app.routers.health.db", new_callable=AsyncMock)
+    @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
+    @patch("app.routers.health.get_llm_config")
+    async def test_status_claude_cli_is_configured_without_key(
+        self, mock_config, mock_health, mock_db, client
+    ):
+        """claude_cli authenticates through the local `claude` login, so a blank
+        API key must still report llm_configured=True (and a ready status)."""
+        mock_config.return_value = type(
+            "C", (), {"api_key": "", "provider": "claude_cli"}
+        )()
+        mock_health.return_value = {"healthy": True}
+        mock_db.get_stats.return_value = {
+            "total_resumes": 1,
+            "total_jobs": 0,
+            "total_improvements": 0,
+            "has_master_resume": True,
+        }
+        async with client:
+            resp = await client.get("/api/v1/status")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["llm_configured"] is True
+        assert data["status"] == "ready"

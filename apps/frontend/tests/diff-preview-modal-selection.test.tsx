@@ -111,4 +111,27 @@ describe('DiffPreviewModal bullet selection summary', () => {
     renderModal(value);
     expect(screen.queryByText(/tailor\.selectionSummary/)).toBeNull();
   });
+
+  it('says how many bullets were kept when no per-role cap applied', () => {
+    renderModal(selection({ max_per_entry: null, bullets_before: 30, bullets_after: 30 }));
+    expect(
+      screen.getByText('tailor.selectionSummaryAll{"kept":30,"total":30} · tailor.pageFit.fits')
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    [2, 2, 'tailor.pageFit.fits'],
+    [2, 3, 'tailor.pageFit.finalOver'],
+    [3, 3, 'tailor.pageFit.fits'],
+  ])('with a %i-page limit, a %i-page rewrite reads %s', (maxPages, finalPages, expected) => {
+    renderModal(
+      selection({
+        page_fit: 'fits',
+        max_pages: maxPages,
+        final_pages: finalPages,
+        final_check: 'ok',
+      })
+    );
+    expect(screen.getByText(`${KEPT} · ${expected}`)).toBeInTheDocument();
+  });
 });

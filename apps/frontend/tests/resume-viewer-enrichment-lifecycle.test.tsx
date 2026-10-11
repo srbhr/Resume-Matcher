@@ -340,3 +340,13 @@ it('preserves an acknowledged enrichment refresh failure through a UI language c
   await waitFor(() => expect(screen.getByTestId('resume-name')).toHaveTextContent('After'));
   expect(mockedApplyEnhancements).toHaveBeenCalledTimes(1);
 });
+
+it('names the enrichment dialog after its heading', async () => {
+  mockedFetchResume.mockResolvedValue(resume('Before'));
+  render(<ResumeViewerPage />);
+  fireEvent.click(await screen.findByRole('button', { name: 'resumeViewer.enhanceResume' }));
+
+  expect(await screen.findByRole('dialog', { name: 'enrichment.title' })).toBeInTheDocument();
+  // A dialog heading, not a second page h1.
+  expect(screen.getByRole('heading', { level: 2, name: 'enrichment.title' })).toBeInTheDocument();
+});

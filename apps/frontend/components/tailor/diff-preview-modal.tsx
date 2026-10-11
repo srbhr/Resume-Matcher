@@ -1,9 +1,18 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, CheckCircle, X, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Warning, X, CaretDown, CaretRight, SpinnerGap } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert } from '@/components/ui/alert';
+import { PanelHeader } from '@/components/ui/panel-header';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
 import type {
   ResumeDiffSummary,
@@ -66,36 +75,30 @@ export function DiffPreviewModal({
           }
         }}
       >
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-6 bg-background border-2 border-black shadow-sw-lg">
-          <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
-            <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
-              {t('tailor.missingDiffDialog.title')}
-            </DialogTitle>
+        <DialogContent size="xl">
+          <DialogHeader>
+            <DialogTitle>{t('tailor.missingDiffDialog.title')}</DialogTitle>
           </DialogHeader>
 
-          <div className="mt-6 border-2 border-black bg-white p-4 font-mono text-xs text-ink-soft">
-            {t('tailor.missingDiffDialog.description')}
-          </div>
-          <div className="mt-3 flex items-center gap-2 font-mono text-xs text-amber-700">
-            <AlertTriangle className="w-4 h-4" />
-            <span>{t('tailor.missingDiffDialog.confirmLabel')}</span>
-          </div>
+          <DialogBody className="space-y-3">
+            <Alert tone="warning">{t('tailor.missingDiffDialog.description')}</Alert>
+          </DialogBody>
 
-          <div className="flex justify-end items-center gap-3 pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
-            <Button variant="outline" onClick={onClose} disabled={isConfirming} className="gap-2">
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose} disabled={isConfirming}>
               {t('common.cancel')}
             </Button>
-            <Button variant="warning" onClick={onConfirm} disabled={isConfirming} className="gap-2">
+            <Button variant="warning" onClick={onConfirm} disabled={isConfirming}>
               {isConfirming ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <SpinnerGap className="w-4 h-4 animate-spin" />
                   {t('common.saving')}
                 </>
               ) : (
                 t('tailor.missingDiffDialog.confirmLabel')
               )}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     );
@@ -133,241 +136,226 @@ export function DiffPreviewModal({
         }
       }}
     >
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-6 bg-background border-2 border-black shadow-sw-lg">
-        <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
-          <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
-            {t('tailor.diffModal.title')}
-          </DialogTitle>
-          <p className="font-mono text-xs text-ink-soft mt-2">
+      <DialogContent size="xl">
+        <DialogHeader>
+          <DialogTitle>{t('tailor.diffModal.title')}</DialogTitle>
+          <p className="font-mono text-xs text-ink-soft">
             {'// '}
             {t('tailor.diffModal.subtitle')}
           </p>
         </DialogHeader>
 
-        {/* Summary cards */}
-        <div className="border-2 border-black bg-white p-4 mt-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 bg-primary"></div>
-            <h3 className="font-mono text-sm font-bold uppercase tracking-wider">
-              {t('tailor.diffModal.summary')}
-            </h3>
-          </div>
+        <DialogBody className="space-y-4">
+          {/* Summary cards */}
+          <div className="border-2 border-ink bg-white p-4">
+            <PanelHeader level="h3" title={t('tailor.diffModal.summary')} />
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <StatCard
-              label={t('tailor.diffModal.skillsAdded')}
-              value={diffSummary.skills_added}
-              variant="success"
-            />
-            <StatCard
-              label={t('tailor.diffModal.skillsRemoved')}
-              value={diffSummary.skills_removed}
-              variant="warning"
-            />
-            <StatCard
-              label={t('tailor.diffModal.certificationsAdded')}
-              value={diffSummary.certifications_added}
-              variant="info"
-            />
-            <StatCard
-              label={t('tailor.diffModal.descriptionsModified')}
-              value={diffSummary.descriptions_modified}
-              variant="info"
-            />
-            <StatCard
-              label={t('tailor.diffModal.highRiskChanges')}
-              value={diffSummary.high_risk_changes}
-              variant={diffSummary.high_risk_changes > 0 ? 'danger' : 'success'}
-            />
-          </div>
-
-          {selectionLine && (
-            <p className="mt-4 font-mono text-xs uppercase tracking-wider text-ink-soft">
-              {selectionLine}
-            </p>
-          )}
-
-          {diffSummary.high_risk_changes > 0 && (
-            <div className="mt-4 border-2 border-warning bg-[#FFF7ED] p-3 flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-              <div>
-                <p className="font-mono text-xs font-bold uppercase text-[#C2410C]">
-                  {t('tailor.diffModal.warningTitle', {
-                    count: diffSummary.high_risk_changes,
-                  })}
-                </p>
-                <p className="font-mono text-xs text-[#C2410C] mt-1">
-                  {t('tailor.diffModal.warningMessage')}
-                </p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <StatCard
+                label={t('tailor.diffModal.skillsAdded')}
+                value={diffSummary.skills_added}
+                variant="success"
+              />
+              <StatCard
+                label={t('tailor.diffModal.skillsRemoved')}
+                value={diffSummary.skills_removed}
+                variant="warning"
+              />
+              <StatCard
+                label={t('tailor.diffModal.certificationsAdded')}
+                value={diffSummary.certifications_added}
+                variant="info"
+              />
+              <StatCard
+                label={t('tailor.diffModal.descriptionsModified')}
+                value={diffSummary.descriptions_modified}
+                variant="info"
+              />
+              <StatCard
+                label={t('tailor.diffModal.highRiskChanges')}
+                value={diffSummary.high_risk_changes}
+                variant={diffSummary.high_risk_changes > 0 ? 'danger' : 'success'}
+              />
             </div>
-          )}
-        </div>
 
+            {selectionLine && (
+              <p className="mt-4 font-mono text-xs uppercase tracking-wider text-ink-soft">
+                {selectionLine}
+              </p>
+            )}
+
+            {diffSummary.high_risk_changes > 0 && (
+              <Alert
+                tone="warning"
+                className="mt-4"
+                title={t('tailor.diffModal.warningTitle', {
+                  count: diffSummary.high_risk_changes,
+                })}
+              >
+                {t('tailor.diffModal.warningMessage')}
+              </Alert>
+            )}
+          </div>
+
+          {/* Detailed changes list */}
+          <div className="space-y-4">
+            {/* Summary changes */}
+            {summaryChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.summaryChanges')}
+                count={summaryChanges.length}
+                isExpanded={expandedSections.has('summary')}
+                onToggle={() => toggleSection('summary')}
+              >
+                {summaryChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Skill changes */}
+            {skillChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.skillChanges')}
+                count={skillChanges.length}
+                isExpanded={expandedSections.has('skills')}
+                onToggle={() => toggleSection('skills')}
+              >
+                {skillChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Experience changes */}
+            {experienceChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.experienceChanges')}
+                count={experienceChanges.length}
+                isExpanded={expandedSections.has('experience')}
+                onToggle={() => toggleSection('experience')}
+              >
+                {experienceChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Description changes */}
+            {descChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.descriptionChanges')}
+                count={descChanges.length}
+                isExpanded={expandedSections.has('descriptions')}
+                onToggle={() => toggleSection('descriptions')}
+              >
+                {descChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Education changes */}
+            {educationChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.educationChanges')}
+                count={educationChanges.length}
+                isExpanded={expandedSections.has('education')}
+                onToggle={() => toggleSection('education')}
+              >
+                {educationChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Project changes */}
+            {projectChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.projectChanges')}
+                count={projectChanges.length}
+                isExpanded={expandedSections.has('project')}
+                onToggle={() => toggleSection('project')}
+              >
+                {projectChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Certification changes */}
+            {certChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.certificationChanges')}
+                count={certChanges.length}
+                isExpanded={expandedSections.has('certifications')}
+                onToggle={() => toggleSection('certifications')}
+              >
+                {certChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Language changes */}
+            {languageChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.languageChanges')}
+                count={languageChanges.length}
+                isExpanded={expandedSections.has('languages')}
+                onToggle={() => toggleSection('languages')}
+              >
+                {languageChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+
+            {/* Award changes */}
+            {awardChanges.length > 0 && (
+              <ChangeSection
+                title={t('tailor.diffModal.awardChanges')}
+                count={awardChanges.length}
+                isExpanded={expandedSections.has('awards')}
+                onToggle={() => toggleSection('awards')}
+              >
+                {awardChanges.map((change, idx) => (
+                  <ChangeItem key={idx} change={change} />
+                ))}
+              </ChangeSection>
+            )}
+          </div>
+        </DialogBody>
+
+        {/* Pinned status: stays visible while the changes list scrolls */}
         {errorMessage && (
-          <div className="mt-4 border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
-            {errorMessage}
+          <div className="shrink-0 space-y-2 border-t border-ink px-6 py-3">
+            <Alert tone="error">{errorMessage}</Alert>
           </div>
         )}
 
-        {/* Detailed changes list */}
-        <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
-          {/* Summary changes */}
-          {summaryChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.summaryChanges')}
-              count={summaryChanges.length}
-              isExpanded={expandedSections.has('summary')}
-              onToggle={() => toggleSection('summary')}
-            >
-              {summaryChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Skill changes */}
-          {skillChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.skillChanges')}
-              count={skillChanges.length}
-              isExpanded={expandedSections.has('skills')}
-              onToggle={() => toggleSection('skills')}
-            >
-              {skillChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Experience changes */}
-          {experienceChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.experienceChanges')}
-              count={experienceChanges.length}
-              isExpanded={expandedSections.has('experience')}
-              onToggle={() => toggleSection('experience')}
-            >
-              {experienceChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Description changes */}
-          {descChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.descriptionChanges')}
-              count={descChanges.length}
-              isExpanded={expandedSections.has('descriptions')}
-              onToggle={() => toggleSection('descriptions')}
-            >
-              {descChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Education changes */}
-          {educationChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.educationChanges')}
-              count={educationChanges.length}
-              isExpanded={expandedSections.has('education')}
-              onToggle={() => toggleSection('education')}
-            >
-              {educationChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Project changes */}
-          {projectChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.projectChanges')}
-              count={projectChanges.length}
-              isExpanded={expandedSections.has('project')}
-              onToggle={() => toggleSection('project')}
-            >
-              {projectChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Certification changes */}
-          {certChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.certificationChanges')}
-              count={certChanges.length}
-              isExpanded={expandedSections.has('certifications')}
-              onToggle={() => toggleSection('certifications')}
-            >
-              {certChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Language changes */}
-          {languageChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.languageChanges')}
-              count={languageChanges.length}
-              isExpanded={expandedSections.has('languages')}
-              onToggle={() => toggleSection('languages')}
-            >
-              {languageChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-
-          {/* Award changes */}
-          {awardChanges.length > 0 && (
-            <ChangeSection
-              title={t('tailor.diffModal.awardChanges')}
-              count={awardChanges.length}
-              isExpanded={expandedSections.has('awards')}
-              onToggle={() => toggleSection('awards')}
-            >
-              {awardChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
-            </ChangeSection>
-          )}
-        </div>
-
         {/* Action buttons */}
-        <div className="flex justify-between items-center pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
-          <Button variant="outline" onClick={onReject} disabled={isConfirming} className="gap-2">
+        <DialogFooter className="justify-between">
+          <Button variant="outline" onClick={onReject} disabled={isConfirming}>
             <X className="w-4 h-4" />
             {t('tailor.diffModal.rejectButton')}
           </Button>
           <div className="flex items-center gap-3">
             {isConfirming && elapsed > 0 && (
-              <span className="font-mono text-xs text-steel-grey">{elapsed}s</span>
+              <span className="font-mono text-xs tabular-nums text-ink-soft">{elapsed}s</span>
             )}
-            <Button
-              onClick={onConfirm}
-              disabled={isConfirming}
-              className="gap-2 bg-success hover:bg-green-800"
-            >
+            <Button variant="success" onClick={onConfirm} disabled={isConfirming}>
               {isConfirming ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <SpinnerGap className="w-4 h-4 animate-spin" />
                   {t('common.saving')}
                 </>
               ) : (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  {t('tailor.diffModal.confirmButton')}
-                </>
+                t('tailor.diffModal.confirmButton')
               )}
             </Button>
           </div>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -378,19 +366,27 @@ function formatSelectionSummary(
   summary: BulletSelectionSummary,
   t: (key: string, params?: Record<string, string | number>) => string
 ): string {
-  const kept = t('tailor.selectionSummary', {
-    kept: summary.bullets_after,
-    total: summary.bullets_before,
-    max: summary.max_per_entry,
-  });
+  const kept =
+    summary.max_per_entry == null
+      ? t('tailor.selectionSummaryAll', {
+          kept: summary.bullets_after,
+          total: summary.bullets_before,
+        })
+      : t('tailor.selectionSummary', {
+          kept: summary.bullets_after,
+          total: summary.bullets_before,
+          max: summary.max_per_entry,
+        });
   if (summary.page_fit === 'skipped') return kept;
   const fitBeforeRewrite = summary.page_fit === 'fits' || summary.page_fit === 'trimmed';
-  // Without the final re-render, the one-page fit of the rewritten result is unverified.
+  // Without the final re-render, the page fit of the rewritten result is unverified.
   if (fitBeforeRewrite && summary.final_check === 'skipped') {
     return `${kept} · ${t('tailor.pageFit.notRechecked')}`;
   }
   // A draft that fit before rewriting can still spill over; the final check reports it.
-  const finalOver = fitBeforeRewrite && summary.final_pages != null && summary.final_pages > 1;
+  const maxPages = summary.max_pages ?? 1;
+  const finalOver =
+    fitBeforeRewrite && summary.final_pages != null && summary.final_pages > maxPages;
   const fit = finalOver
     ? t('tailor.pageFit.finalOver')
     : summary.page_fit === 'trimmed'
@@ -408,15 +404,15 @@ interface StatCardProps {
 
 function StatCard({ label, value, variant }: StatCardProps) {
   const colors = {
-    success: 'border-success bg-[#F0FDF4] text-success',
-    warning: 'border-warning bg-[#FFF7ED] text-warning',
-    danger: 'border-destructive bg-[#FEF2F2] text-destructive',
-    info: 'border-primary bg-[#EFF6FF] text-primary',
+    success: 'border-success bg-success-tint text-success',
+    warning: 'border-warning bg-warning-tint text-warning-text',
+    danger: 'border-destructive bg-destructive-tint text-destructive',
+    info: 'border-primary bg-info-tint text-primary',
   };
 
   return (
     <div className={`border-2 p-3 ${colors[variant]}`}>
-      <div className="font-mono text-2xl font-bold">{value}</div>
+      <div className="font-mono text-2xl font-bold tabular-nums">{value}</div>
       <div className="font-mono text-xs uppercase tracking-wider mt-1">{label}</div>
     </div>
   );
@@ -433,20 +429,22 @@ interface ChangeSectionProps {
 
 function ChangeSection({ title, count, isExpanded, onToggle, children }: ChangeSectionProps) {
   return (
-    <div className="border-2 border-black bg-white">
+    <div className="border-2 border-ink bg-white">
       <button
+        type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 hover:bg-paper-tint"
+        aria-expanded={isExpanded}
+        className="flex w-full items-center justify-between p-3 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       >
         <div className="flex items-center gap-2">
-          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          <span className="font-mono text-sm font-bold uppercase tracking-wider">
+          {isExpanded ? <CaretDown className="size-4" /> : <CaretRight className="size-4" />}
+          <span className="font-mono text-sm font-bold uppercase tracking-wider tabular-nums">
             {title} ({count})
           </span>
         </div>
       </button>
 
-      {isExpanded && <div className="border-t-2 border-black p-4 space-y-3">{children}</div>}
+      {isExpanded && <div className="space-y-3 border-t-2 border-ink p-4">{children}</div>}
     </div>
   );
 }
@@ -457,14 +455,15 @@ interface ChangeItemProps {
 }
 
 function ChangeItem({ change }: ChangeItemProps) {
+  const { t } = useTranslations();
   // Background tint + leading glyph instead of left-stripe borders.
   // Side-stripe borders are an impeccable absolute_ban (BAN 1) — the most
   // overused dashboard "design touch". The leading +/-/~ glyph carries the
   // semantic load and the bg tint reinforces it.
   const typeBackgrounds = {
-    added: 'bg-[#F0FDF4]',
-    removed: 'bg-[#FEF2F2]',
-    modified: 'bg-[#EFF6FF]',
+    added: 'bg-success-tint',
+    removed: 'bg-destructive-tint',
+    modified: 'bg-info-tint',
   };
 
   const typeGlyphColors = {
@@ -480,7 +479,7 @@ function ChangeItem({ change }: ChangeItemProps) {
   };
 
   return (
-    <div className={`p-3 border border-black ${typeBackgrounds[change.change_type]}`}>
+    <div className={`border border-ink p-3 ${typeBackgrounds[change.change_type]}`}>
       <div className="flex items-start gap-2">
         <span
           className={`font-mono text-base font-bold uppercase tracking-wider ${typeGlyphColors[change.change_type]}`}
@@ -490,16 +489,20 @@ function ChangeItem({ change }: ChangeItemProps) {
         </span>
         <div className="flex-1">
           {change.original_value && (
-            <div className="line-through text-destructive font-mono text-sm mb-1">
+            <del className="mb-1 block text-sm text-destructive line-through">
               {change.original_value}
-            </div>
+            </del>
           )}
           {change.new_value && (
-            <div className="text-ink-soft font-mono text-sm">{change.new_value}</div>
+            <ins className="block text-sm text-ink-soft no-underline">{change.new_value}</ins>
           )}
         </div>
         {change.change_type === 'added' && change.confidence === 'high' && (
-          <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+          <Warning
+            role="img"
+            aria-label={t('tailor.diffModal.highRiskChanges')}
+            className="size-4 shrink-0 text-warning-text"
+          />
         )}
       </div>
     </div>

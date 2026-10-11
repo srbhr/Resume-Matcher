@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
@@ -30,5 +30,42 @@ describe('ConfirmDialog', () => {
       '[overflow-wrap:anywhere]'
     );
     expect(descriptionElement.parentElement).toHaveClass('min-w-0', 'flex-1');
+  });
+
+  describe('dismissal', () => {
+    const renderDialog = (props: Partial<React.ComponentProps<typeof ConfirmDialog>> = {}) =>
+      render(
+        <ConfirmDialog
+          open
+          onOpenChange={vi.fn()}
+          title="Confirm"
+          description="Sure?"
+          onConfirm={vi.fn()}
+          {...props}
+        />
+      );
+
+    it('shows the Close button by default', () => {
+      renderDialog();
+      expect(screen.getByRole('button', { name: 'common.close' })).toBeInTheDocument();
+    });
+
+    it('hides the Close button while cancel is disabled', () => {
+      renderDialog({ cancelDisabled: true });
+      expect(screen.queryByRole('button', { name: 'common.close' })).not.toBeInTheDocument();
+    });
+
+    it('hides the Close button when dismissible is false', () => {
+      renderDialog({ dismissible: false });
+      expect(screen.queryByRole('button', { name: 'common.close' })).not.toBeInTheDocument();
+    });
+
+    it('ignores Escape and a backdrop click when dismissible is false', () => {
+      const onOpenChange = vi.fn();
+      renderDialog({ dismissible: false, onOpenChange });
+      fireEvent.keyDown(document, { key: 'Escape' });
+      fireEvent.click(document.querySelector('.bg-overlay') as HTMLElement);
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
   });
 });

@@ -499,6 +499,9 @@ async def test_deadline_during_claim_retires_committed_owner_before_returning(
         await asyncio.sleep(0.1)
         return token
 
+    # Initialize the database first so the short deadline lands in the claim,
+    # not in first-use schema setup (slow on PostgreSQL).
+    await isolated_db.list_resumes()
     monkeypatch.setattr(settings, "request_timeout_seconds", 0.04)
     monkeypatch.setattr(isolated_db, "claim_resume_processing", slow_claim)
     monkeypatch.setattr(

@@ -114,9 +114,12 @@ async function fillJobDescriptionAndGenerate() {
   await act(async () => screen.getByRole('button', { name: 'tailor.generateTailored' }).click());
 }
 
+// The Dropdown trigger announces "<label> <current value>", so match on the label prefix.
+const PICKER_NAME = /^tailor\.selectResume\b/;
+
 function chooseMaster(label: string, options: { hidden?: boolean } = {}) {
-  fireEvent.click(screen.getByRole('button', { name: 'tailor.selectResume', ...options }));
-  fireEvent.click(screen.getByRole('menuitemradio', { name: new RegExp(label), ...options }));
+  fireEvent.click(screen.getByRole('button', { name: PICKER_NAME, ...options }));
+  fireEvent.click(screen.getByRole('option', { name: new RegExp(label), ...options }));
 }
 
 async function confirmDiff() {
@@ -124,7 +127,11 @@ async function confirmDiff() {
 }
 
 describe('tailor page master picker', () => {
-  it('preselects the default master and sends the bullet cap', async () => {
+  it('preselects the default master and sends the stored bullet cap', async () => {
+    localStorage.setItem(
+      'tailor_length_settings',
+      JSON.stringify({ maxPages: 2, maxBulletsPerEntry: 3 })
+    );
     api.list.mockResolvedValue([
       master('m1', false, 'DevRel'),
       master('m2', true, 'Solutions Eng'),
@@ -145,9 +152,26 @@ describe('tailor page master picker', () => {
     api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
     await renderPage();
     await fillJobDescriptionAndGenerate();
+    // Default length settings: two-page limit, no per-role bullet cap.
     expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, {
-      maxBulletsPerEntry: 3,
       pageFit: { template: 'modern', lang: 'es' },
+      maxPages: 2,
+    });
+  });
+
+  it('sends and remembers the chosen page limit and bullet cap', async () => {
+    api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
+    await renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.length\.pageLimitLabel/ }));
+    fireEvent.click(screen.getByRole('option', { name: /tailor\.length\.pageLimitOptions\.none/ }));
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.length\.bulletsLabel/ }));
+    fireEvent.click(screen.getByRole('option', { name: /tailor\.length\.bulletOptions\.5/ }));
+    await fillJobDescriptionAndGenerate();
+    // No page limit: no page fit is requested, only the per-role cap.
+    expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, { maxBulletsPerEntry: 5 });
+    expect(JSON.parse(localStorage.getItem('tailor_length_settings') ?? '{}')).toEqual({
+      maxPages: null,
+      maxBulletsPerEntry: 5,
     });
   });
 
@@ -163,7 +187,7 @@ describe('tailor page master picker', () => {
   it('shows no picker when there is a single ready master', async () => {
     api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
     await renderPage();
-    expect(screen.queryByRole('button', { name: 'tailor.selectResume' })).toBeNull();
+    expect(screen.queryByRole('button', { name: PICKER_NAME })).toBeNull();
   });
 
   it('lists only ready masters in the picker', async () => {
@@ -174,8 +198,8 @@ describe('tailor page master picker', () => {
       master('m4', false, 'SWE'),
     ]);
     await renderPage();
-    fireEvent.click(screen.getByRole('button', { name: 'tailor.selectResume' }));
-    expect(screen.getAllByRole('menuitemradio').map((el) => el.textContent)).toEqual([
+    fireEvent.click(screen.getByRole('button', { name: PICKER_NAME }));
+    expect(screen.getAllByRole('option').map((el) => el.textContent)).toEqual([
       expect.stringContaining('DevRel'),
       expect.stringContaining('SWE'),
     ]);
@@ -220,7 +244,7 @@ describe('tailor page pinned preview source', () => {
     await renderPage();
     await fillJobDescriptionAndGenerate();
     expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, expect.anything());
-    const picker = screen.getByRole('button', { name: 'tailor.selectResume' });
+    const picker = screen.getByRole('button', { name: PICKER_NAME });
     expect(picker).toBeDisabled();
     await act(async () => resolvePreview(PREVIEW_RESULT));
     expect(picker).toBeDisabled(); // still locked while the diff modal is open

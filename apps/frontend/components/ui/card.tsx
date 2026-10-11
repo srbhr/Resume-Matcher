@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'interactive' | 'outline' | 'ghost';
+  variant?: 'default' | 'interactive' | 'raised' | 'outline' | 'ghost';
   noPadding?: boolean;
 }
 
@@ -12,20 +12,20 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 
     const variants = {
       default: 'bg-canvas',
+      // The card itself is not focusable, so it carries no focus ring: the link or button
+      // inside owns the ring, and the tile reacts to it with has-[:focus-visible].
       interactive: cn(
-        'bg-canvas border-2 border-transparent', // Initial state
-        'transition-all duration-200 ease-in-out',
-        'cursor-pointer group',
-        'hover:z-20 hover:border-ink hover:shadow-sw-default hover:-translate-y-[2px] hover:-translate-x-[2px]'
+        'bg-canvas border-2 border-transparent cursor-pointer group',
+        'transition-[transform,box-shadow,border-color]',
+        'hover:z-20 hover:border-ink hover:translate-x-px hover:translate-y-px'
+      ),
+      raised: cn(
+        'bg-white border border-ink shadow-sw-nested transition-[transform,box-shadow]',
+        'hover:translate-x-px hover:translate-y-px hover:shadow-none'
       ),
       outline: 'bg-canvas border-2 border-ink',
       ghost: 'bg-transparent border-none shadow-none',
     };
-
-    // Dashboard specific style that was common:
-    // border-2 border-dashed border-amber-500 bg-amber-50
-    // We can handle specific overrides via className, but the base interactive card
-    // in dashboard had: bg-background (canvas)
 
     return (
       <div
@@ -49,7 +49,7 @@ const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('font-serif text-2xl font-semibold leading-none tracking-tight', className)}
+      className={cn('font-serif text-2xl font-bold leading-none tracking-tight', className)}
       {...props}
     />
   )
@@ -60,7 +60,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn('text-sm text-steel-grey font-mono', className)} {...props} />
+  <p ref={ref} className={cn('text-sm text-steel font-mono', className)} {...props} />
 ));
 CardDescription.displayName = 'CardDescription';
 

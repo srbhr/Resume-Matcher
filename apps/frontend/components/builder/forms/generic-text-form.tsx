@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslations } from '@/lib/i18n';
@@ -25,6 +25,7 @@ export const GenericTextForm: React.FC<GenericTextFormProps> = ({
   placeholder,
 }) => {
   const { t } = useTranslations();
+  const fieldId = useId();
   const finalLabel = label ?? t('builder.customSections.contentLabel');
   const finalPlaceholder = placeholder ?? t('builder.customSections.defaultTextPlaceholder');
 
@@ -37,15 +38,14 @@ export const GenericTextForm: React.FC<GenericTextFormProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
-        {finalLabel}
-      </Label>
+      <Label htmlFor={fieldId}>{finalLabel}</Label>
       <Textarea
+        id={fieldId}
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={finalPlaceholder}
-        className="min-h-[150px] text-black rounded-none border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700 bg-white"
+        className="min-h-[150px]"
       />
     </div>
   );
