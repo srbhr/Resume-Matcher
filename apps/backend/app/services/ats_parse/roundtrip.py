@@ -15,11 +15,13 @@ MATCH_PREFIX = 6
 Field = tuple[str, str]
 
 # Header contact order per template (apps/frontend/components/resume/resume-*.tsx).
-CONTACT_ORDER = ("email", "phone", "location")
+CONTACT_ORDER = ("email", "phone", "location", "website", "linkedin", "github")
 CONTACT_ORDER_BY_TEMPLATE: dict[str, tuple[str, ...]] = {
-    "clean": ("location", "phone", "email"),
-    "latex": ("location", "phone", "email"),
+    "clean": ("location", "phone", "email", "linkedin", "github", "website"),
+    "latex": ("location", "phone", "email", "linkedin", "github", "website"),
+    "vivid": ("website", "linkedin", "github", "email", "phone", "location"),
 }
+LINK_FIELDS = frozenset({"website", "linkedin", "github"})
 
 
 def canonical_resume_data(data: Any) -> dict[str, Any]:
@@ -30,6 +32,17 @@ def canonical_resume_data(data: Any) -> dict[str, Any]:
     """
     raw = normalize_resume_data(dict(data)) if isinstance(data, dict) else data
     return ResumeData.model_validate(raw).model_dump(mode="json")
+
+
+def _contact_text(key: str, value: Any) -> str:
+    """A contact value as the header shows it: a bare link host drops "www.".
+
+    The templates show a value starting with "http" or "//" exactly as typed.
+    """
+    text = str(value or "")
+    if key in LINK_FIELDS and not text.startswith(("http", "//")):
+        return text.removeprefix("www.")
+    return text
 
 
 def _join(values: Any) -> str:
@@ -114,7 +127,7 @@ def expected_fields(
     info = data.get("personalInfo") or {}
     contact = CONTACT_ORDER_BY_TEMPLATE.get(template or "", CONTACT_ORDER)
     fields: list[Field] = [
-        (f"personalInfo.{k}", str(info.get(k) or ""))
+        (f"personalInfo.{k}", _contact_text(k, info.get(k)))
         for k in ("name", "title", *contact)
     ]
     hidden: list[str] = []

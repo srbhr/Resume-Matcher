@@ -239,6 +239,46 @@ async def test_roundtrip_uses_the_template_contact_order() -> None:
     ]
 
 
+async def test_roundtrip_checks_header_links() -> None:
+    # The render shows "linkedin.com/in/johndoe , github.com/johndoe".
+    data = john_doe()
+    data["personalInfo"]["linkedin"] = "www.linkedin.com/in/johndoe"
+    data["personalInfo"]["github"] = "github.com/johndoe"
+    text = extract_pdf(render("single-column")).text
+    kept = compute_roundtrip(data, text, "swiss-single")
+    statuses = {f.field: f.status for f in kept.fields}
+    assert statuses["personalInfo.linkedin"] == "found"
+    assert statuses["personalInfo.github"] == "found"
+    assert kept.content_recall == 1.0 and kept.order_fidelity == 1.0
+
+    dropped = compute_roundtrip(data, text.replace("linkedin.com/in/johndoe", ""))
+    assert {f.field: f.status for f in dropped.fields}[
+        "personalInfo.linkedin"
+    ] == "missing"
+    assert dropped.content_recall < 1.0
+
+
+def test_roundtrip_links_follow_template_display_and_order() -> None:
+    data = john_doe()
+    data["personalInfo"] |= {
+        "website": "https://www.jane.dev",  # a full URL is shown as typed
+        "linkedin": "www.linkedin.com/in/jane",  # a bare host loses "www."
+        "github": "github.com/jane",
+    }
+    expected = {
+        None: ["email", "phone", "location", "website", "linkedin", "github"],
+        "clean": ["location", "phone", "email", "linkedin", "github", "website"],
+        "latex": ["location", "phone", "email", "linkedin", "github", "website"],
+        "vivid": ["website", "linkedin", "github", "email", "phone", "location"],
+    }
+    for template, order in expected.items():
+        fields = expected_fields(data, template)[0][2:8]
+        assert [name.removeprefix("personalInfo.") for name, _ in fields] == order
+    texts = dict(expected_fields(data)[0])
+    assert texts["personalInfo.website"] == "https://www.jane.dev"
+    assert texts["personalInfo.linkedin"] == "linkedin.com/in/jane"
+
+
 async def test_pdf_without_text_is_not_extractable() -> None:
     report = await parse_check_bytes(_pdf(1), "scan.pdf")
     assert report.extractability == "none"
