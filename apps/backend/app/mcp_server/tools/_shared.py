@@ -191,6 +191,14 @@ def job_view(job: dict[str, Any]) -> dict[str, Any]:
 
 
 def keyword_updates(content: str, keywords: JobKeywords) -> dict[str, Any]:
+    # Scoring reads only these three lists; an empty payload would still be cached
+    # as truthy and score every resume 0% instead of reporting missing keywords.
+    terms = (*keywords.required_skills, *keywords.preferred_skills, *keywords.keywords)
+    if not any(term.strip() for term in terms):
+        raise ToolError(
+            "keywords must include at least one of required_skills, "
+            "preferred_skills or keywords."
+        )
     updates: dict[str, Any] = {
         "job_keywords": keywords.model_dump(),
         "job_keywords_hash": _hash_job_content(content),
