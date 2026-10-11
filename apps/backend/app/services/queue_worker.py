@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from app.ai_budget import operation_budget
 from app.ai_limits import PromptSizeError
 from app.config import settings
-from app.database import db
+from app.database import DatabaseBusyError, db
 
 logger = logging.getLogger(__name__)
 
@@ -197,12 +197,12 @@ class QueueManager:
             raise
         except Exception as error:
             logger.exception("Tailoring queue item %s failed.", item_id)
-            await db.update_queue_item(
+            await self._record_outcome(
                 item_id, {"status": "failed", "error": failure_code(error)}
             )
             return
 
-        await db.update_queue_item(
+        await self._record_outcome(
             item_id,
             {
                 "status": "completed",
@@ -216,6 +216,28 @@ class QueueManager:
             item_id,
             tailored_resume["resume_id"],
         )
+
+    @staticmethod
+    async def _record_outcome(item_id: str, updates: dict[str, Any]) -> None:
+        """Write the final status, riding out brief database contention.
+
+        A write that never lands leaves the row ``processing`` until the next
+        start requeues it, so busy reservations are retried a few times.
+        """
+        for attempt in range(1, _FINAL_WRITE_ATTEMPTS + 1):
+            try:
+                await db.update_queue_item(item_id, updates)
+                return
+            except DatabaseBusyError:
+                if attempt == _FINAL_WRITE_ATTEMPTS:
+                    logger.exception(
+                        "Could not record the outcome of queue item %s after %d "
+                        "attempts; the next start recovers it.",
+                        item_id,
+                        attempt,
+                    )
+                    return
+                await asyncio.sleep(_FINAL_WRITE_BACKOFF_SECONDS * attempt)
 
     async def _tailor(self, item: dict[str, Any]) -> dict[str, Any]:
         from app.routers import resumes
@@ -258,6 +280,8 @@ class QueueManager:
 
 
 _RETRY_DELAY_SECONDS = 1.0
+_FINAL_WRITE_ATTEMPTS = 4
+_FINAL_WRITE_BACKOFF_SECONDS = 0.25
 
 # Global singleton instance
 queue_manager = QueueManager()
