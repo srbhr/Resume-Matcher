@@ -149,14 +149,9 @@ Generate tailored cover letters based on the job description and your resume.
 
 Generate structured, resume-grounded interview prep for saved tailored resumes. Use the Builder's Interview Prep tab on demand, or enable automatic generation in Settings.
 
-### Sequential Tailoring Queue
+### Tailoring Queue
 
-Queue multiple job descriptions for automated, sequential resume tailoring in the background:
-
-- **Zero-LLM Metadata Detection**: Instantly detects Target Role, Company Name, and Job ID using regex heuristic parsing without making any LLM calls (with manual user override fields).
-- **Rate-Limit & Cooldown Protection**: Configurable cooldown period (e.g., 5s, 10s) between sequential jobs to stay comfortably within provider rate limits.
-- **Dedicated Queue Route (`/queue`)**: Clean dashboard to monitor real-time statuses (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`), delete items, clear the queue, and jump directly to generated resumes.
-- **Background Worker**: Managed async worker with SQLite-backed state persistence across server restarts.
+Paste several job descriptions on the Tailoring Queue page and they are tailored from your master resume one after another in the background. Role, company and job ID are detected from the text without an AI call, and you can edit them. An optional cooldown between jobs (0 to 60 seconds) lowers the risk of hitting your provider's rate limits. Queued jobs are kept in the database and resume after a restart.
 
 ### Resume Scoring & Keyword Highlighting
 
@@ -242,7 +237,7 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
 | **DeepSeek** | Cloud | DeepSeek Chat |
-| **Groq** | Cloud | Ultra-fast inference (Llama 3.3, Llama 3.1, GPT-OSS) |
+| **Groq** | Cloud | Llama 3.3 70B, GPT-OSS |
 
 ### Docker Deployment
 
@@ -277,7 +272,7 @@ Endpoints:
 |-----------|------------|
 | Backend | FastAPI, Python 3.13+, LiteLLM |
 | Frontend | Next.js 16, React 19, TypeScript |
-| Database | SQLite (SQLAlchemy 2.0 async / aiosqlite) |
+| Database | SQLite by default, optional PostgreSQL (SQLAlchemy 2.0) |
 | Styling | Tailwind CSS 4, Swiss International Style |
 | PDF | Headless Chromium via Playwright |
 
