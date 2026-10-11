@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "Adicionar Emprego",
         "addFirstJob": "Adicionar Primeiro Emprego",
+        "condense": {
+          "label": "Condensar (cargo anterior)",
+          "description": "Exibido em uma linha em Experiência anterior. Os tópicos ficam ocultos."
+        },
         "fields": {
           "jobTitle": "Cargo",
           "company": "Empresa"
@@ -1111,6 +1115,7 @@
       "personalInfo": "Informações Pessoais",
       "summary": "Resumo",
       "experience": "Experiência",
+      "earlierExperience": "Experiência anterior",
       "education": "Formação",
       "projects": "Projetos",
       "skills": "Habilidades e Prêmios",

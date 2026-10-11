@@ -354,6 +354,10 @@
       "experience": {
         "addJob": "경력 추가",
         "addFirstJob": "첫 경력 추가",
+        "condense": {
+          "label": "간략히 표시 (이전 경력)",
+          "description": "‘이전 경력’ 아래에 한 줄로 표시합니다. 글머리 항목은 숨겨집니다."
+        },
         "fields": {
           "jobTitle": "직함",
           "company": "회사"
@@ -1111,6 +1115,7 @@
       "personalInfo": "개인 정보",
       "summary": "요약",
       "experience": "경력",
+      "earlierExperience": "이전 경력",
       "education": "학력",
       "projects": "프로젝트",
       "skills": "기술 및 수상 내역",

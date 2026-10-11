@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "添加经历",
         "addFirstJob": "添加第一条经历",
+        "condense": {
+          "label": "精简显示（早期职位）",
+          "description": "在“早期工作经历”下以一行显示，要点将被隐藏。"
+        },
         "fields": {
           "jobTitle": "职位名称",
           "company": "公司"
@@ -1111,6 +1115,7 @@
       "personalInfo": "个人信息",
       "summary": "个人简介",
       "experience": "工作经历",
+      "earlierExperience": "早期工作经历",
       "education": "教育背景",
       "projects": "项目经历",
       "skills": "技能与荣誉",

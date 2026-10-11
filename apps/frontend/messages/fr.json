@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "Ajouter un emploi",
         "addFirstJob": "Ajouter le premier emploi",
+        "condense": {
+          "label": "Condenser (poste antérieur)",
+          "description": "Affiché sur une ligne sous Expérience antérieure. Les puces sont masquées."
+        },
         "fields": {
           "jobTitle": "Intitulé du poste",
           "company": "Entreprise"
@@ -1111,6 +1115,7 @@
       "personalInfo": "Informations personnelles",
       "summary": "Résumé",
       "experience": "Expérience",
+      "earlierExperience": "Expérience antérieure",
       "education": "Formation",
       "projects": "Projets",
       "skills": "Compétences et récompenses",

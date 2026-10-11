@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "Add Job",
         "addFirstJob": "Add First Job",
+        "condense": {
+          "label": "Condense (earlier role)",
+          "description": "Show as one line under Earlier experience. Bullets are hidden."
+        },
         "fields": {
           "jobTitle": "Job Title",
           "company": "Company"
@@ -1111,6 +1115,7 @@
       "personalInfo": "Personal Info",
       "summary": "Summary",
       "experience": "Experience",
+      "earlierExperience": "Earlier experience",
       "education": "Education",
       "projects": "Projects",
       "skills": "Skills & Awards",

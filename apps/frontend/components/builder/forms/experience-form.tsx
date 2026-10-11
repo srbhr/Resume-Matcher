@@ -4,6 +4,7 @@ import React, { useId } from 'react';
 import dynamic from 'next/dynamic';
 import { Input } from '@/components/ui/input';
 import { Label, labelClass } from '@/components/ui/label';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -69,6 +70,10 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
         return item;
       })
     );
+  };
+
+  const handleCondensedChange = (id: number, condensed: boolean) => {
+    onChange(data.map((item) => (item.id === id ? { ...item, condensed } : item)));
   };
 
   const handleDescriptionChange = (id: number, index: number, value: string) => {
@@ -230,6 +235,14 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
                   />
                 </div>
               </div>
+
+              <ToggleSwitch
+                variant="inline"
+                checked={Boolean(item.condensed)}
+                onCheckedChange={(checked) => handleCondensedChange(item.id, checked)}
+                label={t('builder.forms.experience.condense.label')}
+                description={t('builder.forms.experience.condense.description')}
+              />
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">

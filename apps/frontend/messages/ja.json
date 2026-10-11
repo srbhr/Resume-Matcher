@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "職歴を追加",
         "addFirstJob": "最初の職歴を追加",
+        "condense": {
+          "label": "簡略表示（以前の職歴）",
+          "description": "「以前の職歴」の下に1行で表示します。箇条書きは非表示になります。"
+        },
         "fields": {
           "jobTitle": "職種",
           "company": "会社"
@@ -1111,6 +1115,7 @@
       "personalInfo": "個人情報",
       "summary": "概要",
       "experience": "職歴",
+      "earlierExperience": "以前の職歴",
       "education": "学歴",
       "projects": "プロジェクト",
       "skills": "スキル・受賞歴",
