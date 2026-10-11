@@ -862,6 +862,10 @@
       "claudeCliShortName": "Claude プラン",
       "claudeCliWarningTitle": "公式サポート対象外",
       "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Pro / Max サブスクリプションを利用することを公式にはサポートしておらず、ポリシーが変更されると動作しなくなる可能性があります（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher があなたの Claude 認証情報を見たり保存したりすることはなく、あなた自身が `claude auth login` でサインインした Claude Code CLI を実行するだけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
+      "chatgptName": "ChatGPT プラン（Sign in with ChatGPT）",
+      "chatgptShortName": "ChatGPT プラン",
+      "chatgptWarningTitle": "プレビュー",
+      "chatgptWarning": "OpenAI 公式のオープンソースアプリ向け Sign in with ChatGPT を使用します。これはプレビュー版のため、変更される可能性があります。ChatGPT Plus と Pro で利用できます。リクエストはお使いのマシンから OpenAI の API に直接送信され、サインイン用のトークンはこのマシンに暗号化して保存されます。利用量は ChatGPT プランの上限に含まれます。Plus では 5 時間の上限を、プランを使う他のアプリと共有します。Pro には 5 時間の上限はありません。確実に利用するには、OpenAI の API キーを使用してください。",
       "modelLabel": "モデル",
       "defaultModel": "既定: {model}",
       "apiKeyLabel": "API キー",
@@ -901,11 +905,34 @@
         "duplicate_v1_path": "ヘルスチェックに失敗しました。Base URL に /v1 が重複している可能性があります。",
         "not_found_404": "ヘルスチェックに失敗しました。404 Not Found。Base URL が提供元と一致しているか確認してください。",
         "html_response": "ヘルスチェックに失敗しました。Base URL が HTML を返しました。コンソールURLや未対応のゲートウェイの可能性があります。",
-        "claude_cli_not_found": "Claude Code CLI が見つかりません。Claude Code をインストールし、`claude auth login` を実行してください。"
+        "claude_cli_not_found": "Claude Code CLI が見つかりません。Claude Code をインストールし、`claude auth login` を実行してください。",
+        "chatgpt_not_connected": "ChatGPT でサインインしていません。設定で ChatGPT プランを選択し、ChatGPT で続行してください。",
+        "chatgpt_usage_limit": "このアプリの ChatGPT プランの利用上限に達しました。ChatGPT の設定の「使用状況」で確認してください。",
+        "chatgpt_not_eligible": "このアカウントでは ChatGPT プランを利用できません。ChatGPT Plus または Pro が必要です。それ以外の場合は OpenAI の API キーを使用してください。"
       },
       "healthWarnings": {
         "empty_content": "ヘルスチェックで空の内容が返されました。"
       }
+    },
+    "chatgpt": {
+      "continue": "ChatGPT で続行",
+      "checking": "確認中",
+      "connected": "接続済み",
+      "notConnected": "未接続",
+      "disconnect": "接続を解除",
+      "manageUsage": "使用状況を管理",
+      "disconnected": "ChatGPT との接続を解除しました。",
+      "revocationUnconfirmed": "このマシンではサインアウトしましたが、OpenAI からセッション終了の確認が得られませんでした。ChatGPT の設定から Resume Matcher の接続を解除することもできます。",
+      "returnConnected": "ChatGPT プランに接続しました。モデルを選んで保存してください。",
+      "returnCancelled": "ChatGPT のサインインはキャンセルされました。",
+      "returnError": "ChatGPT のサインインを完了できませんでした。もう一度お試しください。",
+      "planDeclined": "ChatGPT プランの利用が許可されませんでした。もう一度 ChatGPT で続行して許可するか、OpenAI の API キーを使用してください。",
+      "sameMachineOnly": "Resume Matcher を実行しているマシンのブラウザからサインインしてください。",
+      "signInFailed": "ChatGPT のサインインを開始できませんでした。もう一度お試しください。",
+      "disconnectFailed": "ChatGPT との接続を解除できませんでした。もう一度お試しください。",
+      "statusFailed": "ChatGPT の接続状態を確認できませんでした。",
+      "modelsFailed": "ChatGPT のモデルを読み込めませんでした。モデル名を入力してください。",
+      "modelHint": "サインイン後、モデルは ChatGPT アカウントから取得されます。"
     },
     "contentGeneration": {
       "title": "コンテンツ生成",

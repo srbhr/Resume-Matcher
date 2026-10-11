@@ -862,6 +862,10 @@
       "claudeCliShortName": "Claude 订阅",
       "claudeCliWarningTitle": "非官方支持",
       "claudeCliWarning": "Anthropic 并未正式支持第三方应用使用 Claude Pro 或 Max 订阅，若其政策变更，此功能可能失效；如需稳定可靠的访问，请使用 Anthropic API 密钥。Resume Matcher 不会看到或存储你的 Claude 凭据，它只是运行你自己的 Claude Code CLI，你需要自行通过 `claude auth login` 登录。请求会计入你的 Claude 订阅用量上限，Anthropic 也可能改为从用量额度中扣除。",
+      "chatgptName": "ChatGPT 订阅（使用 ChatGPT 登录）",
+      "chatgptShortName": "ChatGPT 订阅",
+      "chatgptWarningTitle": "预览版",
+      "chatgptWarning": "此方式使用 OpenAI 面向开源应用的官方“使用 ChatGPT 登录”（Sign in with ChatGPT），目前为预览版，可能会有变化。适用于 ChatGPT Plus 和 Pro。请求从你的电脑直接发送到 OpenAI 的 API，登录令牌加密保存在这台电脑上。用量计入你的 ChatGPT 套餐限额：Plus 的五小时限额与你其他使用该套餐的应用共享；Pro 没有五小时限额。如需稳定可用，请使用 OpenAI API Key。",
       "modelLabel": "模型",
       "defaultModel": "默认：{model}",
       "apiKeyLabel": "API 密钥",
@@ -901,11 +905,34 @@
         "duplicate_v1_path": "健康检查失败。Base URL 可能包含重复的 /v1 路径。",
         "not_found_404": "健康检查失败。404 未找到，请检查 Base URL 是否与提供方匹配。",
         "html_response": "健康检查失败。Base URL 返回了 HTML，可能是控制台地址或网关不支持该路径。",
-        "claude_cli_not_found": "未找到 Claude Code CLI。请安装 Claude Code 并运行 `claude auth login`。"
+        "claude_cli_not_found": "未找到 Claude Code CLI。请安装 Claude Code 并运行 `claude auth login`。",
+        "chatgpt_not_connected": "尚未使用 ChatGPT 登录。请在设置中选择 ChatGPT 订阅，然后通过 ChatGPT 继续。",
+        "chatgpt_usage_limit": "此应用已达到你的 ChatGPT 套餐用量上限。请在 ChatGPT 设置的“用量”中查看。",
+        "chatgpt_not_eligible": "此账户无法使用 ChatGPT 套餐。需要 ChatGPT Plus 或 Pro；否则请使用 OpenAI API Key。"
       },
       "healthWarnings": {
         "empty_content": "健康检查返回了空内容。"
       }
+    },
+    "chatgpt": {
+      "continue": "通过 ChatGPT 继续",
+      "checking": "检查中",
+      "connected": "已连接",
+      "notConnected": "未连接",
+      "disconnect": "断开连接",
+      "manageUsage": "管理用量",
+      "disconnected": "已断开与 ChatGPT 的连接。",
+      "revocationUnconfirmed": "已在这台电脑上退出，但 OpenAI 未确认会话已结束。你也可以在 ChatGPT 设置中断开 Resume Matcher 的连接。",
+      "returnConnected": "已连接到你的 ChatGPT 套餐。请选择模型，然后保存。",
+      "returnCancelled": "已取消 ChatGPT 登录。",
+      "returnError": "ChatGPT 登录未完成，请重试。",
+      "planDeclined": "未允许使用 ChatGPT 套餐。请再次通过 ChatGPT 继续并允许，或使用 OpenAI API Key。",
+      "sameMachineOnly": "请在运行 Resume Matcher 的电脑上的浏览器中登录。",
+      "signInFailed": "无法开始 ChatGPT 登录，请重试。",
+      "disconnectFailed": "无法断开 ChatGPT 连接，请重试。",
+      "statusFailed": "无法检查 ChatGPT 连接状态。",
+      "modelsFailed": "无法加载你的 ChatGPT 模型，请直接输入模型名称。",
+      "modelHint": "登录后，模型列表来自你的 ChatGPT 账户。"
     },
     "contentGeneration": {
       "title": "内容生成",

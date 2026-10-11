@@ -15,12 +15,15 @@ const api = vi.hoisted(() => ({
   refreshStatus: vi.fn(),
   setUiLanguage: vi.fn(),
   setContentLanguage: vi.fn(),
+  fetchChatGptStatus: vi.fn(),
+  fetchChatGptModels: vi.fn(),
   unavailable: () => Promise.reject(new Error('not under test')),
 }));
 // Module-level so the page's load effect (deps: [t]) runs once.
 const t = (key: string) => key;
 // The picker label comes from i18n (the mocked t returns the key).
 const CLAUDE_CLI_LABEL = 'settings.llmConfiguration.claudeCliShortName';
+const CHATGPT_LABEL = 'settings.llmConfiguration.chatgptShortName';
 let currentStatus: typeof systemStatus | null = null;
 const systemStatus = {
   status: 'setup_required' as const,
@@ -73,8 +76,19 @@ vi.mock('@/lib/api/config', async (importOriginal) => {
   };
 });
 
+vi.mock('@/lib/api/chatgpt', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api/chatgpt')>();
+  return {
+    ...actual,
+    fetchChatGptStatus: api.fetchChatGptStatus,
+    fetchChatGptModels: api.fetchChatGptModels,
+  };
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
+  api.fetchChatGptStatus.mockResolvedValue({ connected: false, email: null, plan_declined: false });
+  api.fetchChatGptModels.mockResolvedValue([]);
   currentStatus = systemStatus;
   api.fetchLlmConfig.mockResolvedValue({
     provider: 'openai',
@@ -218,6 +232,34 @@ describe('settings page (Swiss sweep)', () => {
 
     fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
     expect(screen.queryByText('settings.llmConfiguration.claudeCliWarning')).toBeNull();
+  });
+
+  it('shows the ChatGPT plan sign-in panel and preview note only while it is selected', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    expect(screen.queryByText('settings.llmConfiguration.chatgptWarning')).toBeNull();
+
+    fireEvent.click(within(providers).getByRole('radio', { name: CHATGPT_LABEL }));
+
+    // Not signed in: the panel offers Continue with ChatGPT instead of a key field.
+    expect(
+      await screen.findByRole('button', { name: 'settings.chatgpt.continue' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('settings.chatgpt.notConnected')).toBeInTheDocument();
+    expect(document.getElementById('apiKey')).toBeNull();
+    expect(screen.getByRole('link', { name: 'settings.chatgpt.manageUsage' })).toHaveAttribute(
+      'href',
+      'https://chatgpt.com/settings/usage'
+    );
+    const note = screen
+      .getByText('settings.llmConfiguration.chatgptWarning')
+      .closest('[role="alert"]');
+    expect(note).toHaveClass('border-2', 'border-warning', 'bg-warning-tint');
+    expect(note).toHaveTextContent('settings.llmConfiguration.chatgptWarningTitle');
+
+    fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
+    expect(screen.queryByText('settings.llmConfiguration.chatgptWarning')).toBeNull();
+    expect(document.getElementById('apiKey')).not.toBeNull();
   });
 
   it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {

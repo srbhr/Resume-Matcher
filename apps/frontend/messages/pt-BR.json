@@ -862,6 +862,10 @@
       "claudeCliShortName": "Plano Claude",
       "claudeCliWarningTitle": "Sem suporte oficial",
       "claudeCliWarning": "A Anthropic não oferece suporte oficial a aplicativos de terceiros que usam as assinaturas Claude Pro ou Max, então isso pode deixar de funcionar se a política mudar; para acesso garantido, use uma chave de API da Anthropic. O Resume Matcher nunca vê nem armazena suas credenciais do Claude: ele executa a sua própria CLI do Claude Code, na qual você mesmo faz login com `claude auth login`. As solicitações contam para os limites de uso do seu plano Claude, e a Anthropic pode descontá-las de créditos de uso em vez disso.",
+      "chatgptName": "Plano do ChatGPT (Sign in with ChatGPT)",
+      "chatgptShortName": "Plano ChatGPT",
+      "chatgptWarningTitle": "Prévia",
+      "chatgptWarning": "Usa o Sign in with ChatGPT oficial da OpenAI para apps de código aberto, que está em prévia e pode mudar. Funciona com ChatGPT Plus e Pro. As solicitações vão do seu computador diretamente para a API da OpenAI, e os tokens de login ficam criptografados neste computador. O uso conta para os limites do seu plano do ChatGPT: no Plus, o limite de cinco horas é compartilhado com seus outros apps que usam seu plano; o Pro não tem limite de cinco horas. Para acesso garantido, use uma chave de API da OpenAI.",
       "modelLabel": "Modelo",
       "defaultModel": "PADRÃO: {model}",
       "apiKeyLabel": "Chave de API",
@@ -901,11 +905,34 @@
         "duplicate_v1_path": "Falha na verificação de integridade. A URL base pode conter um caminho /v1 duplicado.",
         "not_found_404": "Falha na verificação de integridade. 404 Não encontrado - verifique se a URL base corresponde ao provedor.",
         "html_response": "Falha na verificação de integridade. A URL base retornou HTML; pode ser uma URL de console ou um caminho de gateway não suportado.",
-        "claude_cli_not_found": "CLI do Claude Code não encontrada. Instale o Claude Code e execute `claude auth login`."
+        "claude_cli_not_found": "CLI do Claude Code não encontrada. Instale o Claude Code e execute `claude auth login`.",
+        "chatgpt_not_connected": "Você não entrou com o ChatGPT. Selecione Plano ChatGPT em Configurações e continue com o ChatGPT.",
+        "chatgpt_usage_limit": "O limite de uso do seu plano do ChatGPT para este app foi atingido. Confira em Uso, nas configurações do ChatGPT.",
+        "chatgpt_not_eligible": "O uso do plano do ChatGPT não está disponível para esta conta. É preciso ter ChatGPT Plus ou Pro; caso contrário, use uma chave de API da OpenAI."
       },
       "healthWarnings": {
         "empty_content": "O LLM retornou conteúdo vazio na verificação de integridade."
       }
+    },
+    "chatgpt": {
+      "continue": "Continuar com o ChatGPT",
+      "checking": "Verificando",
+      "connected": "Conectado",
+      "notConnected": "Não conectado",
+      "disconnect": "Desconectar",
+      "manageUsage": "Gerenciar uso",
+      "disconnected": "Desconectado do ChatGPT.",
+      "revocationUnconfirmed": "Você saiu neste computador, mas a OpenAI não confirmou o fim da sessão. Você também pode desconectar o Resume Matcher nas configurações do ChatGPT.",
+      "returnConnected": "Conectado ao seu plano do ChatGPT. Escolha um modelo e salve.",
+      "returnCancelled": "O login com o ChatGPT foi cancelado.",
+      "returnError": "O login com o ChatGPT não foi concluído. Tente novamente.",
+      "planDeclined": "O uso do plano do ChatGPT não foi permitido. Continue com o ChatGPT de novo e permita, ou use uma chave de API da OpenAI.",
+      "sameMachineOnly": "Entre em um navegador no computador que está executando o Resume Matcher.",
+      "signInFailed": "Não foi possível iniciar o login com o ChatGPT. Tente novamente.",
+      "disconnectFailed": "Não foi possível desconectar o ChatGPT. Tente novamente.",
+      "statusFailed": "Não foi possível verificar a conexão com o ChatGPT.",
+      "modelsFailed": "Não foi possível carregar seus modelos do ChatGPT. Digite o nome de um modelo.",
+      "modelHint": "Depois que você entrar, os modelos vêm da sua conta do ChatGPT."
     },
     "contentGeneration": {
       "title": "Geração de conteúdo",

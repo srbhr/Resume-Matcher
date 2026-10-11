@@ -862,6 +862,10 @@
       "claudeCliShortName": "Claude plan",
       "claudeCliWarningTitle": "Not officially supported",
       "claudeCliWarning": "Anthropic does not officially support third-party apps using Claude Pro or Max subscriptions, so this may stop working if its policy changes; for guaranteed access, use an Anthropic API key. Resume Matcher never sees or stores your Claude credentials: it runs your own Claude Code CLI, which you sign in to yourself with `claude auth login`. Requests count toward your Claude plan's usage limits, and Anthropic may draw them from usage credits instead.",
+      "chatgptName": "ChatGPT plan (Sign in with ChatGPT)",
+      "chatgptShortName": "ChatGPT plan",
+      "chatgptWarningTitle": "Preview",
+      "chatgptWarning": "This uses OpenAI's official Sign in with ChatGPT for open-source apps, which is a preview and may change. It works with ChatGPT Plus and Pro. Requests go from your machine directly to OpenAI's API, and the sign-in tokens stay encrypted on this machine. Usage counts toward your ChatGPT plan's limits: on Plus, the five-hour limit is shared with your other apps that use your plan; Pro has no five-hour limit. For guaranteed access, use an OpenAI API key.",
       "modelLabel": "Model",
       "defaultModel": "DEFAULT: {model}",
       "apiKeyLabel": "API Key",
@@ -901,11 +905,34 @@
         "duplicate_v1_path": "Health check failed. The Base URL may contain a duplicate /v1 path.",
         "not_found_404": "Health check failed. 404 Not Found - check that the Base URL matches the provider.",
         "html_response": "Health check failed. The Base URL returned HTML; it may be a console URL or an unsupported gateway path.",
-        "claude_cli_not_found": "Claude Code CLI not found. Install Claude Code and run `claude auth login`."
+        "claude_cli_not_found": "Claude Code CLI not found. Install Claude Code and run `claude auth login`.",
+        "chatgpt_not_connected": "Not signed in with ChatGPT. Select ChatGPT plan in Settings and continue with ChatGPT.",
+        "chatgpt_usage_limit": "Your ChatGPT plan's usage limit for this app has been reached. Review it in ChatGPT settings under Usage.",
+        "chatgpt_not_eligible": "ChatGPT plan usage isn't available for this account. It needs ChatGPT Plus or Pro; otherwise use an OpenAI API key."
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."
       }
+    },
+    "chatgpt": {
+      "continue": "Continue with ChatGPT",
+      "checking": "Checking",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "disconnect": "Disconnect",
+      "manageUsage": "Manage usage",
+      "disconnected": "Disconnected from ChatGPT.",
+      "revocationUnconfirmed": "Signed out on this machine, but OpenAI didn't confirm the session ended. You can also disconnect Resume Matcher in ChatGPT settings.",
+      "returnConnected": "Connected to your ChatGPT plan. Choose a model, then save.",
+      "returnCancelled": "ChatGPT sign-in was cancelled.",
+      "returnError": "ChatGPT sign-in didn't complete. Try again.",
+      "planDeclined": "ChatGPT plan usage wasn't allowed. Continue with ChatGPT again and allow it, or use an OpenAI API key.",
+      "sameMachineOnly": "Sign in from a browser on the machine running Resume Matcher.",
+      "signInFailed": "Couldn't start ChatGPT sign-in. Try again.",
+      "disconnectFailed": "Couldn't disconnect ChatGPT. Try again.",
+      "statusFailed": "Couldn't check the ChatGPT connection.",
+      "modelsFailed": "Couldn't load your ChatGPT models. Enter a model name instead.",
+      "modelHint": "After you sign in, models come from your ChatGPT account."
     },
     "contentGeneration": {
       "title": "Content generation",

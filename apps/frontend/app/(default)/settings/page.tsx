@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, m } from 'motion/react';
 import {
@@ -32,6 +32,8 @@ import {
   type ApiKeyProvider,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
+import { CHATGPT_RETURN_OUTCOMES, type ChatGptReturnOutcome } from '@/lib/api/chatgpt';
+import { ChatGptConnection } from '@/components/settings/chatgpt-connection';
 import { getVersionString } from '@/lib/config/version';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -87,7 +89,33 @@ const PROVIDERS: LLMProvider[] = [
   'groq',
   'ollama',
   'claude_cli',
+  'chatgpt',
 ];
+
+/** Picker labels translated instead of derived from PROVIDER_INFO's English name. */
+const SHORT_NAME_KEYS: Partial<Record<LLMProvider, string>> = {
+  claude_cli: 'settings.llmConfiguration.claudeCliShortName',
+  chatgpt: 'settings.llmConfiguration.chatgptShortName',
+};
+const FULL_NAME_KEYS: Partial<Record<LLMProvider, string>> = {
+  claude_cli: 'settings.llmConfiguration.claudeCliName',
+  chatgpt: 'settings.llmConfiguration.chatgptName',
+};
+/** The ChatGPT plan shares OpenAI's mark. */
+const brandMark = (p: LLMProvider): string => (p === 'chatgpt' ? 'openai' : p);
+
+/**
+ * The outcome the backend appends (`?chatgpt=`) when it sends the browser back
+ * from OpenAI. Removed from the address bar so a reload does not repeat it.
+ */
+function takeChatGptReturn(): ChatGptReturnOutcome | null {
+  const url = new URL(window.location.href);
+  const value = url.searchParams.get('chatgpt');
+  if (value === null) return null;
+  url.searchParams.delete('chatgpt');
+  window.history.replaceState(window.history.state, '', url.toString());
+  return CHATGPT_RETURN_OUTCOMES.find((outcome) => outcome === value) ?? 'error';
+}
 
 const unwrapCodeBlock = (value?: string | null): string | null => {
   if (!value) return null;
@@ -132,6 +160,13 @@ export default function SettingsPage() {
   // won't re-fire on next load). Typed tightly so invalid values can't leak
   // through the save path.
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort | 'auto'>('auto');
+  // Read once per mount (refs survive Strict Mode's effect replay).
+  const chatGptReturnRef = useRef<ChatGptReturnOutcome | null | undefined>(undefined);
+  const [chatGptReturn, setChatGptReturn] = useState<ChatGptReturnOutcome | null>(null);
+  const readChatGptReturn = useCallback((): ChatGptReturnOutcome | null => {
+    if (chatGptReturnRef.current === undefined) chatGptReturnRef.current = takeChatGptReturn();
+    return chatGptReturnRef.current;
+  }, []);
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -288,6 +323,8 @@ export default function SettingsPage() {
     let cancelled = false;
 
     async function loadConfig() {
+      const returnedFromChatGpt = readChatGptReturn();
+      if (returnedFromChatGpt) setChatGptReturn(returnedFromChatGpt);
       try {
         const [llmConfig, featureConfig, promptConfig, featurePrompts, keyStatus] =
           await Promise.all([
@@ -308,14 +345,22 @@ export default function SettingsPage() {
           const safeProvider = PROVIDERS.includes(providerFromBackend as LLMProvider)
             ? (providerFromBackend as LLMProvider)
             : 'openai';
-          setProvider(safeProvider);
-          setModel(llmConfig.model || PROVIDER_INFO[safeProvider].defaultModel);
+          // Back from Sign in with ChatGPT: show the ChatGPT plan panel (unsaved)
+          // even if another provider is still the saved one.
+          const resumeChatGpt = returnedFromChatGpt !== null && safeProvider !== 'chatgpt';
+          const activeProvider: LLMProvider = resumeChatGpt ? 'chatgpt' : safeProvider;
+          setProvider(activeProvider);
+          setModel(
+            resumeChatGpt
+              ? PROVIDER_INFO.chatgpt.defaultModel
+              : llmConfig.model || PROVIDER_INFO[safeProvider].defaultModel
+          );
           // Whether THIS provider already has an encrypted key (per-provider,
           // not the legacy shared slot) drives the "leave blank to keep" hint.
-          const keyProvider = llmProviderToKeyProvider(safeProvider);
+          const keyProvider = llmProviderToKeyProvider(activeProvider);
           setHasStoredApiKey(statuses.some((s) => s.provider === keyProvider && s.configured));
           setApiKey('');
-          setApiBase(llmConfig.api_base || '');
+          setApiBase(resumeChatGpt ? '' : llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
 
           if (providerFromBackend !== safeProvider) {
@@ -355,7 +400,7 @@ export default function SettingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [t, readChatGptReturn]);
 
   // Whether a given key-store provider currently has a saved key.
   const providerHasStoredKey = (p: LLMProvider): boolean => {
@@ -680,6 +725,8 @@ export default function SettingsPage() {
   const requiresApiKey = providerInfo.requiresKey ?? true;
   const requiresApiBase = providerInfo.requiresBaseUrl ?? false;
   const usesLocalCli = providerInfo.localCli ?? false;
+  const usesChatGptSignIn = providerInfo.chatgptSignIn ?? false;
+  const fullNameKey = FULL_NAME_KEYS[provider];
   // M-04: provider-specific base-URL copy comes from the message catalogs, not
   // English literals in PROVIDER_INFO — otherwise this whole block reverted to
   // English inside an otherwise fully-translated settings page.
@@ -876,26 +923,27 @@ export default function SettingsPage() {
                   aria-labelledby="provider-label"
                   size="sm"
                   className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
-                  items={PROVIDERS.map((p) => ({
-                    value: p,
-                    label: (
-                      <span className="inline-flex items-center gap-2">
-                        {hasBrandIcon(p) && <BrandIcon name={p} className="size-4 shrink-0" />}
-                        {p === 'claude_cli'
-                          ? t('settings.llmConfiguration.claudeCliShortName')
-                          : PROVIDER_INFO[p].name.split(' ')[0]}
-                      </span>
-                    ),
-                  }))}
+                  items={PROVIDERS.map((p) => {
+                    const mark = brandMark(p);
+                    const shortNameKey = SHORT_NAME_KEYS[p];
+                    return {
+                      value: p,
+                      label: (
+                        <span className="inline-flex items-center gap-2">
+                          {hasBrandIcon(mark) && (
+                            <BrandIcon name={mark} className="size-4 shrink-0" />
+                          )}
+                          {shortNameKey ? t(shortNameKey) : PROVIDER_INFO[p].name.split(' ')[0]}
+                        </span>
+                      ),
+                    };
+                  })}
                   value={provider}
                   onChange={handleProviderChange}
                 />
                 <p className="text-xs text-steel font-mono">
                   {t('settings.llmConfiguration.selectedProvider', {
-                    provider:
-                      provider === 'claude_cli'
-                        ? t('settings.llmConfiguration.claudeCliName')
-                        : providerInfo.name,
+                    provider: fullNameKey ? t(fullNameKey) : providerInfo.name,
                   })}
                 </p>
               </div>
@@ -908,6 +956,18 @@ export default function SettingsPage() {
                     title={t('settings.llmConfiguration.claudeCliWarningTitle')}
                   >
                     {t('settings.llmConfiguration.claudeCliWarning')}
+                  </Alert>
+                </>
+              ) : usesChatGptSignIn ? (
+                <>
+                  <ChatGptConnection
+                    model={model}
+                    onModelChange={setModel}
+                    returnOutcome={chatGptReturn}
+                    onConnectionChange={refreshStatus}
+                  />
+                  <Alert tone="warning" title={t('settings.llmConfiguration.chatgptWarningTitle')}>
+                    {t('settings.llmConfiguration.chatgptWarning')}
                   </Alert>
                 </>
               ) : (
@@ -1008,7 +1068,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {!usesLocalCli && (
+              {!usesLocalCli && !usesChatGptSignIn && (
                 <>
                   {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
                   <div className="space-y-2">
