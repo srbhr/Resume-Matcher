@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { ArrowsClockwise, SpinnerGap } from '@phosphor-icons/react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/lib/i18n';
 import { fetchLastAtsScore, recalculateAtsScore, type ATSScoreRecord } from '@/lib/api/resume';
@@ -65,47 +66,30 @@ export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScor
     }
   };
 
-  if (state.status === 'loading') {
-    return (
-      <div className="border-2 border-ink bg-white p-4 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-ink-soft">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        {t('builder.jdMatch.atsScore.loading')}
-      </div>
-    );
-  }
-
+  const loading = state.status === 'loading';
   const record = state.status === 'loaded' ? state.record : null;
 
   return (
-    <div className="space-y-2">
-      {record ? (
-        <ATSScoreCard atsScore={record.score} template={template} />
-      ) : (
-        <div className="border-2 border-ink bg-white p-4 font-mono text-xs text-ink-soft">
-          {state.status === 'failed'
-            ? t('builder.jdMatch.atsScore.loadFailed')
-            : t('builder.jdMatch.atsScore.notCalculated')}
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-mono text-xs text-ink-soft">
-          {record &&
-            t('builder.jdMatch.atsScore.lastCalculated', {
-              date: new Date(record.calculated_at).toLocaleString(locale),
-            })}
-        </span>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4 border-2 border-ink bg-white p-4">
+        <p className="font-mono text-xs uppercase text-steel">
+          {loading
+            ? t('builder.jdMatch.atsScore.loading')
+            : record
+              ? t('builder.jdMatch.atsScore.lastCalculated', {
+                  date: new Date(record.calculated_at).toLocaleString(locale),
+                })
+              : null}
+        </p>
         <Button
-          variant="outline"
           size="sm"
           onClick={handleRecalculate}
-          disabled={recalculating || hasUnsavedChanges}
-          className="gap-2"
+          disabled={loading || recalculating || hasUnsavedChanges}
         >
           {recalculating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <SpinnerGap aria-hidden="true" className="animate-spin" />
           ) : (
-            <RefreshCw className="w-4 h-4" />
+            <ArrowsClockwise aria-hidden="true" />
           )}
           {recalculating
             ? t('builder.jdMatch.atsScore.recalculating')
@@ -114,12 +98,23 @@ export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScor
       </div>
 
       {hasUnsavedChanges && (
-        <p className="font-mono text-xs text-ink-soft">{t('builder.jdMatch.atsScore.saveFirst')}</p>
+        <Alert tone="warning" role="status">
+          {t('builder.jdMatch.atsScore.saveFirst')}
+        </Alert>
       )}
       {recalculateFailed && (
-        <p className="font-mono text-xs text-destructive">
-          {t('builder.jdMatch.atsScore.recalculateFailed')}
-        </p>
+        <Alert tone="error">{t('builder.jdMatch.atsScore.recalculateFailed')}</Alert>
+      )}
+      {state.status === 'failed' && (
+        <Alert tone="error">{t('builder.jdMatch.atsScore.loadFailed')}</Alert>
+      )}
+
+      {record ? (
+        <ATSScoreCard atsScore={record.score} template={template} />
+      ) : (
+        state.status === 'loaded' && (
+          <p className="text-sm text-ink-soft">{t('builder.jdMatch.atsScore.notCalculated')}</p>
+        )
       )}
     </div>
   );
