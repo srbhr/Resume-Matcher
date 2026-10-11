@@ -29,7 +29,7 @@ def normalize(text: str) -> str:
     text = _HTML_TAG.sub("", text)
     text = _HYPHEN_BREAK.sub(r"\1-\2", text)
     text = "\n".join(rejoin_letter_spacing(line) for line in text.splitlines())
-    return re.sub(r"[ \t ]+", " ", text).lower().strip()
+    return re.sub(r"[ \t ]+", " ", text).casefold().strip()
 
 
 def tokens(text: str) -> list[str]:

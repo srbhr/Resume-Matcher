@@ -133,7 +133,14 @@ def _run_text(element: Any, path: str) -> str:
 
 
 def _xml_text(element: Any) -> str:
-    return _run_text(element, f".//{_RUN_CONTENT}").strip()
+    """Run text with one line per paragraph, so cell paragraphs never run together."""
+    paragraphs: dict[Any, list[str]] = {}
+    for node in element.xpath(f".//{_RUN_CONTENT}"):
+        paragraph = next(node.iterancestors(qn("w:p")), None)
+        paragraphs.setdefault(paragraph, []).append(
+            _RUN_BREAKS.get(node.tag, node.text or "")
+        )
+    return "\n".join("".join(parts) for parts in paragraphs.values()).strip()
 
 
 def _table_lines(table: Any) -> list[str]:
@@ -143,6 +150,10 @@ def _table_lines(table: Any) -> list[str]:
         cells = [_xml_text(cell) for cell in row.xpath("./w:tc")]
         lines.append(" | ".join(c for c in cells if c))
     return lines
+
+
+def _count_docx_images(element: Any) -> int:
+    return len(element.xpath(".//w:drawing")) + len(element.xpath(".//w:pict"))
 
 
 def extract_docx(content: bytes) -> ExtractedDocument:
@@ -160,16 +171,25 @@ def extract_docx(content: bytes) -> ExtractedDocument:
             lines.extend(_table_lines(child))
     header_footer: list[str] = []
     columns = 1
+    images = _count_docx_images(body)
     for section in document.sections:
-        for part in (section.header, section.footer):
+        # Word keeps first-page and even-page variants in parts of their own.
+        for part in (
+            section.header,
+            section.footer,
+            section.first_page_header,
+            section.first_page_footer,
+            section.even_page_header,
+            section.even_page_footer,
+        ):
             if not part.is_linked_to_previous:
                 header_footer.extend(p.text for p in part.paragraphs if p.text.strip())
                 for table in part.tables:
                     header_footer.extend(t for t in _table_lines(table._tbl) if t)
+                images += _count_docx_images(part._element)
         for num in section._sectPr.xpath("./w:cols/@w:num"):
             columns = max(columns, int(num))
     textboxes = [_xml_text(box) for box in body.xpath(".//w:txbxContent")]
-    images = len(body.xpath(".//w:drawing")) + len(body.xpath(".//w:pict"))
     return ExtractedDocument(
         kind="docx",
         text="\n".join(line for line in lines if line.strip()),

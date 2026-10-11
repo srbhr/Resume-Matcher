@@ -1,5 +1,6 @@
 """ATS parse-check engine: normalization, checks, scoring and round trip."""
 
+import base64
 import copy
 import io
 import json
@@ -130,6 +131,10 @@ def test_cjk_split_keeps_latin_runs_whole() -> None:
     assert by_field["additional.technicalSkills"] == "found"
 
 
+def test_normalize_casefolds_so_sharp_s_matches_ss() -> None:
+    assert tokens("Straße") == tokens("STRASSE") == ["strasse"]
+
+
 def test_normalize_strips_inline_html_and_keeps_real_hyphens() -> None:
     assert (
         normalize("<strong>Led</strong> open-\nsource work") == "led open-source work"
@@ -234,6 +239,90 @@ async def test_roundtrip_uses_the_template_contact_order() -> None:
     ]
 
 
+async def test_roundtrip_checks_header_links() -> None:
+    # The render shows "linkedin.com/in/johndoe , github.com/johndoe".
+    data = john_doe()
+    data["personalInfo"]["linkedin"] = "www.linkedin.com/in/johndoe"
+    data["personalInfo"]["github"] = "github.com/johndoe"
+    text = extract_pdf(render("single-column")).text
+    kept = compute_roundtrip(data, text, "swiss-single")
+    statuses = {f.field: f.status for f in kept.fields}
+    assert statuses["personalInfo.linkedin"] == "found"
+    assert statuses["personalInfo.github"] == "found"
+    assert kept.content_recall == 1.0 and kept.order_fidelity == 1.0
+
+    dropped = compute_roundtrip(data, text.replace("linkedin.com/in/johndoe", ""))
+    assert {f.field: f.status for f in dropped.fields}[
+        "personalInfo.linkedin"
+    ] == "missing"
+    assert dropped.content_recall < 1.0
+
+
+def test_roundtrip_links_follow_template_display_and_order() -> None:
+    data = john_doe()
+    data["personalInfo"] |= {
+        "website": "https://www.jane.dev",  # a full URL is shown as typed
+        "linkedin": "www.linkedin.com/in/jane",  # a bare host loses "www."
+        "github": "github.com/jane",
+    }
+    expected = {
+        None: ["email", "phone", "location", "website", "linkedin", "github"],
+        "clean": ["location", "phone", "email", "linkedin", "github", "website"],
+        "latex": ["location", "phone", "email", "linkedin", "github", "website"],
+        "vivid": ["website", "linkedin", "github", "email", "phone", "location"],
+    }
+    for template, order in expected.items():
+        fields = expected_fields(data, template)[0][2:8]
+        assert [name.removeprefix("personalInfo.") for name, _ in fields] == order
+    texts = dict(expected_fields(data)[0])
+    assert texts["personalInfo.website"] == "https://www.jane.dev"
+    assert texts["personalInfo.linkedin"] == "linkedin.com/in/jane"
+
+
+def test_roundtrip_reads_entry_rows_left_column_first() -> None:
+    # The render's "title | dates" over "company | location" rows read title,
+    # company, dates, location.
+    data = john_doe()
+    for entry in data["workExperience"]:
+        entry["location"] = "San Francisco, CA"
+    text = extract_pdf(render("single-column")).text
+    assert compute_roundtrip(data, text, "swiss-single").order_fidelity == 1.0
+
+
+# Entry lines in the order pdfminer reads assets/pdf-templates/<template>.pdf.
+TEMPLATE_ENTRY_TEXT = {
+    "clean": "Acme Corp | Staff Engineer\nDublin | 2020 - 2023\n"
+    "Trinity College | BSc Physics\n2016",
+    "latex": "Acme Corp\nStaff Engineer\n2020 - 2023\nDublin\n"
+    "Trinity College\nBSc Physics\n2016",
+    "vivid": "Acme Corp | Staff Engineer\n2020 - 2023 | Dublin\n"
+    "Trinity College\nBSc Physics\n2016",
+    "swiss-two-column": "Staff Engineer\nAcme Corp • Dublin\n2020 - 2023\n"
+    "Trinity College | 2016\nBSc Physics",
+}
+
+
+@pytest.mark.parametrize("template", TEMPLATE_ENTRY_TEXT)
+def test_roundtrip_uses_the_template_entry_order(template: str) -> None:
+    data = {
+        "personalInfo": {"name": "Jane Roe"},
+        "workExperience": [
+            {
+                "title": "Staff Engineer",
+                "company": "Acme Corp",
+                "location": "Dublin",
+                "years": "2020 - 2023",
+            }
+        ],
+        "education": [
+            {"institution": "Trinity College", "degree": "BSc Physics", "years": "2016"}
+        ],
+    }
+    text = "Jane Roe\n" + TEMPLATE_ENTRY_TEXT[template]
+    assert compute_roundtrip(data, text, template).order_fidelity == 1.0
+    assert compute_roundtrip(data, text).order_fidelity < 1.0
+
+
 async def test_pdf_without_text_is_not_extractable() -> None:
     report = await parse_check_bytes(_pdf(1), "scan.pdf")
     assert report.extractability == "none"
@@ -288,6 +377,49 @@ async def test_docx_tabs_and_line_breaks_separate_words() -> None:
     assert "Go\tPython" in lines
 
 
+@pytest.mark.parametrize("part", ["first_page_header", "even_page_footer"])
+async def test_docx_contact_in_first_or_even_page_margin_is_flagged(part: str) -> None:
+    def build(document: Any) -> None:
+        section = document.sections[0]
+        section.different_first_page_header_footer = True
+        document.settings.odd_and_even_pages_header_footer = True
+        getattr(section, part).paragraphs[0].text = "jane@example.com"
+        document.add_paragraph("EXPERIENCE")
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    check = next(c for c in report.checks if c.id == "header_footer_content")
+    assert check.status == "fail"
+    assert check.params["contact_only_in_margin"] is True
+
+
+async def test_docx_header_image_is_counted() -> None:
+    png = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    )
+
+    def build(document: Any) -> None:
+        header = document.sections[0].header
+        header.paragraphs[0].add_run().add_picture(io.BytesIO(png))
+        document.add_paragraph("Jane Doe jane@example.com")
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    check = next(c for c in report.checks if c.id == "images")
+    assert check.status == "warn"
+    assert check.params["count"] == 1
+
+
+async def test_docx_table_cell_paragraphs_stay_separate_words() -> None:
+    def build(document: Any) -> None:
+        cells = document.add_table(rows=1, cols=2).rows[0].cells
+        cells[0].paragraphs[0].text = "Senior"
+        cells[0].add_paragraph("Engineer")
+        cells[1].text = "2020"
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    assert "Senior\nEngineer | 2020" in report.extracted_text_preview
+    assert "SeniorEngineer" not in report.extracted_text_preview
+
+
 async def test_docx_contact_in_a_header_table_is_flagged() -> None:
     def build(document: Any) -> None:
         header = document.sections[0].header
@@ -321,6 +453,9 @@ def test_contact_info_found_late_is_a_warning() -> None:
         ("Acme 03.2019 - 06.2022", False),
         ("2019 - 2022\n+44 20 7946 0958", True),
         ("(415) 555-0142", True),
+        # Seven-digit local numbers.
+        ("555-1234", True),
+        ("5551234", True),
     ],
 )
 def test_contact_info_needs_a_phone_shaped_number(text: str, phone: bool) -> None:

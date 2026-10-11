@@ -15,10 +15,32 @@ MATCH_PREFIX = 6
 Field = tuple[str, str]
 
 # Header contact order per template (apps/frontend/components/resume/resume-*.tsx).
-CONTACT_ORDER = ("email", "phone", "location")
+CONTACT_ORDER = ("email", "phone", "location", "website", "linkedin", "github")
 CONTACT_ORDER_BY_TEMPLATE: dict[str, tuple[str, ...]] = {
-    "clean": ("location", "phone", "email"),
-    "latex": ("location", "phone", "email"),
+    "clean": ("location", "phone", "email", "linkedin", "github", "website"),
+    "latex": ("location", "phone", "email", "linkedin", "github", "website"),
+    "vivid": ("website", "linkedin", "github", "email", "phone", "location"),
+}
+LINK_FIELDS = frozenset({"website", "linkedin", "github"})
+
+# Entry field order as pdfminer reads each template (assets/pdf-templates/*.pdf).
+# Two-row entries read the left column first: swiss-single's "title | dates"
+# over "company | location" reads title, company, dates, location.
+ENTRY_ORDER: dict[str, tuple[str, ...]] = {
+    "workExperience": ("title", "company", "years", "location"),
+    "education": ("institution", "degree", "years"),
+    "personalProjects": ("name", "role", "years"),
+}
+_TWO_COLUMN_ENTRY_ORDER = {
+    "workExperience": ("title", "company", "location", "years"),
+    "education": ("institution", "years", "degree"),
+}
+ENTRY_ORDER_BY_TEMPLATE: dict[str, dict[str, tuple[str, ...]]] = {
+    "swiss-two-column": _TWO_COLUMN_ENTRY_ORDER,
+    "modern-two-column": _TWO_COLUMN_ENTRY_ORDER,
+    "clean": {"workExperience": ("company", "title", "location", "years")},
+    "latex": {"workExperience": ("company", "title", "years", "location")},
+    "vivid": {"workExperience": ("company", "title", "years", "location")},
 }
 
 
@@ -30,6 +52,17 @@ def canonical_resume_data(data: Any) -> dict[str, Any]:
     """
     raw = normalize_resume_data(dict(data)) if isinstance(data, dict) else data
     return ResumeData.model_validate(raw).model_dump(mode="json")
+
+
+def _contact_text(key: str, value: Any) -> str:
+    """A contact value as the header shows it: a bare link host drops "www.".
+
+    The templates show a value starting with "http" or "//" exactly as typed.
+    """
+    text = str(value or "")
+    if key in LINK_FIELDS and not text.startswith(("http", "//")):
+        return text.removeprefix("www.")
+    return text
 
 
 def _join(values: Any) -> str:
@@ -50,32 +83,19 @@ def _entry_fields(
     return out
 
 
-def _section_fields(key: str, data: dict[str, Any]) -> list[Field]:
+def _section_fields(
+    key: str, data: dict[str, Any], template: str | None
+) -> list[Field]:
     if key == "summary":
         return [("summary", data.get("summary") or "")]
-    if key == "workExperience":
+    if key in ENTRY_ORDER:
+        order = ENTRY_ORDER_BY_TEMPLATE.get(template or "", {}).get(
+            key, ENTRY_ORDER[key]
+        )
         return [
             f
-            for i, e in enumerate(data.get("workExperience") or [])
-            for f in _entry_fields(
-                f"workExperience[{i}]", e, ("title", "company", "location", "years")
-            )
-        ]
-    if key == "education":
-        return [
-            f
-            for i, e in enumerate(data.get("education") or [])
-            for f in _entry_fields(
-                f"education[{i}]", e, ("institution", "degree", "years")
-            )
-        ]
-    if key == "personalProjects":
-        return [
-            f
-            for i, e in enumerate(data.get("personalProjects") or [])
-            for f in _entry_fields(
-                f"personalProjects[{i}]", e, ("name", "role", "years")
-            )
+            for i, e in enumerate(data.get(key) or [])
+            for f in _entry_fields(f"{key}[{i}]", e, order)
         ]
     if key == "additional":
         additional = data.get("additional") or {}
@@ -114,7 +134,7 @@ def expected_fields(
     info = data.get("personalInfo") or {}
     contact = CONTACT_ORDER_BY_TEMPLATE.get(template or "", CONTACT_ORDER)
     fields: list[Field] = [
-        (f"personalInfo.{k}", str(info.get(k) or ""))
+        (f"personalInfo.{k}", _contact_text(k, info.get(k)))
         for k in ("name", "title", *contact)
     ]
     hidden: list[str] = []
@@ -125,7 +145,7 @@ def expected_fields(
         if not meta.get("isVisible", True):
             hidden.append(key)
             continue
-        fields.extend(_section_fields(key, data))
+        fields.extend(_section_fields(key, data, template))
     return [(name, text) for name, text in fields if tokens(text)], hidden
 
 
