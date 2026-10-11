@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import QueuePage from '@/app/(default)/queue/page';
 import type { QueueItem } from '@/lib/api/resume';
 
@@ -61,6 +61,10 @@ const item = (id: string, status: QueueItem['status'], extra: Partial<QueueItem>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Drop queued one-off results a failed test may leave behind.
+  for (const fn of [listResumes, fetchQueue, addJob, removeItem, clearItems, parseMetadata]) {
+    fn.mockReset();
+  }
   localStorage.clear();
   listResumes.mockResolvedValue([
     {
@@ -244,5 +248,62 @@ describe('queue list states', () => {
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(await screen.findByText('back role')).toBeTruthy();
     expect(screen.queryByText('queue.errors.loadFailed')).toBeNull();
+  });
+});
+
+describe('queue polling', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const flush = () => act(async () => {});
+  const advance = (ms: number) =>
+    act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+
+  it('polls on one steady interval while items are active and stops when none are', async () => {
+    vi.useFakeTimers();
+    // Reads that take a second: re-creating the interval per snapshot would delay each tick.
+    const slowRead = (items: QueueItem[]) => () =>
+      new Promise<QueueItem[]>((resolve) => setTimeout(() => resolve(items), 1000));
+    fetchQueue
+      .mockResolvedValueOnce([item('a', 'pending')])
+      .mockImplementationOnce(slowRead([item('a', 'processing')]))
+      .mockImplementationOnce(slowRead([item('a', 'processing')]))
+      .mockImplementation(slowRead([item('a', 'completed')]));
+    render(<QueuePage />);
+    await flush();
+    await flush();
+    expect(fetchQueue).toHaveBeenCalledTimes(1);
+
+    // Each read lands a second after its tick; the next tick stays 2.5s after the last.
+    await advance(2500);
+    expect(fetchQueue).toHaveBeenCalledTimes(2);
+    await advance(1000);
+    await advance(1500);
+    expect(fetchQueue).toHaveBeenCalledTimes(3);
+    await advance(1000);
+    await advance(1500);
+    expect(fetchQueue).toHaveBeenCalledTimes(4);
+    await advance(1000); // the completed snapshot lands
+    await advance(25_000);
+    expect(fetchQueue).toHaveBeenCalledTimes(4);
+  });
+
+  it('stops polling after a failed read until the user retries', async () => {
+    vi.useFakeTimers();
+    fetchQueue
+      .mockResolvedValueOnce([item('a', 'processing')])
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    render(<QueuePage />);
+    await flush();
+    await flush();
+    await advance(2500);
+    expect(fetchQueue).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('queue.errors.loadFailed')).toBeTruthy();
+
+    await advance(60_000);
+    expect(fetchQueue).toHaveBeenCalledTimes(2);
   });
 });

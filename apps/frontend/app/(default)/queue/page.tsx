@@ -176,17 +176,18 @@ export default function QueuePage() {
     loadQueue();
   }, [loadQueue, resumesLoading]);
 
-  // Poll while any item is waiting or being tailored.
+  const hasActiveItems = queueItems.some(
+    (item) => item.status === 'pending' || item.status === 'processing'
+  );
+  const pollingPaused = queueLoad === 'error';
+
+  // Poll while an item is waiting or being tailored. One interval per active
+  // stretch; a failed read pauses polling until the user retries.
   useEffect(() => {
-    const hasActiveItems = queueItems.some(
-      (item) => item.status === 'pending' || item.status === 'processing'
-    );
-    if (!hasActiveItems) return;
-
+    if (!hasActiveItems || pollingPaused) return;
     const interval = setInterval(loadQueue, POLL_INTERVAL_MS);
-
     return () => clearInterval(interval);
-  }, [loadQueue, queueItems]);
+  }, [hasActiveItems, pollingPaused, loadQueue]);
 
   const handleRefresh = async () => {
     setIsRefreshingQueue(true);
