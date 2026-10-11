@@ -288,6 +288,12 @@ class TestCommandLine:
 
         assert "--safe-mode" in args
 
+    async def test_bare_mode_is_not_requested(self):
+        args, _ = await self._args()
+
+        # --bare never reads the OAuth login this provider depends on.
+        assert "--bare" not in args
+
     async def test_session_is_not_persisted(self):
         args, _ = await self._args()
 

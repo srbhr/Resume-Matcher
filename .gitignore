@@ -38,6 +38,9 @@ uv.lock
 
 # Encryption secret for API keys at rest - NEVER COMMIT
 **/data/.secret_key
+# Sign in with ChatGPT credentials (encrypted) and their refresh lock - NEVER COMMIT
+**/data/chatgpt_credentials.enc
+**/data/chatgpt_credentials.lock
 
 # Test artifacts
 .pytest_cache/

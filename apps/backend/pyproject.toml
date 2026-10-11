@@ -14,6 +14,8 @@ dependencies = [
     "aiosqlite==0.22.1",
     "psycopg[binary]==3.3.6",
     "cryptography==50.0.2",
+    "httpx==0.28.1",
+    "PyJWT[crypto]==2.15.1",
     "litellm==1.104.2",
     "markitdown[docx,pdf]==0.1.8",
     "pdfminer.six==20260107",

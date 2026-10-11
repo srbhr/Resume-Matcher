@@ -901,6 +901,15 @@
     "llmConfiguration": {
       "selectedProvider": "SÉLECTIONNÉ : {provider}",
       "claudeCliNote": "Exécute la CLI Claude Code installée et connectée sur cette machine, aucune clé API n'est donc nécessaire ici. Claude Code envoie toujours vos prompts à Anthropic via votre compte et utilise son propre modèle par défaut.",
+      "claudeCliName": "Abonnement Claude (via Claude Code)",
+      "claudeCliShortName": "Forfait Claude",
+      "claudeCliWarningTitle": "Non pris en charge officiellement",
+      "claudeCliWarning": "Anthropic ne prend pas officiellement en charge l'utilisation des abonnements Claude Pro ou Max par des applications tierces, et cela peut cesser de fonctionner si sa politique change ; pour un accès garanti, utilisez une clé API Anthropic. Resume Matcher ne voit ni ne stocke jamais vos identifiants Claude : il exécute votre propre CLI Claude Code, à laquelle vous vous connectez vous-même avec `claude auth login`. Les requêtes comptent dans les limites d'utilisation de votre forfait Claude, et Anthropic peut les imputer à des crédits d'utilisation à la place.",
+      "communityBuilt": "Fonctionnalité créée par la communauté.",
+      "chatgptName": "Forfait ChatGPT (Se connecter avec ChatGPT)",
+      "chatgptShortName": "Forfait ChatGPT",
+      "chatgptWarningTitle": "Aperçu",
+      "chatgptWarning": "Utilise Sign in with ChatGPT, la connexion officielle d'OpenAI pour les applications open source, qui est en aperçu et peut changer. Elle fonctionne avec ChatGPT Plus et Pro. Les requêtes partent de votre machine directement vers l'API d'OpenAI, et les jetons de connexion restent chiffrés sur cette machine. L'utilisation est décomptée des limites de votre forfait ChatGPT : avec Plus, la limite de cinq heures est partagée avec vos autres applications qui utilisent votre forfait ; Pro n'a pas de limite de cinq heures. Pour un accès garanti, utilisez une clé API OpenAI.",
       "modelLabel": "Modèle",
       "defaultModel": "PAR DÉFAUT : {model}",
       "apiKeyLabel": "Clé API",
@@ -940,11 +949,34 @@
         "duplicate_v1_path": "Échec de la vérification de l'état. L'URL de base peut contenir un chemin /v1 en double.",
         "not_found_404": "Échec de la vérification de l'état. 404 Non trouvé - vérifiez que l'URL de base correspond au fournisseur.",
         "html_response": "Échec de la vérification de l'état. L'URL de base a retourné du HTML ; il peut s'agir d'une URL de console ou d'un chemin de passerelle non pris en charge.",
-        "claude_cli_not_found": "CLI Claude Code introuvable. Installez Claude Code et exécutez `claude auth login`."
+        "claude_cli_not_found": "CLI Claude Code introuvable. Installez Claude Code et exécutez `claude auth login`.",
+        "chatgpt_not_connected": "Non connecté à ChatGPT. Sélectionnez Forfait ChatGPT dans les paramètres, puis continuez avec ChatGPT.",
+        "chatgpt_usage_limit": "La limite d'utilisation de votre forfait ChatGPT pour cette application est atteinte. Consultez-la dans les paramètres de ChatGPT, sous Utilisation.",
+        "chatgpt_not_eligible": "L'utilisation du forfait ChatGPT n'est pas disponible pour ce compte. Elle nécessite ChatGPT Plus ou Pro ; sinon, utilisez une clé API OpenAI."
       },
       "healthWarnings": {
         "empty_content": "Le LLM a retourné un contenu vide lors de la vérification de l'état."
       }
+    },
+    "chatgpt": {
+      "continue": "Continuer avec ChatGPT",
+      "checking": "Vérification",
+      "connected": "Connecté",
+      "notConnected": "Non connecté",
+      "disconnect": "Déconnecter",
+      "manageUsage": "Gérer l'utilisation",
+      "disconnected": "Déconnecté de ChatGPT.",
+      "revocationUnconfirmed": "Déconnecté sur cette machine, mais OpenAI n'a pas confirmé la fin de la session. Vous pouvez aussi déconnecter Resume Matcher dans les paramètres de ChatGPT.",
+      "returnConnected": "Connecté à votre forfait ChatGPT. Choisissez un modèle, puis enregistrez.",
+      "returnCancelled": "La connexion avec ChatGPT a été annulée.",
+      "returnError": "La connexion avec ChatGPT n'a pas abouti. Réessayez.",
+      "planDeclined": "L'utilisation du forfait ChatGPT n'a pas été autorisée. Continuez à nouveau avec ChatGPT et autorisez-la, ou utilisez une clé API OpenAI.",
+      "sameMachineOnly": "Connectez-vous depuis un navigateur sur la machine qui exécute Resume Matcher.",
+      "signInFailed": "Impossible de lancer la connexion avec ChatGPT. Réessayez.",
+      "disconnectFailed": "Impossible de déconnecter ChatGPT. Réessayez.",
+      "statusFailed": "Impossible de vérifier la connexion à ChatGPT.",
+      "modelsFailed": "Impossible de charger vos modèles ChatGPT. Saisissez plutôt un nom de modèle.",
+      "modelHint": "Une fois connecté, les modèles proviennent de votre compte ChatGPT."
     },
     "contentGeneration": {
       "title": "Génération de contenu",

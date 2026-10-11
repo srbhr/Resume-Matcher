@@ -15,6 +15,9 @@ from pydantic import BaseModel
 
 from app.ai_budget import remaining_timeout
 from app.ai_limits import validate_prompt_size
+from app.chatgpt_auth import ChatGPTNotConnectedError
+from app.chatgpt_auth import is_connected as chatgpt_is_connected
+from app.chatgpt_inference import ChatGPTPlanError, chatgpt_acompletion
 from app.claude_cli import ClaudeCliNotFoundError, claude_acompletion
 from app.config import load_config_file, save_config_file, settings
 
@@ -332,7 +335,12 @@ def _output_token_kwarg(config: LLMConfig, max_tokens: int) -> dict[str, int]:
     OpenAI model received the raw ``max_tokens`` and failed with "Unsupported
     parameter: 'max_tokens'" (issue #1030). Deciding by provider avoids keeping a
     list of model names. Every other provider keeps the portable ``max_tokens``.
+
+    The ChatGPT plan route rejects ``max_output_tokens`` (and every other
+    output cap), so ``chatgpt`` gets no output-token parameter at all.
     """
+    if config.provider == "chatgpt":
+        return {}
     if _is_native_openai(config):
         return {"max_completion_tokens": max_tokens}
     return {"max_tokens": max_tokens}
@@ -372,6 +380,10 @@ async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -
     """
     if config.provider == "claude_cli":
         return await claude_acompletion(**kwargs)
+    if config.provider == "chatgpt":
+        # Signed-in ChatGPT plan: the Responses API with the sign-in token.
+        # ``kwargs["model"]`` is the Router alias here, so pass the real slug.
+        return await chatgpt_acompletion(config.model, **kwargs)
     try:
         return await transport.acompletion(**kwargs)
     except litellm.BadRequestError as e:
@@ -671,7 +683,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 # default), because the env var may hold a real paid-API key that would then
 # leak to a local/compatible endpoint the user set up expecting no auth.
 _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
-    {"openai_compatible", "ollama", "claude_cli"}
+    {"openai_compatible", "ollama", "claude_cli", "chatgpt"}
 )
 
 
@@ -924,14 +936,16 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router | None, LLMConfi
     Returns the Router and the config it was built from. The Router is ``None``
     for ``claude_cli``: that provider is served by the local ``claude`` binary
     (see ``_route_acompletion``) and has no LiteLLM deployment — LiteLLM rejects
-    the bare ``claude_cli`` model name when the Router is constructed.
+    the bare ``claude_cli`` model name when the Router is constructed. It is
+    also ``None`` for ``chatgpt``, whose bearer token is per call and comes from
+    the Sign in with ChatGPT store, not from a Router deployment.
     """
     global _router, _router_config_key
 
     if config is None:
         config = get_llm_config()
 
-    if config.provider == "claude_cli":
+    if config.provider in ("claude_cli", "chatgpt"):
         return None, config
 
     key = _config_fingerprint(config)
@@ -945,6 +959,13 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router | None, LLMConfi
         router = _router
 
     return router, config
+
+
+#: ChatGPT plan errors the settings page explains (docs: "Errors and recovery").
+_CHATGPT_ERROR_CODES: dict[str, str] = {
+    "subscription_sharing_usage_limit_exceeded": "chatgpt_usage_limit",
+    "subscription_sharing_user_not_eligible": "chatgpt_not_eligible",
+}
 
 
 async def check_llm_health(
@@ -962,7 +983,7 @@ async def check_llm_health(
     # providers — a sentinel is passed downstream (see _effective_api_key)
     # to satisfy the OpenAI client's non-empty-string validation.
     if (
-        config.provider not in ("ollama", "openai_compatible", "claude_cli")
+        config.provider not in ("ollama", "openai_compatible", "claude_cli", "chatgpt")
         and not config.api_key
     ):
         return {
@@ -970,6 +991,13 @@ async def check_llm_health(
             "provider": config.provider,
             "model": config.model,
             "error_code": "api_key_missing",
+        }
+    if config.provider == "chatgpt" and not chatgpt_is_connected():
+        return {
+            "healthy": False,
+            "provider": config.provider,
+            "model": config.model,
+            "error_code": "chatgpt_not_connected",
         }
 
     model_name = get_model_name(config)
@@ -1056,6 +1084,10 @@ async def check_llm_health(
         message = str(e)
         if isinstance(e, ClaudeCliNotFoundError):
             error_code = "claude_cli_not_found"
+        elif isinstance(e, ChatGPTNotConnectedError):
+            error_code = "chatgpt_not_connected"
+        elif isinstance(e, ChatGPTPlanError):
+            error_code = _CHATGPT_ERROR_CODES.get(e.code, error_code)
         elif "404" in message and "/v1/v1/" in message:
             error_code = "duplicate_v1_path"
         elif "404" in message:
@@ -1648,9 +1680,13 @@ async def complete_json(
     # Unknown compatible servers may reject response_format. Use JSON mode
     # when LiteLLM advertises it or when the endpoint is explicitly known to
     # support it; prompt-only JSON remains the portable default.
-    use_json_mode = _supports_json_mode(
-        model_name
-    ) or _openai_compatible_supports_json_mode(config)
+    #
+    # The ChatGPT plan route has no JSON mode to opt into: never send it, even
+    # when the slug is in LiteLLM's registry. The prompt plus extraction and
+    # retries below carry JSON for that provider, as for claude_cli.
+    use_json_mode = config.provider != "chatgpt" and (
+        _supports_json_mode(model_name) or _openai_compatible_supports_json_mode(config)
+    )
     json_mode_failed = False
 
     for attempt in range(retries + 1):
