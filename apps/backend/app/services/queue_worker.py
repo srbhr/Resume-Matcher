@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import re
+from typing import Any
 
 from app.database import db
 
@@ -101,156 +102,113 @@ def extract_job_details(text: str) -> dict[str, str]:
 
 
 class QueueManager:
-    """Manages sequential execution of queued resume tailoring with rate limiting."""
+    """Tailor queued job descriptions one at a time, oldest first, in the API process.
 
-    def __init__(self):
-        self._queue: asyncio.Queue[str] = asyncio.Queue()
-        self._worker_task: asyncio.Task | None = None
-        self._shutdown_event = asyncio.Event()
+    The ``queue_items`` table is the queue: the worker claims the oldest pending
+    row, so items survive restarts and a deleted row is never picked up. Every
+    database step is its own short transaction, so no write reservation is held
+    while the LLM runs.
+    """
 
-    async def start(self):
-        """Start the background worker task."""
-        self._shutdown_event.clear()
-        self._worker_task = asyncio.create_task(self._worker_loop())
-        await self._recover_pending_items()
-        logger.info("QueueManager background worker started.")
+    def __init__(self) -> None:
+        self._task: asyncio.Task[None] | None = None
+        self._wake = asyncio.Event()
 
-    async def stop(self):
-        """Gracefully stop the background worker."""
-        self._shutdown_event.set()
-        if self._worker_task:
-            self._worker_task.cancel()
-            try:
-                await self._worker_task
-            except asyncio.CancelledError:
-                pass
-            self._worker_task = None
-        logger.info("QueueManager background worker stopped.")
-
-    async def enqueue_item(self, item_id: str):
-        """Enqueue an individual job item for background tailoring."""
-        await self._queue.put(item_id)
-
-    async def _recover_pending_items(self):
-        """Recover items that were queued or in-progress before server restart."""
-        try:
-            pending_items = [
-                it
-                for it in await db.get_queue(limit=100)
-                if it.get("status") in ("pending", "processing")
-            ]
-            for item in reversed(pending_items):
-                item_id = item["item_id"]
-                # Reset stuck processing items back to pending
-                if item.get("status") == "processing":
-                    await db.update_queue_item(item_id, {"status": "pending"})
-                await self._queue.put(item_id)
-                logger.info("Recovered queued tailoring item: %s", item_id)
-        except Exception as e:
-            logger.error("Failed to recover pending queue items: %s", e)
-
-    async def _worker_loop(self):
-        """Worker loop that dequeues and processes items sequentially."""
-        from app.routers.resumes import execute_tailoring_pipeline
-
-        while not self._shutdown_event.is_set():
-            try:
-                item_id = await self._queue.get()
-            except asyncio.CancelledError:
-                break
-
-            try:
-                await self._process_item(item_id, execute_tailoring_pipeline)
-            except Exception as e:
-                logger.error(
-                    "Error processing queue item %s: %s", item_id, e, exc_info=True
-                )
-            finally:
-                self._queue.task_done()
-
-    async def _process_item(self, item_id: str, execute_tailoring_fn):
-        """Process an individual queued job with cooldown rate-limiting."""
-        item = await db.get_queue_item(item_id)
-        if not item:
+    async def start(self) -> None:
+        """Start the worker; it first returns rows left ``processing`` to ``pending``."""
+        if self._task is not None:
             return
+        self._wake = asyncio.Event()
+        self._wake.set()
+        self._task = asyncio.create_task(self._run(), name="tailoring-queue")
+        logger.info("Tailoring queue worker started.")
 
-        # Skip if already completed or deleted
-        if item.get("status") in ("completed", "cancelled"):
+    async def stop(self) -> None:
+        """Cancel the worker and wait for it to finish unwinding."""
+        task, self._task = self._task, None
+        if task is None:
             return
-
-        await db.update_queue_item(item_id, {"status": "processing"})
-        resume_id = item["resume_id"]
-        rate_limit_seconds = float(item.get("rate_limit_seconds", 5.0))
-        prompt_id = item.get("prompt_id")
-
+        task.cancel()
         try:
-            # 1. Create Job in database if needed
+            await task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Tailoring queue worker stopped.")
+
+    def notify(self) -> None:
+        """Wake the worker after a new item was committed."""
+        self._wake.set()
+
+    async def _run(self) -> None:
+        recovered = False
+        while True:
+            await self._wake.wait()
+            self._wake.clear()
+            try:
+                if not recovered:
+                    count = await db.requeue_interrupted_queue_items()
+                    recovered = True
+                    if count:
+                        logger.info("Requeued %d interrupted tailoring item(s).", count)
+                await self.drain()
+            except Exception:
+                logger.exception("Tailoring queue worker error; retrying shortly.")
+                await asyncio.sleep(_RETRY_DELAY_SECONDS)
+                self._wake.set()
+
+    async def drain(self) -> None:
+        """Process pending items until none is left, cooling down after each one."""
+        while (item := await db.claim_next_queue_item()) is not None:
+            await self._process_item(item)
+            if item["rate_limit_seconds"] > 0:
+                await self._cooldown(item["rate_limit_seconds"])
+
+    async def _cooldown(self, seconds: float) -> None:
+        logger.info("Tailoring queue cooldown: %ss before the next item.", seconds)
+        await asyncio.sleep(seconds)
+
+    async def _process_item(self, item: dict[str, Any]) -> None:
+        """Tailor one claimed item and record the outcome on its row."""
+        from app.routers import resumes
+
+        item_id = item["item_id"]
+        try:
             job_id = item.get("job_id")
             if not job_id:
                 job = await db.create_job(
-                    content=item["job_description"].strip(),
-                    resume_id=resume_id,
+                    content=item["job_description"], resume_id=item["resume_id"]
                 )
                 job_id = job["job_id"]
                 await db.update_queue_item(item_id, {"job_id": job_id})
-
-            # 2. Run tailoring pipeline
-            (
-                tailored_resume,
-                improved_data,
-                improvements,
-                request_id,
-                extra_meta,
-            ) = await execute_tailoring_fn(
-                resume_id=resume_id,
+            tailored_resume, *_ = await resumes.execute_tailoring_pipeline(
+                resume_id=item["resume_id"],
                 job_id=job_id,
-                prompt_id=prompt_id,
+                prompt_id=item.get("prompt_id"),
             )
-
-            tailored_resume_id = tailored_resume["resume_id"]
-            final_title = (
-                tailored_resume.get("title")
-                or extra_meta.get("title")
-                or item.get("role")
-                or "Tailored Resume"
-            )
-
+        except Exception as error:
+            logger.exception("Tailoring queue item %s failed.", item_id)
             await db.update_queue_item(
-                item_id,
-                {
-                    "status": "completed",
-                    "tailored_resume_id": tailored_resume_id,
-                    "title": final_title,
-                    "error": None,
-                },
+                item_id, {"status": "failed", "error": str(error)}
             )
-            logger.info(
-                "Queue item %s: successfully generated resume %s (%s)",
-                item_id,
-                tailored_resume_id,
-                final_title,
-            )
+            return
 
-        except Exception as err:
-            logger.error(
-                "Queue item %s tailoring failed: %s", item_id, err, exc_info=True
-            )
-            await db.update_queue_item(
-                item_id,
-                {
-                    "status": "failed",
-                    "error": str(err),
-                },
-            )
+        await db.update_queue_item(
+            item_id,
+            {
+                "status": "completed",
+                "tailored_resume_id": tailored_resume["resume_id"],
+                "title": tailored_resume.get("title"),
+                "error": None,
+            },
+        )
+        logger.info(
+            "Tailoring queue item %s produced resume %s.",
+            item_id,
+            tailored_resume["resume_id"],
+        )
 
-        # Apply rate limiting cooldown
-        if rate_limit_seconds > 0 and not self._shutdown_event.is_set():
-            logger.info(
-                "Rate limit cooldown: sleeping %s seconds before next queue item...",
-                rate_limit_seconds,
-            )
-            await asyncio.sleep(rate_limit_seconds)
 
+_RETRY_DELAY_SECONDS = 1.0
 
 # Global singleton instance
 queue_manager = QueueManager()

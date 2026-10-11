@@ -74,8 +74,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Shutdown - wrap each cleanup in try-except to ensure all resources are released
     try:
         await queue_manager.stop()
-    except Exception as e:
-        logger.error(f"Error stopping queue manager: {e}")
+    except Exception:
+        logger.exception("Error stopping the tailoring queue")
 
     try:
         await drain_processing_cleanup_tasks()

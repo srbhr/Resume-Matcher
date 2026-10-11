@@ -1,8 +1,6 @@
-"""Unit tests for background queue worker and metadata extraction."""
+"""Unit tests for the queue's heuristic job metadata extraction."""
 
-import pytest
-
-from app.services.queue_worker import QueueManager, extract_job_details
+from app.services.queue_worker import extract_job_details
 
 
 class TestExtractJobDetails:
@@ -52,11 +50,3 @@ Datadog is the monitoring and security platform for cloud applications...
 
         whitespace_details = extract_job_details("   \n\n   ")
         assert whitespace_details["role"] == ""
-
-
-@pytest.mark.asyncio
-async def test_queue_manager_enqueue():
-    qm = QueueManager()
-    await qm.enqueue_item("test-item-1")
-    item = await qm._queue.get()
-    assert item == "test-item-1"

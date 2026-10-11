@@ -1481,6 +1481,34 @@ class Database:
             await session.commit()
             return True
 
+    async def claim_next_queue_item(self) -> dict[str, Any] | None:
+        """Mark the oldest pending item ``processing`` and return it; None when idle."""
+        async with self._write_session() as session:
+            result = await session.execute(
+                select(QueueItem)
+                .where(QueueItem.status == "pending")
+                .order_by(QueueItem.created_at, QueueItem.item_id)
+                .limit(1)
+            )
+            row = result.scalars().first()
+            if row is None:
+                return None
+            row.status = "processing"
+            row.updated_at = _now()
+            await session.commit()
+            return self._queue_item_to_dict(row)
+
+    async def requeue_interrupted_queue_items(self) -> int:
+        """Return items a previous run left ``processing`` to ``pending``. Returns count."""
+        async with self._write_session() as session:
+            result = await session.execute(
+                update(QueueItem)
+                .where(QueueItem.status == "processing")
+                .values(status="pending", updated_at=_now())
+            )
+            await session.commit()
+            return int(result.rowcount or 0)
+
     async def clear_queue(self, status: str | None = None) -> int:
         """Delete queue items, optionally only those in one status. Returns count."""
         stmt = delete(QueueItem)

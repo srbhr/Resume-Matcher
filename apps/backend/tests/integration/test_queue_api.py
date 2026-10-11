@@ -1,6 +1,6 @@
 """Tailoring queue endpoints and storage against the real per-test database."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -24,9 +24,9 @@ def client() -> AsyncClient:
 
 
 @pytest.fixture
-def enqueue(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
-    mock = AsyncMock()
-    monkeypatch.setattr("app.routers.jobs.queue_manager.enqueue_item", mock)
+def enqueue(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    mock = MagicMock()
+    monkeypatch.setattr("app.routers.jobs.queue_manager.notify", mock)
     return mock
 
 
@@ -55,7 +55,7 @@ async def test_parse_metadata_endpoint(client: AsyncClient) -> None:
 
 
 async def test_add_persists_detected_metadata_and_wakes_worker(
-    isolated_db: Database, enqueue: AsyncMock, client: AsyncClient
+    isolated_db: Database, enqueue: MagicMock, client: AsyncClient
 ) -> None:
     resume_id = await _master(isolated_db)
     async with client:
@@ -74,11 +74,11 @@ async def test_add_persists_detected_metadata_and_wakes_worker(
     stored = await isolated_db.get_queue_item(body["item_id"])
     assert stored is not None
     assert stored["job_description"] == JOB_DESCRIPTION
-    enqueue.assert_awaited_once_with(body["item_id"])
+    enqueue.assert_called_once_with()
 
 
 async def test_add_prefers_user_metadata_over_detection(
-    isolated_db: Database, enqueue: AsyncMock, client: AsyncClient
+    isolated_db: Database, enqueue: MagicMock, client: AsyncClient
 ) -> None:
     resume_id = await _master(isolated_db)
     async with client:
@@ -97,7 +97,7 @@ async def test_add_prefers_user_metadata_over_detection(
 
 
 async def test_add_rejects_unknown_resume_and_blank_description(
-    isolated_db: Database, enqueue: AsyncMock, client: AsyncClient
+    isolated_db: Database, enqueue: MagicMock, client: AsyncClient
 ) -> None:
     resume_id = await _master(isolated_db)
     async with client:
@@ -112,7 +112,7 @@ async def test_add_rejects_unknown_resume_and_blank_description(
     assert missing.status_code == 404
     assert blank.status_code == 400
     assert await isolated_db.get_queue() == []
-    enqueue.assert_not_awaited()
+    enqueue.assert_not_called()
 
 
 async def test_list_filters_by_resume_newest_first(
@@ -181,7 +181,7 @@ async def test_queue_writes_take_the_write_reservation(
 
 
 async def test_contended_add_returns_503(
-    fast_busy_database: Database, enqueue: AsyncMock, client: AsyncClient
+    fast_busy_database: Database, enqueue: MagicMock, client: AsyncClient
 ) -> None:
     resume_id = await _master(fast_busy_database)
     async with client:
@@ -194,7 +194,7 @@ async def test_contended_add_returns_503(
     assert resp.status_code == 503
     assert resp.headers["retry-after"] == "1"
     assert await fast_busy_database.get_queue() == []
-    enqueue.assert_not_awaited()
+    enqueue.assert_not_called()
 
 
 async def test_reset_database_clears_the_queue(isolated_db: Database) -> None:

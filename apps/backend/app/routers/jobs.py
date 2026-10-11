@@ -121,7 +121,7 @@ async def add_to_queue(request: JobQueueAddRequest) -> JobQueueItemResponse:
         prompt_id=request.prompt_id,
     )
 
-    await queue_manager.enqueue_item(item_id)
+    queue_manager.notify()
     return _format_queue_item(item)
 
 
