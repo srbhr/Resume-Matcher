@@ -1,9 +1,10 @@
 """Sign in with ChatGPT endpoints: start sign-in, callback, status, sign-out, models.
 
-The browser goes ``Settings -> auth.openai.com -> 127.0.0.1:<backend
-port>/auth/callback -> Settings``. The callback path is fixed by OpenAI's
-loopback-redirect rule (only the port may change), so it is served at the app
-root rather than under ``/api/v1``.
+The browser goes ``Settings -> auth.openai.com -> 127.0.0.1:<port>/auth/callback
+-> Settings``, where ``<port>`` is the one it opened the app on (the frontend,
+which proxies ``/auth/callback`` to this backend) or the backend's own. The
+callback path is fixed by OpenAI's loopback-redirect rule (only the port may
+change), so it is served at the app root rather than under ``/api/v1``.
 """
 
 import ipaddress
@@ -82,17 +83,35 @@ def _require_trusted_origin(request: Request) -> None:
         raise HTTPException(status_code=403, detail="Cross-site request blocked.")
 
 
+def _callback_port(request: Request) -> int:
+    """The port the browser reaches this app on, for the loopback redirect.
+
+    A page opened at ``http://localhost:<port>`` (the frontend, which proxies
+    ``/auth/callback`` here, so it is the one port Docker publishes) returns the
+    browser to that same port. Otherwise use the port this backend accepted the
+    connection on, so the redirect also works with uvicorn's ``--port``.
+    """
+    origin = _caller_origin(request)
+    if origin:
+        parts = urlsplit(origin)
+        if parts.scheme == "http" and (
+            parts.hostname == "localhost" or _is_loopback(parts.hostname)
+        ):
+            try:
+                return parts.port or 80
+            except ValueError:
+                pass
+    server = request.scope.get("server")
+    return int(server[1]) if server and server[1] else settings.port
+
+
 @router.post("/login")
 async def start_chatgpt_login(request: Request) -> dict[str, str]:
     """Return the OpenAI authorization URL for the browser to open."""
     _require_loopback(request)
     _require_trusted_origin(request)
-    # The port this backend actually accepted the connection on, so the
-    # redirect reaches it even when uvicorn was started with --port.
-    server = request.scope.get("server")
-    port = server[1] if server and server[1] else settings.port
     try:
-        url = chatgpt_auth.start_login(int(port))
+        url = chatgpt_auth.start_login(_callback_port(request))
     except Exception:
         logger.exception("Could not start Sign in with ChatGPT")
         raise HTTPException(

@@ -98,3 +98,49 @@ class TestCrossSiteGuard:
 
         assert resp.status_code == 200
         assert started == [path]
+
+
+class TestCallbackPort:
+    """The loopback redirect targets the port the browser opened the app on."""
+
+    @pytest.mark.parametrize(
+        ("headers", "port"),
+        [
+            # Through the Next.js proxy (Docker publishes only the frontend port).
+            ({"Origin": "http://localhost:3000"}, 3000),
+            ({"Origin": "http://127.0.0.1:3100"}, 3100),
+            ({"Referer": "http://localhost:3000/settings"}, 3000),
+            ({"Origin": "http://localhost"}, 80),
+            # Anything else keeps the backend's own port (the ASGI server here).
+            ({}, 8123),
+            (
+                {
+                    "Origin": "http://192.168.1.5:3000",
+                    "X-Forwarded-Host": "192.168.1.5:3000",
+                },
+                8123,
+            ),
+            ({"Origin": "https://localhost:3443"}, 8123),
+            ({"Origin": "http://localhost:99999"}, 8123),
+        ],
+    )
+    async def test_login_redirect_port(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        headers: dict[str, str],
+        port: int,
+    ) -> None:
+        ports: list[int] = []
+
+        def fake_start_login(callback_port: int) -> str:
+            ports.append(callback_port)
+            return "https://auth.openai.com/authorize"
+
+        monkeypatch.setattr(chatgpt_auth, "start_login", fake_start_login)
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test:8123"
+        ) as client:
+            resp = await client.post("/api/v1/config/chatgpt/login", headers=headers)
+
+        assert resp.status_code == 200
+        assert ports == [port]

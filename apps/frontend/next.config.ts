@@ -44,6 +44,14 @@ const nextConfig: NextConfig = {
         destination: `${BACKEND_ORIGIN}/api/:path*`,
       },
       {
+        // Sign in with ChatGPT returns the browser to http://127.0.0.1:<port>/auth/callback
+        // (a fixed path, loopback only). Serving it on the frontend port lets Docker, which
+        // publishes only 3000, finish the flow. The backend still requires a loopback peer,
+        // which is this proxy.
+        source: '/auth/callback',
+        destination: `${BACKEND_ORIGIN}/auth/callback`,
+      },
+      {
         source: '/docs',
         destination: `${BACKEND_ORIGIN}/docs`,
       },
