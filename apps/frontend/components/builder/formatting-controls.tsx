@@ -153,6 +153,10 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
         name: t('builder.formatting.templates.vivid.name'),
         description: t('builder.formatting.templates.vivid.description'),
       },
+      deedy: {
+        name: t('builder.formatting.templates.deedy.name'),
+        description: t('builder.formatting.templates.deedy.description'),
+      },
     }),
     [t]
   );

@@ -7,6 +7,7 @@ import {
   ResumeLatex,
   ResumeClean,
   ResumeVivid,
+  ResumeDeedy,
 } from '@/components/resume';
 import {
   type TemplateSettings,
@@ -236,6 +237,14 @@ const Resume: React.FC<ResumeProps> = ({
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
+          fallbackLabels={fallbackLabels}
+        />
+      )}
+      {mergedSettings.template === 'deedy' && (
+        <ResumeDeedy
+          data={resumeData}
+          sectionHeadings={sectionHeadings}
+          additionalSectionLabels={additionalSectionLabels}
           fallbackLabels={fallbackLabels}
         />
       )}
