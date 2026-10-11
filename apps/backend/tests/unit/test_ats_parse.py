@@ -140,6 +140,24 @@ async def test_small_caps_glyphs_are_flagged_and_not_matched_elsewhere() -> None
     assert _status(report.checks, "section_headings") == "pass"
 
 
+async def test_roundtrip_uses_the_template_contact_order() -> None:
+    # The clean template renders location, phone, then email.
+    report = await parse_check_bytes(
+        fixture("clean-small-caps"),
+        "c.pdf",
+        source="render",
+        resume_data=john_doe(),
+        template="clean",
+    )
+    assert report.roundtrip.order_fidelity == 1.0
+    names = [name for name, _ in expected_fields(john_doe(), "latex")[0]][:5]
+    assert names[2:] == [
+        "personalInfo.location",
+        "personalInfo.phone",
+        "personalInfo.email",
+    ]
+
+
 async def test_pdf_without_text_is_not_extractable() -> None:
     report = await parse_check_bytes(_pdf(1), "scan.pdf")
     assert report.extractability == "none"

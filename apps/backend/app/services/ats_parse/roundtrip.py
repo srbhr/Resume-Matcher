@@ -14,6 +14,13 @@ MATCH_PREFIX = 6
 
 Field = tuple[str, str]
 
+# Header contact order per template (apps/frontend/components/resume/resume-*.tsx).
+CONTACT_ORDER = ("email", "phone", "location")
+CONTACT_ORDER_BY_TEMPLATE: dict[str, tuple[str, ...]] = {
+    "clean": ("location", "phone", "email"),
+    "latex": ("location", "phone", "email"),
+}
+
 
 def canonical_resume_data(data: Any) -> dict[str, Any]:
     """Stored resume data as the print page renders it: normalized, then validated.
@@ -98,12 +105,15 @@ def _section_fields(key: str, data: dict[str, Any]) -> list[Field]:
     return fields
 
 
-def expected_fields(data: dict[str, Any]) -> tuple[list[Field], list[str]]:
+def expected_fields(
+    data: dict[str, Any], template: str | None = None
+) -> tuple[list[Field], list[str]]:
     """Fields in render order, plus the keys of hidden sections."""
     info = data.get("personalInfo") or {}
+    contact = CONTACT_ORDER_BY_TEMPLATE.get(template or "", CONTACT_ORDER)
     fields: list[Field] = [
         (f"personalInfo.{k}", str(info.get(k) or ""))
-        for k in ("name", "title", "email", "phone", "location")
+        for k in ("name", "title", *contact)
     ]
     hidden: list[str] = []
     for meta in sorted(data.get("sectionMeta") or [], key=lambda m: m.get("order", 0)):
@@ -190,8 +200,10 @@ def kendall_fidelity(positions: list[int]) -> float:
     return round(((concordant - discordant) / pairs + 1) / 2, 3)
 
 
-def compute_roundtrip(data: dict[str, Any], extracted_text: str) -> RoundTrip:
-    fields, hidden = expected_fields(canonical_resume_data(data))
+def compute_roundtrip(
+    data: dict[str, Any], extracted_text: str, template: str | None = None
+) -> RoundTrip:
+    fields, hidden = expected_fields(canonical_resume_data(data), template)
     truncated = len(fields) > MAX_FIELDS
     fields = fields[:MAX_FIELDS]
     doc_tokens = tokens(extracted_text)
