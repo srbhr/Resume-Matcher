@@ -8,6 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.ai_limits import validate_source_size
+from app.config import normalize_provider
 from app.schemas.refinement import RefinementStats
 
 _TEXT_VALUE_KEYS = (
@@ -799,6 +800,11 @@ class LLMConfigRequest(BaseModel):
     # Strictly typed so invalid values are rejected at the boundary (422)
     # rather than corrupting config.json and crashing later reads.
     reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def _normalize_provider(cls, value: Any) -> Any:
+        return normalize_provider(value)
 
 
 class LLMConfigResponse(BaseModel):

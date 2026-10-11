@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 import litellm
 from litellm import Router
 from litellm.router import RetryPolicy
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.ai_budget import remaining_timeout
 from app.ai_limits import validate_prompt_size
@@ -19,7 +19,12 @@ from app.chatgpt_auth import ChatGPTNotConnectedError
 from app.chatgpt_auth import is_connected as chatgpt_is_connected
 from app.chatgpt_inference import ChatGPTPlanError, chatgpt_acompletion
 from app.claude_cli import ClaudeCliNotFoundError, claude_acompletion
-from app.config import load_config_file, save_config_file, settings
+from app.config import (
+    load_config_file,
+    normalize_provider,
+    save_config_file,
+    settings,
+)
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -104,6 +109,11 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
     api_version: str | None = None
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def _normalize_provider(cls, value: Any) -> Any:
+        return normalize_provider(value)
 
 
 def _is_azure_openai_foundry_endpoint(

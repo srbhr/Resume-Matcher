@@ -32,14 +32,25 @@ def get_config_path() -> Path:
     return settings.config_path
 
 
+def normalize_provider(value: Any) -> Any:
+    """Strip and lowercase a provider name so ``Anthropic`` matches ``anthropic``.
+
+    Non-strings pass through for the caller's own validation to reject.
+    """
+    return value.strip().lower() if isinstance(value, str) else value
+
+
 def _read_config_json() -> dict[str, Any]:
     """Raw read of config.json (no key injection)."""
     config_path = get_config_path()
     if config_path.exists():
         try:
-            return json.loads(config_path.read_text())
+            config = json.loads(config_path.read_text())
         except (json.JSONDecodeError, OSError):
             return {}
+        if isinstance(config, dict) and "provider" in config:
+            config["provider"] = normalize_provider(config["provider"])
+        return config
     return {}
 
 
@@ -249,7 +260,7 @@ def _get_llm_api_key_with_fallback() -> str:
 
     # Fallback to config file based on provider
     config_keys = get_api_keys_from_config()
-    provider = os.environ.get("LLM_PROVIDER", "openai")
+    provider = normalize_provider(os.environ.get("LLM_PROVIDER", "openai"))
 
     # Map provider to config key
     provider_map = {
@@ -300,10 +311,10 @@ class Settings(BaseSettings):
     @field_validator("llm_provider", mode="before")
     @classmethod
     def set_default_provider(cls, v: Any) -> str:
-        """Handle empty string provider by defaulting to openai."""
+        """Default an empty provider to openai and ignore case and padding."""
         if not v or (isinstance(v, str) and not v.strip()):
             return "openai"
-        return v
+        return normalize_provider(v)
 
     @field_validator("log_llm", mode="before")
     @classmethod
