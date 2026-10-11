@@ -47,7 +47,8 @@
     "settings": "Paramètres",
     "backToDashboard": "Retour au tableau de bord",
     "goToSettings": "Accéder aux paramètres",
-    "applicationTracker": "Suivi des candidatures"
+    "applicationTracker": "Suivi des candidatures",
+    "queue": "File d'adaptation"
   },
   "dashboard": {
     "title": "Tableau de bord",

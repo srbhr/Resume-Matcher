@@ -47,7 +47,8 @@
     "settings": "Configurações",
     "backToDashboard": "Voltar ao Painel",
     "goToSettings": "Ir para Configurações",
-    "applicationTracker": "Acompanhamento de candidaturas"
+    "applicationTracker": "Acompanhamento de candidaturas",
+    "queue": "Fila de personalização"
   },
   "dashboard": {
     "title": "Painel",

@@ -47,7 +47,8 @@
     "settings": "設定",
     "backToDashboard": "ダッシュボードに戻る",
     "goToSettings": "設定へ",
-    "applicationTracker": "応募トラッカー"
+    "applicationTracker": "応募トラッカー",
+    "queue": "最適化キュー"
   },
   "dashboard": {
     "title": "ダッシュボード",

@@ -47,7 +47,8 @@
     "settings": "설정",
     "backToDashboard": "대시보드로 돌아가기",
     "goToSettings": "설정으로 이동",
-    "applicationTracker": "지원 현황 트래커"
+    "applicationTracker": "지원 현황 트래커",
+    "queue": "맞춤화 대기열"
   },
   "dashboard": {
     "title": "대시보드",
