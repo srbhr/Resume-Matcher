@@ -63,6 +63,7 @@ EXPECTED_TOOLS = {
     "set_job_keywords",
     "save_tailored_resume",
     "tailor_and_verify",
+    "recalculate_ats_score",
     "export_resume_pdf",
     "create_application",
     "update_application",
@@ -161,6 +162,27 @@ async def test_get_resume_survives_stored_data_that_breaks_the_schema(
     assert "update_resume" in result["resume_data_error"]
     assert result["cover_letter"] == "Dear team"
     assert "source_markdown" in result
+
+
+@pytest.mark.parametrize("tool", ["verify_resume", "parse_check_resume"])
+async def test_render_checks_map_invalid_stored_data_to_a_stable_error(
+    tool: str,
+    isolated_db: Database,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_resume: dict[str, Any],
+) -> None:
+    rendered = AsyncMock(return_value=render("single-column"))
+    monkeypatch.setattr(shared_module, "render_resume_pdf", rendered)
+    monkeypatch.setattr(ats_parse, "render_resume_pdf", rendered)
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        await isolated_db.update_resume(
+            master["resume_id"], {"processed_data": {"workExperience": "legacy text"}}
+        )
+        message = await call_error(mcp, tool, {"resume_id": master["resume_id"]})
+    assert "stored data is invalid" in message
+    assert "ValidationError" not in message
+    rendered.assert_not_awaited()
 
 
 async def test_create_master_requires_name_and_respects_limit(
@@ -305,6 +327,65 @@ async def test_save_tailored_links_job_and_creates_tracker_card(
             {"application_id": saved["application_id"], "status": "interview"},
         )
         assert moved["status"] == "interview"
+
+
+async def test_save_tailored_stores_the_ats_score(
+    isolated_db: Database,
+    sample_resume: dict[str, Any],
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+        saved = await call(
+            mcp,
+            "save_tailored_resume",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": master["resume_data"],
+            },
+        )
+    improvement = await isolated_db.get_improvement_by_tailored_resume(
+        saved["resume_id"]
+    )
+    assert improvement["ats_score"] == saved["ats_score"]
+    assert saved["ats_score"]["score"]["overall_score"] > 0
+
+
+async def test_recalculate_ats_score_refreshes_the_stored_score(
+    isolated_db: Database,
+    sample_resume: dict[str, Any],
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+        saved = await call(
+            mcp,
+            "save_tailored_resume",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": master["resume_data"],
+            },
+        )
+        await isolated_db.set_ats_score(saved["resume_id"], {"stale": True})
+        again = await call(
+            mcp, "recalculate_ats_score", {"resume_id": saved["resume_id"]}
+        )
+        improvement = await isolated_db.get_improvement_by_tailored_resume(
+            saved["resume_id"]
+        )
+        assert improvement["ats_score"] == again["ats_score"]
+        assert again["ats_score"]["score"] == saved["ats_score"]["score"]
+
+        message = await call_error(
+            mcp, "recalculate_ats_score", {"resume_id": master["resume_id"]}
+        )
+    assert "only available for tailored resumes" in message
 
 
 async def test_update_application_keeps_omitted_and_applies_explicit_null(

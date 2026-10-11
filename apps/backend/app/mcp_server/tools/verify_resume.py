@@ -10,7 +10,7 @@ from app.mcp_server.tools._shared import (
     render_pdf,
     require_job,
     require_resume,
-    require_structured,
+    require_valid_structured,
 )
 from app.pdf import PDFRenderError
 from app.routers.resumes import _grounding_master_data
@@ -62,7 +62,7 @@ async def verify(
     max_pages: int | None,
 ) -> dict[str, Any]:
     resume_id = resume["resume_id"]
-    data = require_structured(resume)
+    data = require_valid_structured(resume)
     if job_id is None:
         improvement = await db.get_improvement_by_tailored_resume(resume_id)
         job_id = improvement["job_id"] if improvement else None

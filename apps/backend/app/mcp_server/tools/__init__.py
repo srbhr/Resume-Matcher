@@ -19,6 +19,7 @@ from app.mcp_server.tools.list_applications import list_applications
 from app.mcp_server.tools.list_resumes import list_resumes
 from app.mcp_server.tools.parse_check_file import parse_check_file
 from app.mcp_server.tools.parse_check_resume import parse_check_resume
+from app.mcp_server.tools.recalculate_ats_score import recalculate_ats_score
 from app.mcp_server.tools.save_tailored_resume import save_tailored_resume
 from app.mcp_server.tools.score_resume import score_resume
 from app.mcp_server.tools.set_cover_letter import set_cover_letter
@@ -61,6 +62,7 @@ WRITE_TOOLS: list[Tool] = [
     set_job_keywords,
     save_tailored_resume,
     tailor_and_verify,
+    recalculate_ats_score,
     export_resume_pdf,
     create_application,
     update_application,

@@ -12,12 +12,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.ai_limits import MAX_SOURCE_CHARACTERS
 from app.config import settings
-from app.database import DatabaseBusyError, ResumeNotFoundError, _now, db
-from app.models import Job
+from app.database import DatabaseBusyError, ResumeNotFoundError, db
 from app.pdf import render_resume_pdf
 from app.routers.resumes import (
+    _cached_job_keywords,
     _get_original_resume_data,
+    _grounding_master_data,
     _hash_job_content,
+    _score_tailored_data,
     _validate_confirm_payload,
 )
 from app.schemas import ResumeData, normalize_resume_data
@@ -107,6 +109,22 @@ def require_structured(resume: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+def require_valid_structured(resume: dict[str, Any]) -> dict[str, Any]:
+    """Structured data that passes the schema, else a stable tool error (details are logged)."""
+    data = require_structured(resume)
+    try:
+        ResumeData.model_validate(normalize_resume_data(dict(data)))
+    except (ValueError, TypeError, AttributeError) as e:
+        logger.error(
+            "Stored data of %s does not match the schema: %s", resume["resume_id"], e
+        )
+        raise ToolError(
+            "This resume's stored data is invalid. Rewrite it with update_resume, "
+            "or open it in the builder and save it again."
+        ) from e
+    return data
+
+
 def ensure_within_size_limit(data: dict[str, Any]) -> None:
     if len(json.dumps(data, ensure_ascii=False)) > MAX_SOURCE_CHARACTERS:
         raise ToolError(f"Resume exceeds {MAX_SOURCE_CHARACTERS} characters.")
@@ -146,23 +164,6 @@ def job_view(job: dict[str, Any]) -> dict[str, Any]:
         "job_keywords": job.get("job_keywords"),
         "created_at": job.get("created_at"),
     }
-
-
-async def create_job_with_metadata(
-    content: str, metadata: dict[str, Any]
-) -> dict[str, Any]:
-    """Insert a job and its dynamic fields in one transaction, so a retry cannot duplicate it."""
-    async with db._write_session() as session:
-        row = Job(
-            job_id=str(uuid4()),
-            content=content,
-            resume_id=None,
-            created_at=_now(),
-            metadata_json=metadata,
-        )
-        session.add(row)
-        await session.commit()
-        return db._job_to_dict(row)
 
 
 def keyword_updates(content: str, keywords: JobKeywords) -> dict[str, Any]:
@@ -264,6 +265,18 @@ async def store_tailored_resume(
     """Save a validated tailored resume, link it to the job and add a tracker card."""
     source_id = source["resume_id"]
     title = clean_title(title) or clean_title(job.get("role"))
+    # The builder's last ATS score, as stored when preview confirmation saves a resume.
+    ats_record: dict[str, Any] | None = None
+    job_keywords = _cached_job_keywords(job)
+    if job_keywords:
+        try:
+            ats_record = _score_tailored_data(
+                candidate,
+                job_keywords,
+                await _grounding_master_data(source) or candidate,
+            )
+        except Exception:  # noqa: BLE001 - the score is recalculable, never block the save
+            logger.warning("ATS score at save failed", exc_info=True)
     tailored = await db.create_tailored_resume(
         request_id=str(uuid4()),
         original_resume_id=source_id,
@@ -279,8 +292,9 @@ async def store_tailored_resume(
             "title": title,
         },
         improvements=generate_improvements(job.get("job_keywords") or {}),
+        ats_score=ats_record,
     )
-    result = summary(tailored)
+    result = {**summary(tailored), "ats_score": ats_record}
     if track_application:
         try:
             application = await db.create_application(
