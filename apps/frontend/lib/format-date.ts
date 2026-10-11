@@ -15,6 +15,23 @@ function toDate(value: string | number | Date): Date {
   return value instanceof Date ? value : new Date(value);
 }
 
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+/** One formatter per locale and options: building one is far costlier than formatting, and lists call this once per row. */
+function formatterFor(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  let formatter = formatters.get(key);
+  if (!formatter) {
+    try {
+      formatter = new Intl.DateTimeFormat(locale, options);
+    } catch {
+      formatter = new Intl.DateTimeFormat('en', options);
+    }
+    formatters.set(key, formatter);
+  }
+  return formatter;
+}
+
 /** Formats a date in the UI locale. Returns '' for missing or invalid input. */
 export function formatDate(
   value: string | number | Date | null | undefined,
@@ -24,9 +41,5 @@ export function formatDate(
   if (value === null || value === undefined || value === '') return '';
   const date = toDate(value);
   if (Number.isNaN(date.getTime())) return '';
-  try {
-    return new Intl.DateTimeFormat(locale, options).format(date);
-  } catch {
-    return new Intl.DateTimeFormat('en', options).format(date);
-  }
+  return formatterFor(locale, options).format(date);
 }

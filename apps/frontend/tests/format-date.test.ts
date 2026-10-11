@@ -17,6 +17,35 @@ describe('formatDate', () => {
   });
 });
 
+describe('formatDate: formatter cache', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('builds one Intl.DateTimeFormat per locale and options, however often it is called', () => {
+    const construct = vi.spyOn(Intl, 'DateTimeFormat');
+    const options: Intl.DateTimeFormatOptions = { year: '2-digit', month: 'narrow' };
+    for (let i = 0; i < 50; i++) {
+      // A fresh options object each call, as the list rows pass inline literals.
+      formatDate('2026-03-05T12:00:00Z', 'en', { ...options });
+      formatDate('2026-03-05T12:00:00Z', 'fr', { ...options });
+    }
+    expect(construct).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps locales and options apart', () => {
+    expect(formatDate('2026-03-05T12:00:00Z', 'en', { month: 'long' })).toBe('March');
+    expect(formatDate('2026-03-05T12:00:00Z', 'en', { month: 'short' })).toBe('Mar');
+    expect(formatDate('2026-03-05T12:00:00Z', 'de', { month: 'long' })).toBe('März');
+  });
+
+  it('builds the English fallback once for an unusable locale, not on every call', () => {
+    const construct = vi.spyOn(Intl, 'DateTimeFormat');
+    for (let i = 0; i < 10; i++)
+      formatDate('2026-03-05T12:00:00Z', 'xx-BAD-TAG-9', { day: '2-digit' });
+    // The failed attempt and the fallback, once.
+    expect(construct).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('formatDate: date-only values', () => {
   const originalTz = process.env.TZ;
 
