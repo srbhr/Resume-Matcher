@@ -245,8 +245,20 @@ def compute_section_completeness(resume: dict[str, Any]) -> float:
     # Legacy/unstructured data: scan the text for section headings. Contact info
     # only counts when it is structured; it can't be detected from free text.
     # Section labels in sectionMeta ("Summary", "Experience", ...) are
-    # configuration, not content, so leave them out of the scan.
-    content = {key: value for key, value in resume.items() if key != "sectionMeta"}
+    # configuration, not content, so leave them out of the scan. So are hidden
+    # sections: they are not rendered, so they cannot be parsed.
+    content = {
+        key: value
+        for key, value in resume.items()
+        if key != "sectionMeta" and _is_section_visible(resume, key)
+    }
+    custom = content.get("customSections")
+    if isinstance(custom, dict):
+        content["customSections"] = {
+            key: value
+            for key, value in custom.items()
+            if _is_section_visible(resume, key)
+        }
     text = _extract_all_text(content).lower()
     headings_found = sum(
         1 for patterns in _SECTION_PATTERNS.values() if any(p in text for p in patterns)
