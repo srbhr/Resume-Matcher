@@ -121,6 +121,15 @@ def _xml_text(element: Any) -> str:
     return "".join(t.text or "" for t in element.xpath(".//w:t")).strip()
 
 
+def _table_lines(table: Any) -> list[str]:
+    """One line per row, its non-empty cells joined by " | "."""
+    lines: list[str] = []
+    for row in table.xpath("./w:tr"):
+        cells = [_xml_text(cell) for cell in row.xpath("./w:tc")]
+        lines.append(" | ".join(c for c in cells if c))
+    return lines
+
+
 def extract_docx(content: bytes) -> ExtractedDocument:
     """Body paragraphs and tables in document order; headers, footers and text boxes kept apart."""
     document = Document(io.BytesIO(content))
@@ -132,15 +141,15 @@ def extract_docx(content: bytes) -> ExtractedDocument:
             runs = child.xpath(".//w:t[not(ancestor::w:txbxContent)]")
             lines.append("".join(t.text or "" for t in runs))
         elif tag == "tbl":
-            for row in child.xpath("./w:tr"):
-                cells = [_xml_text(cell) for cell in row.xpath("./w:tc")]
-                lines.append(" | ".join(c for c in cells if c))
+            lines.extend(_table_lines(child))
     header_footer: list[str] = []
     columns = 1
     for section in document.sections:
         for part in (section.header, section.footer):
             if not part.is_linked_to_previous:
                 header_footer.extend(p.text for p in part.paragraphs if p.text.strip())
+                for table in part.tables:
+                    header_footer.extend(t for t in _table_lines(table._tbl) if t)
         for num in section._sectPr.xpath("./w:cols/@w:num"):
             columns = max(columns, int(num))
     textboxes = [_xml_text(box) for box in body.xpath(".//w:txbxContent")]

@@ -268,6 +268,20 @@ async def test_docx_tables_and_header_contact_are_flagged() -> None:
     assert "Acme Corp | 2020 - 2022" in report.extracted_text_preview
 
 
+async def test_docx_contact_in_a_header_table_is_flagged() -> None:
+    def build(document: Any) -> None:
+        header = document.sections[0].header
+        table = header.add_table(rows=1, cols=2, width=document.sections[0].page_width)
+        table.cell(0, 0).text = "Jane Doe"
+        table.cell(0, 1).text = "jane@example.com"
+        document.add_paragraph("EXPERIENCE")
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    check = next(c for c in report.checks if c.id == "header_footer_content")
+    assert check.status == "fail"
+    assert check.params["contact_only_in_margin"] is True
+
+
 # -- content ---------------------------------------------------------------------
 
 
