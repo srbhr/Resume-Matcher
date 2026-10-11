@@ -8,6 +8,8 @@ from sqlalchemy.exc import ArgumentError
 POSTGRES_DRIVER = "postgresql+psycopg"
 _POSTGRES_SCHEMES = ("postgres", "postgresql", POSTGRES_DRIVER)
 _SCHEMA_RE = re.compile(r"^[a-z_][a-z0-9_]{0,62}$")
+# libpq accepts these as query parameters; ``hide_password`` only masks the userinfo.
+_SECRET_QUERY_KEYS = frozenset({"password", "sslpassword"})
 
 
 def normalize_database_url(url: str) -> str:
@@ -34,4 +36,10 @@ def validate_schema_name(name: str) -> str:
 
 
 def redact(url: str) -> str:
-    return make_url(url).render_as_string(hide_password=True)
+    """Render a URL for logs with the password, in userinfo or query, masked."""
+    parsed = make_url(url)
+    query = {
+        key: "redacted" if key.lower() in _SECRET_QUERY_KEYS else value
+        for key, value in parsed.query.items()
+    }
+    return parsed.set(query=query).render_as_string(hide_password=True)

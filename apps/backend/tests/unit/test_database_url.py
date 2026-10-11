@@ -57,6 +57,25 @@ def test_redact_hides_the_password() -> None:
     assert "s3cret" not in redact(PG) and "rm:***@db" in redact(PG)
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "postgresql://rm@db/rm?password=s3cret",
+        "postgresql://rm@db/rm?sslmode=require&PASSWORD=s3cret",
+        "postgresql://rm@db/rm?sslpassword=s3cret&password=s3cret",
+        "postgresql://rm:s3cret@db/rm?password=s3cret",
+    ],
+)
+def test_redact_hides_password_query_parameters(url: str) -> None:
+    assert "s3cret" not in redact(url)
+
+
+def test_redact_keeps_harmless_query_parameters() -> None:
+    assert redact("postgresql://rm@db/rm?password=s3cret&sslmode=require") == (
+        "postgresql://rm@db/rm?password=redacted&sslmode=require"
+    )
+
+
 def test_database_url_selects_postgres_unless_a_path_is_given(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
