@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.schema import CreateIndex
@@ -19,7 +20,8 @@ from app.database import (
 )
 from app.db_engine import make_async_engine, make_sync_engine
 from app.db_url import normalize_database_url, redact, validate_schema_name
-from app.models import Resume
+from app.models import Base, Resume
+from app.preview import job_fingerprint, resume_fingerprint
 from app.scripts.copy_sqlite_to_postgres import TargetNotEmptyError, copy_rows
 
 pytestmark = pytest.mark.unit
@@ -166,6 +168,21 @@ def test_copy_rows_rejects_uninitialized_databases(
         copy_rows(source, target)
 
 
+def _dump(database: Database) -> dict[str, list[dict[str, Any]]]:
+    database._ensure_initialized()
+    assert database._sync_engine is not None
+    with database._sync_engine.connect() as conn:
+        return {
+            table.name: [
+                dict(row)
+                for row in conn.execute(
+                    select(table).order_by(*table.primary_key.columns)
+                ).mappings()
+            ]
+            for table in Base.metadata.sorted_tables
+        }
+
+
 async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
     source = Database(db_path=tmp_path / "source.db")
     target = Database(db_path=tmp_path / "target.db")
@@ -175,11 +192,28 @@ async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
         )
         job = await source.create_job("Engineer", resume["resume_id"])
         await source.create_application(job_id=job["job_id"], resume_id="r1")
+        await source.create_improvement(
+            resume["resume_id"], "tailored-1", job["job_id"], [{"suggestion": "s"}]
+        )
+        await source.register_preview(
+            source_id=resume["resume_id"],
+            job_id=job["job_id"],
+            payload_hash="h",
+            source_hash=resume_fingerprint(
+                resume["content"],
+                resume.get("processed_data"),
+                resume.get("original_markdown"),
+            ),
+            job_hash=job_fingerprint(job["content"]),
+            prompt_id="keywords",
+            ttl_seconds=60,
+            improvements=[{"suggestion": "s"}],
+        )
         source.set_api_key_ciphertext("openai", "ciphertext")
 
         counts = copy_rows(source, target)
-        assert counts["resumes"] == counts["jobs"] == counts["applications"] == 1
-        assert counts["api_keys"] == 1
+        assert counts == {table.name: 1 for table in Base.metadata.sorted_tables}
+        assert _dump(target) == _dump(source)
         assert await target.get_resume(resume["resume_id"]) == await source.get_resume(
             resume["resume_id"]
         )
