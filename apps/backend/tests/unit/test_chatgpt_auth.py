@@ -10,8 +10,11 @@ import base64
 import hashlib
 import json
 import os
+import shutil
 import stat
+import subprocess
 from collections.abc import Iterator
+from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -55,6 +58,19 @@ class TestCredentialStore:
         assert chatgpt_auth.load_record() == record
         # Atomic replace leaves no temp files behind.
         assert [p.name for p in path.parent.iterdir() if p.name.endswith(".tmp")] == []
+
+    def test_an_interrupted_staging_file_is_gitignored(self) -> None:
+        repo = Path(__file__).resolve().parents[4]
+        if shutil.which("git") is None or not (repo / ".git").exists():
+            pytest.skip("not running from a git checkout")
+        # save_record() stages through mkstemp(prefix=".<file>.", suffix=".tmp").
+        staged = f"apps/backend/data/.{chatgpt_auth._CREDENTIALS_FILE}.a1b2c3.tmp"
+
+        result = subprocess.run(
+            ["git", "check-ignore", "-q", staged], cwd=repo, check=False
+        )
+
+        assert result.returncode == 0
 
 
 class TestStartLogin:
