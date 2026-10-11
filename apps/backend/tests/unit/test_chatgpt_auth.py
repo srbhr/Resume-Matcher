@@ -6,6 +6,7 @@ test that would reach the real network.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import os
@@ -387,3 +388,198 @@ class TestCompleteLogin:
         assert record["client_id"] == fakes.ISSUED_CLIENT_ID
         assert record["plan_declined"] is True
         assert "access_token" not in record and "refresh_token" not in record
+
+
+# ---------------------------------------------------------------------------
+# Refresh rotation, serialization, sign-out and status
+# ---------------------------------------------------------------------------
+
+
+def _expired() -> dict[str, float]:
+    return {"saved_at": chatgpt_auth.time.time() - 7200}
+
+
+class TestAccessToken:
+    async def test_a_fresh_token_is_returned_without_refreshing(self) -> None:
+        fakes.save_connected_record(access_token="still-good")
+        with respx.mock(assert_all_called=False) as router:
+            token = router.post(chatgpt_auth.TOKEN_URL)
+            assert await chatgpt_auth.get_access_token() == "still-good"
+        assert not token.called
+
+    async def test_refresh_rotates_and_persists_both_tokens(self) -> None:
+        fakes.save_connected_record(refresh_token="refresh-old", **_expired())
+        with respx.mock() as router:
+            token = router.post(chatgpt_auth.TOKEN_URL).mock(
+                return_value=fakes.token_response(
+                    access_token="access-new", refresh_token="refresh-new"
+                )
+            )
+            assert await chatgpt_auth.get_access_token() == "access-new"
+
+        assert fakes.form(token.calls.last.request) == {
+            "grant_type": "refresh_token",
+            "client_id": fakes.ISSUED_CLIENT_ID,
+            "refresh_token": "refresh-old",
+            "resource": "https://api.openai.com/v1",
+        }
+        record = chatgpt_auth.load_record()
+        assert record["access_token"] == "access-new"
+        assert record["refresh_token"] == "refresh-new"
+        raw = (settings.data_dir / "chatgpt_credentials.enc").read_bytes()
+        assert b"refresh-new" not in raw and b"access-new" not in raw
+
+    async def test_concurrent_callers_share_one_refresh(self) -> None:
+        fakes.save_connected_record(refresh_token="refresh-old", **_expired())
+
+        async def slow_token_endpoint(request: httpx.Request) -> httpx.Response:
+            # Suspend mid-refresh so the other callers really run concurrently.
+            await asyncio.sleep(0.05)
+            return fakes.token_response(
+                access_token="access-new", refresh_token="refresh-new"
+            )
+
+        with respx.mock() as router:
+            token = router.post(chatgpt_auth.TOKEN_URL).mock(
+                side_effect=slow_token_endpoint
+            )
+            results = await asyncio.gather(
+                *(chatgpt_auth.get_access_token() for _ in range(5))
+            )
+        assert results == ["access-new"] * 5
+        # A rotating refresh token must never be spent twice.
+        assert token.call_count == 1
+
+    @pytest.mark.skipif(os.name == "nt", reason="POSIX advisory lock")
+    async def test_refresh_waits_for_another_process_holding_the_lock(self) -> None:
+        import fcntl
+
+        fakes.save_connected_record(**_expired())
+        lock_path = settings.data_dir / "chatgpt_credentials.lock"
+        other_process = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+        fcntl.flock(other_process, fcntl.LOCK_EX)
+        try:
+            with respx.mock() as router:
+                token = router.post(chatgpt_auth.TOKEN_URL).mock(
+                    return_value=fakes.token_response(access_token="access-new")
+                )
+                task = asyncio.create_task(chatgpt_auth.get_access_token())
+                await asyncio.sleep(0.3)
+                assert not task.done()
+                assert not token.called
+                os.close(other_process)
+                other_process = -1
+                assert await asyncio.wait_for(task, 5) == "access-new"
+        finally:
+            if other_process >= 0:
+                os.close(other_process)
+
+    @pytest.mark.parametrize("error", ["invalid_grant", "refresh_token_reused"])
+    async def test_a_dead_refresh_token_clears_tokens_but_keeps_the_registration(
+        self, error: str
+    ) -> None:
+        fakes.save_connected_record(**_expired())
+        with respx.mock() as router:
+            router.post(chatgpt_auth.TOKEN_URL).mock(
+                return_value=httpx.Response(400, json={"error": error})
+            )
+            with pytest.raises(chatgpt_auth.ChatGPTNotConnectedError):
+                await chatgpt_auth.get_access_token()
+        record = chatgpt_auth.load_record()
+        assert "refresh_token" not in record and "access_token" not in record
+        assert record["client_id"] == fakes.ISSUED_CLIENT_ID
+        assert record["ext_agent_host_id"].startswith("urn:uuid:")
+        assert chatgpt_auth.status()["connected"] is False
+
+    async def test_a_temporary_failure_keeps_the_credentials(self) -> None:
+        fakes.save_connected_record(refresh_token="refresh-old", **_expired())
+        with respx.mock() as router:
+            router.post(chatgpt_auth.TOKEN_URL).mock(
+                return_value=httpx.Response(
+                    503, json={"error": "temporarily_unavailable"}
+                )
+            )
+            with pytest.raises(chatgpt_auth.TokenEndpointError):
+                await chatgpt_auth.get_access_token()
+        assert chatgpt_auth.load_record()["refresh_token"] == "refresh-old"
+
+    async def test_not_signed_in(self) -> None:
+        with pytest.raises(chatgpt_auth.ChatGPTNotConnectedError):
+            await chatgpt_auth.get_access_token()
+
+
+class TestDisconnect:
+    @pytest.fixture(autouse=True)
+    def _no_backoff(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(chatgpt_auth, "REVOKE_RETRY_DELAYS", (0.0, 0.0))
+
+    async def test_revokes_the_refresh_token_then_clears_tokens(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        fakes.save_connected_record(refresh_token="refresh-live")
+        revoke = openai_auth.post(fakes.REVOCATION_URI).mock(
+            return_value=httpx.Response(200)
+        )
+
+        assert await chatgpt_auth.disconnect() is True
+
+        assert fakes.form(revoke.calls.last.request) == {
+            "token": "refresh-live",
+            "token_type_hint": "refresh_token",
+            "client_id": fakes.ISSUED_CLIENT_ID,
+        }
+        record = chatgpt_auth.load_record()
+        for field in ("access_token", "refresh_token", "id_token"):
+            assert field not in record
+        assert record["client_id"] == fakes.ISSUED_CLIENT_ID
+        assert record["ext_agent_host_id"].startswith("urn:uuid:")
+        assert chatgpt_auth.status() == {
+            "connected": False,
+            "email": None,
+            "plan_declined": False,
+        }
+
+    async def test_retries_a_server_error(self, openai_auth: respx.MockRouter) -> None:
+        fakes.save_connected_record()
+        revoke = openai_auth.post(fakes.REVOCATION_URI).mock(
+            side_effect=[
+                httpx.Response(503),
+                httpx.ConnectError("down"),
+                httpx.Response(200),
+            ]
+        )
+        assert await chatgpt_auth.disconnect() is True
+        assert revoke.call_count == 3
+
+    async def test_unconfirmed_revocation_still_signs_out_locally(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        fakes.save_connected_record()
+        openai_auth.post(fakes.REVOCATION_URI).mock(return_value=httpx.Response(503))
+        assert await chatgpt_auth.disconnect() is False
+        assert "refresh_token" not in chatgpt_auth.load_record()
+
+    async def test_nothing_to_revoke(self) -> None:
+        assert await chatgpt_auth.disconnect() is True
+        assert chatgpt_auth.load_record() == {}
+
+
+class TestStatus:
+    def test_connected_status_carries_no_secrets(self) -> None:
+        fakes.save_connected_record(access_token="tok-A", refresh_token="tok-R")
+        result = chatgpt_auth.status()
+        assert result == {
+            "connected": True,
+            "email": fakes.EMAIL,
+            "plan_declined": False,
+        }
+        assert "tok-" not in repr(result)
+        assert chatgpt_auth.is_connected() is True
+
+    def test_declined_plan_usage_is_reported(self) -> None:
+        chatgpt_auth.save_record({"client_id": "oaiapp_x", "plan_declined": True})
+        assert chatgpt_auth.status() == {
+            "connected": False,
+            "email": None,
+            "plan_declined": True,
+        }

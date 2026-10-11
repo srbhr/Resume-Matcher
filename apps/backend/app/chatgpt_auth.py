@@ -74,6 +74,21 @@ ID_TOKEN_ALGORITHMS = ["RS256"]
 HTTP_TIMEOUT_SECONDS = 30.0
 #: How long to wait for another process that is refreshing the same tokens.
 LOCK_TIMEOUT_SECONDS = 60.0
+#: Refresh this long before the access token expires (it lives one hour).
+REFRESH_MARGIN_SECONDS = 120
+#: Waits between revocation retries after a network error or a 5xx.
+REVOKE_RETRY_DELAYS: tuple[float, ...] = (0.5, 2.0)
+#: Refresh errors that mean the refresh token can never work again.
+_DEAD_REFRESH_ERRORS = frozenset(
+    {
+        "invalid_grant",
+        "invalid_refresh_token",
+        "token_expired",
+        "refresh_token_expired",
+        "refresh_token_invalidated",
+        "refresh_token_reused",
+    }
+)
 
 _CREDENTIALS_FILE = "chatgpt_credentials.enc"
 _LOCK_FILE = "chatgpt_credentials.lock"
@@ -103,6 +118,10 @@ class ChatGPTLoginError(ChatGPTAuthError):
     def __init__(self, outcome: str, message: str) -> None:
         super().__init__(message)
         self.outcome = outcome
+
+
+class ChatGPTNotConnectedError(ChatGPTAuthError):
+    """No usable ChatGPT plan credentials; the user must sign in (again)."""
 
 
 class TokenEndpointError(ChatGPTAuthError):
@@ -521,6 +540,153 @@ async def complete_login(query: Mapping[str, str]) -> str:
         )
         save_record(record)
     return "connected"
+
+
+# ---------------------------------------------------------------------------
+# Access tokens, sign-out and status
+# ---------------------------------------------------------------------------
+
+
+def _clear_tokens(record: dict[str, Any]) -> None:
+    """Drop the token set but keep the registration and host ID for next time."""
+    for field in _TOKEN_FIELDS:
+        record.pop(field, None)
+
+
+def _access_token_is_fresh(record: dict[str, Any]) -> bool:
+    saved_at = record.get("saved_at")
+    expires_in = record.get("expires_in")
+    if not isinstance(record.get("access_token"), str):
+        return False
+    if not isinstance(saved_at, (int, float)) or not isinstance(expires_in, int):
+        return False
+    return time.time() < saved_at + expires_in - REFRESH_MARGIN_SECONDS
+
+
+async def get_access_token() -> str:
+    """Return a current access token, refreshing (and rotating) it when needed.
+
+    Refreshes are serialized by :func:`credentials_lock`, and the record is
+    re-read inside the lock so a caller that waited uses the token another
+    caller (or process) just obtained instead of spending the rotated refresh
+    token a second time.
+    """
+    record = load_record()
+    if _has_plan_scope(record) and _access_token_is_fresh(record):
+        return record["access_token"]
+    async with credentials_lock():
+        record = load_record()
+        if not _has_plan_scope(record) or not record.get("client_id"):
+            raise ChatGPTNotConnectedError("not signed in with ChatGPT")
+        if _access_token_is_fresh(record):
+            return record["access_token"]
+        refresh_token = record.get("refresh_token")
+        if not isinstance(refresh_token, str) or not refresh_token:
+            raise ChatGPTNotConnectedError("no refresh token; sign in again")
+        try:
+            tokens = await _post_token(
+                {
+                    "grant_type": "refresh_token",
+                    "client_id": record["client_id"],
+                    "refresh_token": refresh_token,
+                    # No scope: keep the original grant.
+                    "resource": RESOURCE,
+                }
+            )
+        except TokenEndpointError as error:
+            if error.error in _DEAD_REFRESH_ERRORS:
+                _clear_tokens(record)
+                save_record(record)
+                raise ChatGPTNotConnectedError(
+                    "ChatGPT session ended; sign in again"
+                ) from error
+            raise
+        record.update(
+            {
+                "access_token": tokens["access_token"],
+                "refresh_token": tokens.get("refresh_token") or refresh_token,
+                "token_type": tokens.get("token_type", "Bearer"),
+                "expires_in": _expires_in(tokens),
+                "saved_at": time.time(),
+            }
+        )
+        granted = _granted_scopes(tokens)
+        if granted:
+            record["scopes"] = granted
+        # Store the rotated pair before anyone else can read the old one.
+        save_record(record)
+        if not _has_plan_scope(record):
+            raise ChatGPTNotConnectedError("ChatGPT plan usage is no longer granted")
+        return record["access_token"]
+
+
+async def _revoke(refresh_token: str, client_id: str) -> bool:
+    """End the renewable session. True when OpenAI confirmed (an HTTP 200)."""
+    try:
+        url = await _endpoint("revocation_endpoint")
+    except (ChatGPTAuthError, httpx.HTTPError, ValueError):
+        logger.warning("ChatGPT revocation endpoint unavailable", exc_info=True)
+        return False
+    data = {
+        "token": refresh_token,
+        "token_type_hint": "refresh_token",
+        "client_id": client_id,
+    }
+    for delay in (0.0, *REVOKE_RETRY_DELAYS):
+        if delay:
+            await asyncio.sleep(delay)
+        try:
+            async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as client:
+                response = await client.post(url, data=data)
+        except httpx.HTTPError:
+            logger.warning("ChatGPT token revocation failed; retrying", exc_info=True)
+            continue
+        if response.status_code == 200:
+            return True
+        if response.status_code < 500:
+            logger.warning(
+                "ChatGPT token revocation returned HTTP %s", response.status_code
+            )
+            return False
+    return False
+
+
+async def disconnect() -> bool:
+    """Sign out: revoke the refresh token, then clear the local token set.
+
+    Returns whether OpenAI confirmed the revocation. Tokens are cleared either
+    way; the issued client ID, account and host ID are kept so the next sign-in
+    reuses the registration instead of creating another one.
+    """
+    async with credentials_lock():
+        record = load_record()
+        refresh_token = record.get("refresh_token")
+        client_id = record.get("client_id")
+        revoked = True
+        if isinstance(refresh_token, str) and refresh_token and client_id:
+            revoked = await _revoke(refresh_token, str(client_id))
+        if record:
+            _clear_tokens(record)
+            save_record(record)
+    return revoked
+
+
+def status() -> dict[str, Any]:
+    """Connection state for the settings page. Never includes a token."""
+    record = load_record()
+    connected = _has_plan_scope(record) and bool(
+        record.get("refresh_token") or record.get("access_token")
+    )
+    email = record.get("email") if connected else None
+    return {
+        "connected": connected,
+        "email": email if isinstance(email, str) else None,
+        "plan_declined": bool(record.get("plan_declined")) and not connected,
+    }
+
+
+def is_connected() -> bool:
+    return bool(status()["connected"])
 
 
 def reset_state() -> None:
