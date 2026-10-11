@@ -14,25 +14,6 @@ from app.database import DatabaseBusyError, db
 
 logger = logging.getLogger(__name__)
 
-# A company name after "at" / "@" is 2-40 characters of this set.
-_COMPANY_AFTER_AT_RE = re.compile(r"[A-Za-z0-9&.\s]{2,40}")
-
-
-def _split_role_at_company(line: str) -> tuple[str, str] | None:
-    """Split "Role at Company" / "Role @ Company" in linear time.
-
-    A single backtracking regex over a user-pasted line is quadratic on long
-    whitespace runs. The company is at most 40 characters, so "at" must be one
-    of the last 21 whitespace-separated tokens; only those are tried.
-    """
-    tokens = line.split()
-    for i in range(max(1, len(tokens) - 21), len(tokens) - 1):
-        if tokens[i].lower() in ("at", "@"):
-            company = " ".join(tokens[i + 1 :])
-            if _COMPANY_AFTER_AT_RE.fullmatch(company):
-                return " ".join(tokens[:i]), company
-    return None
-
 
 def extract_job_details(text: str) -> dict[str, str]:
     """Heuristically extract role, company, and job_req_id from job description without LLM calls.
@@ -56,7 +37,7 @@ def extract_job_details(text: str) -> dict[str, str]:
         # Role / Position / Title
         if not details["role"]:
             m_role = re.search(
-                r"^(?:job\s+title|role|position|title)\s*[:\-]\s*(\S.*)$",
+                r"^(?:job\s+title|role|position|title)\s*[:\-]\s*(.+)$",
                 line,
                 re.IGNORECASE,
             )
@@ -66,7 +47,7 @@ def extract_job_details(text: str) -> dict[str, str]:
         # Company / Organization / Client
         if not details["company"]:
             m_comp = re.search(
-                r"^(?:company|organization|employer|client)\s*[:\-]\s*(\S.*)$",
+                r"^(?:company|organization|employer|client)\s*[:\-]\s*(.+)$",
                 line,
                 re.IGNORECASE,
             )
@@ -76,7 +57,7 @@ def extract_job_details(text: str) -> dict[str, str]:
         # Job ID / Requisition ID / Req #
         if not details["job_req_id"]:
             m_id = re.search(
-                r"(?:job\s*id|req(?:uisition)?\s*id|req\s*#|job\s*#|requisition)\s*(?:[:\-#]\s*)?([a-zA-Z0-9_\-]+)",
+                r"(?:job\s*id|req(?:uisition)?\s*id|req\s*#|job\s*#|requisition)\s*[:\-#]?\s*([a-zA-Z0-9_\-]+)",
                 line,
                 re.IGNORECASE,
             )
@@ -87,11 +68,15 @@ def extract_job_details(text: str) -> dict[str, str]:
     if not details["role"] and lines:
         first_line = lines[0]
         # Pattern like "Senior Software Engineer at Stripe" or "Frontend Developer @ Google"
-        at_split = _split_role_at_company(first_line)
-        if at_split:
-            details["role"] = at_split[0]
+        m_at = re.search(
+            r"^(.+?)\s+(?:at|@)\s+([A-Za-z0-9&.\s]{2,40})$",
+            first_line,
+            re.IGNORECASE,
+        )
+        if m_at:
+            details["role"] = m_at.group(1).strip()
             if not details["company"]:
-                details["company"] = at_split[1]
+                details["company"] = m_at.group(2).strip()
         elif len(first_line) < 70 and not any(
             w in first_line.lower()
             for w in ["about us", "overview", "description", "welcome"]
