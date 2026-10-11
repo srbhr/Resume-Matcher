@@ -24,7 +24,7 @@ from app.config import settings
 from app.database import MAX_MASTER_RESUMES, Database, DatabaseBusyError
 from app.main import app
 from app.mcp_server import tools
-from app.mcp_server.server import build_server
+from app.mcp_server.server import INSTRUCTIONS, build_server
 from app.models import Job
 from app.pdf import PDFRenderError
 from app.routers import resumes as resumes_router
@@ -115,6 +115,32 @@ async def test_exposes_exactly_the_deterministic_tool_set() -> None:
         )
         read_only = {t.name for t in listed.tools if t.annotations.read_only_hint}
         assert read_only == {fn.__name__ for fn in tools.READ_ONLY_TOOLS}
+
+
+async def test_overwrite_capable_tools_are_marked_destructive_and_disclosed() -> None:
+    async with connect() as mcp:
+        listed = (await mcp.list_tools()).tools
+    destructive = {t.name for t in listed if t.annotations.destructive_hint}
+    assert destructive == {
+        "update_resume",
+        "set_resume_title",
+        "set_cover_letter",
+        "set_outreach_message",
+        "set_default_master",
+        "set_job_keywords",
+        "export_resume_pdf",
+        "update_application",
+    }
+    additive = {
+        t.name
+        for t in listed
+        if t.annotations.destructive_hint is False and not t.annotations.read_only_hint
+    }
+    assert additive == {fn.__name__ for fn in tools.ADDITIVE_TOOLS}
+    assert "Nothing here deletes data" not in INSTRUCTIONS
+    for name in ("update_resume", "export_resume_pdf"):
+        assert name in INSTRUCTIONS
+    assert "overwrite" in INSTRUCTIONS
 
 
 async def test_master_round_trip_is_visible_to_the_web_api(
