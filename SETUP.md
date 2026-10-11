@@ -478,7 +478,7 @@ docker compose watch
 
 Edits under `apps/backend/app` are synced into the running container, which restarts without an image rebuild. Changes to `apps/frontend`, `apps/backend/pyproject.toml`, the `Dockerfile` or `docker/` rebuild the image. Python dependencies and Chromium are cached in their own layers, so a rebuild after a code change does not download them again.
 
-If a build step downloads slowly, point it at a mirror. Both build args are empty by default (no change):
+If a build step downloads slowly, point it at a mirror. All four build args are empty by default (no change):
 
 - `DEBIAN_MIRROR`: if `apt-get` is slow, build with `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (or your local mirror; give its `/debian` URL). Security updates stay on `deb.debian.org` unless you also set `DEBIAN_SECURITY_MIRROR` (a `/debian-security` URL; most mirrors don't carry it).
 - `PIP_INDEX_URL`: if Python package downloads are slow, set it to a PyPI mirror's `/simple` URL (for example `https://pypi.mirrors.ustc.edu.cn/simple`).
@@ -492,7 +492,7 @@ docker build \
   -t resume-matcher .
 ```
 
-`docker compose build` and `scripts/docker-smoke.sh` pick both up from environment variables of the same names, e.g. `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian ./scripts/docker-smoke.sh`.
+`docker compose build` and `scripts/docker-smoke.sh` pick all four up from environment variables of the same names, e.g. `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian ./scripts/docker-smoke.sh`.
 
 ### Important Notes
 
