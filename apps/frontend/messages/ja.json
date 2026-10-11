@@ -40,6 +40,19 @@
     "docs": "利用ドキュメント",
     "launchApp": "アプリを起動"
   },
+  "community": {
+    "follow": "@srbhr をフォロー",
+    "star": "スター",
+    "starOnGithub": "GitHub でスターを付ける",
+    "sponsor": "スポンサー",
+    "discord": "Discord",
+    "joinDiscord": "Discord に参加",
+    "contributors": "コントリビューター",
+    "settingsPrompt": "Resume Matcher を気に入っていただけましたか？",
+    "sponsorProject": "プロジェクトをスポンサーする",
+    "joinTheDiscord": "Discord に参加する",
+    "aboutTitle": "このアプリについて"
+  },
   "nav": {
     "dashboard": "ダッシュボード",
     "builder": "履歴書ビルダー",

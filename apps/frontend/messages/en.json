@@ -40,6 +40,19 @@
     "docs": "Docs",
     "launchApp": "Launch App"
   },
+  "community": {
+    "follow": "Follow @srbhr",
+    "star": "Star",
+    "starOnGithub": "Star on GitHub",
+    "sponsor": "Sponsor",
+    "discord": "Discord",
+    "joinDiscord": "Join Discord",
+    "contributors": "Contributors",
+    "settingsPrompt": "Enjoying Resume Matcher?",
+    "sponsorProject": "Sponsor the project",
+    "joinTheDiscord": "Join the Discord",
+    "aboutTitle": "About"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "builder": "Resume Builder",

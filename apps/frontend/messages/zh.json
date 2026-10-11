@@ -40,6 +40,19 @@
     "docs": "使用文档",
     "launchApp": "启动应用"
   },
+  "community": {
+    "follow": "关注 @srbhr",
+    "star": "加星标",
+    "starOnGithub": "在 GitHub 上加星标",
+    "sponsor": "赞助",
+    "discord": "Discord",
+    "joinDiscord": "加入 Discord",
+    "contributors": "贡献者",
+    "settingsPrompt": "喜欢 Resume Matcher 吗？",
+    "sponsorProject": "赞助本项目",
+    "joinTheDiscord": "加入 Discord 社区",
+    "aboutTitle": "关于"
+  },
   "nav": {
     "dashboard": "仪表板",
     "builder": "简历生成器",

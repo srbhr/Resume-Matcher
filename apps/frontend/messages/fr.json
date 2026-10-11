@@ -40,6 +40,19 @@
     "docs": "Documentation",
     "launchApp": "Lancer l'application"
   },
+  "community": {
+    "follow": "Suivre @srbhr",
+    "star": "Mettre une étoile",
+    "starOnGithub": "Mettre une étoile sur GitHub",
+    "sponsor": "Sponsoriser",
+    "discord": "Discord",
+    "joinDiscord": "Rejoindre Discord",
+    "contributors": "Contributeurs",
+    "settingsPrompt": "Vous aimez Resume Matcher ?",
+    "sponsorProject": "Sponsorisez le projet",
+    "joinTheDiscord": "Rejoignez le Discord",
+    "aboutTitle": "À propos"
+  },
   "nav": {
     "dashboard": "Tableau de bord",
     "builder": "Créateur de CV",
