@@ -460,6 +460,30 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 
 Alternatively copy the file out of the stopped container (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) and pass it with `--source ./resume_matcher.db` from a host that can reach the database. Keep `data/.secret_key` (it stays in the volume): it decrypts your stored API keys.
 
+### Testing the Docker image
+
+To check that the image builds and works (backend and frontend start, pages load, PDF export renders), run the smoke test from the repo root:
+
+```bash
+./scripts/docker-smoke.sh
+```
+
+It builds the image with the build cache, starts it on port `3100` (set `SMOKE_PORT` to change it) with a throwaway data volume, runs the checks, prints `PASS` or `FAIL` with the image size, and removes the container and volume. It never touches your real data and makes no LLM calls. Flags: `--no-build` (test an existing image), `--tag <name>`, `--keep` (leave it running to poke at), `--clean` (also remove the image).
+
+For quick iteration, use Compose watch (Docker Compose 2.22 or newer):
+
+```bash
+docker compose watch
+```
+
+Edits under `apps/backend/app` are synced into the running container, which restarts without an image rebuild. Changes to `apps/frontend`, `apps/backend/pyproject.toml`, the `Dockerfile` or `docker/` rebuild the image. Python dependencies and Chromium are cached in their own layers, so a rebuild after a code change does not download them again.
+
+If Chromium downloads slowly during a build (Playwright's default CDN can be throttled in some regions), point the build at a mirror:
+
+```bash
+docker build --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://your-mirror.example.com -t resume-matcher .
+```
+
 ### Important Notes
 
 - **API keys are best configured through the UI** at `http://localhost:3000/settings`
