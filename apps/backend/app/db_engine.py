@@ -9,11 +9,12 @@ spin up fully isolated engines against a temp-file database or a scratch schema.
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, event, text
-from sqlalchemy.engine import Engine
+from sqlalchemy import Column, create_engine, event, inspect, text
+from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.schema import CreateColumn
 
-from app.models import Base
+from app.models import Base, Improvement
 
 __all__ = [
     "Base",
@@ -91,6 +92,22 @@ def make_sync_engine(
     return engine
 
 
+def _add_missing_column(
+    conn: Connection, column: Column[Any], schema: str | None = None
+) -> None:
+    """Additive migration: add a model column that an existing table lacks.
+
+    ``create_all`` never alters existing tables. The column DDL is rendered by
+    the connection's dialect, so this works on SQLite and PostgreSQL alike.
+    """
+    existing = inspect(conn).get_columns(column.table.name, schema=schema)
+    if column.name in {c["name"] for c in existing}:
+        return
+    table = conn.dialect.identifier_preparer.format_table(column.table)
+    ddl = CreateColumn(column).compile(dialect=conn.dialect)
+    conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {ddl}")
+
+
 def _init_postgres(engine: Engine, schema: str | None) -> None:
     """Create the schema and tables once, even when several processes start together."""
     with engine.begin() as conn:
@@ -101,6 +118,7 @@ def _init_postgres(engine: Engine, schema: str | None) -> None:
         if schema:
             conn.exec_driver_sql(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
         Base.metadata.create_all(conn)
+        _add_missing_column(conn, Improvement.__table__.c.ats_score, schema)
 
 
 def init_models_sync(engine: Engine, schema: str | None = None) -> None:
@@ -140,13 +158,7 @@ def init_models_sync(engine: Engine, schema: str | None = None) -> None:
                 "ON resumes (is_default_master) WHERE is_default_master = 1"
             )
 
-        improvement_columns = (
-            conn.exec_driver_sql("PRAGMA table_info(improvements)").mappings().all()
-        )
-        if improvement_columns and "ats_score" not in {
-            column["name"] for column in improvement_columns
-        }:
-            conn.exec_driver_sql("ALTER TABLE improvements ADD COLUMN ats_score JSON")
+        _add_missing_column(conn, Improvement.__table__.c.ats_score)
 
         preview_columns = (
             conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)")
