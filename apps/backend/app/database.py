@@ -37,8 +37,6 @@ from app.db_url import validate_schema_name
 from app.models import (
     ApiKey,
     Application,
-    Batch,
-    BatchItem,
     Improvement,
     Job,
     QueueItem,
@@ -323,38 +321,6 @@ class Database:
             "error": row.error,
             "rate_limit_seconds": row.rate_limit_seconds,
             "prompt_id": row.prompt_id,
-            "created_at": row.created_at,
-            "updated_at": row.updated_at,
-        }
-
-    @staticmethod
-    def _batch_to_dict(row: Batch) -> dict[str, Any]:
-        return {
-            "batch_id": row.batch_id,
-            "resume_id": row.resume_id,
-            "total_jobs": row.total_jobs,
-            "completed_jobs": row.completed_jobs,
-            "failed_jobs": row.failed_jobs,
-            "status": row.status,
-            "rate_limit_seconds": row.rate_limit_seconds,
-            "prompt_id": row.prompt_id,
-            "created_at": row.created_at,
-            "updated_at": row.updated_at,
-        }
-
-    @staticmethod
-    def _batch_item_to_dict(row: BatchItem) -> dict[str, Any]:
-        return {
-            "item_id": row.item_id,
-            "batch_id": row.batch_id,
-            "resume_id": row.resume_id,
-            "job_description": row.job_description,
-            "index": row.index,
-            "prompt_id": row.prompt_id,
-            "status": row.status,
-            "job_id": row.job_id,
-            "tailored_resume_id": row.tailored_resume_id,
-            "error": row.error,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
         }
@@ -1425,8 +1391,6 @@ class Database:
         """
         async with self._write_session() as session:
             await session.execute(delete(QueueItem))
-            await session.execute(delete(BatchItem))
-            await session.execute(delete(Batch))
             await session.execute(delete(TailoringPreview))
             await session.execute(delete(Application))
             await session.execute(delete(Improvement))
@@ -1522,112 +1486,6 @@ class Database:
             result = session.execute(stmt)
             session.commit()
             return result.rowcount
-
-    # -- Batch operations (SQLite) -------------------------------------------
-
-    def create_batch(
-        self,
-        batch_id: str,
-        resume_id: str,
-        total_items: int,
-        rate_limit_seconds: float = 5.0,
-        prompt_id: str | None = None,
-    ) -> dict[str, Any]:
-        now = _now()
-        batch = Batch(
-            batch_id=batch_id,
-            resume_id=resume_id,
-            total_jobs=total_items,
-            completed_jobs=0,
-            failed_jobs=0,
-            status="queued",
-            rate_limit_seconds=rate_limit_seconds,
-            prompt_id=prompt_id,
-            created_at=now,
-            updated_at=now,
-        )
-        with self._sync_write_session() as session:
-            session.add(batch)
-            session.commit()
-            return self._batch_to_dict(batch)
-
-    def create_batch_item(
-        self,
-        item_id: str,
-        batch_id: str,
-        resume_id: str,
-        job_description: str,
-        index: int,
-        prompt_id: str | None = None,
-    ) -> dict[str, Any]:
-        now = _now()
-        item = BatchItem(
-            item_id=item_id,
-            batch_id=batch_id,
-            resume_id=resume_id,
-            job_description=job_description,
-            index=index,
-            prompt_id=prompt_id,
-            status="pending",
-            job_id=None,
-            tailored_resume_id=None,
-            error=None,
-            created_at=now,
-            updated_at=now,
-        )
-        with self._sync_write_session() as session:
-            session.add(item)
-            session.commit()
-            return self._batch_item_to_dict(item)
-
-    def get_batch(self, batch_id: str) -> dict[str, Any] | None:
-        with self._sync() as session:
-            row = session.get(Batch, batch_id)
-            return self._batch_to_dict(row) if row else None
-
-    def get_batch_items(self, batch_id: str) -> list[dict[str, Any]]:
-        with self._sync() as session:
-            stmt = (
-                select(BatchItem)
-                .where(BatchItem.batch_id == batch_id)
-                .order_by(BatchItem.index.asc())
-            )
-            rows = session.execute(stmt).scalars().all()
-            return [self._batch_item_to_dict(r) for r in rows]
-
-    def update_batch(
-        self, batch_id: str, updates: dict[str, Any]
-    ) -> dict[str, Any] | None:
-        with self._sync_write_session() as session:
-            row = session.get(Batch, batch_id)
-            if row is None:
-                return None
-            for key, val in updates.items():
-                if hasattr(row, key):
-                    setattr(row, key, val)
-            row.updated_at = _now()
-            session.commit()
-            return self._batch_to_dict(row)
-
-    def update_batch_item(
-        self, item_id: str, updates: dict[str, Any]
-    ) -> dict[str, Any] | None:
-        with self._sync_write_session() as session:
-            row = session.get(BatchItem, item_id)
-            if row is None:
-                return None
-            for key, val in updates.items():
-                if hasattr(row, key):
-                    setattr(row, key, val)
-            row.updated_at = _now()
-            session.commit()
-            return self._batch_item_to_dict(row)
-
-    def list_batches(self, limit: int = 50) -> list[dict[str, Any]]:
-        with self._sync() as session:
-            stmt = select(Batch).order_by(Batch.created_at.desc()).limit(limit)
-            rows = session.execute(stmt).scalars().all()
-            return [self._batch_to_dict(r) for r in rows]
 
 
 # Global database instance

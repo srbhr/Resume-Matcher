@@ -530,66 +530,6 @@ export async function fetchJobDescription(
   return res.json();
 }
 
-export interface BatchItem {
-  item_id: string;
-  index: number;
-  job_description_snippet: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  tailored_resume_id: string | null;
-  error: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface BatchStatus {
-  batch_id: string;
-  resume_id: string;
-  total_jobs: number;
-  completed_jobs: number;
-  failed_jobs: number;
-  status: 'queued' | 'processing' | 'completed' | 'failed' | 'partially_failed';
-  rate_limit_seconds: number;
-  created_at: string;
-  updated_at: string;
-  items: BatchItem[];
-}
-
-export interface BatchTailorResponse {
-  batch_id: string;
-  total_jobs: number;
-  message: string;
-  status: string;
-}
-
-/** Queue multiple job descriptions for background tailoring with rate-limited execution */
-export async function startBatchTailor(
-  resumeId: string,
-  jobDescriptions: string[],
-  rateLimitSeconds: number = 5,
-  promptId?: string
-): Promise<BatchTailorResponse> {
-  const res = await apiPost('/jobs/batch-tailor', {
-    resume_id: resumeId,
-    job_descriptions: jobDescriptions,
-    rate_limit_seconds: rateLimitSeconds,
-    prompt_id: promptId ?? null,
-  });
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Batch tailor failed with status ${res.status}: ${errorText}`);
-  }
-  return res.json();
-}
-
-/** Fetch current status and progress of a batch tailoring task */
-export async function fetchBatchStatus(batchId: string): Promise<BatchStatus> {
-  const res = await apiFetch(`/jobs/batch/${encodeURIComponent(batchId)}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch batch status (${res.status})`);
-  }
-  return res.json();
-}
-
 export interface QueueItem {
   item_id: string;
   resume_id: string;

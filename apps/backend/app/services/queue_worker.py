@@ -131,12 +131,6 @@ class QueueManager:
         """Enqueue an individual job item for background tailoring."""
         await self._queue.put(item_id)
 
-    async def enqueue_batch(self, batch_id: str):
-        """Enqueue items in a batch for backward compatibility."""
-        items = db.get_batch_items(batch_id)
-        for item in items:
-            await self._queue.put(item["item_id"])
-
     async def _recover_pending_items(self):
         """Recover items that were queued or in-progress before server restart."""
         try:
@@ -178,13 +172,6 @@ class QueueManager:
         """Process an individual queued job with cooldown rate-limiting."""
         item = db.get_queue_item(item_id)
         if not item:
-            # Check if this item is in the batch_items table (backward compatibility)
-            ItemQuery = db.batch_items
-            results = (
-                ItemQuery.search(db.batch_items.table.Query().item_id == item_id)
-                if hasattr(ItemQuery, "table")
-                else None
-            )
             return
 
         # Skip if already completed or deleted
@@ -265,6 +252,5 @@ class QueueManager:
             await asyncio.sleep(rate_limit_seconds)
 
 
-# Global singleton instances
+# Global singleton instance
 queue_manager = QueueManager()
-batch_manager = queue_manager  # Alias for backward compatibility

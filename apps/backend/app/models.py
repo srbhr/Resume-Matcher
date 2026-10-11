@@ -208,39 +208,3 @@ class QueueItem(Base):
     prompt_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
     updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
-
-
-class Batch(Base):
-    """A batch container for multiple tailoring requests."""
-
-    __tablename__ = "batches"
-
-    batch_id: Mapped[str] = mapped_column(String, primary_key=True)
-    resume_id: Mapped[str] = mapped_column(String, index=True)
-    total_jobs: Mapped[int] = mapped_column(Integer, default=0)
-    completed_jobs: Mapped[int] = mapped_column(Integer, default=0)
-    failed_jobs: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[str] = mapped_column(String, default="queued")
-    rate_limit_seconds: Mapped[float] = mapped_column(Float, default=5.0)
-    prompt_id: Mapped[str | None] = mapped_column(String, nullable=True)
-    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
-
-
-class BatchItem(Base):
-    """An individual job item within a batch tailoring task."""
-
-    __tablename__ = "batch_items"
-
-    item_id: Mapped[str] = mapped_column(String, primary_key=True)
-    batch_id: Mapped[str] = mapped_column(String, index=True)
-    resume_id: Mapped[str] = mapped_column(String, index=True)
-    job_description: Mapped[str] = mapped_column(Text)
-    index: Mapped[int] = mapped_column(Integer, default=0)
-    prompt_id: Mapped[str | None] = mapped_column(String, nullable=True)
-    status: Mapped[str] = mapped_column(String, default="pending", index=True)
-    job_id: Mapped[str | None] = mapped_column(String, nullable=True)
-    tailored_resume_id: Mapped[str | None] = mapped_column(String, nullable=True)
-    error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
