@@ -248,6 +248,30 @@ describe('builder panels', () => {
   );
 });
 
+describe('builder preview tabs', () => {
+  it('names the tab strip after the Preview heading and points only the selected tab at the panel', async () => {
+    fetchResume.mockResolvedValue(response());
+    const Builder = await importBuilder();
+    render(<Builder />);
+    await act(async () => {
+      await fetchResume.mock.results[0].value;
+    });
+
+    const tablist = screen.getByRole('tablist', { name: 'builder.panels.preview' });
+    const heading = screen.getByRole('heading', { name: 'builder.panels.preview' });
+    expect(tablist).toHaveAttribute('aria-labelledby', heading.id);
+
+    const panel = screen.getByRole('tabpanel');
+    const tabs = within(tablist).getAllByRole('tab');
+    const selected = tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true');
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toHaveAttribute('aria-controls', panel.id);
+    for (const tab of tabs.filter((tab) => tab !== selected[0])) {
+      expect(tab).not.toHaveAttribute('aria-controls');
+    }
+  });
+});
+
 describe('builder footer', () => {
   it('has no footer bar: the page frame ends with the panel grid', async () => {
     fetchResume.mockResolvedValue(response());

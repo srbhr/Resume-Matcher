@@ -56,6 +56,39 @@ describe('RetroTabs', () => {
     expect(screen.getByRole('tab', { name: 'Beta' })).toHaveAttribute('tabindex', '-1');
   });
 
+  it('points only the selected tab at a panel, since inactive panels are not rendered', () => {
+    render(<RetroTabs tabs={tabs} activeTab="b" onTabChange={vi.fn()} idPrefix="t" />);
+    expect(screen.getByRole('tab', { name: 'Beta' })).toHaveAttribute('aria-controls', 't-panel-b');
+    expect(screen.getByRole('tab', { name: 'Alpha' })).not.toHaveAttribute('aria-controls');
+  });
+
+  it('keeps the tab stop on an enabled tab when the active tab is disabled', () => {
+    const withDisabledActive = [
+      { id: 'a', label: 'Alpha', disabled: true },
+      { id: 'b', label: 'Beta' },
+      { id: 'c', label: 'Gamma' },
+    ];
+    render(<RetroTabs tabs={withDisabledActive} activeTab="a" onTabChange={vi.fn()} />);
+    expect(screen.getByRole('tab', { name: 'Alpha' })).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('tab', { name: 'Beta' })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('tab', { name: 'Gamma' })).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('can be named by a label or by a heading', () => {
+    const { rerender } = render(
+      <RetroTabs tabs={tabs} activeTab="a" onTabChange={vi.fn()} aria-label="Preview" />
+    );
+    expect(screen.getByRole('tablist', { name: 'Preview' })).toBeInTheDocument();
+
+    rerender(
+      <>
+        <h2 id="heading">Output</h2>
+        <RetroTabs tabs={tabs} activeTab="a" onTabChange={vi.fn()} aria-labelledby="heading" />
+      </>
+    );
+    expect(screen.getByRole('tablist', { name: 'Output' })).toBeInTheDocument();
+  });
+
   it('activates the next tab with ArrowRight', () => {
     const onChange = vi.fn();
     render(<RetroTabs tabs={tabs} activeTab="a" onTabChange={onChange} />);

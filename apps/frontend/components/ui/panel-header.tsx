@@ -14,12 +14,15 @@ export function PanelHeader({
   tone = 'neutral',
   title,
   level: Heading = 'h2',
+  titleId,
   children,
   className,
 }: {
   tone?: PanelTone;
   title: React.ReactNode;
   level?: 'h2' | 'h3';
+  /** Id for the heading, so a region it names can point at it with aria-labelledby. */
+  titleId?: string;
   children?: React.ReactNode;
   className?: string;
 }) {
@@ -32,7 +35,10 @@ export function PanelHeader({
     >
       <div className="flex min-w-0 items-center gap-2">
         <span aria-hidden="true" className={cn('size-3 shrink-0', SQUARE[tone])} />
-        <Heading className="truncate font-mono text-xs font-bold uppercase tracking-wider text-ink">
+        <Heading
+          id={titleId}
+          className="truncate font-mono text-xs font-bold uppercase tracking-wider text-ink"
+        >
           {title}
         </Heading>
       </div>
