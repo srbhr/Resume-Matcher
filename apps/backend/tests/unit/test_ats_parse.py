@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 from docx import Document
+from docx.shared import Inches
 from pydantic import ValidationError
 
 from app.services.ats_parse import build_report, parse_check_bytes
@@ -266,6 +267,25 @@ async def test_docx_tables_and_header_contact_are_flagged() -> None:
     assert _status(report.checks, "header_footer_content") == "fail"
     assert _status(report.checks, "contact_info") == "fail"
     assert "Acme Corp | 2020 - 2022" in report.extracted_text_preview
+
+
+async def test_docx_tabs_and_line_breaks_separate_words() -> None:
+    def build(document: Any) -> None:
+        paragraph = document.add_paragraph()
+        paragraph.paragraph_format.tab_stops.add_tab_stop(Inches(3))
+        run = paragraph.add_run("Jane Doe")
+        run.add_tab()
+        run.add_text("Engineer")
+        run.add_break()
+        run.add_text("Acme")
+        cell = document.add_table(rows=1, cols=1).cell(0, 0)
+        cell.paragraphs[0].add_run("Go").add_tab()
+        cell.paragraphs[0].add_run("Python")
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    lines = report.extracted_text_preview.split("\n")
+    assert lines[:2] == ["Jane Doe\tEngineer", "Acme"]
+    assert "Go\tPython" in lines
 
 
 async def test_docx_contact_in_a_header_table_is_flagged() -> None:

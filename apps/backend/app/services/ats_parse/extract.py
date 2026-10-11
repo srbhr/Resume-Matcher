@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from docx import Document
+from docx.oxml.ns import qn
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTContainer, LTFigure, LTImage, LTTextContainer
 from pdfminer.pdfpage import PDFPage
@@ -117,8 +118,21 @@ def extract_pdf(content: bytes) -> ExtractedDocument:
     )
 
 
+# Run content in document order. Only run-level tabs count: w:pPr/w:tabs/w:tab
+# defines tab stops and is not text.
+_RUN_CONTENT = "w:r/*[self::w:t or self::w:tab or self::w:br or self::w:cr]"
+_RUN_BREAKS = {qn("w:tab"): "\t", qn("w:br"): "\n", qn("w:cr"): "\n"}
+
+
+def _run_text(element: Any, path: str) -> str:
+    """Run text with tabs and line breaks kept, so "Name<tab>Title" stays two words."""
+    return "".join(
+        _RUN_BREAKS.get(node.tag, node.text or "") for node in element.xpath(path)
+    )
+
+
 def _xml_text(element: Any) -> str:
-    return "".join(t.text or "" for t in element.xpath(".//w:t")).strip()
+    return _run_text(element, f".//{_RUN_CONTENT}").strip()
 
 
 def _table_lines(table: Any) -> list[str]:
@@ -138,8 +152,9 @@ def extract_docx(content: bytes) -> ExtractedDocument:
     for child in body.iterchildren():
         tag = child.tag.rsplit("}", 1)[-1]
         if tag == "p":
-            runs = child.xpath(".//w:t[not(ancestor::w:txbxContent)]")
-            lines.append("".join(t.text or "" for t in runs))
+            lines.append(
+                _run_text(child, f".//{_RUN_CONTENT}[not(ancestor::w:txbxContent)]")
+            )
         elif tag == "tbl":
             lines.extend(_table_lines(child))
     header_footer: list[str] = []
