@@ -228,7 +228,7 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 | Provider | Local/Cloud | Notes |
 |----------|-------------|-------|
 | **Ollama** | Local | Free, runs on your machine |
-| **Claude Code CLI** | Cloud (via local CLI) | Runs your installed `claude` CLI, so this app needs no API key, but prompts still go to Anthropic through your Claude Code login. Set `LLM_PROVIDER=claude_cli`. Requires [Claude Code](https://claude.com/claude-code) installed and signed in (`claude auth login`); not available inside the Docker images. |
+| **Claude subscription (via Claude Code)** | Cloud (via local CLI) | Runs your installed `claude` CLI, so this app needs no API key and never sees or stores your Claude credentials, but prompts still go to Anthropic through your Claude Code login and count toward your plan's usage limits (Anthropic may draw them from usage credits instead). Anthropic does not officially support third-party apps using Claude Pro/Max subscriptions, so this may stop working if its policy changes; for guaranteed access, use the **Anthropic** provider with an API key. Set `LLM_PROVIDER=claude_cli`. Requires [Claude Code](https://claude.com/claude-code) installed and signed in (`claude auth login`); not available inside the Docker images. |
 | **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
