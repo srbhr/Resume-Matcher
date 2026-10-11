@@ -310,10 +310,12 @@ def is_heading(line: str, names: list[str]) -> bool:
     return False
 
 
-def find_sections(text: str, locale: str | None) -> list[str]:
+def find_sections(
+    text: str, locale: str | None, kinds: tuple[str, ...] = REQUIRED_SECTIONS
+) -> list[str]:
     lines = _heading_lines(text)
     found = []
-    for kind in REQUIRED_SECTIONS:
+    for kind in kinds:
         names = [normalize(name) for name in synonyms(kind, locale)]
         if any(is_heading(line, names) for line in lines):
             found.append(kind)

@@ -23,7 +23,7 @@ from app.services.ats_parse.extract import (
     TextBox,
     extract_pdf,
 )
-from app.services.ats_parse.headings import HEADINGS
+from app.services.ats_parse.headings import ACADEMIC_SECTIONS, HEADINGS
 from app.services.ats_parse.models import Check
 from app.services.ats_parse.normalize import normalize, rejoin_letter_spacing, tokens
 from app.services.ats_parse.roundtrip import (
@@ -212,6 +212,15 @@ async def test_single_column_academic_cv_over_three_pages_is_not_multi_column(
     assert check.status == "pass"
     assert check.params["pages"] == []
     assert check.params["expected_by_template"] is False
+
+
+@pytest.mark.parametrize("name", ["swiss-single-academic-3p", "clean-academic-3p"])
+async def test_academic_appointments_on_a_real_render_count_as_experience(
+    name: str,
+) -> None:
+    report = await parse_check_bytes(fixture(name), f"{name}.pdf", source="render")
+    check = next(c for c in report.checks if c.id == "section_headings")
+    assert "experience" in check.params["found"]
 
 
 async def test_two_column_template_over_three_pages_is_still_detected() -> None:
@@ -536,6 +545,14 @@ def test_contact_info_needs_a_phone_shaped_number(text: str, phone: bool) -> Non
         ("Experience in product engineering\nEducation\nSkills", None, "fail"),
         ("職歴\n学歴\n技術を活用したシステム開発", "ja", "warn"),
         ("職歴\n学歴\n技術スキル", "ja", "pass"),
+        # Academic appointments stand in for experience.
+        ("Academic Appointments\nEducation\nSkills", None, "pass"),
+        ("Appointments\nEducation\nSkills", "en", "pass"),
+        ("Research Experience\nEducation\nSkills", None, "pass"),
+        ("Academic Appointments\nEducation", None, "warn"),
+        ("Education\nSkills\nPublications", None, "fail"),
+        # Prose that starts with an appointment synonym is not a heading.
+        ("Appointments scheduling for clinics\nEducation\nSkills", None, "fail"),
     ],
 )
 def test_section_headings(text: str, locale: str | None, status: str) -> None:
@@ -543,6 +560,58 @@ def test_section_headings(text: str, locale: str | None, status: str) -> None:
         _status(run_checks(_text_doc(text), {"locale": locale}), "section_headings")
         == status
     )
+
+
+@pytest.mark.parametrize(
+    ("line", "kind"),
+    [
+        ("Publications", "publications"),
+        ("Selected Publications", "publications"),
+        ("Peer-Reviewed Publications", "publications"),
+        ("Peer-reviewed journal articles", "publications"),
+        ("Journal Articles", "publications"),
+        ("Conference Papers", "publications"),
+        ("Peer-Reviewed Conference Papers", "publications"),
+        ("Publications & Presentations", "publications"),
+        ("Grants", "grants"),
+        ("Grants & Funding", "grants"),
+        ("Funding", "grants"),
+        ("Grants and Funding", "grants"),
+        ("Teaching", "teaching"),
+        ("Invited Talks", "talks"),
+        ("Presentations", "talks"),
+        ("Service", "service"),
+        ("Academic Service", "service"),
+        ("Research", "research"),
+    ],
+)
+def test_academic_headings_are_recognized(line: str, kind: str) -> None:
+    found = find_sections(f"Jane Doe\n{line}\nSome text", None, ACADEMIC_SECTIONS)
+    assert kind in found
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Research interests include single-cell methods",
+        "Teaching and mentoring graduate students across three labs",
+        "Publications are listed on my website",
+        "Service to the profession and the community at large",
+        "Funding secured from several agencies",
+        "Presentations at major venues worldwide this year",
+    ],
+)
+def test_prose_starting_with_an_academic_word_is_not_a_heading(line: str) -> None:
+    assert find_sections(line, None, ACADEMIC_SECTIONS) == []
+
+
+def test_academic_sections_never_change_the_required_headings_report() -> None:
+    # The report's found/missing lists name only the three required kinds; the UI maps
+    # each to a translated label.
+    doc = _text_doc("Academic Appointments\nEducation\nPublications\nGrants\nTeaching")
+    check = next(c for c in run_checks(doc, {}) if c.id == "section_headings")
+    assert check.params["found"] == ["experience", "education"]
+    assert check.params["missing"] == ["skills"]
 
 
 def test_headings_cover_every_frontend_locale_label() -> None:
