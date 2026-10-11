@@ -17,14 +17,17 @@ WORKDIR /app/frontend
 # Copy package files first for better caching
 COPY apps/frontend/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (npm download cache kept between builds)
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy frontend source
 COPY apps/frontend/ ./
 
-# Build the frontend
-RUN npm run build
+# Build the frontend (Next.js build cache kept between builds; it is not part of the
+# standalone output)
+RUN --mount=type=cache,target=/app/frontend/.next/cache \
+    npm run build
 
 # ============================================
 # Stage 2: Final Image
@@ -32,15 +35,38 @@ RUN npm run build
 FROM python:3.13-slim-bookworm
 
 # Set environment variables
+# PIP_NO_CACHE_DIR is deliberately not set: the pip steps below use a BuildKit cache
+# mount (kept out of the image), and that mount only helps while pip's cache is on.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Optional Debian mirrors for slow networks, e.g.
+#   docker build --build-arg DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian .
+# DEBIAN_MIRROR is the mirror's /debian URL (packages and updates). Most mirrors do not
+# carry debian-security, so that stays on the stock deb.debian.org unless you also set
+# DEBIAN_SECURITY_MIRROR (a /debian-security URL). Both are empty by default: the image's
+# stock sources are used unchanged.
+ARG DEBIAN_MIRROR
+ARG DEBIAN_SECURITY_MIRROR
+RUN if [ -n "${DEBIAN_MIRROR}" ]; then \
+        sed -i "s|^URIs: http://deb.debian.org/debian\$|URIs: ${DEBIAN_MIRROR%/}|" \
+            /etc/apt/sources.list.d/debian.sources; \
+    fi \
+    && if [ -n "${DEBIAN_SECURITY_MIRROR}" ]; then \
+        sed -i "s|^URIs: http://deb.debian.org/debian-security|URIs: ${DEBIAN_SECURITY_MIRROR%/}|" \
+            /etc/apt/sources.list.d/debian.sources; \
+    fi
+
+# Install system dependencies. BuildKit cache mounts keep the downloaded .debs between
+# builds (docker-clean would delete them after install), so a re-run of this layer
+# does not download everything again. The mounts are not part of the image.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     # Playwright dependencies
@@ -62,8 +88,38 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatspi2.0-0 \
     libgtk-3-0 \
     # CJK fonts for Chinese/Japanese/Korean PDF rendering via Playwright
-    fonts-noto-cjk \
-    && rm -rf /var/lib/apt/lists/*
+    fonts-noto-cjk
+
+# ============================================
+# Python dependencies + Chromium (cached across code changes)
+# ============================================
+# These layers only depend on pyproject.toml, so editing app code or the frontend
+# never re-downloads dependencies or Chromium.
+WORKDIR /app/backend
+COPY apps/backend/pyproject.toml /app/backend/
+
+# Optional Python package index mirror for slow networks, e.g.
+#   docker build --build-arg PIP_INDEX_URL=https://pypi.mirrors.ustc.edu.cn/simple .
+# pip reads PIP_INDEX_URL from the environment (an empty value is ignored), so both pip
+# installs below use it when set and the default PyPI otherwise.
+ARG PIP_INDEX_URL
+
+# Install the dependency list from pyproject.toml (read with tomllib so it never
+# drifts), without the package itself. The package is installed after the code copy.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" > /tmp/requirements.txt \
+    && pip install -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+
+# Chromium for PDF export, installed once into a shared path (root-owned, readable by
+# appuser) so the layer survives code changes. Only the headless shell is installed:
+# app/pdf.py launches headless, which Playwright 1.49+ serves from the headless shell.
+# Optional build arg for a mirror when the default CDN is slow:
+#   docker build --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://<mirror> .
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ARG PLAYWRIGHT_DOWNLOAD_HOST
+RUN python -m playwright install --only-shell chromium \
+    && chmod -R a+rX /ms-playwright
 
 WORKDIR /app
 
@@ -73,13 +129,13 @@ COPY --from=frontend-builder /usr/local/bin/node /usr/local/bin/node
 # ============================================
 # Backend Setup
 # ============================================
-COPY apps/backend/pyproject.toml /app/backend/
 COPY apps/backend/app /app/backend/app
 
 WORKDIR /app/backend
 
-# Install Python dependencies
-RUN pip install .
+# Install the backend package itself (dependencies are already installed above)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-deps .
 
 # ============================================
 # Frontend Setup
@@ -108,9 +164,6 @@ RUN useradd -m -u 1000 appuser \
     && chown -R appuser:appuser /app
 
 USER appuser
-
-# Install Playwright Chromium as appuser (so browsers are in correct location)
-RUN python -m playwright install chromium
 
 # Expose the public port (backend remains internal on 8000)
 EXPOSE 3000

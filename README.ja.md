@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.jpg)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
@@ -56,15 +56,15 @@ Resume Matcher は、まず「マスター履歴書」を作り、それを各�
 
 ### コミュニティ
 
-[![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
+[![Discord](assets/resume_matcher_discord.webp)](https://dsc.gg/resume-matcher)
 
 ディスカッション、要望、サポートは [Discord](https://dsc.gg/resume-matcher) へ。
 
-[![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
+[![LinkedIn](assets/resume_matcher_linkedin.webp)](https://www.linkedin.com/company/resume-matcher/)
 
 最新情報は [LinkedIn](https://www.linkedin.com/company/resume-matcher/) でも発信しています。
 
-![Star Resume Matcher](assets/star_resume_matcher.png)
+![Star Resume Matcher](assets/star_resume_matcher.webp)
 
 Star を付けていただけると開発の励みになります（リリース通知も受け取れます）。
 
@@ -72,7 +72,7 @@ Star を付けていただけると開発の励みになります（リリース
 
 ## スポンサー
 
-![sponsors](assets/sponsors.png)
+![sponsors](assets/sponsors.webp)
 
 Resume Matcher は無料かつオープンソースで、スポンサーと支援者の皆さまによって支えられています。役立つと感じたら、開発の支援をご検討ください。
 
@@ -95,7 +95,7 @@ Resume Matcher は無料かつオープンソースで、スポンサーと支�
 
 ### 個人として支援する
 
-![donate](assets/supporting_resume_matcher.png)
+![donate](assets/supporting_resume_matcher.webp)
 
 少額の支援でも Resume Matcher を無料に保ち、新機能の開発を支えます —— ReadME とウェブサイトにて感謝の意をお伝えします。
 
@@ -118,17 +118,17 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 ## 主な機能
 
-![resume_matcher_features](assets/features.png)
+![resume_matcher_features](assets/features.webp)
 
 ### コア機能
 
 **マスター履歴書（Master Resume）**：既存の履歴書から、再利用できる包括的なマスター履歴書を作成します。
 
-![Job Description Input](assets/step_2.png)
+![Job Description Input](assets/step_2.webp)
 
 ### 履歴書ビルダー
 
-![Resume Builder](assets/step_5_ja.png)
+![Resume Builder](assets/step_5_ja.webp)
 
 求人票を貼り付けると、その職種に合わせた AI 提案の履歴書を生成します。
 
@@ -143,13 +143,13 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 求人票と履歴書に基づき、カスタマイズされたカバーレターとメール文面を生成します。
 
-![Cover Letter](assets/cover_letter_ja.png)
+![Cover Letter](assets/cover_letter_ja.webp)
 
 ### 履歴書スコアリング（開発中）
 
 履歴書と求人票を比較して、マッチスコアと改善提案を出す機能を開発中です。
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter_ja.png)
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter_ja.webp)
 
 ### PDF 出力
 
@@ -159,13 +159,13 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 | テンプレート名 | プレビュー | 説明 |
 |---------------|-----------|------|
-| **1カラム** | ![1カラム](assets/pdf-templates/single-column.jpg) | 内容密度が高い伝統的な全幅レイアウト。[PDF を見る](assets/pdf-templates/single-column.pdf) |
-| **2カラム** | ![2カラム](assets/pdf-templates/two-column.jpg) | 経験中心のメイン列とスキル用サイドバー。[PDF を見る](assets/pdf-templates/two-column.pdf) |
-| **モダン** | ![モダン](assets/pdf-templates/modern-single-column.jpg) | カラフルなアクセントとテーマ色のカスタマイズ。[PDF を見る](assets/pdf-templates/modern-single-column.pdf) |
-| **モダン2カラム** | ![モダン2カラム](assets/pdf-templates/modern-two-column.jpg) | モダンな2カラムとカラフルなアクセント。[PDF を見る](assets/pdf-templates/modern-two-column.pdf) |
-| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.jpg) | 罫線付き見出しのクラシックなセリフ体レイアウト。[PDF を見る](assets/pdf-templates/latex.pdf) |
-| **クリーン** | ![クリーン](assets/pdf-templates/clean.jpg) | 大きく控えめな見出しのミニマルなサンセリフ体レイアウト。[PDF を見る](assets/pdf-templates/clean.pdf) |
-| **ビビッド** | ![ビビッド](assets/pdf-templates/vivid.jpg) | アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト。[PDF を見る](assets/pdf-templates/vivid.pdf) |
+| **1カラム** | ![1カラム](assets/pdf-templates/single-column.webp) | 内容密度が高い伝統的な全幅レイアウト。[PDF を見る](assets/pdf-templates/single-column.pdf) |
+| **2カラム** | ![2カラム](assets/pdf-templates/two-column.webp) | 経験中心のメイン列とスキル用サイドバー。[PDF を見る](assets/pdf-templates/two-column.pdf) |
+| **モダン** | ![モダン](assets/pdf-templates/modern-single-column.webp) | カラフルなアクセントとテーマ色のカスタマイズ。[PDF を見る](assets/pdf-templates/modern-single-column.pdf) |
+| **モダン2カラム** | ![モダン2カラム](assets/pdf-templates/modern-two-column.webp) | モダンな2カラムとカラフルなアクセント。[PDF を見る](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.webp) | 罫線付き見出しのクラシックなセリフ体レイアウト。[PDF を見る](assets/pdf-templates/latex.pdf) |
+| **クリーン** | ![クリーン](assets/pdf-templates/clean.webp) | 大きく控えめな見出しのミニマルなサンセリフ体レイアウト。[PDF を見る](assets/pdf-templates/clean.pdf) |
+| **ビビッド** | ![ビビッド](assets/pdf-templates/vivid.webp) | アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト。[PDF を見る](assets/pdf-templates/vivid.pdf) |
 
 ### 国際化
 
@@ -184,7 +184,7 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 ## インストール方法
 
-![Installation](assets/how_to_install_resumematcher.png)
+![Installation](assets/how_to_install_resumematcher.webp)
 
 詳細なセットアップ手順は **[SETUP.ja.md](SETUP.ja.md)** を参照してください（[English](SETUP.md) / [Español](SETUP.es.md) / [简体中文](SETUP.zh-CN.md) も利用できます）。
 
@@ -254,7 +254,7 @@ docker run srbhr/resume-matcher:latest
 
 ## 参加・コントリビュート
 
-![how to contribute](assets/how_to_contribute.png)
+![how to contribute](assets/how_to_contribute.webp)
 
 どなたでもコントリビュート歓迎です。開発者・デザイナー・ユーザーを問わず、協力してくれる方を募集しています。コントリビューター一覧は、公式サイトの [about ページ](https://resumematcher.fyi/about) と GitHub README に掲載されています。
 
@@ -264,7 +264,7 @@ docker run srbhr/resume-matcher:latest
 
 ## コントリビューター
 
-![Contributors](assets/contributors.png)
+![Contributors](assets/contributors.webp)
 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />

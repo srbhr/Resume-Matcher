@@ -2,10 +2,11 @@
 
 import copy
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.llm import FALLBACK_MAX_TOKENS, LLMConfig
 from app.services.improver import (
     extract_job_keywords,
     generate_resume_diffs,
@@ -348,6 +349,76 @@ class TestGenerateResumeDiffs:
             "responsibilities.\n5. Each change MUST include"
         ) in prompt
         assert "already chosen" not in prompt
+
+
+class TestGenerateResumeDiffsTokenBudget:
+    """The diff call asks for more than the old 4096 tokens, clamped to the
+    model's output limit through get_safe_max_tokens (PR #1035)."""
+
+    @pytest.mark.parametrize(
+        ("model_info", "expected"),
+        [
+            ({"max_output_tokens": 128000}, 8192),
+            ({"max_output_tokens": 6000}, 6000),
+            (ValueError("not in the registry"), FALLBACK_MAX_TOKENS),
+        ],
+        ids=["roomy-model", "small-limit-model", "unknown-model"],
+    )
+    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
+    async def test_budget_is_clamped_to_the_model_output_limit(
+        self, mock_llm, model_info, expected, sample_job_keywords
+    ):
+        mock_llm.return_value = {"changes": [], "strategy_notes": ""}
+        config = LLMConfig(provider="anthropic", model="claude-opus-5-5", api_key="k")
+        info_patch = (
+            patch("app.llm.litellm.get_model_info", side_effect=model_info)
+            if isinstance(model_info, Exception)
+            else patch("app.llm.litellm.get_model_info", return_value=model_info)
+        )
+        with (
+            patch("app.services.improver.get_llm_config", return_value=config),
+            info_patch,
+        ):
+            await generate_resume_diffs(
+                original_resume="# Resume",
+                job_description="JD",
+                job_keywords=sample_job_keywords,
+            )
+
+        assert mock_llm.call_args.kwargs["max_tokens"] == expected
+
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_clamped_budget_reaches_the_native_openai_token_kwarg(
+        self, mock_get_router, _mock_supports_json, sample_job_keywords
+    ):
+        """The budget goes out under ``max_completion_tokens`` (#1030), not as a
+        raw ``max_tokens`` the model would reject."""
+        config = LLMConfig(provider="openai", model="gpt-5-mini", api_key="k")
+        choice = MagicMock()
+        choice.message.content = '{"changes": [], "strategy_notes": ""}'
+        response = MagicMock()
+        response.choices = [choice]
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=response)
+        mock_get_router.return_value = (router, config)
+
+        with (
+            patch("app.services.improver.get_llm_config", return_value=config),
+            patch(
+                "app.llm.litellm.get_model_info",
+                return_value={"max_output_tokens": 6000},
+            ),
+        ):
+            await generate_resume_diffs(
+                original_resume="# Resume",
+                job_description="JD",
+                job_keywords=sample_job_keywords,
+            )
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 6000
+        assert "max_tokens" not in kwargs
 
 
 class TestSkillTargetPlanning:

@@ -145,6 +145,19 @@
   overflow-wrap: anywhere;
 }
 
+/* Tag list (TagList): pills in the text flow, so they share a baseline with a
+   row label. The separator is transparent rather than visually hidden: Chromium
+   leaves clipped, zero-size and opacity: 0 text out of the PDF, and the comma
+   must reach the PDF text layer so an ATS reads "Python, Java, Go". */
+.resume-tag-list .resume-skill-pill {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+}
+
+.resume-tag-separator {
+  color: transparent;
+}
+
 /* Link pill - styled clickable link with icon support */
 .resume-link-pill {
   font-family: var(--resume-font-mono);

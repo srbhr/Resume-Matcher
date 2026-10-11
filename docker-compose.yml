@@ -1,7 +1,15 @@
 services:
   resume-matcher:
     image: ghcr.io/srbhr/resume-matcher
-    build: .
+    build:
+      context: .
+      # Optional, for slow networks (empty by default = no change):
+      #   DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian docker compose build
+      args:
+        - DEBIAN_MIRROR=${DEBIAN_MIRROR:-}
+        - DEBIAN_SECURITY_MIRROR=${DEBIAN_SECURITY_MIRROR:-}
+        - PIP_INDEX_URL=${PIP_INDEX_URL:-}
+        - PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST:-}
     container_name: resume-matcher
     ports:
       - "${PORT:-3000}:3000"
@@ -32,6 +40,28 @@ services:
       # CORS origins (JSON array format). FRONTEND_BASE_URL is auto-included.
       #- CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
     restart: unless-stopped
+    # Fast iteration: `docker compose watch` (Compose 2.22+). Backend code is synced into
+    # the running container and the app restarts; no image rebuild. Frontend, dependency
+    # and image changes rebuild the image (Chromium and Python deps stay cached).
+    # Plain `docker compose up` ignores this block.
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/backend/app
+          target: /app/backend/app
+          ignore:
+            - __pycache__/
+        - action: rebuild
+          path: ./apps/frontend
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ./apps/backend/pyproject.toml
+        - action: rebuild
+          path: ./Dockerfile
+        - action: rebuild
+          path: ./docker
 
 #secrets:
 #  llm_api_key:
