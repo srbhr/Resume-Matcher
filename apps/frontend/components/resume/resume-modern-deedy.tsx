@@ -42,7 +42,7 @@ const joinMeta = (...parts: (string | undefined)[]) => parts.filter(Boolean).joi
  *
  * Dense one-page, single-column layout set in Lato: a centred regular-weight name over a
  * single " | " separated contact line, light grey uppercase section headings with no
- * rule, and compact one-line entry headers (bold caps name, small-caps role, right-aligned
+ * rule, and compact one-line entry headers (bold caps name, small uppercase role, right-aligned
  * place and dates). Everything is real DOM text, so the PDF text layer reads in order.
  *
  * Section order: Determined by sectionMeta ordering.

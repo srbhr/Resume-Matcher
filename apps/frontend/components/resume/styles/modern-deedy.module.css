@@ -37,6 +37,7 @@
   font-size: calc(var(--font-size-base) * var(--header-scale));
   font-weight: 400;
   line-height: 1.15;
+  margin-bottom: 0.3em;
   color: var(--resume-text-primary);
 }
 
@@ -122,8 +123,15 @@
   color: var(--resume-text-primary);
 }
 
+/*
+  Small caps are faked with uppercase at a smaller size. font-variant: small-caps (or smcp)
+  can reach the PDF text layer as private-use glyphs ("Snior Softwar Enginr"), so an ATS
+  would misread the role and institution.
+*/
 .smallCaps {
-  font-variant: small-caps;
+  text-transform: uppercase;
+  font-size: 0.82em;
+  letter-spacing: 0.02em;
   color: var(--resume-text-primary);
 }
 
@@ -137,6 +145,7 @@
 
 /* The project tech stack reads as dark as the role, unlike the grey place and dates. */
 .entryMeta .smallCaps {
+  font-size: 0.88em;
   color: var(--resume-text-body);
 }
 
