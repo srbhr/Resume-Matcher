@@ -2165,7 +2165,7 @@ async def download_resume_pdf(
     """Generate a PDF for a resume using headless Chromium.
 
     Accepts template settings for customization:
-    - template: swiss-single, swiss-two-column, modern, modern-two-column, latex, clean, or vivid
+    - template: swiss-single, swiss-two-column, modern, modern-two-column, latex, clean, vivid, or vivid-single
     - pageSize: A4 or LETTER
     - marginTop/Bottom/Left/Right: page margins in mm (5-25)
     - sectionSpacing: gap between sections (1-5)
