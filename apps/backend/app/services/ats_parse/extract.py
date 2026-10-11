@@ -169,7 +169,15 @@ def extract_docx(content: bytes) -> ExtractedDocument:
     header_footer: list[str] = []
     columns = 1
     for section in document.sections:
-        for part in (section.header, section.footer):
+        # Word keeps first-page and even-page variants in parts of their own.
+        for part in (
+            section.header,
+            section.footer,
+            section.first_page_header,
+            section.first_page_footer,
+            section.even_page_header,
+            section.even_page_footer,
+        ):
             if not part.is_linked_to_previous:
                 header_footer.extend(p.text for p in part.paragraphs if p.text.strip())
                 for table in part.tables:

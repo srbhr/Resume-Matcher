@@ -292,6 +292,21 @@ async def test_docx_tabs_and_line_breaks_separate_words() -> None:
     assert "Go\tPython" in lines
 
 
+@pytest.mark.parametrize("part", ["first_page_header", "even_page_footer"])
+async def test_docx_contact_in_first_or_even_page_margin_is_flagged(part: str) -> None:
+    def build(document: Any) -> None:
+        section = document.sections[0]
+        section.different_first_page_header_footer = True
+        document.settings.odd_and_even_pages_header_footer = True
+        getattr(section, part).paragraphs[0].text = "jane@example.com"
+        document.add_paragraph("EXPERIENCE")
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    check = next(c for c in report.checks if c.id == "header_footer_content")
+    assert check.status == "fail"
+    assert check.params["contact_only_in_margin"] is True
+
+
 async def test_docx_table_cell_paragraphs_stay_separate_words() -> None:
     def build(document: Any) -> None:
         cells = document.add_table(rows=1, cols=2).rows[0].cells
