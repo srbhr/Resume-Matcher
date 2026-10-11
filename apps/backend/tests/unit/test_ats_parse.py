@@ -299,6 +299,31 @@ async def test_modern_deedy_render_is_single_column_and_extracts_cleanly() -> No
     assert "Technical Skills: Go, Python, Kafka" in text
 
 
+async def test_vivid_render_extracts_without_small_caps_or_opacity_losses() -> None:
+    # Real render of john_doe(). Section titles and roles are uppercase text, not font
+    # small caps (private-use glyphs in the text layer, "Snior Softwar Enginr"), and the
+    # surname is a solid tint, not opacity (a transparency group the extraction skips).
+    # Still two columns, so multi_column fails as the template expects; the score is
+    # capped there rather than dragged down by garbled glyphs and an image.
+    report = await parse_check_bytes(
+        render("vivid"),
+        "d.pdf",
+        source="render",
+        resume_data=john_doe(),
+        template="vivid",
+    )
+    assert report.overall_score >= 88
+    assert report.content_score == 100
+    assert _status(report.checks, "garbled_glyphs") == "pass"
+    assert _status(report.checks, "images") == "pass"
+    assert _status(report.checks, "multi_column") == "fail"
+    assert report.roundtrip.content_recall == 1.0
+    text = extract_pdf(render("vivid")).text
+    assert "John Doe" in text
+    assert "SUMMARY" in text
+    assert "Stripe | SENIOR SOFTWARE ENGINEER" in text
+
+
 async def test_sparse_sidebar_still_counts_as_two_columns() -> None:
     # A short skills sidebar covers little of the page but still interleaves.
     report = await parse_check_bytes(
@@ -423,7 +448,7 @@ TEMPLATE_ENTRY_TEXT = {
     "Trinity College | BSc Physics\n2016",
     "latex": "Acme Corp\nStaff Engineer\n2020 - 2023\nDublin\n"
     "Trinity College\nBSc Physics\n2016",
-    "vivid": "Acme Corp | Staff Engineer\n2020 - 2023 | Dublin\n"
+    "vivid": "Acme Corp | STAFF ENGINEER\n2020 - 2023 | Dublin\n"
     "Trinity College\nBSc Physics\n2016",
     "vivid-single": "Acme Corp | STAFF ENGINEER\n2020 - 2023 | Dublin\n"
     "Trinity College | BSC PHYSICS\n2016",

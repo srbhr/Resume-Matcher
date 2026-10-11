@@ -1,10 +1,9 @@
-"""Real-browser PDF text layer of the Vivid single-column styles.
+"""Real-browser PDF text layer of the Vivid styles (both layouts share the classes).
 
-The two-column Vivid draws its lighter surname with ``opacity`` and its section
-titles and roles in small caps. Both reach the PDF text layer badly: opacity wraps
-the text in a transparency group that an ATS counts as an image and may skip, and
-small caps become private-use glyphs on some fonts. vivid-single styles those spots
-with plain colour and real capitals instead.
+Drawing the lighter surname with ``opacity`` and the section titles and roles in small
+caps reaches the PDF text layer badly: opacity wraps the text in a transparency group
+that an ATS counts as an image and may skip, and small caps become private-use glyphs
+on some fonts. Vivid styles those spots with plain colour and real capitals instead.
 """
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ResumeVivid } from '@/components/resume/resume-vivid';
@@ -43,5 +45,28 @@ describe('ResumeVivid', () => {
     // Meta should be just the location, never "| Remote".
     expect(screen.getByText('Remote')).toBeInTheDocument();
     expect(screen.queryByText('| Remote')).toBeNull();
+  });
+});
+
+describe('ResumeVivid text layer', () => {
+  // Font small caps reach the PDF text layer as private-use glyphs ("Snior Softwar Enginr")
+  // and partially transparent text becomes a transparency group the text extractor skips,
+  // so an ATS would misread the role and drop the surname.
+  it('draws headings and roles as capitals and the surname as a solid tint', () => {
+    const { container } = render(<ResumeVivid data={data} />);
+    const headings = Array.from(container.querySelectorAll('h3'));
+    expect(headings.length).toBeGreaterThan(0);
+    for (const h of headings) expect(h.className).toMatch(/sectionTitleCaps|sectionTitleSm/);
+    expect(screen.getByText('DevRel Engineer').className).toMatch(/entryRoleCaps/);
+    expect(screen.getByText('Rai').className).toMatch(/nameRestSolid/);
+  });
+
+  it('keeps small caps and opacity out of the stylesheet', () => {
+    const css = readFileSync(
+      join(process.cwd(), 'components/resume/styles/vivid.module.css'),
+      'utf8'
+    ).replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).not.toMatch(/small-caps|smcp|font-feature-settings|font-variant-caps/);
+    expect(css).not.toMatch(/opacity/);
   });
 });

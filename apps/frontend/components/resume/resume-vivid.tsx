@@ -124,7 +124,7 @@ export const VividHeader: React.FC<{
   personalInfo,
   showContactIcons,
   nameFallback = 'Your Name',
-  nameRestClassName = styles.nameRest,
+  nameRestClassName = styles.nameRestSolid,
 }) => {
   const fullName = personalInfo?.name || nameFallback;
   const firstSpace = fullName.indexOf(' ');
@@ -152,10 +152,10 @@ export const VividHeader: React.FC<{
   );
 };
 
-/** One experience entry. `roleClassName` lets a layout swap the role's small caps. */
+/** One experience entry. `roleClassName` lets a layout swap the role's style. */
 export const VividExperienceItem: React.FC<{ exp: Experience; roleClassName?: string }> = ({
   exp,
-  roleClassName = styles.entryRole,
+  roleClassName = styles.entryRoleCaps,
 }) => (
   <div className={baseStyles['resume-item']}>
     <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
@@ -176,10 +176,10 @@ export const VividExperienceItem: React.FC<{ exp: Experience; roleClassName?: st
   </div>
 );
 
-/** One project entry. `roleClassName` lets a layout swap the role's small caps. */
+/** One project entry. `roleClassName` lets a layout swap the role's style. */
 export const VividProjectItem: React.FC<{ project: Project; roleClassName?: string }> = ({
   project,
-  roleClassName = styles.entryRole,
+  roleClassName = styles.entryRoleCaps,
 }) => (
   <div className={baseStyles['resume-item']}>
     <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
@@ -246,7 +246,7 @@ export const VividProjectItem: React.FC<{ project: Project; roleClassName?: stri
  * Vivid Resume Template
  *
  * Colorful two-column layout in the "Awesome-CV" lineage: a two-tone accent name,
- * a monospace title + contact row with circular icon chips, accent small-caps section
+ * a monospace title + contact row with circular icon chips, accent uppercase section
  * headers, and accent arrow (➜) bullet markers. Reads the accent-color control
  * (default blue). ATS-safe (all text is real DOM nodes).
  *
@@ -297,7 +297,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
         <div className={styles.mainColumn}>
           {isSectionVisible('summary') && summary && (
             <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitle}>
+              <h3 className={styles.sectionTitleCaps}>
                 {getSectionDisplayName('summary', headingFallbacks.summary)}
               </h3>
               <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
@@ -306,7 +306,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 
           {isSectionVisible('workExperience') && workExperience && workExperience.length > 0 && (
             <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitle}>
+              <h3 className={styles.sectionTitleCaps}>
                 {getSectionDisplayName('workExperience', headingFallbacks.experience)}
               </h3>
               <div className={baseStyles['resume-items']}>
@@ -321,7 +321,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
             personalProjects &&
             personalProjects.length > 0 && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={styles.sectionTitle}>
+                <h3 className={styles.sectionTitleCaps}>
                   {getSectionDisplayName('personalProjects', headingFallbacks.projects)}
                 </h3>
                 <div className={baseStyles['resume-items']}>
@@ -334,7 +334,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 
           {isSectionVisible('additional') && certificationsTraining.length > 0 && (
             <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitle}>{headingFallbacks.certifications}</h3>
+              <h3 className={styles.sectionTitleCaps}>{headingFallbacks.certifications}</h3>
               {renderArrowBullets(certificationsTraining)}
             </div>
           )}
@@ -436,7 +436,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 
 /**
  * Dynamic (custom) section wrapper for the Vivid template.
- * Uses the accent small-caps section title and accent arrow bullets so custom
+ * Uses the accent uppercase section title and accent arrow bullets so custom
  * sections match the rest of the template (rather than the plain shared styling).
  */
 export const DynamicResumeSectionVivid: React.FC<{
@@ -447,8 +447,8 @@ export const DynamicResumeSectionVivid: React.FC<{
 }> = ({
   sectionMeta,
   resumeData,
-  titleClassName = styles.sectionTitle,
-  roleClassName = styles.entryRole,
+  titleClassName = styles.sectionTitleCaps,
+  roleClassName = styles.entryRoleCaps,
 }) => {
   const customSection = resumeData.customSections?.[sectionMeta.key];
   if (!customSection) return null;

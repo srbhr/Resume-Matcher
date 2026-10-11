@@ -5,8 +5,16 @@
   ID: vivid (vivid-single reuses these styles in one column)
 
   Colorful two-column "Awesome-CV" lineage: two-tone accent name, monospace title +
-  circular-icon contact row, accent small-caps section headers, accent arrow bullets.
+  circular-icon contact row, accent uppercase section headers, accent arrow bullets.
   Reads the accent-color control (--resume-accent-primary, default blue).
+
+  PDF text layer: no small caps and no opacity on text, in either layout. Chromium
+  draws small caps from the font's alternate glyphs, and on some fonts the PDF text
+  layer maps those to private-use codepoints, so an ATS reads "Snior Softwar Enginr".
+  Text at partial opacity is wrapped in a transparency group that an ATS's PDF text
+  extraction can skip (it reads "Sarah", never "Sarah Chen"). So headings and roles are
+  real capitals at a smaller size (`sectionTitleCaps`, `sectionTitleSm`, `entryRoleCaps`)
+  and the lighter surname is a solid tint (`nameRestSolid`).
 */
 
 .grid {
@@ -42,10 +50,13 @@
   color: var(--resume-accent-primary);
 }
 
-.nameRest {
+/*
+  The lighter surname as a solid tint, not `opacity: 0.6` (see the note at the top).
+  No print rule forces the full accent colour on it, unlike .nameFirst.
+*/
+.nameRestSolid {
   font-weight: 400;
-  color: var(--resume-accent-primary);
-  opacity: 0.6;
+  color: color-mix(in srgb, var(--resume-accent-primary) 60%, white);
 }
 
 /* Monospace title + contact row */
@@ -81,12 +92,11 @@
   flex-shrink: 0;
 }
 
-/* Accent small-caps section headers */
+/* Accent section headers. Used through .sectionTitleCaps below, which makes them capitals. */
 .sectionTitle {
   font-family: var(--header-font);
   font-size: calc(var(--font-size-base) * var(--section-header-scale) * 1.1);
   font-weight: 700;
-  font-variant: small-caps;
   letter-spacing: 0.03em;
   color: var(--resume-accent-primary);
   margin-bottom: var(--item-gap);
@@ -96,12 +106,13 @@
   widows: 3;
 }
 
+/* Sidebar section headers: capitals, sized down from the small caps they replace. */
 .sectionTitleSm {
   font-family: var(--header-font);
-  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.95);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.82);
   font-weight: 700;
-  font-variant: small-caps;
-  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--resume-accent-primary);
   margin-bottom: var(--item-gap);
   break-after: avoid;
@@ -125,7 +136,6 @@
 }
 
 .entryRole {
-  font-variant: small-caps;
   letter-spacing: 0.02em;
   color: var(--resume-text-tertiary);
 }
@@ -137,34 +147,16 @@
   color: var(--resume-text-tertiary);
 }
 
-/*
-  Single column (vivid-single): real capitals instead of small caps. Chromium draws
-  small caps from the font's alternate glyphs, and on some fonts the PDF text layer
-  maps those to private-use codepoints, so an ATS reads "Snior Softwar Enginr".
-  Uppercase text-transform reaches the text layer as plain capitals.
-*/
+/* Real capitals instead of small caps (see the note at the top). */
 .sectionTitleCaps {
   composes: sectionTitle;
-  font-variant: normal;
   text-transform: uppercase;
   font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.95);
   letter-spacing: 0.06em;
 }
 
-/*
-  The lighter surname as a solid tint, not `opacity: 0.6`: opacity makes Chromium wrap
-  the text in a transparency group, which the PDF text extraction of an ATS can skip
-  (it reads "Sarah", never "Sarah Chen"). Not composed from .nameRest, whose print rule
-  forces the full accent colour.
-*/
-.nameRestSolid {
-  font-weight: 400;
-  color: color-mix(in srgb, var(--resume-accent-primary) 60%, white);
-}
-
 .entryRoleCaps {
   composes: entryRole;
-  font-variant: normal;
   text-transform: uppercase;
   font-size: 0.85em;
   letter-spacing: 0.04em;
@@ -172,7 +164,6 @@
 
 @media print {
   .nameFirst,
-  .nameRest,
   .sectionTitle,
   .sectionTitleSm,
   .arrow {
