@@ -1249,3 +1249,179 @@ class TestGetLlmConfigApiBase:
         config = get_llm_config()
 
         assert config.api_base == "https://env-default.example/v1"
+
+
+# ---------------------------------------------------------------------------
+# Output-token parameter name (issue #1030)
+# ---------------------------------------------------------------------------
+
+MAX_TOKENS_REJECTION = (
+    "OpenAIException - Unsupported parameter: 'max_tokens' is not supported "
+    "with this model. Use 'max_completion_tokens' instead."
+)
+
+
+def _text_response(text: str = "pong") -> MagicMock:
+    choice = MagicMock()
+    choice.message.content = text
+    response = MagicMock()
+    response.choices = [choice]
+    return response
+
+
+def _bad_request(message: str, provider: str = "openai") -> Exception:
+    import litellm
+
+    return litellm.BadRequestError(message, model="some-model", llm_provider=provider)
+
+
+class TestOutputTokenParameter:
+    """LiteLLM only remaps ``max_tokens`` -> ``max_completion_tokens`` for model
+    names it recognises, so an unknown or new OpenAI model got the raw
+    ``max_tokens`` and OpenAI rejected it (issue #1030). The native OpenAI
+    provider now always sends ``max_completion_tokens``.
+    """
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "model", ["gpt-4o", "gpt-6.1-sol", "o5-mini", "gpt-5-chat-latest"]
+    )
+    async def test_health_check_openai_sends_max_completion_tokens(self, model):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(provider="openai", model=model, api_key="sk-test")
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 64
+        assert "max_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("provider", "model", "api_base"),
+        [
+            ("anthropic", "claude-sonnet-4-5", None),
+            ("gemini", "gemini-2.5-flash", None),
+            ("deepseek", "deepseek-chat", None),
+            ("openrouter", "openai/gpt-5", None),
+            ("openai_compatible", "local-model", "http://localhost:8080/v1"),
+            # A custom endpoint behind the openai provider (llama.cpp, vLLM,
+            # an older compatible server) keeps the portable max_tokens.
+            ("openai", "local-model", "http://localhost:8080/v1"),
+        ],
+    )
+    async def test_health_check_other_providers_keep_max_tokens(
+        self, provider, model, api_base
+    ):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider=provider, model=model, api_key="key", api_base=api_base
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            await check_llm_health(config)
+
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_tokens"] == 64
+        assert "max_completion_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    async def test_health_check_openai_with_explicit_openai_base(self):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="openai",
+            model="o5-mini",
+            api_key="sk-test",
+            api_base="https://api.openai.com/v1",
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            await check_llm_health(config)
+
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 64
+        assert "max_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_keeps_the_clamped_value_under_the_new_key(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(provider="openai", model="o5-mini", api_key="sk-test")
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        with patch("app.llm._calculate_timeout", return_value=90) as calc_timeout:
+            await complete(prompt="Hi", max_tokens=2048)
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 2048
+        assert "max_tokens" not in kwargs
+        # The timeout scaling still sees the plain token budget.
+        calc_timeout.assert_called_once_with("completion", 2048, "openai")
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_complete_json_openai_sends_max_completion_tokens(
+        self, mock_get_router, _mock_supports_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(provider="openai", model="o5-mini", api_key="sk-test")
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response('{"ok": true}'))
+        mock_get_router.return_value = (router, config)
+
+        result = await complete_json(
+            prompt="Extract", max_tokens=3000, schema_type="keywords"
+        )
+
+        assert result == {"ok": True}
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["max_completion_tokens"] == 3000
+        assert "max_tokens" not in kwargs
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("provider", ["anthropic", "gemini"])
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_other_providers_keep_max_tokens(
+        self, mock_get_router, _mock_supports_temp, provider
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(provider=provider, model="some-model", api_key="key")
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        await complete(prompt="Hi", max_tokens=2048)
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["max_tokens"] == 2048
+        assert "max_completion_tokens" not in kwargs
+
+    def test_litellm_passes_max_completion_tokens_through_for_openai(self):
+        """Pin the LiteLLM behaviour the fix relies on: known and unknown models
+        alike keep ``max_completion_tokens`` for the openai provider."""
+        from litellm.utils import get_optional_params
+
+        for model in ("gpt-4o", "gpt-4.1", "gpt-5", "o5-mini", "gpt-5-chat-latest"):
+            params = get_optional_params(
+                model=model, custom_llm_provider="openai", max_completion_tokens=64
+            )
+            assert params["max_completion_tokens"] == 64, model
+            assert "max_tokens" not in params, model

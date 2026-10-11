@@ -305,6 +305,39 @@ def _openai_compatible_supports_json_mode(config: LLMConfig) -> bool:
     return _uses_opencode_zen_hy3(config) or host in JSON_MODE_VERIFIED_HOSTS
 
 
+OPENAI_API_HOST = "api.openai.com"
+
+
+def _is_native_openai(config: LLMConfig) -> bool:
+    """Return True when ``config`` targets OpenAI itself.
+
+    The ``openai`` provider is also how users point at llama.cpp, vLLM and other
+    compatible servers via ``api_base`` (issue #751), so the provider name alone
+    does not mean the request reaches OpenAI.
+    """
+    if config.provider != "openai":
+        return False
+    api_base = config.api_base if isinstance(config.api_base, str) else ""
+    if not api_base.strip():
+        return True
+    return (urlsplit(api_base.strip()).hostname or "").lower() == OPENAI_API_HOST
+
+
+def _output_token_kwarg(config: LLMConfig, max_tokens: int) -> dict[str, int]:
+    """Build the kwarg that caps output tokens for ``config``'s provider.
+
+    OpenAI's chat models take ``max_completion_tokens`` (reasoning-era models
+    reject ``max_tokens``; gpt-4o and gpt-4.1 accept either). LiteLLM only remaps
+    ``max_tokens`` to it for model names it recognises, so an unknown or new
+    OpenAI model received the raw ``max_tokens`` and failed with "Unsupported
+    parameter: 'max_tokens'" (issue #1030). Deciding by provider avoids keeping a
+    list of model names. Every other provider keeps the portable ``max_tokens``.
+    """
+    if _is_native_openai(config):
+        return {"max_completion_tokens": max_tokens}
+    return {"max_tokens": max_tokens}
+
+
 async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -> Any:
     """Route a completion to the local Claude Code CLI or to LiteLLM.
 
@@ -907,7 +940,7 @@ async def check_llm_health(
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 64,
+            **_output_token_kwarg(config, 64),
             "api_key": _effective_api_key(config.provider, config.api_key),
             "api_base": _normalize_api_base(
                 config.provider, config.api_base, config.model
@@ -1027,7 +1060,7 @@ async def complete(
         kwargs: dict[str, Any] = {
             "model": "primary",
             "messages": messages,
-            "max_tokens": max_tokens,
+            **_output_token_kwarg(config, max_tokens),
             "timeout": remaining_timeout(
                 _calculate_timeout("completion", max_tokens, config.provider)
             ),
@@ -1583,7 +1616,7 @@ async def complete_json(
             kwargs: dict[str, Any] = {
                 "model": "primary",
                 "messages": messages,
-                "max_tokens": max_tokens,
+                **_output_token_kwarg(config, max_tokens),
                 "timeout": remaining_timeout(
                     _calculate_timeout("json", max_tokens, config.provider)
                 ),
