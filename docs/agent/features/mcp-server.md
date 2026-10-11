@@ -4,7 +4,7 @@
 
 ## Overview
 
-`app/mcp_server/` exposes Resume Matcher as MCP tools over **stdio**. No LLM key is needed and no tool calls an LLM. The agent writes resume content, and the tools store it, run the same preservation checks as `/improve/confirm`, score it and render PDFs. The server shares `data/resume_matcher.db` with the web app (SQLite WAL), so anything the agent saves shows up in the UI.
+`app/mcp_server/` exposes Resume Matcher as MCP tools over **stdio**. No LLM key is needed and no tool calls an LLM. The agent writes resume content, and the tools store it, run the same preservation checks as `/improve/confirm`, score it and render PDFs. The server uses the same database as the web app, so anything the agent saves shows up in the UI. By default that is `data/resume_matcher.db` (SQLite WAL). When `DATABASE_URL` is set, both use that PostgreSQL database instead (see [postgres-backend.md](postgres-backend.md)); `DATA_DIR` then does not select the database.
 
 No tool deletes data or touches `/config`.
 
@@ -15,7 +15,7 @@ cd apps/backend && uv sync
 claude mcp add resume-matcher -- uv run --directory /abs/path/to/apps/backend resume-matcher-mcp
 ```
 
-Any client works the same way: run the command `uv` with args `run --directory <apps/backend> resume-matcher-mcp`. `python -m app.mcp_server` is equivalent. `--directory` makes `.env` and `data/` resolve exactly as they do for the web app. Set `DATA_DIR` to point at a different data folder.
+Any client works the same way: run the command `uv` with args `run --directory <apps/backend> resume-matcher-mcp`. `python -m app.mcp_server` is equivalent. `--directory` makes `.env` and `data/` resolve exactly as they do for the web app. Set `DATA_DIR` to point at a different data folder (this moves the SQLite file only; PostgreSQL is chosen by `DATABASE_URL`).
 
 `export_resume_pdf`, `verify_resume`, `tailor_and_verify` and `parse_check_resume` need the frontend running (`FRONTEND_BASE_URL`, default `http://localhost:3000`) and able to reach a backend on the same data dir. All other tools work without either server running. `verify_resume` and `tailor_and_verify` still return the keyword score when rendering fails.
 
