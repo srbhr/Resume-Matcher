@@ -13,7 +13,14 @@ from pydantic import ValidationError
 
 from app.services.ats_parse import build_report, parse_check_bytes
 from app.services.ats_parse.checks import find_sections, has_columns, run_checks, score
-from app.services.ats_parse.extract import ExtractedDocument, PageLayout, TextBox
+from app.services.ats_parse.extract import (
+    MAX_COUNTED_PAGES,
+    MAX_PARSE_CHECK_PAGES,
+    ExtractedDocument,
+    PageLayout,
+    TextBox,
+    extract_pdf,
+)
 from app.services.ats_parse.headings import HEADINGS
 from app.services.ats_parse.models import Check
 from app.services.ats_parse.normalize import normalize, rejoin_letter_spacing, tokens
@@ -230,6 +237,13 @@ async def test_pdf_without_text_is_not_extractable() -> None:
     report = await parse_check_bytes(_pdf(1), "scan.pdf")
     assert report.extractability == "none"
     assert _status(report.checks, "text_layer") == "fail"
+
+
+def test_pdf_page_count_stops_at_the_budget() -> None:
+    doc = extract_pdf(_pdf(MAX_COUNTED_PAGES + 50))
+    assert doc.page_count == MAX_COUNTED_PAGES
+    assert doc.truncated
+    assert len(doc.pages) == MAX_PARSE_CHECK_PAGES
 
 
 async def test_pdf_text_inside_form_xobjects_is_extracted() -> None:

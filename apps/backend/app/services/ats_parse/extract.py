@@ -21,6 +21,9 @@ from app.services.parser import (
 )
 
 MAX_PARSE_CHECK_PAGES = 10
+# Page counting stops here, so a huge page tree costs a bounded walk; larger
+# documents report this many pages and are marked truncated.
+MAX_COUNTED_PAGES = 100
 SUPPORTED_SUFFIXES = (".pdf", ".docx")
 
 # pdfminer warns per glyph on Chromium fonts ("Could not get FontBBox").
@@ -91,7 +94,9 @@ def extract_pdf(content: bytes) -> ExtractedDocument:
     ``all_texts`` lays out text drawn inside form XObjects too; without it that
     text stays as loose characters and never reaches the report.
     """
-    page_count = len(list(PDFPage.get_pages(io.BytesIO(content))))
+    page_count = sum(
+        1 for _ in PDFPage.get_pages(io.BytesIO(content), maxpages=MAX_COUNTED_PAGES)
+    )
     pages: list[PageLayout] = []
     for page in extract_pages(
         io.BytesIO(content),
