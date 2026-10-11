@@ -29,6 +29,28 @@ describe('Hero entrance', () => {
     expect(docs).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('adds a quiet row of community links under the buttons, with Launch App still the only primary', () => {
+    render(<Hero />);
+    const launch = screen.getByRole('link', { name: 'home.launchApp' });
+    const follow = screen.getByRole('link', { name: 'community.follow' });
+    expect(follow).toHaveAttribute('href', 'https://github.com/srbhr');
+    expect(screen.getByRole('link', { name: 'community.sponsor' })).toHaveAttribute(
+      'href',
+      'https://github.com/sponsors/srbhr'
+    );
+    expect(screen.getByRole('link', { name: 'community.discord' })).toHaveAttribute(
+      'href',
+      'https://dsc.gg/resume-matcher'
+    );
+    // The row follows the button row, and its links are quiet text (steel, not a button fill).
+    expect(launch.parentElement!.compareDocumentPosition(follow)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+    expect(follow).toHaveClass('text-steel');
+    expect(launch).toHaveClass('bg-primary');
+    expect(follow).not.toHaveClass('bg-primary');
+  });
+
   it('sits on plain Canvas, ready for the background effect behind its frame', () => {
     const { container } = render(<Hero />);
     expect(container.firstChild).toHaveClass('relative', 'isolate', 'bg-canvas');

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { CommunityLinks } from '@/components/common/community-links';
 import { BackgroundEffect } from '@/components/effects/background-effect';
 import { buttonClass } from '@/components/ui/button';
 import { useBlockDissolveNavigate } from '@/lib/effects/use-block-dissolve-navigate';
@@ -48,6 +49,11 @@ export default function Hero() {
             {t('home.launchApp')}
           </Link>
         </div>
+
+        <CommunityLinks
+          variant="hero"
+          className="hero-enter hero-enter-delay-2 mt-8 justify-center"
+        />
       </div>
     </section>
   );
