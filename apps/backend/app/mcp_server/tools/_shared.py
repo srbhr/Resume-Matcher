@@ -53,6 +53,7 @@ AUTHORING_RULES = [
     "Rewrite, reorder and trim bullet text freely; keep descriptionStyles the same length as description.",
     "Inline HTML in descriptions is limited to <strong>, <em>, <u> and <a>.",
     "Keep existing ids and sectionMeta from the source; omit sectionMeta on new resumes to get defaults.",
+    "Keep each work entry's condensed flag as in the source; it only controls how the entry is laid out.",
 ]
 
 

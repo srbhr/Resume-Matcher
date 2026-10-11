@@ -6,10 +6,13 @@ import type { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeClean } from '@/components/resume/resume-clean';
 import { ResumeLatex } from '@/components/resume/resume-latex';
 import { ResumeModern } from '@/components/resume/resume-modern';
+import { ResumeModernDeedy } from '@/components/resume/resume-modern-deedy';
 import { ResumeModernTwoColumn } from '@/components/resume/resume-modern-two-column';
 import { ResumeSingleColumn } from '@/components/resume/resume-single-column';
 import { ResumeTwoColumn } from '@/components/resume/resume-two-column';
 import { ResumeVivid } from '@/components/resume/resume-vivid';
+import { ResumeVividSingle } from '@/components/resume/resume-vivid-single';
+import { ResumeDeedy } from '@/components/resume/resume-deedy';
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (k: string) => k }) }));
 
@@ -44,10 +47,13 @@ const TEMPLATES: [string, React.ComponentType<{ data: ResumeData }>][] = [
   ['ResumeClean', ResumeClean],
   ['ResumeLatex', ResumeLatex],
   ['ResumeModern', ResumeModern],
+  ['ResumeModernDeedy', ResumeModernDeedy],
   ['ResumeModernTwoColumn', ResumeModernTwoColumn],
   ['ResumeSingleColumn', ResumeSingleColumn],
   ['ResumeTwoColumn', ResumeTwoColumn],
   ['ResumeVivid', ResumeVivid],
+  ['ResumeVividSingle', ResumeVividSingle],
+  ['ResumeDeedy', ResumeDeedy],
 ];
 
 const rowFor = (container: HTMLElement, text: string): HTMLElement => {

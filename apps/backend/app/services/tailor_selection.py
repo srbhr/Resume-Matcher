@@ -16,7 +16,7 @@ from app.services.bullet_selector import (
     fit_to_page_limit,
     select_bullets,
 )
-from app.services.page_fit import measure_page_count
+from app.services.page_fit import measure_page_count, page_limit
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +64,7 @@ async def run_bullet_selection(
     status: PageFitStatus = "skipped"
     trimmed = 0
     pages: int | None = None
+    limit = page_limit(page_fit, max_pages)
     if page_fit is not None:
         fit_deadline = _page_fit_deadline()
 
@@ -73,7 +74,7 @@ async def run_bullet_selection(
             )
 
         fit = await fit_to_page_limit(
-            selection.data, selection.scores, measure, max_pages=max_pages
+            selection.data, selection.scores, measure, max_pages=limit
         )
         data, status, trimmed, pages = fit.data, fit.status, fit.trimmed, fit.pages
         if status == "over":
@@ -82,7 +83,7 @@ async def run_bullet_selection(
             warnings.append(PAGE_FIT_UNAVAILABLE_WARNING)
     summary = BulletSelectionSummary(
         max_per_entry=max_per_entry,
-        max_pages=max_pages if page_fit is not None else None,
+        max_pages=limit if page_fit is not None else None,
         bullets_before=selection.bullets_before,
         bullets_after=count_bullets(data),
         trimmed_for_fit=trimmed,

@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "Adicionar Emprego",
         "addFirstJob": "Adicionar Primeiro Emprego",
+        "condense": {
+          "label": "Condensar (cargo anterior)",
+          "description": "Exibido em uma linha em Experiência anterior. Os tópicos ficam ocultos."
+        },
         "fields": {
           "jobTitle": "Cargo",
           "company": "Empresa"
@@ -451,6 +455,18 @@
         "vivid": {
           "name": "Vívido",
           "description": "Layout de duas colunas colorido com cabeçalhos de destaque e marcadores em seta"
+        },
+        "vividSingle": {
+          "name": "Vívido Coluna Única",
+          "description": "Layout de coluna única colorido com cabeçalhos de destaque e marcadores em seta"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Layout denso de uma página em Lato com títulos de seção em maiúsculas cinza-claro"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Layout de duas colunas com nome em traço fino, coluna esquerda estreita e títulos em cinza-claro"
         }
       },
       "accentColors": {
@@ -1099,6 +1115,7 @@
       "personalInfo": "Informações Pessoais",
       "summary": "Resumo",
       "experience": "Experiência",
+      "earlierExperience": "Experiência anterior",
       "education": "Formação",
       "projects": "Projetos",
       "skills": "Habilidades e Prêmios",

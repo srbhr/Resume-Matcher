@@ -21,6 +21,7 @@ TEMPLATE_STYLES = (
     "vivid.module.css",
     "swiss-two-column.module.css",
     "modern-two-column.module.css",
+    "deedy.module.css",
 )
 PAGE_WIDTH_MM = {"A4": 210.0, "Letter": 215.9}
 

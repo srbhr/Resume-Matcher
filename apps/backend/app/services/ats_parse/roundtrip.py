@@ -20,6 +20,8 @@ CONTACT_ORDER_BY_TEMPLATE: dict[str, tuple[str, ...]] = {
     "clean": ("location", "phone", "email", "linkedin", "github", "website"),
     "latex": ("location", "phone", "email", "linkedin", "github", "website"),
     "vivid": ("website", "linkedin", "github", "email", "phone", "location"),
+    "vivid-single": ("website", "linkedin", "github", "email", "phone", "location"),
+    "deedy": ("website", "linkedin", "github", "email", "phone", "location"),
 }
 LINK_FIELDS = frozenset({"website", "linkedin", "github"})
 
@@ -31,6 +33,8 @@ ENTRY_ORDER: dict[str, tuple[str, ...]] = {
     "education": ("institution", "degree", "years"),
     "personalProjects": ("name", "role", "years"),
 }
+# A condensed entry is one line, "Title, Company, years", in every template.
+CONDENSED_ORDER = ("title", "company", "years")
 _TWO_COLUMN_ENTRY_ORDER = {
     "workExperience": ("title", "company", "location", "years"),
     "education": ("institution", "years", "degree"),
@@ -41,6 +45,12 @@ ENTRY_ORDER_BY_TEMPLATE: dict[str, dict[str, tuple[str, ...]]] = {
     "clean": {"workExperience": ("company", "title", "location", "years")},
     "latex": {"workExperience": ("company", "title", "years", "location")},
     "vivid": {"workExperience": ("company", "title", "years", "location")},
+    "vivid-single": {"workExperience": ("company", "title", "years", "location")},
+    "modern-deedy": {
+        "workExperience": ("company", "title", "location", "years"),
+        "education": ("degree", "institution", "years"),
+    },
+    "deedy": {"workExperience": ("company", "title", "years", "location")},
 }
 
 
@@ -83,6 +93,11 @@ def _entry_fields(
     return out
 
 
+def _condensed_fields(prefix: str, entry: dict[str, Any]) -> list[Field]:
+    """Title, company and years only: the description and location are not shown."""
+    return [(f"{prefix}.{k}", _join(entry.get(k))) for k in CONDENSED_ORDER]
+
+
 def _section_fields(
     key: str, data: dict[str, Any], template: str | None
 ) -> list[Field]:
@@ -92,10 +107,18 @@ def _section_fields(
         order = ENTRY_ORDER_BY_TEMPLATE.get(template or "", {}).get(
             key, ENTRY_ORDER[key]
         )
+        entries = list(enumerate(data.get(key) or []))
+        if key == "workExperience":
+            # Condensed entries follow the full ones, under "Earlier experience".
+            entries.sort(key=lambda pair: bool(pair[1].get("condensed")))
         return [
             f
-            for i, e in enumerate(data.get(key) or [])
-            for f in _entry_fields(f"{key}[{i}]", e, order)
+            for i, e in entries
+            for f in (
+                _condensed_fields(f"{key}[{i}]", e)
+                if key == "workExperience" and e.get("condensed")
+                else _entry_fields(f"{key}[{i}]", e, order)
+            )
         ]
     if key == "additional":
         additional = data.get("additional") or {}

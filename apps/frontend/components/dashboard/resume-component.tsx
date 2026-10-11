@@ -7,6 +7,9 @@ import {
   ResumeLatex,
   ResumeClean,
   ResumeVivid,
+  ResumeVividSingle,
+  ResumeModernDeedy,
+  ResumeDeedy,
 } from '@/components/resume';
 import {
   type TemplateSettings,
@@ -28,6 +31,7 @@ export interface PersonalInfo {
 }
 
 export interface Experience {
+  condensed?: boolean;
   id: number;
   title?: string;
   company?: string;
@@ -80,6 +84,7 @@ export interface ResumeSectionHeadings {
   languages: string;
   awards: string;
   links: string;
+  earlierExperience?: string;
 }
 
 export interface ResumeFallbackLabels {
@@ -190,6 +195,7 @@ const Resume: React.FC<ResumeProps> = ({
     >
       {mergedSettings.template === 'swiss-single' && (
         <ResumeSingleColumn
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
@@ -197,6 +203,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'swiss-two-column' && (
         <ResumeTwoColumn
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
@@ -204,6 +211,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'modern' && (
         <ResumeModern
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
@@ -211,6 +219,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'modern-two-column' && (
         <ResumeModernTwoColumn
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
@@ -219,6 +228,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'latex' && (
         <ResumeLatex
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
@@ -226,6 +236,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'clean' && (
         <ResumeClean
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
@@ -233,9 +244,36 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'vivid' && (
         <ResumeVivid
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
+          fallbackLabels={fallbackLabels}
+        />
+      )}
+      {mergedSettings.template === 'vivid-single' && (
+        <ResumeVividSingle
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          sectionHeadings={sectionHeadings}
+          fallbackLabels={fallbackLabels}
+        />
+      )}
+      {mergedSettings.template === 'modern-deedy' && (
+        <ResumeModernDeedy
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
+        />
+      )}
+      {mergedSettings.template === 'deedy' && (
+        <ResumeDeedy
+          earlierExperienceLabel={sectionHeadings?.earlierExperience}
+          data={resumeData}
+          sectionHeadings={sectionHeadings}
+          additionalSectionLabels={additionalSectionLabels}
           fallbackLabels={fallbackLabels}
         />
       )}

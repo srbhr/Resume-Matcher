@@ -354,6 +354,10 @@
       "experience": {
         "addJob": "경력 추가",
         "addFirstJob": "첫 경력 추가",
+        "condense": {
+          "label": "간략히 표시 (이전 경력)",
+          "description": "‘이전 경력’ 아래에 한 줄로 표시합니다. 글머리 항목은 숨겨집니다."
+        },
         "fields": {
           "jobTitle": "직함",
           "company": "회사"
@@ -431,6 +435,18 @@
         "vivid": {
           "name": "비비드",
           "description": "강조 헤더와 화살표 불릿이 있는 화려한 2단 레이아웃"
+        },
+        "vividSingle": {
+          "name": "비비드 단일 열",
+          "description": "강조 헤더와 화살표 불릿이 있는 화려한 단일 열 레이아웃"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Lato 글꼴의 1페이지 고밀도 레이아웃, 연한 회색 대문자 섹션 제목"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "가는 글씨의 이름, 좁은 왼쪽 열, 연한 회색 제목이 있는 2단 레이아웃"
         }
       },
       "accentColor": "강조 색상",
@@ -1099,6 +1115,7 @@
       "personalInfo": "개인 정보",
       "summary": "요약",
       "experience": "경력",
+      "earlierExperience": "이전 경력",
       "education": "학력",
       "projects": "프로젝트",
       "skills": "기술 및 수상 내역",

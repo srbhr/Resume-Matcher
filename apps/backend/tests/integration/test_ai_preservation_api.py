@@ -168,6 +168,70 @@ async def test_partial_final_writer_preview_confirms_and_reads_back_without_loss
         assert stored["processed_data"][section] == source[section]
 
 
+async def test_final_writer_cannot_change_which_roles_are_condensed(
+    isolated_db: Any, sample_resume: dict[str, Any]
+) -> None:
+    source = copy.deepcopy(sample_resume)
+    source["workExperience"][1]["condensed"] = True
+    source = ResumeData.model_validate(source).model_dump()
+    resume_id, job_id = await _seed(isolated_db, source)
+    # The writer drops the flag from one role and sets it on the other.
+    writer_result = copy.deepcopy(source)
+    del writer_result["workExperience"][1]["condensed"]
+    writer_result["workExperience"][0]["condensed"] = True
+    writer_result["summary"] = "Python backend engineer for reliable systems."
+
+    with ExitStack() as stack:
+        for pipeline_patch in _pipeline_patches(
+            copy.deepcopy(source), _refinement_result(writer_result)
+        ):
+            stack.enter_context(pipeline_patch)
+        async with _client() as client:
+            preview = await client.post(
+                "/api/v1/resumes/improve/preview",
+                json={"resume_id": resume_id, "job_id": job_id},
+            )
+        assert preview.status_code == 200, preview.text
+        preview_data = preview.json()["data"]
+        preview_resume = preview_data["resume_preview"]
+        assert [e["condensed"] for e in preview_resume["workExperience"]] == [
+            False,
+            True,
+        ]
+
+        flipped = copy.deepcopy(preview_resume)
+        flipped["workExperience"][1]["condensed"] = False
+        async with _client() as client:
+            rejected = await client.post(
+                "/api/v1/resumes/improve/confirm",
+                json={
+                    "resume_id": resume_id,
+                    "job_id": job_id,
+                    "improved_data": flipped,
+                    "improvements": preview_data["improvements"],
+                },
+            )
+        assert rejected.status_code == 400
+
+        async with _client() as client:
+            confirm = await client.post(
+                "/api/v1/resumes/improve/confirm",
+                json={
+                    "resume_id": resume_id,
+                    "job_id": job_id,
+                    "improved_data": preview_resume,
+                    "improvements": preview_data["improvements"],
+                },
+            )
+        assert confirm.status_code == 200, confirm.text
+
+    stored = await isolated_db.get_resume(confirm.json()["data"]["resume_id"])
+    assert [e["condensed"] for e in stored["processed_data"]["workExperience"]] == [
+        False,
+        True,
+    ]
+
+
 async def test_schema_round_trip_preview_preserves_rows_styles_and_list_multiplicity(
     isolated_db: Any, sample_resume: dict[str, Any]
 ) -> None:

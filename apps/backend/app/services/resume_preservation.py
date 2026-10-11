@@ -19,11 +19,13 @@ _ENTRY_FIELDS: dict[str, tuple[str, ...]] = {
     "customItems": ("title", "subtitle"),
 }
 _PROTECTED_FIELDS: dict[str, tuple[str, ...]] = {
-    "workExperience": ("id", "title", "company", "location", "years"),
+    "workExperience": ("id", "title", "company", "location", "years", "condensed"),
     "education": ("id", "institution", "degree", "years"),
     "personalProjects": ("id", "name", "role", "years", "github", "website"),
     "customItems": ("id", "title", "subtitle", "location", "years"),
 }
+# Yes/no entry flags: a missing key reads as false, so legacy data compares equal.
+_FLAG_FIELDS = frozenset({"condensed"})
 _TOKEN_RE = re.compile(r"[\w+#./-]+", re.UNICODE)
 _NUMBER_RE = re.compile(
     r"(?<![\w.])(?P<currency>[$€£])?(?P<number>\d[\d,]*(?:\.\d+)?)"
@@ -575,6 +577,16 @@ def _entry_map(
     return result
 
 
+def _protected_field_changed(
+    field: str, source_entry: dict[str, Any], candidate_entry: dict[str, Any]
+) -> bool:
+    if field in _FLAG_FIELDS:
+        return bool(source_entry.get(field)) != bool(candidate_entry.get(field))
+    return field in source_entry and source_entry.get(field) != candidate_entry.get(
+        field
+    )
+
+
 def _entry_bucket_violation(
     source_entries: list[dict[str, Any]],
     candidate_entries: list[dict[str, Any]],
@@ -593,8 +605,7 @@ def _entry_bucket_violation(
         available.remove(source_index)
         source_entry = source_entries[source_index]
         if any(
-            field in source_entry
-            and source_entry.get(field) != candidate_entry.get(field)
+            _protected_field_changed(field, source_entry, candidate_entry)
             for field in _PROTECTED_FIELDS[section]
         ):
             return "identity"

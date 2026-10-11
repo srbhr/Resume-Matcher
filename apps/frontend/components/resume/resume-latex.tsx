@@ -8,10 +8,13 @@ import type {
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
+import { EarlierExperience, splitCondensed } from './earlier-experience';
+import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/latex.module.css';
 
 interface ResumeLatexProps {
+  earlierExperienceLabel?: string;
   data: ResumeData;
   showContactIcons?: boolean;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
@@ -33,6 +36,7 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
   data,
   showContactIcons = false,
   additionalSectionLabels,
+  earlierExperienceLabel,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
@@ -131,8 +135,10 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
       case 'summary':
         if (!summary) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles.sectionTitle}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitle}>
+              {section.displayName}
+            </h3>
             <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
           </div>
         );
@@ -140,15 +146,27 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
       case 'workExperience':
         if (!workExperience || workExperience.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles.sectionTitle}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitle}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
-              {workExperience.map((exp) => (
-                <div key={exp.id} className={baseStyles['resume-item']}>
+              {splitCondensed(workExperience).full.map((exp) => (
+                <div
+                  key={exp.id}
+                  {...resumeItem(exp.description)}
+                  className={baseStyles['resume-item']}
+                >
                   {renderEntryHeader(exp.company, exp.years, exp.title, exp.location)}
                   {renderBullets(exp.description, exp.descriptionStyles)}
                 </div>
               ))}
+              {splitCondensed(workExperience).condensed.length > 0 && (
+                <EarlierExperience
+                  items={splitCondensed(workExperience).condensed}
+                  label={earlierExperienceLabel}
+                />
+              )}
             </div>
           </div>
         );
@@ -156,11 +174,17 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
       case 'personalProjects':
         if (!personalProjects || personalProjects.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles.sectionTitle}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitle}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {personalProjects.map((project) => (
-                <div key={project.id} className={baseStyles['resume-item']}>
+                <div
+                  key={project.id}
+                  {...resumeItem(project.description)}
+                  className={baseStyles['resume-item']}
+                >
                   <div
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
@@ -228,11 +252,13 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
       case 'education':
         if (!education || education.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles.sectionTitle}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitle}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {education.map((edu) => (
-                <div key={edu.id} className={baseStyles['resume-item']}>
+                <div key={edu.id} {...resumeItem()} className={baseStyles['resume-item']}>
                   {renderEntryHeader(edu.institution, edu.years, edu.degree)}
                   {edu.description && (
                     <p className={baseStyles['resume-text-sm']}>{edu.description}</p>
@@ -338,14 +364,16 @@ const AdditionalSection: React.FC<{
 
   const line = (label: string, items: string[]) =>
     items.length > 0 ? (
-      <div>
+      <div {...resumeItem()}>
         <span className="font-bold">{label}</span> {items.join(', ')}
       </div>
     ) : null;
 
   return (
-    <div className={baseStyles['resume-section']}>
-      <h3 className={styles.sectionTitle}>{displayName}</h3>
+    <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+      <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitle}>
+        {displayName}
+      </h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {line(mergedLabels.technicalSkills, technicalSkills)}
         {line(mergedLabels.languages, languages)}
@@ -383,15 +411,21 @@ const DynamicResumeSectionLatex: React.FC<{
   if (!hasContent) return null;
 
   return (
-    <div className={baseStyles['resume-section']}>
-      <h3 className={styles.sectionTitle}>{sectionMeta.displayName}</h3>
+    <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+      <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitle}>
+        {sectionMeta.displayName}
+      </h3>
       {sectionMeta.sectionType === 'text' && customSection.text?.trim() && (
         <p className={`text-justify ${baseStyles['resume-text']}`}>{customSection.text}</p>
       )}
       {sectionMeta.sectionType === 'itemList' && customSection.items?.length ? (
         <div className={baseStyles['resume-items']}>
           {customSection.items.map((item) => (
-            <div key={item.id} className={baseStyles['resume-item']}>
+            <div
+              key={item.id}
+              {...resumeItem(item.description)}
+              className={baseStyles['resume-item']}
+            >
               <div
                 className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
               >

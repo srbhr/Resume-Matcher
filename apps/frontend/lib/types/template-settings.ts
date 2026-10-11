@@ -12,12 +12,16 @@ export type TemplateType =
   | 'modern-two-column'
   | 'latex'
   | 'clean'
-  | 'vivid';
+  | 'vivid'
+  | 'vivid-single'
+  | 'modern-deedy'
+  | 'deedy';
 
 const TWO_COLUMN_TEMPLATES: ReadonlySet<TemplateType> = new Set([
   'swiss-two-column',
   'modern-two-column',
   'vivid',
+  'deedy',
 ]);
 
 /** Two-column layouts can be read out of order by ATS parsers. */
@@ -218,6 +222,13 @@ export function settingsToCssVars(
   // Get accent colors for Modern template
   const accentColors = ACCENT_COLOR_MAP[s.accentColor];
 
+  // Modern Deedy's signature face is Lato: its "sans-serif" choice resolves to the
+  // self-hosted --font-lato (app/layout.tsx), with the regular sans stack as fallback.
+  const withTemplateFace = (map: Record<HeaderFontFamily, string>) =>
+    s.template === 'modern-deedy'
+      ? { ...map, 'sans-serif': `var(--font-lato), ${map['sans-serif']}` }
+      : map;
+
   return {
     '--section-gap': s.compactMode
       ? `calc(${SECTION_SPACING_MAP[s.spacing.section]} * ${compact})`
@@ -232,8 +243,8 @@ export function settingsToCssVars(
     '--font-size-base': FONT_SIZE_MAP[s.fontSize.base],
     '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
-    '--header-font': buildHeaderFontMap(locale)[s.fontSize.headerFont],
-    '--body-font': buildBodyFontMap(locale)[s.fontSize.bodyFont],
+    '--header-font': withTemplateFace(buildHeaderFontMap(locale))[s.fontSize.headerFont],
+    '--body-font': withTemplateFace(buildBodyFontMap(locale))[s.fontSize.bodyFont],
     '--margin-top': `${marginTop}mm`,
     '--margin-bottom': `${marginBottom}mm`,
     '--margin-left': `${marginLeft}mm`,
@@ -289,6 +300,22 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     name: 'Vivid',
     description: 'Colorful two-column layout with accent headers and arrow bullets',
   },
+  {
+    id: 'vivid-single',
+    name: 'Vivid Single Column',
+    description: 'Colorful single-column layout with accent headers and arrow bullets',
+  },
+  {
+    id: 'modern-deedy',
+    name: 'Modern Deedy',
+    description: 'Dense one-page layout in Lato with light grey uppercase section headings',
+  },
+  {
+    id: 'deedy',
+    name: 'Deedy',
+    description:
+      'Two-column layout with a hairline name, a narrow left column and light gray headings',
+  },
 ];
 
 /**
@@ -304,6 +331,7 @@ export const TEMPLATE_FONT_PRESETS: Partial<
 > = {
   latex: { headerFont: 'serif', bodyFont: 'serif' },
   clean: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
+  'modern-deedy': { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
 };
 
 /**

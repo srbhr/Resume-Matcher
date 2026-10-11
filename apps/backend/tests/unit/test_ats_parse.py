@@ -23,7 +23,7 @@ from app.services.ats_parse.extract import (
     TextBox,
     extract_pdf,
 )
-from app.services.ats_parse.headings import HEADINGS
+from app.services.ats_parse.headings import ACADEMIC_SECTIONS, HEADINGS
 from app.services.ats_parse.models import Check
 from app.services.ats_parse.normalize import normalize, rejoin_letter_spacing, tokens
 from app.services.ats_parse.roundtrip import (
@@ -167,6 +167,89 @@ def test_columns_need_a_gutter_over_a_large_span() -> None:
     assert not has_columns(dates_beside_titles)
 
 
+def test_right_aligned_dates_in_a_run_of_entries_are_not_a_column() -> None:
+    # Entries without body text leave no full-width line to cross the gutter, so the
+    # dates form a band of their own. They all end at one edge and are narrow.
+    titles_and_dates = _page(
+        *[(20, 700 - 60 * i, 330, 740 - 60 * i) for i in range(4)],
+        *[(550 - 15 * (i % 3), 705 - 60 * i, 580, 725 - 60 * i) for i in range(4)],
+    )
+    assert not has_columns(titles_and_dates)
+
+
+def test_a_ragged_sidebar_is_still_a_column_even_when_narrow() -> None:
+    sidebar = _page(
+        *[(20, 700 - 60 * i, 330, 740 - 60 * i) for i in range(4)],
+        *[(420, 705 - 60 * i, 420 + 60 + 25 * i, 725 - 60 * i) for i in range(4)],
+    )
+    assert has_columns(sidebar)
+
+
+def test_a_justified_main_column_beside_a_sidebar_is_still_a_column() -> None:
+    # Boxes that end at one edge but are wide are text, not right-aligned metadata.
+    justified = _page(
+        *[(20, 700 - 60 * i, 150, 740 - 60 * i) for i in range(4)],
+        *[(200, 700 - 60 * i, 580, 740 - 60 * i) for i in range(4)],
+    )
+    assert has_columns(justified)
+
+
+@pytest.mark.parametrize(
+    ("name", "template"),
+    [("swiss-single-academic-3p", "swiss-single"), ("clean-academic-3p", "clean")],
+)
+async def test_single_column_academic_cv_over_three_pages_is_not_multi_column(
+    name: str, template: str
+) -> None:
+    # Publications, grants and talks are entries with a title and a right-aligned
+    # year (clean: "Pittsburgh, PA | Jul 2021 - Present") and no body text. Every
+    # page of these single-column templates used to be flagged as columns.
+    report = await parse_check_bytes(
+        fixture(name), f"{name}.pdf", source="render", template=template
+    )
+    assert report.page_count == 3
+    check = next(c for c in report.checks if c.id == "multi_column")
+    assert check.status == "pass"
+    assert check.params["pages"] == []
+    assert check.params["expected_by_template"] is False
+
+
+@pytest.mark.parametrize("name", ["swiss-single-academic-3p", "clean-academic-3p"])
+async def test_academic_appointments_on_a_real_render_count_as_experience(
+    name: str,
+) -> None:
+    report = await parse_check_bytes(fixture(name), f"{name}.pdf", source="render")
+    check = next(c for c in report.checks if c.id == "section_headings")
+    assert "experience" in check.params["found"]
+
+
+async def test_cv_mode_lifts_the_page_count_warning_but_not_truncation() -> None:
+    content = fixture("swiss-single-academic-3p")
+    default = await parse_check_bytes(content, "a.pdf", source="render")
+    cv = await parse_check_bytes(content, "a.pdf", source="render", cv_mode=True)
+    assert _status(default.checks, "page_count") == "warn"
+    assert _status(cv.checks, "page_count") == "pass"
+    assert cv.page_count == 3
+    truncated = ExtractedDocument(
+        kind="pdf", text="x", page_count=MAX_PARSE_CHECK_PAGES + 1, truncated=True
+    )
+    checks = run_checks(truncated, {"cv_mode": True})
+    assert _status(checks, "page_count") == "warn"
+
+
+async def test_two_column_template_over_three_pages_is_still_detected() -> None:
+    report = await parse_check_bytes(
+        fixture("swiss-two-column-academic-3p"),
+        "a.pdf",
+        source="render",
+        template="swiss-two-column",
+    )
+    assert report.page_count == 3
+    check = next(c for c in report.checks if c.id == "multi_column")
+    assert check.status == "fail"
+    assert check.params["pages"] == [1]
+
+
 @pytest.mark.parametrize(
     ("name", "status"),
     [
@@ -195,6 +278,52 @@ async def test_two_column_render_scrambles_reading_order() -> None:
     assert double.overall_score < single.overall_score
 
 
+async def test_modern_deedy_render_is_single_column_and_extracts_cleanly() -> None:
+    # Real render of john_doe(): the roles and institutions are uppercase text, not
+    # font small caps (which reach the text layer as private-use glyphs, as in clean),
+    # the pipes are real text, and the read order is high.
+    report = await parse_check_bytes(
+        render("modern-deedy"),
+        "d.pdf",
+        source="render",
+        resume_data=john_doe(),
+        template="modern-deedy",
+    )
+    assert report.overall_score == 100
+    assert _status(report.checks, "garbled_glyphs") == "pass"
+    assert _status(report.checks, "multi_column") == "pass"
+    assert report.roundtrip.content_recall == 1.0
+    assert report.roundtrip.order_fidelity >= 0.99
+    text = extract_pdf(render("modern-deedy")).text
+    assert "STRIPE | SENIOR SOFTWARE ENGINEER" in text
+    assert "Technical Skills: Go, Python, Kafka" in text
+
+
+async def test_vivid_render_extracts_without_small_caps_or_opacity_losses() -> None:
+    # Real render of john_doe(). Section titles and roles are uppercase text, not font
+    # small caps (private-use glyphs in the text layer, "Snior Softwar Enginr"), and the
+    # surname is a solid tint, not opacity (a transparency group the extraction skips).
+    # Still two columns, so multi_column fails as the template expects; the score is
+    # capped there rather than dragged down by garbled glyphs and an image.
+    report = await parse_check_bytes(
+        render("vivid"),
+        "d.pdf",
+        source="render",
+        resume_data=john_doe(),
+        template="vivid",
+    )
+    assert report.overall_score >= 88
+    assert report.content_score == 100
+    assert _status(report.checks, "garbled_glyphs") == "pass"
+    assert _status(report.checks, "images") == "pass"
+    assert _status(report.checks, "multi_column") == "fail"
+    assert report.roundtrip.content_recall == 1.0
+    text = extract_pdf(render("vivid")).text
+    assert "John Doe" in text
+    assert "SUMMARY" in text
+    assert "Stripe | SENIOR SOFTWARE ENGINEER" in text
+
+
 async def test_sparse_sidebar_still_counts_as_two_columns() -> None:
     # A short skills sidebar covers little of the page but still interleaves.
     report = await parse_check_bytes(
@@ -219,6 +348,27 @@ async def test_small_caps_glyphs_are_flagged_and_not_matched_elsewhere() -> None
     assert fields["personalInfo.title"] == "found"
     assert fields["workExperience[0].title"] == "missing"
     assert _status(report.checks, "section_headings") == "pass"
+
+
+async def test_vivid_single_render_is_fully_parseable_and_in_order() -> None:
+    # A real Chromium render of john_doe() with the vivid-single template. Small caps
+    # and an opacity tint would put private-use glyphs or an unread "image" in the
+    # text layer; the single column must not be flagged as columns either.
+    report = await parse_check_bytes(
+        fixture("vivid-single"),
+        "v.pdf",
+        source="render",
+        resume_data=john_doe(),
+        template="vivid-single",
+    )
+    assert report.overall_score == 100
+    for check_id in ("garbled_glyphs", "images", "multi_column", "section_headings"):
+        assert _status(report.checks, check_id) == "pass", check_id
+    multi = next(c for c in report.checks if c.id == "multi_column")
+    assert multi.params["expected_by_template"] is False
+    assert report.roundtrip.content_recall == 1.0
+    assert report.roundtrip.order_fidelity == 1.0
+    assert "John Doe" in report.extracted_text_preview
 
 
 async def test_roundtrip_uses_the_template_contact_order() -> None:
@@ -270,6 +420,9 @@ def test_roundtrip_links_follow_template_display_and_order() -> None:
         "clean": ["location", "phone", "email", "linkedin", "github", "website"],
         "latex": ["location", "phone", "email", "linkedin", "github", "website"],
         "vivid": ["website", "linkedin", "github", "email", "phone", "location"],
+        "vivid-single": ["website", "linkedin", "github", "email", "phone", "location"],
+        "modern-deedy": ["email", "phone", "location", "website", "linkedin", "github"],
+        "deedy": ["website", "linkedin", "github", "email", "phone", "location"],
     }
     for template, order in expected.items():
         fields = expected_fields(data, template)[0][2:8]
@@ -295,8 +448,14 @@ TEMPLATE_ENTRY_TEXT = {
     "Trinity College | BSc Physics\n2016",
     "latex": "Acme Corp\nStaff Engineer\n2020 - 2023\nDublin\n"
     "Trinity College\nBSc Physics\n2016",
-    "vivid": "Acme Corp | Staff Engineer\n2020 - 2023 | Dublin\n"
+    "vivid": "Acme Corp | STAFF ENGINEER\n2020 - 2023 | Dublin\n"
     "Trinity College\nBSc Physics\n2016",
+    "vivid-single": "Acme Corp | STAFF ENGINEER\n2020 - 2023 | Dublin\n"
+    "Trinity College | BSC PHYSICS\n2016",
+    "modern-deedy": "Acme Corp | Staff Engineer\nDublin | 2020 - 2023\n"
+    "BSc Physics\nTrinity College\n2016",
+    "deedy": "ACME CORP | STAFF ENGINEER\n2020 - 2023 | Dublin\n"
+    "TRINITY COLLEGE\nBSC PHYSICS\n2016",
     "swiss-two-column": "Staff Engineer\nAcme Corp • Dublin\n2020 - 2023\n"
     "Trinity College | 2016\nBSc Physics",
 }
@@ -476,6 +635,14 @@ def test_contact_info_needs_a_phone_shaped_number(text: str, phone: bool) -> Non
         ("Experience in product engineering\nEducation\nSkills", None, "fail"),
         ("職歴\n学歴\n技術を活用したシステム開発", "ja", "warn"),
         ("職歴\n学歴\n技術スキル", "ja", "pass"),
+        # Academic appointments stand in for experience.
+        ("Academic Appointments\nEducation\nSkills", None, "pass"),
+        ("Appointments\nEducation\nSkills", "en", "pass"),
+        ("Research Experience\nEducation\nSkills", None, "pass"),
+        ("Academic Appointments\nEducation", None, "warn"),
+        ("Education\nSkills\nPublications", None, "fail"),
+        # Prose that starts with an appointment synonym is not a heading.
+        ("Appointments scheduling for clinics\nEducation\nSkills", None, "fail"),
     ],
 )
 def test_section_headings(text: str, locale: str | None, status: str) -> None:
@@ -483,6 +650,58 @@ def test_section_headings(text: str, locale: str | None, status: str) -> None:
         _status(run_checks(_text_doc(text), {"locale": locale}), "section_headings")
         == status
     )
+
+
+@pytest.mark.parametrize(
+    ("line", "kind"),
+    [
+        ("Publications", "publications"),
+        ("Selected Publications", "publications"),
+        ("Peer-Reviewed Publications", "publications"),
+        ("Peer-reviewed journal articles", "publications"),
+        ("Journal Articles", "publications"),
+        ("Conference Papers", "publications"),
+        ("Peer-Reviewed Conference Papers", "publications"),
+        ("Publications & Presentations", "publications"),
+        ("Grants", "grants"),
+        ("Grants & Funding", "grants"),
+        ("Funding", "grants"),
+        ("Grants and Funding", "grants"),
+        ("Teaching", "teaching"),
+        ("Invited Talks", "talks"),
+        ("Presentations", "talks"),
+        ("Service", "service"),
+        ("Academic Service", "service"),
+        ("Research", "research"),
+    ],
+)
+def test_academic_headings_are_recognized(line: str, kind: str) -> None:
+    found = find_sections(f"Jane Doe\n{line}\nSome text", None, ACADEMIC_SECTIONS)
+    assert kind in found
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Research interests include single-cell methods",
+        "Teaching and mentoring graduate students across three labs",
+        "Publications are listed on my website",
+        "Service to the profession and the community at large",
+        "Funding secured from several agencies",
+        "Presentations at major venues worldwide this year",
+    ],
+)
+def test_prose_starting_with_an_academic_word_is_not_a_heading(line: str) -> None:
+    assert find_sections(line, None, ACADEMIC_SECTIONS) == []
+
+
+def test_academic_sections_never_change_the_required_headings_report() -> None:
+    # The report's found/missing lists name only the three required kinds; the UI maps
+    # each to a translated label.
+    doc = _text_doc("Academic Appointments\nEducation\nPublications\nGrants\nTeaching")
+    check = next(c for c in run_checks(doc, {}) if c.id == "section_headings")
+    assert check.params["found"] == ["experience", "education"]
+    assert check.params["missing"] == ["skills"]
 
 
 def test_headings_cover_every_frontend_locale_label() -> None:
@@ -521,6 +740,13 @@ def test_score_halves_warnings() -> None:
 def test_multi_column_reports_whether_template_expects_it() -> None:
     doc = ExtractedDocument(kind="pdf", text="x", page_count=1, pages=[])
     report = build_report(doc, source="render", template="swiss-two-column")
+    check = next(c for c in report.checks if c.id == "multi_column")
+    assert check.params["expected_by_template"] is True
+
+
+def test_deedy_columns_are_expected_by_the_template() -> None:
+    doc = ExtractedDocument(kind="pdf", text="x", page_count=1, pages=[])
+    report = build_report(doc, source="render", template="deedy")
     check = next(c for c in report.checks if c.id == "multi_column")
     assert check.params["expected_by_template"] is True
 

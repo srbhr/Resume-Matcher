@@ -13,6 +13,7 @@ import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
 import { resolveLocale } from '@/lib/i18n/locale';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { runningHeaderCss } from '@/lib/print/running-header';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -141,7 +142,10 @@ function parseTemplate(value: string | undefined): TemplateType {
     value === 'modern-two-column' ||
     value === 'latex' ||
     value === 'clean' ||
-    value === 'vivid'
+    value === 'vivid' ||
+    value === 'vivid-single' ||
+    value === 'modern-deedy' ||
+    value === 'deedy'
   ) {
     return value;
   }
@@ -194,6 +198,7 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     languages: t('resume.sections.languages'),
     awards: t('resume.sections.awards'),
     links: t('resume.sections.links'),
+    earlierExperience: t('resume.sections.earlierExperience'),
   };
   const fallbackLabels = {
     name: t('resume.defaults.name'),
@@ -265,6 +270,12 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     // `lang` also drives Chromium's own font fallback during PDF render, which
     // matters for the CJK faces (L-08).
     <div className="resume-print bg-white" lang={locale}>
+      {/* "Name · 2 / 3" on pages 2+; the CSS string is fully escaped. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: runningHeaderCss(localizedResumeData.personalInfo?.name),
+        }}
+      />
       <Resume
         resumeData={localizedResumeData}
         template={settings.template}

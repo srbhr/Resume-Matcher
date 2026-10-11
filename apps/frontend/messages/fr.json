@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "Ajouter un emploi",
         "addFirstJob": "Ajouter le premier emploi",
+        "condense": {
+          "label": "Condenser (poste antérieur)",
+          "description": "Affiché sur une ligne sous Expérience antérieure. Les puces sont masquées."
+        },
         "fields": {
           "jobTitle": "Intitulé du poste",
           "company": "Entreprise"
@@ -453,6 +457,18 @@
         "vivid": {
           "name": "Vif",
           "description": "Mise en page deux colonnes colorée avec en-têtes accentués et puces fléchées"
+        },
+        "vividSingle": {
+          "name": "Vif une colonne",
+          "description": "Mise en page une colonne colorée avec en-têtes accentués et puces fléchées"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Mise en page dense d'une page en Lato avec des en-têtes de section en majuscules gris clair"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Mise en page deux colonnes avec nom en trait fin, colonne gauche étroite et titres gris clair"
         }
       },
       "accentColor": "Couleur d'accentuation",
@@ -1099,6 +1115,7 @@
       "personalInfo": "Informations personnelles",
       "summary": "Résumé",
       "experience": "Expérience",
+      "earlierExperience": "Expérience antérieure",
       "education": "Formation",
       "projects": "Projets",
       "skills": "Compétences et récompenses",

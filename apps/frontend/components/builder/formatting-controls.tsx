@@ -153,6 +153,18 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
         name: t('builder.formatting.templates.vivid.name'),
         description: t('builder.formatting.templates.vivid.description'),
       },
+      'vivid-single': {
+        name: t('builder.formatting.templates.vividSingle.name'),
+        description: t('builder.formatting.templates.vividSingle.description'),
+      },
+      'modern-deedy': {
+        name: t('builder.formatting.templates.modernDeedy.name'),
+        description: t('builder.formatting.templates.modernDeedy.description'),
+      },
+      deedy: {
+        name: t('builder.formatting.templates.deedy.name'),
+        description: t('builder.formatting.templates.deedy.description'),
+      },
     }),
     [t]
   );
@@ -227,7 +239,8 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {/* Accent Color Selection - Visible for Modern templates */}
           {(settings.template === 'modern' ||
             settings.template === 'modern-two-column' ||
-            settings.template === 'vivid') && (
+            settings.template === 'vivid' ||
+            settings.template === 'vivid-single') && (
             <div>
               <h4
                 id={`${contentId}-accent`}

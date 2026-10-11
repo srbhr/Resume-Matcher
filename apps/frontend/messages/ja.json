@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "職歴を追加",
         "addFirstJob": "最初の職歴を追加",
+        "condense": {
+          "label": "簡略表示（以前の職歴）",
+          "description": "「以前の職歴」の下に1行で表示します。箇条書きは非表示になります。"
+        },
         "fields": {
           "jobTitle": "職種",
           "company": "会社"
@@ -453,6 +457,18 @@
         "vivid": {
           "name": "ビビッド",
           "description": "アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト"
+        },
+        "vividSingle": {
+          "name": "ビビッド1カラム",
+          "description": "アクセント見出しと矢印箇条書きのカラフルな1カラムレイアウト"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Lato書体の1ページ向け高密度レイアウト。見出しは淡いグレーの大文字"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "細字の名前、狭い左カラム、薄いグレーの見出しを備えた2カラムレイアウト"
         }
       },
       "accentColor": "アクセントカラー",
@@ -1099,6 +1115,7 @@
       "personalInfo": "個人情報",
       "summary": "概要",
       "experience": "職歴",
+      "earlierExperience": "以前の職歴",
       "education": "学歴",
       "projects": "プロジェクト",
       "skills": "スキル・受賞歴",

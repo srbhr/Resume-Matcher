@@ -20,8 +20,11 @@ def build_report(
     resume_data: dict[str, Any] | None = None,
     locale: str | None = None,
     template: str | None = None,
+    cv_mode: bool = False,
 ) -> ParseCheckReport:
-    checks = run_checks(doc, {"locale": locale, "template": template})
+    checks = run_checks(
+        doc, {"locale": locale, "template": template, "cv_mode": cv_mode}
+    )
     status = {check.id: check.status for check in checks}
     if status["text_layer"] == "fail":
         extractability = "none"
@@ -56,10 +59,16 @@ async def parse_check_bytes(
     resume_data: dict[str, Any] | None = None,
     locale: str | None = None,
     template: str | None = None,
+    cv_mode: bool = False,
 ) -> ParseCheckReport:
     doc = await extract_document(content, filename)
     return build_report(
-        doc, source=source, resume_data=resume_data, locale=locale, template=template
+        doc,
+        source=source,
+        resume_data=resume_data,
+        locale=locale,
+        template=template,
+        cv_mode=cv_mode,
     )
 
 
@@ -84,4 +93,5 @@ async def parse_check_pdf(
         resume_data=resume_data,
         locale=fit.lang,
         template=fit.template,
+        cv_mode=fit.cv_mode,
     )

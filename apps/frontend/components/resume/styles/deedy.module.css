@@ -1,0 +1,227 @@
+@import './_tokens.css';
+
+/*
+  Deedy Template
+  ID: deedy
+
+  Recreation of Debarghya Das's "Deedy Resume" (LaTeX, Apache-2.0): Lato Hairline/Light
+  name, Raleway contact lines, a thin rule, then a narrow left and a wide right column
+  with light gray uppercase Lato headings. Colors follow the original class file.
+  Lato and Raleway come from next/font (app/layout.tsx); --body-font supplies the
+  fallbacks for scripts they do not cover (CJK).
+*/
+
+.deedy {
+  --deedy-text: #2b2b2b;
+  --deedy-heading: #6a6a6a;
+  --deedy-subheading: #333333;
+  --deedy-lato: var(--font-lato, 'Lato'), var(--body-font);
+  --deedy-raleway: var(--font-raleway, 'Raleway'), var(--body-font);
+  --deedy-text-size: calc(var(--font-size-base) * 0.88);
+
+  font-family: var(--deedy-lato);
+  font-weight: 300;
+  /* The original sets 11pt on roughly 1.25 leading, a little tighter than the app default. */
+  line-height: calc(var(--line-height) * 0.94);
+  color: var(--deedy-text);
+}
+
+/* Header */
+.header {
+  text-align: center;
+}
+
+.name {
+  font-family: var(--deedy-lato);
+  font-size: calc(var(--font-size-base) * var(--header-scale) * 1.6);
+  font-weight: 300;
+  line-height: 1.15;
+  color: var(--deedy-text);
+  margin-bottom: 0.12em;
+}
+
+.nameFirst {
+  font-weight: 100;
+}
+
+.nameLast {
+  font-weight: 400;
+}
+
+.title {
+  font-family: var(--deedy-raleway);
+  font-size: calc(var(--font-size-base) * 1.05);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--deedy-heading);
+}
+
+.contact {
+  font-family: var(--deedy-raleway);
+  font-size: calc(var(--font-size-base) * 0.95);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--deedy-heading);
+  overflow-wrap: anywhere;
+}
+
+/* Overrides the underline _base.module.css gives every link in print. */
+.deedy .link {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.handle {
+  font-weight: 400;
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--deedy-heading);
+  margin: calc(var(--item-gap) * 1.5) 0 var(--section-gap);
+}
+
+/* Columns: the original's 0.33 / 0.66 minipages */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 33fr) minmax(0, 67fr);
+  column-gap: calc(var(--section-gap) * 1.25);
+  align-items: start;
+}
+
+.sidebarColumn,
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  min-width: 0;
+}
+
+.sidebarColumn {
+  overflow-wrap: anywhere;
+}
+
+/* Sections */
+.section {
+  min-width: 0;
+}
+
+.sectionTitle {
+  font-family: var(--deedy-lato);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 1.25);
+  font-weight: 300;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--deedy-heading);
+  margin-bottom: calc(var(--item-gap) * 0.75);
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--item-gap) * 2);
+}
+
+.entryHeading {
+  line-height: 1.2;
+}
+
+.entryTitle {
+  font-family: var(--deedy-lato);
+  font-size: calc(var(--font-size-base) * 1.08);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--deedy-subheading);
+}
+
+.entryRole {
+  font-family: var(--deedy-raleway);
+  font-size: calc(var(--font-size-base) * 1.02);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--deedy-subheading);
+}
+
+/* Lowercase runs of a small-caps label (SmallCaps in resume-deedy.tsx) */
+.smallCap {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.entryHeading .entryRole {
+  margin-left: 0.2em;
+}
+
+.entryMeta {
+  font-family: var(--deedy-raleway);
+  font-size: calc(var(--font-size-base) * 0.9);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--deedy-heading);
+  margin-top: 0.1em;
+}
+
+.text {
+  font-size: var(--deedy-text-size);
+  font-weight: 300;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Compact round bullets (the original's tightemize) */
+.bullets {
+  font-size: var(--deedy-text-size);
+  font-weight: 300;
+  gap: 0.1em;
+  margin-top: 0.15em;
+}
+
+.bulletMarker {
+  flex-shrink: 0;
+  margin-right: 0.35em;
+}
+
+/* Awards: year | rank | title. The narrow gap keeps each row on one line for
+   pdfminer-style text extraction (a wider gap splits the table into columns). */
+.awards {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 0.8em;
+  font-size: var(--deedy-text-size);
+  font-weight: 300;
+}
+
+.awardsRanked {
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+}
+
+/* Publications: [1] [2] with a hanging indent */
+.numbered {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--item-gap) * 1.5);
+}
+
+.numberedItem {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 0.6em;
+}
+
+.number {
+  font-size: var(--deedy-text-size);
+  font-weight: 300;
+}
+
+@media print {
+  .sectionTitle {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+}

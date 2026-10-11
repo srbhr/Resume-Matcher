@@ -63,6 +63,11 @@ def count_pdf_pages(pdf_bytes: bytes) -> int:
     return len(list(PDFPage.get_pages(io.BytesIO(pdf_bytes))))
 
 
+def page_limit(fit: PageFitSettings | None, max_pages: int | None) -> int | None:
+    """The page cap that applies: None in CV mode, which reports pages and never caps."""
+    return None if fit is not None and fit.cv_mode else max_pages
+
+
 def print_margins(fit: PageFitSettings) -> dict[str, int]:
     return {
         "top": fit.marginTop,

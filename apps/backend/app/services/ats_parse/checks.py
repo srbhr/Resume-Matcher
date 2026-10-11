@@ -4,17 +4,23 @@ import re
 from collections import Counter
 from collections.abc import Callable
 
-from app.services.ats_parse.extract import ExtractedDocument, PageLayout
+from app.services.ats_parse.extract import ExtractedDocument, PageLayout, TextBox
 from app.services.ats_parse.headings import REQUIRED_SECTIONS, synonyms
 from app.services.ats_parse.models import Check, Severity, Status
 from app.services.ats_parse.normalize import normalize
 from app.services.parser import _MD_DATE_RE
 
-TWO_COLUMN_TEMPLATES = frozenset({"swiss-two-column", "modern-two-column", "vivid"})
+TWO_COLUMN_TEMPLATES = frozenset(
+    {"swiss-two-column", "modern-two-column", "vivid", "deedy"}
+)
 MIN_TEXT_CHARACTERS = 50
 SPARSE_PAGE_CHARACTERS = 200
 COLUMN_MIN_COVERAGE = 0.05
 COLUMN_MIN_BOXES = 3
+# Dates and locations right-aligned beside entry titles: narrow boxes ending at one edge.
+RIGHT_BAND_MAX_WIDTH = 0.3
+RIGHT_BAND_EDGE_TOLERANCE = 2.0
+RIGHT_BAND_MIN_FLUSH = 0.8
 MAX_COMFORTABLE_PAGES = 2
 
 # Bounded local part keeps search linear on long "a.a.a..." runs (see normalize._TOKEN).
@@ -27,7 +33,7 @@ _DATE_PART = re.compile(r"(?:19|20)\d{2}|0?[1-9]|1[0-2]")
 YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 GARBLED_RE = re.compile(r"\(cid:\d+\)|�|[-]")
 
-Context = dict[str, str | None]
+Context = dict[str, str | bool | None]
 CheckFn = Callable[[ExtractedDocument, Context], Check | None]
 
 
@@ -105,11 +111,27 @@ def _free_bands(
     return bands
 
 
+def _is_right_aligned_band(boxes: list[TextBox], page_width: float) -> bool:
+    """Narrow boxes that all end at one right edge, like dates beside entry titles.
+
+    A sidebar is ragged on the right. Entries with no body text between them leave
+    these bands clear of full-width lines, so they would otherwise read as a column.
+    """
+    edge = max(b.x1 for b in boxes)
+    flush = sum(1 for b in boxes if edge - b.x1 <= RIGHT_BAND_EDGE_TOLERANCE)
+    widest = max(b.x1 - b.x0 for b in boxes)
+    return (
+        flush >= RIGHT_BAND_MIN_FLUSH * len(boxes)
+        and widest < RIGHT_BAND_MAX_WIDTH * page_width
+    )
+
+
 def has_columns(page: PageLayout) -> bool:
     """True when a vertical gutter separates two text columns over a large span.
 
     Full-width lines cross every gutter in single-column layouts, so right-aligned
-    dates beside a title do not count as a second column.
+    dates beside a title do not count as a second column. Neither does a run of
+    entries without body text, where those dates line up in a band of their own.
     """
     if page.height <= 0 or len(page.boxes) < 4:
         return False
@@ -126,13 +148,14 @@ def has_columns(page: PageLayout) -> bool:
                 for b in page.boxes
                 if b.x1 <= gutter and b.y1 > lo and b.y0 < hi
             ]
-            right = [
-                (max(b.y0, lo), min(b.y1, hi))
-                for b in page.boxes
-                if b.x0 >= gutter and b.y1 > lo and b.y0 < hi
+            right_boxes = [
+                b for b in page.boxes if b.x0 >= gutter and b.y1 > lo and b.y0 < hi
             ]
-            if min(len(left), len(right)) < COLUMN_MIN_BOXES:
+            if min(len(left), len(right_boxes)) < COLUMN_MIN_BOXES:
                 continue
+            if _is_right_aligned_band(right_boxes, page.width):
+                continue
+            right = [(max(b.y0, lo), min(b.y1, hi)) for b in right_boxes]
             coverage = min(_union_length(left), _union_length(right)) / page.height
             if coverage >= COLUMN_MIN_COVERAGE:
                 return True
@@ -217,9 +240,9 @@ def images(doc: ExtractedDocument, ctx: Context) -> Check:
 def page_count(doc: ExtractedDocument, ctx: Context) -> Check | None:
     if doc.page_count is None:
         return None
-    status: Status = (
-        "warn" if doc.truncated or doc.page_count > MAX_COMFORTABLE_PAGES else "pass"
-    )
+    # An academic CV has no comfortable length, so only truncation warns.
+    too_long = not ctx.get("cv_mode") and doc.page_count > MAX_COMFORTABLE_PAGES
+    status: Status = "warn" if doc.truncated or too_long else "pass"
     return _check(
         "page_count",
         "layout",
@@ -289,10 +312,12 @@ def is_heading(line: str, names: list[str]) -> bool:
     return False
 
 
-def find_sections(text: str, locale: str | None) -> list[str]:
+def find_sections(
+    text: str, locale: str | None, kinds: tuple[str, ...] = REQUIRED_SECTIONS
+) -> list[str]:
     lines = _heading_lines(text)
     found = []
-    for kind in REQUIRED_SECTIONS:
+    for kind in kinds:
         names = [normalize(name) for name in synonyms(kind, locale)]
         if any(is_heading(line, names) for line in lines):
             found.append(kind)

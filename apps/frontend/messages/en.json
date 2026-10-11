@@ -376,6 +376,10 @@
       "experience": {
         "addJob": "Add Job",
         "addFirstJob": "Add First Job",
+        "condense": {
+          "label": "Condense (earlier role)",
+          "description": "Show as one line under Earlier experience. Bullets are hidden."
+        },
         "fields": {
           "jobTitle": "Job Title",
           "company": "Company"
@@ -453,6 +457,18 @@
         "vivid": {
           "name": "Vivid",
           "description": "Colorful two-column layout with accent headers and arrow bullets"
+        },
+        "vividSingle": {
+          "name": "Vivid Single Column",
+          "description": "Colorful single-column layout with accent headers and arrow bullets"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Dense one-page layout in Lato with light grey uppercase section headings"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Two-column layout with a hairline name, a narrow left column and light gray headings"
         }
       },
       "accentColor": "Accent Color",
@@ -1099,6 +1115,7 @@
       "personalInfo": "Personal Info",
       "summary": "Summary",
       "experience": "Experience",
+      "earlierExperience": "Earlier experience",
       "education": "Education",
       "projects": "Projects",
       "skills": "Skills & Awards",

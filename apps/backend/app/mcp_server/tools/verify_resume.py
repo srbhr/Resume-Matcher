@@ -17,7 +17,7 @@ from app.routers.resumes import _grounding_master_data
 from app.schemas.models import PageFitSettings
 from app.services import ats_parse
 from app.services.ats_parse.models import ParseCheckReport
-from app.services.page_fit import count_pdf_pages
+from app.services.page_fit import count_pdf_pages, page_limit
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +64,7 @@ async def verify(
     max_pages: int | None,
 ) -> dict[str, Any]:
     resume_id = resume["resume_id"]
+    max_pages = page_limit(fit, max_pages)
     data = require_valid_structured(resume)
     if job_id is None:
         improvement = await db.get_improvement_by_tailored_resume(resume_id)
@@ -107,7 +108,9 @@ async def verify_resume(
 ) -> dict[str, Any]:
     """Render a saved resume once and report page count, ATS parse-check, keyword score and issues. Writes nothing.
 
-    job_id defaults to the job a tailored resume was saved for. Issue codes: over_page_limit,
+    job_id defaults to the job a tailored resume was saved for. With print_settings.cv_mode
+    true (an academic CV) there is no page cap: max_pages is ignored and over_page_limit is
+    never raised; page_count is still reported. Issue codes: over_page_limit,
     text_layer (the PDF has too little extractable text), multi_column, garbled_glyphs,
     low_order_fidelity, fields_missing, roundtrip_truncated, injectable_keywords, render_failed.
     """

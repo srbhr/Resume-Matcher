@@ -58,7 +58,7 @@ describe('ATSScoreCard', () => {
     expect(screen.queryByText('tailor.atsScore.titleMatch')).not.toBeInTheDocument();
   });
 
-  it.each(['swiss-two-column', 'modern-two-column', 'vivid'] as const)(
+  it.each(['swiss-two-column', 'modern-two-column', 'vivid', 'deedy'] as const)(
     'warns that the %s layout may be misread by an ATS',
     (template) => {
       render(<ATSScoreCard atsScore={atsScore} template={template} />);
@@ -66,7 +66,7 @@ describe('ATSScoreCard', () => {
     }
   );
 
-  it.each(['swiss-single', 'modern', 'latex', 'clean'] as const)(
+  it.each(['swiss-single', 'modern', 'latex', 'clean', 'vivid-single', 'modern-deedy'] as const)(
     'shows no layout warning for the single-column %s template',
     (template) => {
       render(<ATSScoreCard atsScore={atsScore} template={template} />);

@@ -743,6 +743,51 @@ async def test_rewritten_condensed_bullet_confirms(
     assert saved["processed_data"]["workExperience"][0]["description"] == expected
 
 
+async def _master_with_condensed_old_role(
+    isolated_db: Any,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    data = _master_data()
+    data["workExperience"].append(
+        {
+            "id": 2,
+            "title": "Systems Analyst",
+            "company": "Initech",
+            "years": "2004 - 2008",
+            "description": ["Maintained the nightly batch jobs"],
+            "condensed": True,
+        }
+    )
+    data = ResumeData.model_validate(data).model_dump()
+    master = await isolated_db.create_resume_atomic_master(
+        content=json.dumps(data),
+        content_type="json",
+        filename="master.json",
+        processed_data=data,
+        processing_status="ready",
+    )
+    job = await isolated_db.create_job(
+        "Backend Engineer at Example: Python and Kubernetes", master["resume_id"]
+    )
+    return master, job
+
+
+async def test_condensed_role_flag_survives_tailoring_and_confirm(
+    client: AsyncClient, isolated_db: Any
+) -> None:
+    master, job = await _master_with_condensed_old_role(isolated_db)
+    data = await _selection_preview(client, master, job, ImproveDiffResult(changes=[]))
+    work = data["resume_preview"]["workExperience"]
+    assert [(e["id"], e["condensed"]) for e in work] == [(1, False), (2, True)]
+
+    confirm = await _confirm(client, master, job, data)
+    assert confirm.status_code == 200, confirm.text
+    saved = await isolated_db.get_resume(confirm.json()["data"]["resume_id"])
+    assert [e["condensed"] for e in saved["processed_data"]["workExperience"]] == [
+        False,
+        True,
+    ]
+
+
 CJK_BULLETS = [
     "负责设计并实现高并发的分布式支付系统",
     "主导数据库性能优化项目",
@@ -1013,6 +1058,42 @@ async def test_final_check_compares_against_the_page_limit(
     data = res.json()["data"]
     assert data["bullet_selection"]["final_pages"] == 3
     assert tailor_selection.PAGE_FIT_FINAL_OVER_WARNING in data["warnings"]
+
+
+async def test_preview_in_cv_mode_reports_pages_without_a_page_limit(
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    measured: list[int] = []
+
+    async def measure(data: dict[str, Any], fit: Any) -> int:
+        measured.append(1)
+        return 3 if len(measured) == 1 else 4  # a CV runs long and the rewrite longer
+
+    monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
+    res = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={
+            "resume_id": master["resume_id"],
+            "job_id": job["job_id"],
+            "max_pages": 2,
+            "page_fit": {"cv_mode": True},
+        },
+    )
+    assert res.status_code == 200, res.text
+    data = res.json()["data"]
+    sel = data["bullet_selection"]
+    assert (sel["page_fit"], sel["trimmed_for_fit"], sel["max_pages"]) == (
+        "fits",
+        0,
+        None,
+    )
+    assert sel["bullets_before"] == sel["bullets_after"] == 10
+    assert (sel["final_pages"], sel["final_check"]) == (4, "ok")
+    assert tailor_selection.PAGE_FIT_OVER_WARNING not in data["warnings"]
+    assert tailor_selection.PAGE_FIT_FINAL_OVER_WARNING not in data["warnings"]
 
 
 @pytest.mark.parametrize("max_pages", [0, 6])

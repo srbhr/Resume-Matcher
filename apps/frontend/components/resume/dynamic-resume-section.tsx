@@ -7,6 +7,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
+import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 
 interface DynamicResumeSectionProps {
@@ -46,8 +47,10 @@ export const DynamicResumeSection: React.FC<DynamicResumeSectionProps> = ({
   if (!hasContent) return null;
 
   return (
-    <div className={baseStyles['resume-section']}>
-      <h3 className={baseStyles['resume-section-title']}>{sectionMeta.displayName}</h3>
+    <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+      <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+        {sectionMeta.displayName}
+      </h3>
       {renderContent(sectionMeta.sectionType, customSection)}
     </div>
   );
@@ -87,7 +90,7 @@ const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ item
   return (
     <div className={baseStyles['resume-items']}>
       {items.map((item) => (
-        <div key={item.id} className={baseStyles['resume-item']}>
+        <div key={item.id} {...resumeItem(item.description)} className={baseStyles['resume-item']}>
           {/* Title and Years Row */}
           <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
             <h4 className={baseStyles['resume-item-title']}>{item.title}</h4>

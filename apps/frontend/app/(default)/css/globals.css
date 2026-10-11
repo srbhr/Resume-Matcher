@@ -150,83 +150,51 @@
 
 /* ============================================
    PAGE BREAK CONTROL
-   Prevents individual items from being split
-   across pages during PDF generation.
-   NOTE: Sections CAN span pages - only individual
-   items (job entries, project entries) stay together.
+   Every template marks its sections, headings and entries with data attributes
+   (components/resume/page-break-attrs.ts): module class names are hashed, so
+   these rules key on the attributes. The builder preview's pagination
+   (components/preview/page-breaks.ts) reads the same attributes, so the preview
+   breaks pages where the PDF does. Sections may span pages.
    ============================================ */
 
-/* Individual items should stay together (job entries, projects, etc.) */
-.resume-body .resume-item {
+/* An entry stays on one page, and so does each list line outside an entry. */
+[data-resume-item],
+[data-no-break],
+[data-resume-section] li {
   break-inside: avoid;
-  page-break-inside: avoid;
 }
 
-/* Section titles should not be orphaned at bottom of page */
-.resume-body .resume-section-title,
-.resume-body .resume-section-title-sm {
+/* A long entry may split, but only between bullets: its header rows stay with
+   the first two bullets, and the last two bullets stay together. */
+[data-resume-item='split'] {
+  break-inside: auto;
+}
+
+[data-resume-item='split'] :not(ul, ol, li) {
   break-after: avoid;
-  page-break-after: avoid;
-  /* Ensure at least 3 lines of content follow the header before a page break */
-  orphans: 3;
-  widows: 3;
 }
 
-/* Keep section header together with its first item */
-.resume-body .resume-section {
-  break-inside: auto; /* Allow sections to span pages */
-}
-
-/* Ensure the header + first content element stay together */
-.resume-body .resume-section-title + .resume-items > *:first-child,
-.resume-body .resume-section-title-sm + .resume-items > *:first-child,
-.resume-body .resume-section-title + p,
-.resume-body .resume-section-title-sm + p,
-.resume-body .resume-section-title + ul,
-.resume-body .resume-section-title-sm + ul,
-.resume-body .resume-section-title + .resume-item,
-.resume-body .resume-section-title-sm + .resume-item {
+[data-resume-item='split'] :is(ul, ol) {
   break-before: avoid;
-  page-break-before: avoid;
 }
 
-/* Generic no-break class for any element */
-.resume-body [data-no-break] {
-  break-inside: avoid;
-  page-break-inside: avoid;
+[data-resume-item='split'] li:first-child {
+  break-after: avoid;
 }
 
-/* Print-specific overrides for resume templates */
-@media print {
-  .resume-body {
-    padding: var(--margin-top) var(--margin-right) var(--margin-bottom) var(--margin-left) !important;
-  }
+[data-resume-item='split'] li:last-child {
+  break-before: avoid;
+}
 
-  .resume-body .resume-section-title,
-  .resume-body .resume-section-title-sm {
-    border-bottom-color: #9ca3af !important;
-    break-after: avoid !important;
-    page-break-after: avoid !important;
-  }
+/* A heading is never the last thing on a page: it stays with the first entry, or
+   with the first two lines of text, that follows it. */
+[data-resume-section-title] {
+  break-after: avoid;
+}
 
-  /* Reinforce page break rules in print - only for individual items */
-  .resume-body .resume-item {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /* Keep section header with first content in print */
-  .resume-body .resume-section-title + .resume-items > *:first-child,
-  .resume-body .resume-section-title-sm + .resume-items > *:first-child,
-  .resume-body .resume-section-title + p,
-  .resume-body .resume-section-title-sm + p,
-  .resume-body .resume-section-title + ul,
-  .resume-body .resume-section-title-sm + ul,
-  .resume-body .resume-section-title + .resume-item,
-  .resume-body .resume-section-title-sm + .resume-item {
-    break-before: avoid !important;
-    page-break-before: avoid !important;
-  }
+[data-resume-section] p {
+  orphans: 2;
+  widows: 2;
 }
 
 /* Home hero entrance (spec D10): one-shot, 300ms expo, staggered. CSS, not

@@ -46,6 +46,18 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
       name: t('builder.formatting.templates.vivid.name'),
       description: t('builder.formatting.templates.vivid.description'),
     },
+    'vivid-single': {
+      name: t('builder.formatting.templates.vividSingle.name'),
+      description: t('builder.formatting.templates.vividSingle.description'),
+    },
+    'modern-deedy': {
+      name: t('builder.formatting.templates.modernDeedy.name'),
+      description: t('builder.formatting.templates.modernDeedy.description'),
+    },
+    deedy: {
+      name: t('builder.formatting.templates.deedy.name'),
+      description: t('builder.formatting.templates.deedy.description'),
+    },
   };
 
   return (
@@ -255,6 +267,110 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
             <div className="h-0.5"></div>
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-3/5 opacity-50`}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'vivid-single') {
+    // Vivid single-column thumbnail - two-tone accent name + accent headers + arrow ticks, one column
+    return (
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
+        {/* Two-tone name (left-aligned) */}
+        <div className="flex items-center gap-1">
+          <div className={`h-1.5 ${accentColor} w-1/3`}></div>
+          <div className={`h-1.5 ${accentColor} w-1/4 opacity-50`}></div>
+        </div>
+        <div className={`h-0.5 ${lineColor} w-2/3 opacity-40`}></div>
+        {/* Single column: accent header, arrow-tick rows, next header */}
+        <div className="flex-1 space-y-1 mt-1">
+          <div className={`h-0.5 ${accentColor} w-2/5`}></div>
+          <div className="flex items-center gap-1">
+            <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
+            <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
+            <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+          </div>
+          <div className="h-0.5"></div>
+          <div className={`h-0.5 ${accentColor} w-1/3`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+          <div className={`h-0.5 ${lineColor} w-3/6 opacity-50`}></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'modern-deedy') {
+    // Modern Deedy thumbnail - centred name + contact line, light grey headings with no
+    // rule, one-line entries with right-aligned dates, and indented bullets
+    return (
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
+        {/* Centred name + contact line */}
+        <div className="flex flex-col items-center gap-1">
+          <div className={`h-1.5 ${lineColor} w-1/2 opacity-70`}></div>
+          <div className={`h-0.5 ${lineColor} w-3/4 opacity-40`}></div>
+        </div>
+        {/* Light grey headings (no rule), entry rows with a right-aligned date */}
+        <div className="flex-1 space-y-1 mt-1">
+          <div className={`h-1 ${lineColor} w-2/5 opacity-30`}></div>
+          <div className="flex items-center justify-between gap-1">
+            <div className={`h-0.5 ${lineColor} w-1/2`}></div>
+            <div className={`h-0.5 ${lineColor} w-1/4 opacity-40`}></div>
+          </div>
+          <div className="flex items-center gap-1 pl-1">
+            <div className={`h-0.5 w-0.5 ${lineColor}`}></div>
+            <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+          </div>
+          <div className="flex items-center gap-1 pl-1">
+            <div className={`h-0.5 w-0.5 ${lineColor}`}></div>
+            <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+          </div>
+          <div className="h-0.5"></div>
+          <div className={`h-1 ${lineColor} w-1/3 opacity-30`}></div>
+          <div className="flex items-center justify-between gap-1">
+            <div className={`h-0.5 ${lineColor} w-2/5`}></div>
+            <div className={`h-0.5 ${lineColor} w-1/4 opacity-40`}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'deedy') {
+    // Deedy thumbnail - centered two-weight name over a full-width rule, then a narrow
+    // left column and a wide right column under light gray headers
+    return (
+      <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
+        {/* Thin first name + heavier last name, contact line */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center gap-1 w-3/4">
+            <div className={`h-1.5 ${lineColor} w-3/5 opacity-30`}></div>
+            <div className={`h-1.5 ${lineColor} w-2/5`}></div>
+          </div>
+          <div className={`h-0.5 ${lineColor} w-1/2 opacity-50`}></div>
+        </div>
+        <div className={`border-b ${borderColor}`}></div>
+        {/* Narrow left, wide right */}
+        <div className="flex-1 flex gap-1">
+          <div className="w-1/3 space-y-1">
+            <div className={`h-0.5 ${lineColor} w-full opacity-30`}></div>
+            <div className={`h-0.5 ${lineColor} w-4/5 opacity-60`}></div>
+            <div className={`h-0.5 ${lineColor} w-3/5 opacity-60`}></div>
+            <div className="h-0.5"></div>
+            <div className={`h-0.5 ${lineColor} w-full opacity-30`}></div>
+            <div className={`h-0.5 ${lineColor} w-4/5 opacity-60`}></div>
+          </div>
+          <div className="w-2/3 space-y-1">
+            <div className={`h-0.5 ${lineColor} w-1/2 opacity-30`}></div>
+            <div className={`h-0.5 ${lineColor} w-2/3`}></div>
+            <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+            <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+            <div className="h-0.5"></div>
+            <div className={`h-0.5 ${lineColor} w-2/3`}></div>
+            <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
           </div>
         </div>
       </div>

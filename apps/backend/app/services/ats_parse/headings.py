@@ -16,10 +16,43 @@ HEADINGS: dict[str, dict[str, tuple[str, ...]]] = {
             "employment history",
             "work history",
             "employment",
+            "appointments",
+            "academic appointments",
+            "professional appointments",
+            "academic positions",
+            "academic experience",
+            "research experience",
+            "teaching experience",
         ),
         "education": ("education", "academic background", "qualifications"),
         "skills": ("skills", "technical skills", "core competencies", "competencies"),
         "projects": ("projects", "personal projects"),
+        # Academic CV sections: recognized as headings, never required.
+        "publications": (
+            "publications",
+            "selected publications",
+            "peer-reviewed publications",
+            "peer reviewed publications",
+            "refereed publications",
+            "journal articles",
+            "peer-reviewed journal articles",
+            "peer-reviewed articles",
+            "conference papers",
+            "peer-reviewed conference papers",
+            "conference proceedings",
+        ),
+        "grants": ("grants", "funding", "research funding"),
+        "teaching": ("teaching", "courses taught"),
+        "talks": (
+            "invited talks",
+            "selected talks",
+            "talks",
+            "presentations",
+            "invited presentations",
+            "conference presentations",
+        ),
+        "service": ("service", "academic service", "professional service"),
+        "research": ("research",),
     },
     "es": {
         "summary": ("resumen", "perfil", "perfil profesional", "sobre mí"),
@@ -66,6 +99,14 @@ HEADINGS: dict[str, dict[str, tuple[str, ...]]] = {
 }
 
 REQUIRED_SECTIONS = ("experience", "education", "skills")
+ACADEMIC_SECTIONS = (
+    "publications",
+    "grants",
+    "teaching",
+    "talks",
+    "service",
+    "research",
+)
 
 
 def synonyms(kind: str, locale: str | None) -> tuple[str, ...]:
