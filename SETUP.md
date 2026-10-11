@@ -518,7 +518,7 @@ Add this to `claude_desktop_config.json` (macOS: `~/Library/Application Support/
 }
 ```
 
-Use the **absolute path** of `uv` for `command` (find it with `which uv` on macOS/Linux or `where uv` on Windows). Claude Desktop does not inherit your shell `PATH`, so a bare `uv` is not found. On Windows, double the backslashes in JSON paths.
+Use the **absolute path** of `uv` for `command` (find it with `which uv` on macOS/Linux or `where.exe uv` on Windows). Claude Desktop does not inherit your shell `PATH`, so a bare `uv` is not found. On Windows, double the backslashes in JSON paths.
 
 ### Other MCP clients
 

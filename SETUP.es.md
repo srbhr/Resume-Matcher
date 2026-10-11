@@ -460,7 +460,7 @@ Añade esto a `claude_desktop_config.json` (macOS: `~/Library/Application Suppor
 }
 ```
 
-Usa la **ruta absoluta** de `uv` en `command` (búscala con `which uv` en macOS/Linux o `where uv` en Windows). Claude Desktop no hereda el `PATH` de tu shell, por lo que un `uv` a secas no se encuentra. En Windows, duplica las barras invertidas en las rutas del JSON.
+Usa la **ruta absoluta** de `uv` en `command` (búscala con `which uv` en macOS/Linux o `where.exe uv` en Windows). Claude Desktop no hereda el `PATH` de tu shell, por lo que un `uv` a secas no se encuentra. En Windows, duplica las barras invertidas en las rutas del JSON.
 
 ### Otros clientes MCP
 

@@ -460,7 +460,7 @@ claude mcp add resume-matcher -- uv run --directory /abs/path/to/Resume-Matcher/
 }
 ```
 
-`command` には `uv` の**絶対パス**を指定してください（macOS/Linux では `which uv`、Windows では `where uv` で確認できます）。Claude Desktop はシェルの `PATH` を継承しないため、`uv` だけでは見つかりません。Windows では、JSON 内のパスのバックスラッシュを二重にしてください。
+`command` には `uv` の**絶対パス**を指定してください（macOS/Linux では `which uv`、Windows では `where.exe uv` で確認できます）。Claude Desktop はシェルの `PATH` を継承しないため、`uv` だけでは見つかりません。Windows では、JSON 内のパスのバックスラッシュを二重にしてください。
 
 ### その他の MCP クライアント
 

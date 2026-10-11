@@ -460,7 +460,7 @@ claude mcp add resume-matcher -- uv run --directory /abs/path/to/Resume-Matcher/
 }
 ```
 
-`command` 请使用 `uv` 的**绝对路径**（在 macOS/Linux 上用 `which uv` 查找，在 Windows 上用 `where uv`）。Claude Desktop 不会继承你的 shell `PATH`，所以只写 `uv` 会找不到。在 Windows 上，JSON 路径中的反斜杠需要写两遍。
+`command` 请使用 `uv` 的**绝对路径**（在 macOS/Linux 上用 `which uv` 查找，在 Windows 上用 `where.exe uv`）。Claude Desktop 不会继承你的 shell `PATH`，所以只写 `uv` 会找不到。在 Windows 上，JSON 路径中的反斜杠需要写两遍。
 
 ### 其他 MCP 客户端
 
