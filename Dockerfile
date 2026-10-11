@@ -55,8 +55,13 @@ RUN if [ -n "${DEBIAN_MIRROR}" ]; then \
             /etc/apt/sources.list.d/debian.sources; \
     fi
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies. BuildKit cache mounts keep the downloaded .debs between
+# builds (docker-clean would delete them after install), so a re-run of this layer
+# does not download everything again. The mounts are not part of the image.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     # Playwright dependencies
@@ -78,8 +83,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatspi2.0-0 \
     libgtk-3-0 \
     # CJK fonts for Chinese/Japanese/Korean PDF rendering via Playwright
-    fonts-noto-cjk \
-    && rm -rf /var/lib/apt/lists/*
+    fonts-noto-cjk
 
 # ============================================
 # Python dependencies + Chromium (cached across code changes)
