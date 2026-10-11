@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.jpg)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
@@ -56,15 +56,15 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 ### 保持联系
 
-[![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
+[![Discord](assets/resume_matcher_discord.webp)](https://dsc.gg/resume-matcher)
 
 加入我们的 [Discord](https://dsc.gg/resume-matcher)，参与讨论、功能需求与社区支持。
 
-[![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
+[![LinkedIn](assets/resume_matcher_linkedin.webp)](https://www.linkedin.com/company/resume-matcher/)
 
 关注我们的 [LinkedIn](https://www.linkedin.com/company/resume-matcher/) 获取更新。
 
-![Star Resume Matcher](assets/star_resume_matcher.png)
+![Star Resume Matcher](assets/star_resume_matcher.webp)
 
 给仓库点 Star 来支持开发，并及时获取新版本通知。
 
@@ -72,7 +72,7 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 ## 赞助商
 
-![sponsors](assets/sponsors.png)
+![sponsors](assets/sponsors.webp)
 
 Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转。如果它对你有帮助，欢迎支持它的开发。
 
@@ -95,7 +95,7 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 ### 以个人身份支持
 
-![donate](assets/supporting_resume_matcher.png)
+![donate](assets/supporting_resume_matcher.webp)
 
 每一份支持都让 Resume Matcher 保持免费，并资助新功能的开发 —— 你也会在 ReadME 和我们的网站上获得鸣谢。
 
@@ -118,17 +118,17 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 ## 主要功能
 
-![resume_matcher_features](assets/features.png)
+![resume_matcher_features](assets/features.webp)
 
 ### 核心能力
 
 **主简历（Master Resume）**：基于你现有简历创建一份完整的主简历，后续每次投递都从这份主简历中抽取与定制。
 
-![Job Description Input](assets/step_2_zh-CN.png)
+![Job Description Input](assets/step_2_zh-CN.webp)
 
 ### 简历生成器
 
-![Resume Builder](assets/step_5_zh-CN.png)
+![Resume Builder](assets/step_5_zh-CN.webp)
 
 粘贴职位描述后，获得针对该岗位定制的 AI 简历建议。
 
@@ -143,13 +143,13 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 基于职位描述与你的简历，生成定制化的求职信与邮件模板。
 
-![Cover Letter](assets/cover_letter_zh-CN.png)
+![Cover Letter](assets/cover_letter_zh-CN.webp)
 
 ### 简历评分（开发中功能）
 
 我们正在开发“简历评分”功能：对比你的简历与职位描述，输出匹配分数，并给出改进建议。
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter_zh-CN.png)
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter_zh-CN.webp)
 
 ### PDF 导出
 
@@ -159,13 +159,13 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 | 模板名称 | 预览 | 说明 |
 |---------|------|------|
-| **单栏** | ![单栏](assets/pdf-templates/single-column.jpg) | 传统全宽布局，内容密度最高。[查看 PDF](assets/pdf-templates/single-column.pdf) |
-| **双栏** | ![双栏](assets/pdf-templates/two-column.jpg) | 以经历为主的主栏布局，侧栏展示技能。[查看 PDF](assets/pdf-templates/two-column.pdf) |
-| **现代** | ![现代](assets/pdf-templates/modern-single-column.jpg) | 彩色点缀，支持自定义主题色。[查看 PDF](assets/pdf-templates/modern-single-column.pdf) |
-| **现代双栏** | ![现代双栏](assets/pdf-templates/modern-two-column.jpg) | 现代双栏布局，带彩色点缀与主题色。[查看 PDF](assets/pdf-templates/modern-two-column.pdf) |
-| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.jpg) | 经典衬线学术版式，带分隔线的栏目标题。[查看 PDF](assets/pdf-templates/latex.pdf) |
-| **简洁** | ![简洁](assets/pdf-templates/clean.jpg) | 极简无衬线版式，栏目标题大而低调。[查看 PDF](assets/pdf-templates/clean.pdf) |
-| **鲜明** | ![鲜明](assets/pdf-templates/vivid.jpg) | 彩色双栏布局，强调色标题与箭头项目符号。[查看 PDF](assets/pdf-templates/vivid.pdf) |
+| **单栏** | ![单栏](assets/pdf-templates/single-column.webp) | 传统全宽布局，内容密度最高。[查看 PDF](assets/pdf-templates/single-column.pdf) |
+| **双栏** | ![双栏](assets/pdf-templates/two-column.webp) | 以经历为主的主栏布局，侧栏展示技能。[查看 PDF](assets/pdf-templates/two-column.pdf) |
+| **现代** | ![现代](assets/pdf-templates/modern-single-column.webp) | 彩色点缀，支持自定义主题色。[查看 PDF](assets/pdf-templates/modern-single-column.pdf) |
+| **现代双栏** | ![现代双栏](assets/pdf-templates/modern-two-column.webp) | 现代双栏布局，带彩色点缀与主题色。[查看 PDF](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.webp) | 经典衬线学术版式，带分隔线的栏目标题。[查看 PDF](assets/pdf-templates/latex.pdf) |
+| **简洁** | ![简洁](assets/pdf-templates/clean.webp) | 极简无衬线版式，栏目标题大而低调。[查看 PDF](assets/pdf-templates/clean.pdf) |
+| **鲜明** | ![鲜明](assets/pdf-templates/vivid.webp) | 彩色双栏布局，强调色标题与箭头项目符号。[查看 PDF](assets/pdf-templates/vivid.pdf) |
 
 ### 国际化
 
@@ -184,7 +184,7 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 ## 如何安装
 
-![Installation](assets/how_to_install_resumematcher.png)
+![Installation](assets/how_to_install_resumematcher.webp)
 
 更详细的安装与配置说明请查看 **[安装文档](SETUP.zh-CN.md)**（也提供 [English](SETUP.md) / [Español](SETUP.es.md) / [日本語](SETUP.ja.md)）。
 
@@ -254,7 +254,7 @@ docker run srbhr/resume-matcher:latest
 
 ## 参与贡献
 
-![how to contribute](assets/how_to_contribute.png)
+![how to contribute](assets/how_to_contribute.webp)
 
 我们欢迎所有人的贡献！无论你是开发者、设计师，还是希望帮忙的用户。所有贡献者都会展示在我们官网的 [about 页面](https://resumematcher.fyi/about)，也会显示在 GitHub README 中。
 
@@ -264,7 +264,7 @@ docker run srbhr/resume-matcher:latest
 
 ## 贡献者
 
-![Contributors](assets/contributors.png)
+![Contributors](assets/contributors.webp)
 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />

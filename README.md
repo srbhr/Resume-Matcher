@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.jpg)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
@@ -56,21 +56,21 @@ Resume Matcher works by creating a master resume that you can use to tailor for 
 
 ### Stay Connected
 
-[![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
+[![Discord](assets/resume_matcher_discord.webp)](https://dsc.gg/resume-matcher)
 
 Join our [Discord](https://dsc.gg/resume-matcher) for discussions, feature requests, and community support.
 
-[![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
+[![LinkedIn](assets/resume_matcher_linkedin.webp)](https://www.linkedin.com/company/resume-matcher/)
 
 Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) for updates.
 
-![Star Resume Matcher](assets/star_resume_matcher.png)
+![Star Resume Matcher](assets/star_resume_matcher.webp)
 
 Star the repo to support development and get notified of new releases.
 
 ## Sponsors
 
-![sponsors](assets/sponsors.png)
+![sponsors](assets/sponsors.webp)
 
 Resume Matcher is free and open-source, kept alive by its sponsors and backers. If it helps you, please consider supporting its development.
 
@@ -93,7 +93,7 @@ Read the [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) for tier
 
 ### Support as an individual
 
-![donate](assets/supporting_resume_matcher.png)
+![donate](assets/supporting_resume_matcher.webp)
 
 Every bit keeps Resume Matcher free and funds new features — and you'll be thanked in the README and on our website.
 
@@ -104,7 +104,7 @@ Every bit keeps Resume Matcher free and funds new features — and you'll be tha
 
 ## Creators' Note
 
-[![srbhr](assets/creators_note.png)](https://srbhr.com)
+[![srbhr](assets/creators_note.webp)](https://srbhr.com)
 
 Thank you for checking out Resume Matcher. If you want to connect, collaborate, or just say hi, feel free to reach out!
 ~ **Saurabh Rai** ✨
@@ -118,17 +118,17 @@ You can follow me on:
 
 ## Key Features
 
-![resume_matcher_features](assets/features.png)
+![resume_matcher_features](assets/features.webp)
 
 ### Core Features
 
 **Master Resume**: Create a comprehensive master resume to draw from your existing one.
 
-![Job Description Input](assets/step_2.png)
+![Job Description Input](assets/step_2.webp)
 
 ### Resume Builder
 
-![Resume Builder](assets/step_5.png)
+![Resume Builder](assets/step_5.webp)
 
 Paste in a job description and get AI-powered resume tailored for that specific role.
 
@@ -143,7 +143,7 @@ You can:
 
 Generate tailored cover letters based on the job description and your resume.
 
-![Cover Letter](assets/cover_letter.png)
+![Cover Letter](assets/cover_letter.webp)
 
 ### Interview Preparation
 
@@ -157,7 +157,7 @@ Paste several job descriptions on the Tailoring Queue page and they are tailored
 
 Analyze your resume against the job description with a match score, keyword highlighting, and suggestions for improvement.
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.webp)
 
 ### PDF Export
 
@@ -167,13 +167,13 @@ Export your tailored resume and cover letter in PDF.
 
 | Template Name | Preview | Description |
 |---------------|---------|-------------|
-| **Single Column** | ![Single Column](assets/pdf-templates/single-column.jpg) | Traditional full-width layout with maximum content density. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/single-column.pdf) |
-| **Two Column** | ![Two Column](assets/pdf-templates/two-column.jpg) | Experience-focused main column with sidebar for skills. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/two-column.pdf) |
-| **Modern** | ![Modern](assets/pdf-templates/modern-single-column.jpg) | Colorful accents with customizable theme colors. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-single-column.pdf) |
-| **Modern Two Column** | ![Modern Two Column](assets/pdf-templates/modern-two-column.jpg) | Two-column layout with modern colorful accents and themes. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-two-column.pdf) |
-| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.jpg) | Classic serif academic layout with ruled section headers. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/latex.pdf) |
-| **Clean** | ![Clean](assets/pdf-templates/clean.jpg) | Minimal sans layout with large understated section headers. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/clean.pdf) |
-| **Vivid** | ![Vivid](assets/pdf-templates/vivid.jpg) | Colorful two-column layout with accent headers and arrow bullets. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/vivid.pdf) |
+| **Single Column** | ![Single Column](assets/pdf-templates/single-column.webp) | Traditional full-width layout with maximum content density. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/single-column.pdf) |
+| **Two Column** | ![Two Column](assets/pdf-templates/two-column.webp) | Experience-focused main column with sidebar for skills. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/two-column.pdf) |
+| **Modern** | ![Modern](assets/pdf-templates/modern-single-column.webp) | Colorful accents with customizable theme colors. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-single-column.pdf) |
+| **Modern Two Column** | ![Modern Two Column](assets/pdf-templates/modern-two-column.webp) | Two-column layout with modern colorful accents and themes. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.webp) | Classic serif academic layout with ruled section headers. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/latex.pdf) |
+| **Clean** | ![Clean](assets/pdf-templates/clean.webp) | Minimal sans layout with large understated section headers. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/clean.pdf) |
+| **Vivid** | ![Vivid](assets/pdf-templates/vivid.webp) | Colorful two-column layout with accent headers and arrow bullets. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/vivid.pdf) |
 
 ### Internationalization
 
@@ -192,7 +192,7 @@ If you have any suggestions or feature requests, please feel free to open an iss
 
 ## How to Install
 
-![Installation](assets/how_to_install_resumematcher.png)
+![Installation](assets/how_to_install_resumematcher.webp)
 
 For detailed setup instructions, see **[SETUP.md](SETUP.md)** (English) or: [Español](SETUP.es.md), [简体中文](SETUP.zh-CN.md), [日本語](SETUP.ja.md).
 
@@ -282,7 +282,7 @@ Endpoints:
 
 ## Join Us and Contribute
 
-![how to contribute](assets/how_to_contribute.png)
+![how to contribute](assets/how_to_contribute.webp)
 
 We welcome contributions from everyone! Whether you're a developer, designer, or just someone who wants to help out. All the contributors are listed in the [about page](https://resumematcher.fyi/about) on our website and on the GitHub Readme here.
 
@@ -292,7 +292,7 @@ Check out the roadmap if you would like to work on the features that are planned
 
 ## Contributors
 
-![Contributors](assets/contributors.png)
+![Contributors](assets/contributors.webp)
 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />

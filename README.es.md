@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.jpg)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
@@ -58,15 +58,15 @@ Resume Matcher funciona creando un currículum maestro que puedes usar para adap
 
 ### Mantente conectado
 
-[![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
+[![Discord](assets/resume_matcher_discord.webp)](https://dsc.gg/resume-matcher)
 
 Únete a nuestro [Discord](https://dsc.gg/resume-matcher) para discusiones, solicitudes de funcionalidades y soporte de la comunidad.
 
-[![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
+[![LinkedIn](assets/resume_matcher_linkedin.webp)](https://www.linkedin.com/company/resume-matcher/)
 
 Síguenos en [LinkedIn](https://www.linkedin.com/company/resume-matcher/) para actualizaciones.
 
-![Star Resume Matcher](assets/star_resume_matcher.png)
+![Star Resume Matcher](assets/star_resume_matcher.webp)
 
 Dale una estrella al repositorio para apoyar el desarrollo y recibir notificaciones de nuevas versiones.
 
@@ -74,7 +74,7 @@ Dale una estrella al repositorio para apoyar el desarrollo y recibir notificacio
 
 ## Patrocinadores
 
-![sponsors](assets/sponsors.png)
+![sponsors](assets/sponsors.webp)
 
 Resume Matcher es libre y de código abierto, y se mantiene gracias a sus patrocinadores y colaboradores. Si te resulta útil, considera apoyar su desarrollo.
 
@@ -97,7 +97,7 @@ Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsor
 
 ### Apoya como particular
 
-![donate](assets/supporting_resume_matcher.png)
+![donate](assets/supporting_resume_matcher.webp)
 
 Cada aporte mantiene Resume Matcher gratis y financia nuevas funciones — y recibirás un agradecimiento en el ReadME y en nuestro sitio web.
 
@@ -120,17 +120,17 @@ Puedes seguirme en:
 
 ## Funciones clave
 
-![resume_matcher_features](assets/features.png)
+![resume_matcher_features](assets/features.webp)
 
 ### Funciones principales
 
 **Currículum maestro**: crea un currículum maestro completo a partir de tu currículum actual.
 
-![Job Description Input](assets/step_2.png)
+![Job Description Input](assets/step_2.webp)
 
 ### Constructor de currículum
 
-![Resume Builder](assets/step_5.png)
+![Resume Builder](assets/step_5.webp)
 
 Pega una descripción del puesto y obtén un currículum adaptado con ayuda de IA.
 
@@ -145,13 +145,13 @@ Puedes:
 
 Genera cartas de presentación y plantillas de email adaptadas según la descripción del puesto y tu currículum.
 
-![Cover Letter](assets/cover_letter_es.png)
+![Cover Letter](assets/cover_letter_es.webp)
 
 ### Puntuación del currículum (función en desarrollo)
 
 Estamos trabajando en una función de puntuación que analiza tu currículum frente a la descripción del puesto y ofrece un puntaje de coincidencia con sugerencias de mejora.
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.webp)
 
 ### Exportación a PDF
 
@@ -161,13 +161,13 @@ Exporta tu currículum adaptado y tu carta de presentación en PDF.
 
 | Nombre de plantilla | Vista previa | Descripción |
 |---------------------|-------------|-------------|
-| **Una columna** | ![Una columna](assets/pdf-templates/single-column.jpg) | Diseño tradicional de ancho completo con máxima densidad de contenido. [Ver PDF](assets/pdf-templates/single-column.pdf) |
-| **Dos columnas** | ![Dos columnas](assets/pdf-templates/two-column.jpg) | Columna principal centrada en experiencia con barra lateral para habilidades. [Ver PDF](assets/pdf-templates/two-column.pdf) |
-| **Moderno** | ![Moderno](assets/pdf-templates/modern-single-column.jpg) | Acentos coloridos con colores de tema personalizables. [Ver PDF](assets/pdf-templates/modern-single-column.pdf) |
-| **Moderno de dos columnas** | ![Moderno de dos columnas](assets/pdf-templates/modern-two-column.jpg) | Diseño de dos columnas moderno con acentos coloridos y temas. [Ver PDF](assets/pdf-templates/modern-two-column.pdf) |
-| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.jpg) | Diseño académico clásico con tipografía serif y encabezados con líneas. [Ver PDF](assets/pdf-templates/latex.pdf) |
-| **Limpio** | ![Limpio](assets/pdf-templates/clean.jpg) | Diseño minimalista sans con encabezados grandes y sobrios. [Ver PDF](assets/pdf-templates/clean.pdf) |
-| **Vívido** | ![Vívido](assets/pdf-templates/vivid.jpg) | Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha. [Ver PDF](assets/pdf-templates/vivid.pdf) |
+| **Una columna** | ![Una columna](assets/pdf-templates/single-column.webp) | Diseño tradicional de ancho completo con máxima densidad de contenido. [Ver PDF](assets/pdf-templates/single-column.pdf) |
+| **Dos columnas** | ![Dos columnas](assets/pdf-templates/two-column.webp) | Columna principal centrada en experiencia con barra lateral para habilidades. [Ver PDF](assets/pdf-templates/two-column.pdf) |
+| **Moderno** | ![Moderno](assets/pdf-templates/modern-single-column.webp) | Acentos coloridos con colores de tema personalizables. [Ver PDF](assets/pdf-templates/modern-single-column.pdf) |
+| **Moderno de dos columnas** | ![Moderno de dos columnas](assets/pdf-templates/modern-two-column.webp) | Diseño de dos columnas moderno con acentos coloridos y temas. [Ver PDF](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.webp) | Diseño académico clásico con tipografía serif y encabezados con líneas. [Ver PDF](assets/pdf-templates/latex.pdf) |
+| **Limpio** | ![Limpio](assets/pdf-templates/clean.webp) | Diseño minimalista sans con encabezados grandes y sobrios. [Ver PDF](assets/pdf-templates/clean.pdf) |
+| **Vívido** | ![Vívido](assets/pdf-templates/vivid.webp) | Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha. [Ver PDF](assets/pdf-templates/vivid.pdf) |
 
 ### Internacionalización
 
@@ -186,7 +186,7 @@ Si tienes alguna sugerencia o solicitud de características, no dudes en abrir u
 
 ## Cómo instalar
 
-![Instalación](assets/how_to_install_resumematcher.png)
+![Instalación](assets/how_to_install_resumematcher.webp)
 
 Para instrucciones detalladas de configuración, consulta **[SETUP.es.md](SETUP.es.md)**. También está disponible en [English](SETUP.md), [简体中文](SETUP.zh-CN.md) y [日本語](SETUP.ja.md).
 
@@ -256,7 +256,7 @@ docker run srbhr/resume-matcher:latest
 
 ## Únete y contribuye
 
-![Cómo contribuir](assets/how_to_contribute.png)
+![Cómo contribuir](assets/how_to_contribute.webp)
 
 ¡Damos la bienvenida a las contribuciones de todos! Ya seas un desarrollador, diseñador o simplemente alguien que quiere ayudar. Todos los colaboradores están listados en la [página "Acerca de"](https://resumematcher.fyi/about) en nuestro sitio web y en el Readme de GitHub.
 
@@ -266,7 +266,7 @@ Echa un vistazo al roadmap si te gustaría trabajar en las características que 
 
 ## Colaboradores
 
-![Colaboradores](assets/contributors.png)
+![Colaboradores](assets/contributors.webp)
 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
