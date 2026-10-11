@@ -24,10 +24,11 @@ apps/backend/app/
 ├── models.py       # SQLAlchemy declarative Base + ORM models
 ├── db_engine.py    # SQLite engine/session factories (async + sync) + PRAGMAs
 ├── llm.py          # Multi-provider LLM
-├── routers/        # health, config, resumes, jobs, applications, enrichment
-├── services/       # parser, improver, cover_letter
+├── routers/        # health, config, resumes, jobs, applications, enrichment, ats
+├── services/       # parser, improver, cover_letter, ats_parse/ (parse-check)
 ├── schemas/        # Pydantic models (models.py, applications.py)
 ├── scripts/        # migrate_tinydb_to_sqlite.py (one-time importer)
+├── mcp_server/     # MCP server over stdio (agent-as-LLM tools)
 └── prompts/        # templates.py
 ```
 

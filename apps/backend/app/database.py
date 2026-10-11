@@ -1,11 +1,11 @@
-"""SQLAlchemy (SQLite) data layer for Resume Matcher.
+"""SQLAlchemy data layer for Resume Matcher (SQLite, or PostgreSQL via DATABASE_URL).
 
 This is a behavior-preserving replacement for the original TinyDB wrapper. The
 ``Database`` facade keeps the same method names/signatures and returns **plain
 dicts** (never ORM rows), so the ~50 call sites only needed ``await`` added.
 
-Two engines back one SQLite file:
-- an **async** engine (``aiosqlite``) for the document tables and applications;
+Two engines back one database:
+- an **async** engine (``aiosqlite`` / ``psycopg``) for the document tables and applications;
 - a **sync** engine for the encrypted ``api_keys`` table, which is read on the
   synchronous LLM hot path (``get_llm_config`` → ``resolve_api_key``).
 """
@@ -27,7 +27,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
-from app.db_engine import init_models_sync, make_async_engine, make_sync_engine
+from app.db_engine import (
+    PG_LOCK_NAMESPACE,
+    init_models_sync,
+    make_async_engine,
+    make_sync_engine,
+)
+from app.db_url import validate_schema_name
 from app.models import ApiKey, Application, Improvement, Job, Resume, TailoringPreview
 from app.preview import (
     PreviewBusyError,
@@ -68,9 +74,15 @@ class MasterResumeLimitError(Exception):
     """Raised when creating a master would exceed MAX_MASTER_RESUMES."""
 
 
+# lock_not_available (lock_timeout), serialization_failure, deadlock_detected.
+_PG_BUSY_SQLSTATES = frozenset({"55P03", "40001", "40P01"})
+_PG_WRITE_LOCK = text("SELECT pg_advisory_xact_lock(:ns, hashtext(current_schema()))")
+WRITE_LOCK_TIMEOUT_MS = 5000
+
+
 @contextmanager
 def _translate_write_errors() -> Iterator[None]:
-    """Expose only SQLite contention as retryable, for async and sync writers."""
+    """Expose only database contention as retryable, for async and sync writers."""
     try:
         yield
     except OperationalError as error:
@@ -80,7 +92,19 @@ def _translate_write_errors() -> Iterator[None]:
             sqlite3.SQLITE_LOCKED,
         ):
             raise DatabaseBusyError("Database is busy") from error
+        if getattr(error.orig, "sqlstate", None) in _PG_BUSY_SQLSTATES:
+            raise DatabaseBusyError("Database is busy") from error
         raise
+
+
+def _write_lock_statements(postgres: bool, lock_timeout_ms: int) -> list[Any]:
+    """SQL that reserves the single writer: BEGIN IMMEDIATE, or a schema-wide advisory lock."""
+    if not postgres:
+        return [text("BEGIN IMMEDIATE")]
+    return [
+        text(f"SET LOCAL lock_timeout = {int(lock_timeout_ms)}"),
+        _PG_WRITE_LOCK.bindparams(ns=PG_LOCK_NAMESPACE),
+    ]
 
 
 class ResumeNotFoundError(ValueError):
@@ -106,9 +130,22 @@ def _now() -> str:
 class Database:
     """Async SQLAlchemy facade for resume matcher data."""
 
-    def __init__(self, db_path: Path | None = None):
-        self.db_path = db_path or settings.sqlite_path
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(
+        self,
+        db_path: Path | None = None,
+        *,
+        url: str | None = None,
+        schema: str | None = None,
+    ):
+        if db_path is None and url is None and settings.database_url:
+            url, schema = settings.database_url, settings.database_schema
+        self.url = None if db_path is not None else url
+        self.schema = validate_schema_name(schema) if self.url and schema else None
+        self.db_path: Path | None = None
+        if self.url is None:
+            self.db_path = db_path or settings.sqlite_path
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.lock_timeout_ms = WRITE_LOCK_TIMEOUT_MS
         self._async_engine = None
         self._async_session_factory: async_sessionmaker[AsyncSession] | None = None
         self._sync_engine = None
@@ -122,16 +159,17 @@ class Database:
 
         Tables are created via the **sync** engine so both the sync (api_keys)
         and async (docs) paths see them immediately, without needing an event
-        loop. Both engines point at the same file.
+        loop. Both engines point at the same database.
         """
         if self._initialized:
             return
-        self._sync_engine = make_sync_engine(self.db_path)
+        target = {"url": self.url, "schema": self.schema}
+        self._sync_engine = make_sync_engine(self.db_path, **target)
         self._sync_session_factory = sessionmaker(
             self._sync_engine, expire_on_commit=False
         )
-        init_models_sync(self._sync_engine)
-        self._async_engine = make_async_engine(self.db_path)
+        init_models_sync(self._sync_engine, self.schema)
+        self._async_engine = make_async_engine(self.db_path, **target)
         self._async_session_factory = async_sessionmaker(
             self._async_engine, expire_on_commit=False
         )
@@ -143,17 +181,26 @@ class Database:
         assert self._async_session_factory is not None
         return self._async_session_factory
 
+    @property
+    def backend(self) -> Literal["sqlite", "postgresql"]:
+        return "postgresql" if self.url else "sqlite"
+
+    def _write_lock(self) -> list[Any]:
+        return _write_lock_statements(self.url is not None, self.lock_timeout_ms)
+
     @asynccontextmanager
     async def _write_session(self) -> AsyncIterator[AsyncSession]:
-        """Reserve SQLite's writer before reading state that a write depends on.
+        """Reserve the database's single writer before reading state that a write depends on.
 
-        The database reservation serializes across connections and processes,
-        unlike an in-memory lock. Callers commit the complete operation; closing
-        the session rolls back every change if any stage raises.
+        The reservation (SQLite ``BEGIN IMMEDIATE``, or a PostgreSQL advisory lock
+        per schema) serializes across connections and processes, unlike an
+        in-memory lock. Callers commit the complete operation; closing the session
+        rolls back every change if any stage raises.
         """
         with _translate_write_errors():
             async with self._session() as session:
-                await session.execute(text("BEGIN IMMEDIATE"))
+                for statement in self._write_lock():
+                    await session.execute(statement)
                 yield session
 
     @property
@@ -167,7 +214,8 @@ class Database:
         """Reserve a synchronous key-store writer with the same busy contract."""
         with _translate_write_errors():
             with self._sync() as session:
-                session.execute(text("BEGIN IMMEDIATE"))
+                for statement in self._write_lock():
+                    session.execute(statement)
                 yield session
 
     async def close(self) -> None:
@@ -1298,6 +1346,7 @@ class Database:
                 select(Resume.resume_id).where(Resume.is_master.is_(True)).limit(1)
             )
             return {
+                "backend": self.backend,
                 "total_resumes": int(resumes or 0),
                 "total_jobs": int(jobs or 0),
                 "total_improvements": int(improvements or 0),

@@ -12,6 +12,8 @@ from typing import Any, Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.db_url import normalize_database_url, validate_schema_name
+
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 logger = logging.getLogger(__name__)
 _CONFIG_WRITE_LOCK = threading.Lock()
@@ -272,6 +274,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # Keeps DATABASE_URL credentials out of validation errors.
+        hide_input_in_errors=True,
     )
 
     # LLM Configuration
@@ -392,6 +396,24 @@ class Settings(BaseSettings):
 
     # Paths
     data_dir: Path = Path(__file__).parent.parent / "data"
+
+    # Optional PostgreSQL backend. Unset: SQLite in data_dir.
+    database_url: str | None = None
+    database_schema: str | None = None
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def parse_database_url(cls, v: Any) -> str | None:
+        if v is None or not str(v).strip():
+            return None
+        return normalize_database_url(str(v))
+
+    @field_validator("database_schema", mode="before")
+    @classmethod
+    def validate_database_schema(cls, v: Any) -> str | None:
+        if v is None or not str(v).strip():
+            return None
+        return validate_schema_name(str(v).strip())
 
     @property
     def db_path(self) -> Path:

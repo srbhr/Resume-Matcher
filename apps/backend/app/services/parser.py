@@ -8,8 +8,9 @@ import re
 import tempfile
 import zipfile
 import zlib
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, BinaryIO, Sequence
+from typing import Any, BinaryIO, Sequence, TypeVar
 
 import anyio
 from markitdown import MarkItDown
@@ -45,6 +46,8 @@ from app.prompts.templates import RESUME_SCHEMA_EXAMPLE
 from app.schemas import ResumeData
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 DOCUMENT_IO_CHUNK_SIZE = 64 * 1024
 MAX_DOCX_MEMBERS = 1_024
@@ -771,6 +774,13 @@ async def parse_document(content: bytes, filename: str) -> str:
     Returns:
         Markdown text content
     """
+    return await run_bounded_document_job(_parse_document_sync, content, filename)
+
+
+async def run_bounded_document_job(
+    job: Callable[[bytes, str], T], content: bytes, filename: str
+) -> T:
+    """Run a sync document job in a worker thread under the shared limiter and deadline."""
     deadline = asyncio.get_running_loop().time() + DOCUMENT_CONVERSION_TIMEOUT_SECONDS
     borrower = object()
     # Queued requests still belong to their caller. Only an admitted conversion
@@ -780,10 +790,10 @@ async def parse_document(content: bytes, filename: str) -> str:
         timeout=DOCUMENT_CONVERSION_TIMEOUT_SECONDS,
     )
 
-    async def run_admitted_worker() -> str:
+    async def run_admitted_worker() -> T:
         try:
             return await anyio.to_thread.run_sync(
-                _parse_document_sync, content, filename, abandon_on_cancel=False
+                job, content, filename, abandon_on_cancel=False
             )
         finally:
             _DOCUMENT_CONVERSION_LIMITER.release_on_behalf_of(borrower)
@@ -799,7 +809,7 @@ async def parse_document(content: bytes, filename: str) -> str:
         # the worker retains its limiter slot and owns its tempfile until done.
         _DOCUMENT_BACKGROUND_WORKERS.add(worker)
 
-        def consume_result(done: asyncio.Task[str]) -> None:
+        def consume_result(done: asyncio.Task[T]) -> None:
             _DOCUMENT_BACKGROUND_WORKERS.discard(done)
             if not done.cancelled():
                 try:

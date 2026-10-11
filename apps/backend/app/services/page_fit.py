@@ -63,18 +63,28 @@ def count_pdf_pages(pdf_bytes: bytes) -> int:
     return len(list(PDFPage.get_pages(io.BytesIO(pdf_bytes))))
 
 
+def print_margins(fit: PageFitSettings) -> dict[str, int]:
+    return {
+        "top": fit.marginTop,
+        "right": fit.marginRight,
+        "bottom": fit.marginBottom,
+        "left": fit.marginLeft,
+    }
+
+
+def resume_print_url(resume_id: str, fit: PageFitSettings) -> str:
+    """Print-route URL for a saved resume (same query as GET /resumes/{id}/pdf)."""
+    query = urlencode(fit.to_query())
+    return f"{settings.frontend_base_url}/print/resumes/{resume_id}?{query}"
+
+
 async def measure_page_count(data: dict[str, Any], fit: PageFitSettings) -> int:
     """Render ``data`` with the user's print settings and return its page count."""
     token = render_drafts.put(data)
     try:
         query = urlencode(fit.to_query())
         url = f"{settings.frontend_base_url}/print/resumes/draft?draft={token}&{query}"
-        margins = {
-            "top": fit.marginTop,
-            "right": fit.marginRight,
-            "bottom": fit.marginBottom,
-            "left": fit.marginLeft,
-        }
+        margins = print_margins(fit)
         # Also wait for the print route's error marker so a missing draft fails fast.
         pdf_bytes = await render_resume_pdf(
             url,

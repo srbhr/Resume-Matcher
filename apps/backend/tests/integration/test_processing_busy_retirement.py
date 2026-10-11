@@ -6,13 +6,14 @@ from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text, update
+from sqlalchemy import update
 
 from app import main as main_module
 from app.database import Database
 from app.main import app
 from app.models import Resume
 from app.routers import resumes
+from tests.db_helpers import hold_writer
 from tests.integration.test_storage_busy_writes import fast_busy_database  # noqa: F401
 from tests.integration.test_upload_processing import _docx_bytes
 
@@ -46,7 +47,7 @@ async def test_sustained_contention_exhausts_retirement_and_allows_later_retry(
     assert token is not None
     writer = database._session()
     await writer.__aenter__()
-    await writer.execute(text("BEGIN IMMEDIATE"))
+    await hold_writer(writer)
     monkeypatch.setattr(resumes, "_PROCESSING_CLEANUP_TIMEOUT_SECONDS", 0.005)
     monkeypatch.setattr(
         resumes, "_PROCESSING_RETIREMENT_MAX_ATTEMPTS", 2, raising=False
@@ -158,7 +159,7 @@ async def test_lifespan_reaps_contended_retirement_before_database_close(
             token = await database.claim_resume_processing(row["resume_id"])
             assert token is not None
             await writer.__aenter__()
-            await writer.execute(text("BEGIN IMMEDIATE"))
+            await hold_writer(writer)
             await resumes._finish_cancelled_processing(row["resume_id"], token)
             await attempt_started.wait()
             assert not attempt_settled.is_set()
@@ -194,7 +195,7 @@ async def test_busy_processing_finish_is_retired_after_caller_returns(
 
     async def parsed_with_writer_held(*args: Any, **kwargs: Any) -> dict[str, Any]:
         del args, kwargs
-        await writer.execute(text("BEGIN IMMEDIATE"))
+        await hold_writer(writer)
         return sample_resume
 
     monkeypatch.setattr(resumes, "parse_resume_to_json", parsed_with_writer_held)
@@ -248,7 +249,7 @@ async def test_busy_claim_preserves_the_existing_processing_owner(
     token = await database.claim_resume_processing(row["resume_id"])
     assert token is not None
     async with database._session() as writer:
-        await writer.execute(text("BEGIN IMMEDIATE"))
+        await hold_writer(writer)
         async with AsyncClient(
             transport=ASGITransport(app=app, raise_app_exceptions=False),
             base_url="http://test",
@@ -286,7 +287,7 @@ async def test_busy_first_upload_claim_retires_only_its_unclaimed_row(
         nonlocal uploaded_id
         row = await original_create(**values)
         uploaded_id = row["resume_id"]
-        await writer.execute(text("BEGIN IMMEDIATE"))
+        await hold_writer(writer)
         return row
 
     monkeypatch.setattr(
