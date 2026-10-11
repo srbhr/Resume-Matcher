@@ -842,16 +842,22 @@ def _build_router(config: LLMConfig) -> Router:
     )
 
 
-def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
+def get_router(config: LLMConfig | None = None) -> tuple[Router | None, LLMConfig]:
     """Get or rebuild the LiteLLM Router.
 
     The Router is cached and only rebuilt when the underlying config changes.
-    Returns the Router and the config it was built from.
+    Returns the Router and the config it was built from. The Router is ``None``
+    for ``claude_cli``: that provider is served by the local ``claude`` binary
+    (see ``_route_acompletion``) and has no LiteLLM deployment — LiteLLM rejects
+    the bare ``claude_cli`` model name when the Router is constructed.
     """
     global _router, _router_config_key
 
     if config is None:
         config = get_llm_config()
+
+    if config.provider == "claude_cli":
+        return None, config
 
     key = _config_fingerprint(config)
     with _router_lock:
