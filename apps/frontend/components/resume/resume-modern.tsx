@@ -8,6 +8,7 @@ import type {
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
+import { TagList } from './tag-list';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/modern.module.css';
 
@@ -383,27 +384,27 @@ const AdditionalSection: React.FC<{
       <h3 className={styles['section-title-accent']}>{displayName}</h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
-          <div className="flex">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <span>{technicalSkills.join(', ')}</span>
+            <TagList items={technicalSkills} />
           </div>
         )}
         {languages.length > 0 && (
-          <div className="flex">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
-            <span>{languages.join(', ')}</span>
+            <TagList items={languages} />
           </div>
         )}
         {certificationsTraining.length > 0 && (
-          <div className="flex">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
-            <span>{certificationsTraining.join(', ')}</span>
+            <TagList items={certificationsTraining} />
           </div>
         )}
         {awards.length > 0 && (
-          <div className="flex">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
-            <span>{awards.join(', ')}</span>
+            <TagList items={awards} />
           </div>
         )}
       </div>

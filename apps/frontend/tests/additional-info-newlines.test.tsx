@@ -52,8 +52,10 @@ describe('ResumeSingleColumn filters blank entries (issue #763)', () => {
 
     render(<ResumeSingleColumn data={data} />);
 
-    // Blank entries must not produce stray separators in the joined output.
-    expect(screen.getByText('React, TypeScript')).toBeInTheDocument();
-    expect(screen.queryByText(/React, , /)).not.toBeInTheDocument();
+    // Blank entries must not produce empty tags or stray separators (#875 renders
+    // each item as its own tag, joined by a separator in the text).
+    const tagList = screen.getByText('React').parentElement;
+    expect(tagList?.children).toHaveLength(3); // React, separator, TypeScript
+    expect(tagList?.textContent).toBe('React, TypeScript');
   });
 });
