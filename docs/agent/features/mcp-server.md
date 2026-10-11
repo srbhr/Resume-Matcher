@@ -35,7 +35,7 @@ Any client works the same way: run the command `uv` with args `run --directory <
 
 1. **Keywords.** `add_job` / `set_job_keywords` store the keywords the agent extracted under `job_keywords` + `job_keywords_hash`. This is the same cache the web tailoring flow reads, so the web UI skips its own extraction for that job.
 2. **Validation.** `validate_tailored_resume` and `save_tailored_resume` run `finalize_ai_resume` (its result must equal the candidate) and `_validate_confirm_payload` (personalInfo unchanged plus `validate_confirmed_resume`, with `allow_appended_rows=True`). Any violation rejects the save. The report lists the violating paths and includes a `repaired_resume_data` the agent can adopt. `grounding_review_warnings` are advisory.
-3. **Save.** A valid save calls `db.create_tailored_resume` (resume + Improvement link), then creates an `applied` tracker card.
+3. **Save.** A valid save calls `db.create_tailored_resume` (resume + Improvement link), then, unless `track_application=false`, tries to create an `applied` tracker card. The card is best-effort: a tracker error is logged and does not fail the save, and `application_id` is in the result only when a card was created.
 4. **Verify.** `tailor_and_verify` runs the validation from step 2. If it fails, nothing is written and it returns `saved: false` with the full report. Otherwise it saves as in step 3, then runs `verify_resume` on the new resume. `verify_resume` renders the PDF once and takes the page count and the parse-check from the same bytes. It scores against the resume's linked job, or `job_id`, and lists `issues`:
 
    | Code | When |
