@@ -41,6 +41,10 @@ ENTRY_ORDER_BY_TEMPLATE: dict[str, dict[str, tuple[str, ...]]] = {
     "clean": {"workExperience": ("company", "title", "location", "years")},
     "latex": {"workExperience": ("company", "title", "years", "location")},
     "vivid": {"workExperience": ("company", "title", "years", "location")},
+    "modern-deedy": {
+        "workExperience": ("company", "title", "location", "years"),
+        "education": ("degree", "institution", "years"),
+    },
 }
 
 

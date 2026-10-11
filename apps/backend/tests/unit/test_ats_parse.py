@@ -270,6 +270,7 @@ def test_roundtrip_links_follow_template_display_and_order() -> None:
         "clean": ["location", "phone", "email", "linkedin", "github", "website"],
         "latex": ["location", "phone", "email", "linkedin", "github", "website"],
         "vivid": ["website", "linkedin", "github", "email", "phone", "location"],
+        "modern-deedy": ["email", "phone", "location", "website", "linkedin", "github"],
     }
     for template, order in expected.items():
         fields = expected_fields(data, template)[0][2:8]
@@ -297,6 +298,8 @@ TEMPLATE_ENTRY_TEXT = {
     "Trinity College\nBSc Physics\n2016",
     "vivid": "Acme Corp | Staff Engineer\n2020 - 2023 | Dublin\n"
     "Trinity College\nBSc Physics\n2016",
+    "modern-deedy": "Acme Corp | Staff Engineer\nDublin | 2020 - 2023\n"
+    "BSc Physics\nTrinity College\n2016",
     "swiss-two-column": "Staff Engineer\nAcme Corp • Dublin\n2020 - 2023\n"
     "Trinity College | 2016\nBSc Physics",
 }
