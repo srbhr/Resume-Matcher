@@ -292,6 +292,18 @@ async def test_docx_tabs_and_line_breaks_separate_words() -> None:
     assert "Go\tPython" in lines
 
 
+async def test_docx_table_cell_paragraphs_stay_separate_words() -> None:
+    def build(document: Any) -> None:
+        cells = document.add_table(rows=1, cols=2).rows[0].cells
+        cells[0].paragraphs[0].text = "Senior"
+        cells[0].add_paragraph("Engineer")
+        cells[1].text = "2020"
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    assert "Senior\nEngineer | 2020" in report.extracted_text_preview
+    assert "SeniorEngineer" not in report.extracted_text_preview
+
+
 async def test_docx_contact_in_a_header_table_is_flagged() -> None:
     def build(document: Any) -> None:
         header = document.sections[0].header

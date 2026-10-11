@@ -134,7 +134,14 @@ def _run_text(element: Any, path: str) -> str:
 
 
 def _xml_text(element: Any) -> str:
-    return _run_text(element, f".//{_RUN_CONTENT}").strip()
+    """Run text with one line per paragraph, so cell paragraphs never run together."""
+    paragraphs: dict[Any, list[str]] = {}
+    for node in element.xpath(f".//{_RUN_CONTENT}"):
+        paragraph = next(node.iterancestors(qn("w:p")), None)
+        paragraphs.setdefault(paragraph, []).append(
+            _RUN_BREAKS.get(node.tag, node.text or "")
+        )
+    return "\n".join("".join(parts) for parts in paragraphs.values()).strip()
 
 
 def _table_lines(table: Any) -> list[str]:
