@@ -1087,4 +1087,3 @@ class JobMetadataParseResponse(BaseModel):
     role: str
     company: str
     job_req_id: str
-

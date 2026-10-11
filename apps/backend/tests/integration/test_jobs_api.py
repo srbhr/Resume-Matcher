@@ -274,4 +274,3 @@ class TestJobQueue:
             resp = await client.delete("/api/v1/jobs/queue?status=completed")
         assert resp.status_code == 200
         assert resp.json()["cleared_count"] == 3
-

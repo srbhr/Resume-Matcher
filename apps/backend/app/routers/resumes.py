@@ -1787,8 +1787,7 @@ async def execute_tailoring_pipeline(
             changes=diff_result.changes,
         )
         allow_appended_rows = any(
-            change.action == "append"
-            for change in applied_changes
+            change.action == "append" for change in applied_changes
         )
 
         diff_warnings = verify_diff_result(
@@ -1831,9 +1830,7 @@ async def execute_tailoring_pipeline(
     improved_data = _restore_original_dates(original_resume_data, improved_data)
     original_markdown = _get_original_markdown(resume)
     if original_markdown:
-        improved_data = restore_dates_from_markdown(
-            improved_data, original_markdown
-        )
+        improved_data = restore_dates_from_markdown(improved_data, original_markdown)
     improved_data = _preserve_original_skills(original_resume_data, improved_data)
     improved_data = _protect_custom_sections(original_resume_data, improved_data)
 

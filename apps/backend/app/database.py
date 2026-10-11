@@ -1595,7 +1595,9 @@ class Database:
             rows = session.execute(stmt).scalars().all()
             return [self._batch_item_to_dict(r) for r in rows]
 
-    def update_batch(self, batch_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+    def update_batch(
+        self, batch_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any] | None:
         with self._sync_write_session() as session:
             row = session.get(Batch, batch_id)
             if row is None:
@@ -1607,7 +1609,9 @@ class Database:
             session.commit()
             return self._batch_to_dict(row)
 
-    def update_batch_item(self, item_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+    def update_batch_item(
+        self, item_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any] | None:
         with self._sync_write_session() as session:
             row = session.get(BatchItem, item_id)
             if row is None:
@@ -1628,4 +1632,3 @@ class Database:
 
 # Global database instance
 db = Database()
-

@@ -19,6 +19,7 @@ from app.schemas import (
     JobUploadResponse,
 )
 from app.services.queue_worker import extract_job_details, queue_manager
+
 batch_manager = queue_manager
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
@@ -67,7 +68,9 @@ async def create_batch_tailor(request: BatchTailorRequest) -> BatchTailorRespons
     """Queue multiple job descriptions for sequential, rate-limited resume tailoring."""
     clean_jds = [jd.strip() for jd in request.job_descriptions if jd.strip()]
     if not clean_jds:
-        raise HTTPException(status_code=400, detail="No valid job descriptions provided")
+        raise HTTPException(
+            status_code=400, detail="No valid job descriptions provided"
+        )
 
     resume = await db.get_resume(request.resume_id)
     if not resume:
@@ -173,7 +176,9 @@ def _format_queue_item(item: dict) -> JobQueueItemResponse:
 
 
 @router.post("/parse-metadata", response_model=JobMetadataParseResponse)
-async def parse_job_metadata(request: JobMetadataParseRequest) -> JobMetadataParseResponse:
+async def parse_job_metadata(
+    request: JobMetadataParseRequest,
+) -> JobMetadataParseResponse:
     """Instantly parse role, company, and job req ID using heuristics with 0 LLM calls."""
     extracted = extract_job_details(request.job_description)
     return JobMetadataParseResponse(

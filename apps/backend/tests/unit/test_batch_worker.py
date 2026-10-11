@@ -1,7 +1,8 @@
 """Unit tests for background queue worker and metadata extraction."""
 
 import pytest
-from app.services.queue_worker import extract_job_details, QueueManager
+
+from app.services.queue_worker import QueueManager, extract_job_details
 
 
 class TestExtractJobDetails:

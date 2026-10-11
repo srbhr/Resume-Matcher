@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import re
-from typing import Any
 
 from app.database import db
 
@@ -73,18 +72,23 @@ def extract_job_details(text: str) -> dict[str, str]:
             if not details["company"]:
                 details["company"] = m_at.group(2).strip()
         elif len(first_line) < 70 and not any(
-            w in first_line.lower() for w in ["about us", "overview", "description", "welcome"]
+            w in first_line.lower()
+            for w in ["about us", "overview", "description", "welcome"]
         ):
             details["role"] = first_line
 
     # 3. If company is still empty, check for "About <Company>" or "<Company> is looking for"
     if not details["company"]:
         for line in lines[:20]:
-            m_about = re.search(r"^about\s+([A-Z][A-Za-z0-9&.\s]{2,35})\b", line, re.IGNORECASE)
+            m_about = re.search(
+                r"^about\s+([A-Z][A-Za-z0-9&.\s]{2,35})\b", line, re.IGNORECASE
+            )
             if m_about:
                 details["company"] = m_about.group(1).strip()
                 break
-            m_hiring = re.search(r"^([A-Z][A-Za-z0-9&.\s]{2,35})\s+is\s+(?:looking|hiring|seeking)", line)
+            m_hiring = re.search(
+                r"^([A-Z][A-Za-z0-9&.\s]{2,35})\s+is\s+(?:looking|hiring|seeking)", line
+            )
             if m_hiring:
                 details["company"] = m_hiring.group(1).strip()
                 break
@@ -164,7 +168,9 @@ class QueueManager:
             try:
                 await self._process_item(item_id, execute_tailoring_pipeline)
             except Exception as e:
-                logger.error("Error processing queue item %s: %s", item_id, e, exc_info=True)
+                logger.error(
+                    "Error processing queue item %s: %s", item_id, e, exc_info=True
+                )
             finally:
                 self._queue.task_done()
 
@@ -174,7 +180,11 @@ class QueueManager:
         if not item:
             # Check if this item is in the batch_items table (backward compatibility)
             ItemQuery = db.batch_items
-            results = ItemQuery.search(db.batch_items.table.Query().item_id == item_id) if hasattr(ItemQuery, "table") else None
+            results = (
+                ItemQuery.search(db.batch_items.table.Query().item_id == item_id)
+                if hasattr(ItemQuery, "table")
+                else None
+            )
             return
 
         # Skip if already completed or deleted
@@ -235,7 +245,9 @@ class QueueManager:
             )
 
         except Exception as err:
-            logger.error("Queue item %s tailoring failed: %s", item_id, err, exc_info=True)
+            logger.error(
+                "Queue item %s tailoring failed: %s", item_id, err, exc_info=True
+            )
             db.update_queue_item(
                 item_id,
                 {
@@ -256,4 +268,3 @@ class QueueManager:
 # Global singleton instances
 queue_manager = QueueManager()
 batch_manager = queue_manager  # Alias for backward compatibility
-
