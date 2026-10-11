@@ -122,8 +122,9 @@ def trim_order(data: dict[str, Any], scores: dict[BulletKey, float]) -> list[Bul
     entry_scores: dict[tuple[str, int], list[float]] = {}
     candidates: list[tuple[int, str, int, int]] = []
     for section_rank, section in enumerate(SELECTABLE_SECTIONS):
-        for entry_index, _entry, description in _entries(data, section):
-            if not description:
+        for entry_index, entry, description in _entries(data, section):
+            # A condensed entry renders as one line, so dropping its bullets saves nothing.
+            if not description or entry.get("condensed"):
                 continue
             counts[(section, entry_index)] = len(description)
             entry_scores[(section, entry_index)] = [

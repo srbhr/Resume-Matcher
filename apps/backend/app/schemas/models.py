@@ -164,6 +164,9 @@ class Experience(BaseModel):
     years: str = ""
     description: list[str] = Field(default_factory=list)
     descriptionStyles: list[Literal["bullet", "plain"]] = Field(default_factory=list)
+    # Renders as one "Title, Company, years" line under "Earlier experience"; the
+    # description and location stay stored but are not shown.
+    condensed: bool = False
 
     @field_validator("description", mode="before")
     @classmethod
@@ -176,6 +179,13 @@ class Experience(BaseModel):
         cls, value: Any
     ) -> list[Literal["bullet", "plain"]]:
         return _coerce_description_styles(value)
+
+    @field_validator("condensed", mode="before")
+    @classmethod
+    def _normalize_condensed(cls, value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() == "true"
 
     @model_validator(mode="after")
     def _sync_description_styles(self) -> "Experience":

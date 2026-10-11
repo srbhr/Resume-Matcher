@@ -743,6 +743,51 @@ async def test_rewritten_condensed_bullet_confirms(
     assert saved["processed_data"]["workExperience"][0]["description"] == expected
 
 
+async def _master_with_condensed_old_role(
+    isolated_db: Any,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    data = _master_data()
+    data["workExperience"].append(
+        {
+            "id": 2,
+            "title": "Systems Analyst",
+            "company": "Initech",
+            "years": "2004 - 2008",
+            "description": ["Maintained the nightly batch jobs"],
+            "condensed": True,
+        }
+    )
+    data = ResumeData.model_validate(data).model_dump()
+    master = await isolated_db.create_resume_atomic_master(
+        content=json.dumps(data),
+        content_type="json",
+        filename="master.json",
+        processed_data=data,
+        processing_status="ready",
+    )
+    job = await isolated_db.create_job(
+        "Backend Engineer at Example: Python and Kubernetes", master["resume_id"]
+    )
+    return master, job
+
+
+async def test_condensed_role_flag_survives_tailoring_and_confirm(
+    client: AsyncClient, isolated_db: Any
+) -> None:
+    master, job = await _master_with_condensed_old_role(isolated_db)
+    data = await _selection_preview(client, master, job, ImproveDiffResult(changes=[]))
+    work = data["resume_preview"]["workExperience"]
+    assert [(e["id"], e["condensed"]) for e in work] == [(1, False), (2, True)]
+
+    confirm = await _confirm(client, master, job, data)
+    assert confirm.status_code == 200, confirm.text
+    saved = await isolated_db.get_resume(confirm.json()["data"]["resume_id"])
+    assert [e["condensed"] for e in saved["processed_data"]["workExperience"]] == [
+        False,
+        True,
+    ]
+
+
 CJK_BULLETS = [
     "负责设计并实现高并发的分布式支付系统",
     "主导数据库性能优化项目",
