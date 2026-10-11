@@ -30,3 +30,25 @@ def test_line_over_the_item_limit_is_rejected(separator: str) -> None:
     line = separator.join(["Python", "Go", *extra])
 
     assert _restore(["Python", "Go"], line) == ["Python", "Go"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Python, Java, Rust and Go",
+        "Python, Java, Rust, and Go",
+        "Python, Java, Rust or Go",
+        "Python, Java, Rust & Go",
+    ],
+)
+def test_final_conjunction_without_oxford_comma_splits_into_skills(line: str) -> None:
+    assert _restore(["Python", "Java"], line) == ["Python", "Java", "Rust", "Go"]
+
+
+def test_conjunction_rules_from_the_wrapped_sentence_guard_still_apply() -> None:
+    # A mid-line "and ..." item or a dangling "and" is a wrapped sentence, not a list.
+    assert _restore(["Python", "Java"], "Python, and Java, Rust, Go") == [
+        "Python",
+        "Java",
+    ]
+    assert _restore(["Python", "Java"], "Python, Java, Rust and") == ["Python", "Java"]
