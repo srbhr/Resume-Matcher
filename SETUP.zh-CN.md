@@ -337,9 +337,9 @@ ollama serve
 3. 在 OpenAI 登录，并允许 Resume Matcher 使用你的 ChatGPT 订阅。首次使用时，OpenAI 会为你的账户注册该应用；之后的登录会复用该注册。
 4. 你会回到 Settings。从你账户可用的模型中选择一个，然后点击 **Save**。
 
-OpenAI 会将浏览器重定向到 `http://127.0.0.1:<backend port>/auth/callback`（默认端口为 `8000`），而后端只接受来自 `127.0.0.1` 的该回调。因此，浏览器必须运行在运行后端的那台机器上，并能直接访问该端口。令牌加密存储在后端数据目录中（`chatgpt_credentials.enc`）。**Disconnect** 会在 OpenAI 端撤销会话并删除令牌；**Manage usage** 会打开你的 ChatGPT 用量设置。
+OpenAI 会将浏览器重定向到 `http://127.0.0.1:<port>/auth/callback`，其中 `<port>` 是你打开 Resume Matcher 时使用的端口（默认为 `3000`）。前端会把该路径转发给后端，而后端只接受来自其所在机器的该回调。因此，浏览器必须运行在运行 Resume Matcher 的那台机器上，并且你应以 `http://localhost:<port>` 或 `http://127.0.0.1:<port>` 的形式打开它。令牌加密存储在后端数据目录中（`chatgpt_credentials.enc`）。**Disconnect** 会在 OpenAI 端撤销会话并删除令牌；**Manage usage** 会打开你的 ChatGPT 用量设置。
 
-**Docker：** 默认配置只发布 3000 端口，而通过 Docker 发布端口建立的连接是从 Docker 网关而不是 `127.0.0.1` 到达容器的，因此无法完成登录。在 Linux 上，请使用主机网络（`network_mode: host`）运行容器；否则请在本地（不使用 Docker）运行 Resume Matcher 以使用此提供商。
+**Docker：** 使用只发布 3000 端口的默认配置即可完成登录：请在运行容器的机器上，通过 `http://localhost:3000`（或你发布的 `PORT`）打开 Resume Matcher。OpenAI 会把浏览器带回同一个端口，前端再把 `/auth/callback` 转发给容器内的后端。从另一台电脑或通过反向代理域名访问时无法使用，因为 OpenAI 只允许 `http://127.0.0.1` 的重定向。
 
 等效的 `.env`（仍需在 Settings 中登录）：
 

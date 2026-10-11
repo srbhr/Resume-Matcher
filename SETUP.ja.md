@@ -337,9 +337,9 @@ OpenAI 公式の [Sign in with ChatGPT for open-source apps](https://developers.
 3. OpenAI でサインインし、Resume Matcher が ChatGPT プランを使うことを許可します。初回は OpenAI がアカウントにアプリを登録し、以降のサインインではその登録が再利用されます。
 4. Settings に戻ります。アカウントで利用できるモデルを選び、**Save** をクリックします。
 
-OpenAI はブラウザを `http://127.0.0.1:<backend port>/auth/callback`（既定ではポート `8000`）に戻し、バックエンドはこのコールバックを `127.0.0.1` からのみ受け付けます。そのため、ブラウザはバックエンドを実行しているマシン上で動作し、そのポートに直接到達できる必要があります。トークンは暗号化してバックエンドのデータディレクトリ（`chatgpt_credentials.enc`）に保存されます。**Disconnect** は OpenAI 側でセッションを取り消してトークンを削除し、**Manage usage** は ChatGPT の使用状況設定を開きます。
+OpenAI はブラウザを `http://127.0.0.1:<port>/auth/callback` に戻します。`<port>` は Resume Matcher を開いたポート（既定は `3000`）です。フロントエンドがこのパスをバックエンドに転送し、バックエンドはこのコールバックを自身が動作しているマシンからのみ受け付けます。そのため、ブラウザは Resume Matcher を実行しているマシン上で動作している必要があり、`http://localhost:<port>` または `http://127.0.0.1:<port>` として開いてください。トークンは暗号化してバックエンドのデータディレクトリ（`chatgpt_credentials.enc`）に保存されます。**Disconnect** は OpenAI 側でセッションを取り消してトークンを削除し、**Manage usage** は ChatGPT の使用状況設定を開きます。
 
-**Docker:** 既定の構成で公開されるのはポート 3000 のみです。Docker の公開ポート経由の接続は `127.0.0.1` ではなく Docker のゲートウェイからコンテナに届くため、サインインを完了できません。Linux ではホストネットワーク（`network_mode: host`）でコンテナを実行してください。それ以外の場合は、このプロバイダを使うために Resume Matcher を（Docker ではなく）ローカルで実行してください。
+**Docker:** サインインは、ポート 3000 のみを公開する既定の構成で動作します。コンテナを実行しているマシン上で、Resume Matcher を `http://localhost:3000`（または公開した `PORT`）で開いてください。OpenAI は同じポートにブラウザを戻し、フロントエンドが `/auth/callback` をコンテナ内のバックエンドに転送します。OpenAI は `http://127.0.0.1` へのリダイレクトしか許可しないため、別のコンピューターやリバースプロキシのドメイン経由では動作しません。
 
 同等の `.env`（サインインは引き続き Settings から行います）：
 
