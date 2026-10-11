@@ -300,3 +300,26 @@ class TestCommandLine:
 
         assert stdin == hostile.encode()
         assert all(hostile not in arg for arg in args)
+
+
+class TestSamplingControls:
+    """The CLI has no temperature/JSON-mode flags; dev's gates must not send them."""
+
+    async def test_complete_sends_no_temperature_for_the_default_model(self):
+        cli = AsyncMock(return_value=_shaped("ok"))
+
+        with patch("app.llm.claude_acompletion", cli):
+            await complete("Hi", config=_cli_config(), temperature=0.7)
+
+        assert "temperature" not in cli.call_args.kwargs
+
+    async def test_complete_json_sends_no_temperature_or_json_mode(self):
+        cli = AsyncMock(return_value=_shaped('{"required_skills": []}'))
+
+        with patch("app.llm.claude_acompletion", cli):
+            await complete_json(
+                prompt="Extract keywords", schema_type="keywords", config=_cli_config()
+            )
+
+        assert "temperature" not in cli.call_args.kwargs
+        assert "response_format" not in cli.call_args.kwargs
