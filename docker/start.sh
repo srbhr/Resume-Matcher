@@ -190,7 +190,7 @@ fi
 
 # Check for Playwright browsers
 info "Checking Playwright browsers..."
-if [ -d "/root/.cache/ms-playwright" ] || [ -d "/home/appuser/.cache/ms-playwright" ]; then
+if [ -d "${PLAYWRIGHT_BROWSERS_PATH:-/nonexistent}" ] || [ -d "/root/.cache/ms-playwright" ] || [ -d "/home/appuser/.cache/ms-playwright" ]; then
     status "Playwright browsers found"
 else
     warn "Installing Playwright Chromium (this may take a moment)..."

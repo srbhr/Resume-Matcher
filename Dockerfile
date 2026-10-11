@@ -32,9 +32,10 @@ RUN npm run build
 FROM python:3.13-slim-bookworm
 
 # Set environment variables
+# PIP_NO_CACHE_DIR is deliberately not set: the pip steps below use a BuildKit cache
+# mount (kept out of the image), and that mount only helps while pip's cache is on.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
@@ -65,6 +66,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
+# ============================================
+# Python dependencies + Chromium (cached across code changes)
+# ============================================
+# These layers only depend on pyproject.toml, so editing app code or the frontend
+# never re-downloads dependencies or Chromium.
+WORKDIR /app/backend
+COPY apps/backend/pyproject.toml /app/backend/
+
+# Install the dependency list from pyproject.toml (read with tomllib so it never
+# drifts), without the package itself. The package is installed after the code copy.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" > /tmp/requirements.txt \
+    && pip install -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+
+# Chromium for PDF export, installed once into a shared path (root-owned, readable by
+# appuser) so the layer survives code changes. Only the headless shell is installed:
+# app/pdf.py launches headless, which Playwright 1.49+ serves from the headless shell.
+# Optional build arg for a mirror when the default CDN is slow:
+#   docker build --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://<mirror> .
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ARG PLAYWRIGHT_DOWNLOAD_HOST
+RUN python -m playwright install --only-shell chromium \
+    && chmod -R a+rX /ms-playwright
+
 WORKDIR /app
 
 # Copy Node.js runtime from frontend builder for reproducible runtime behavior.
@@ -73,13 +99,13 @@ COPY --from=frontend-builder /usr/local/bin/node /usr/local/bin/node
 # ============================================
 # Backend Setup
 # ============================================
-COPY apps/backend/pyproject.toml /app/backend/
 COPY apps/backend/app /app/backend/app
 
 WORKDIR /app/backend
 
-# Install Python dependencies
-RUN pip install .
+# Install the backend package itself (dependencies are already installed above)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-deps .
 
 # ============================================
 # Frontend Setup
@@ -108,9 +134,6 @@ RUN useradd -m -u 1000 appuser \
     && chown -R appuser:appuser /app
 
 USER appuser
-
-# Install Playwright Chromium as appuser (so browsers are in correct location)
-RUN python -m playwright install chromium
 
 # Expose the public port (backend remains internal on 8000)
 EXPOSE 3000
