@@ -453,6 +453,10 @@
         "vivid": {
           "name": "鲜明",
           "description": "彩色双栏布局，强调色标题与箭头项目符号"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Lato 字体的单页紧凑版式，栏目标题为浅灰色大写"
         }
       },
       "accentColor": "强调色",

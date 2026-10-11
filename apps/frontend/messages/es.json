@@ -453,6 +453,10 @@
         "vivid": {
           "name": "Vívido",
           "description": "Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Diseño denso de una página en Lato con encabezados de sección en mayúsculas de gris claro"
         }
       },
       "accentColor": "Color de acento",

@@ -453,6 +453,10 @@
         "vivid": {
           "name": "Vivid",
           "description": "Colorful two-column layout with accent headers and arrow bullets"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Dense one-page layout in Lato with light grey uppercase section headings"
         }
       },
       "accentColor": "Accent Color",
