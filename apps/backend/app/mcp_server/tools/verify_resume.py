@@ -38,6 +38,8 @@ def _issues(
         if max_pages is not None and page_count is not None and page_count > max_pages:
             issues.append("over_page_limit")
         status = {check.id: check.status for check in report.checks}
+        if status.get("text_layer") == "fail":
+            issues.append("text_layer")
         if status.get("multi_column") == "fail":
             issues.append("multi_column")
         if status.get("garbled_glyphs") != "pass":
@@ -106,8 +108,8 @@ async def verify_resume(
     """Render a saved resume once and report page count, ATS parse-check, keyword score and issues. Writes nothing.
 
     job_id defaults to the job a tailored resume was saved for. Issue codes: over_page_limit,
-    multi_column, garbled_glyphs, low_order_fidelity, fields_missing, roundtrip_truncated,
-    injectable_keywords, render_failed.
+    text_layer (the PDF has too little extractable text), multi_column, garbled_glyphs,
+    low_order_fidelity, fields_missing, roundtrip_truncated, injectable_keywords, render_failed.
     """
     resume = await require_resume(resume_id)
     return await verify(resume, job_id, print_settings or PageFitSettings(), max_pages)

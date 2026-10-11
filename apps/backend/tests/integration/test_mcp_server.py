@@ -30,6 +30,7 @@ from app.pdf import PDFRenderError
 from app.routers import resumes as resumes_router
 from app.routers.resumes import _hash_job_content
 from app.services import ats_parse
+from app.services.ats_parse.extract import ExtractedDocument
 from tests.ats_fixtures import john_doe, render
 from tests.unit.test_page_fit import _pdf
 
@@ -926,6 +927,32 @@ async def test_verify_resume_flags_a_truncated_round_trip(
     assert "roundtrip_truncated" not in before["issues"]
     assert after["parse_check"]["roundtrip"]["truncated"]
     assert "roundtrip_truncated" in after["issues"]
+
+
+async def test_verify_resume_flags_a_failed_text_layer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        shared_module,
+        "render_resume_pdf",
+        AsyncMock(return_value=render("single-column")),
+    )
+    # Almost no extractable text, and no round trip to report missing fields.
+    unreadable = ats_parse.build_report(
+        ExtractedDocument(kind="pdf", text="Jane", page_count=1), source="render"
+    )
+    assert {c.id: c.status for c in unreadable.checks}["text_layer"] == "fail"
+    monkeypatch.setattr(
+        ats_parse, "parse_check_pdf", AsyncMock(return_value=unreadable)
+    )
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        result = await call(mcp, "verify_resume", {"resume_id": master["resume_id"]})
+        description = next(
+            t for t in (await mcp.list_tools()).tools if t.name == "verify_resume"
+        ).description
+    assert "text_layer" in result["issues"]
+    assert "text_layer" in description
 
 
 async def test_resume_schema_rules_are_described_as_guidance() -> None:
