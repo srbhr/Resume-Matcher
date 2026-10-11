@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 
+from app.ai_limits import MAX_JOB_CHARACTERS, require_source_size
 from app.database import DatabaseBusyError, db
 from app.schemas import (
     JobMetadataParseRequest,
@@ -96,6 +97,8 @@ async def add_to_queue(request: JobQueueAddRequest) -> JobQueueItemResponse:
     """Queue a single job description for sequential background resume tailoring."""
     if not request.job_description or not request.job_description.strip():
         raise HTTPException(status_code=400, detail="Job description cannot be empty")
+    # Refuse now what the worker would fail later, before anything is stored.
+    require_source_size(request.job_description.strip(), MAX_JOB_CHARACTERS)
 
     resume = await db.get_resume(request.resume_id)
     if not resume:

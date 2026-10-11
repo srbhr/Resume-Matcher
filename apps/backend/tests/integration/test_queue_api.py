@@ -259,3 +259,22 @@ async def test_add_accepts_cooldown_bounds(
         )
     assert resp.status_code == 200, resp.text
     assert resp.json()["rate_limit_seconds"] == cooldown
+
+
+async def test_add_rejects_an_oversized_job_description_before_queueing(
+    isolated_db: Database, enqueue: MagicMock, client: AsyncClient
+) -> None:
+    from app.ai_limits import MAX_JOB_CHARACTERS
+
+    resume_id = await _master(isolated_db)
+    async with client:
+        resp = await client.post(
+            "/api/v1/jobs/queue",
+            json={
+                "resume_id": resume_id,
+                "job_description": "x" * (MAX_JOB_CHARACTERS + 1),
+            },
+        )
+    assert resp.status_code == 422
+    assert await isolated_db.get_queue() == []
+    enqueue.assert_not_called()
