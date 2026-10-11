@@ -28,6 +28,7 @@ SQLite in `data/resume_matcher.db` stays the default. PostgreSQL is for durabili
 3. **Startup** (`db_engine.init_models_sync`).
    - `CREATE SCHEMA IF NOT EXISTS` and `create_all` run in one transaction under an advisory lock, so the web app and the MCP server can start together.
    - The SQLite-only `ALTER TABLE` migrations are skipped, because Postgres tables are always created current.
+   - Columns added after the Postgres backend shipped (`improvements.ats_score`) go through `_add_missing_column`, which both backends run. It inspects the table and renders the column DDL through the dialect.
    - The default-master partial unique index uses `postgresql_where=is_default_master`.
 4. **Status.** `GET /status` `database_stats.backend` and MCP `get_status` report `sqlite` or `postgresql`.
 

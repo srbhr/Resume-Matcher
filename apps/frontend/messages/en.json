@@ -320,6 +320,17 @@
         "keywordsExtracted": "{count} keywords extracted",
         "matchesFound": "{count} matches found",
         "matchRateLabel": "Match Rate:"
+      },
+      "atsScore": {
+        "description": "Scores the saved resume against this job description. The ATS CHECK tab tests how the PDF itself parses.",
+        "loading": "Loading ATS score…",
+        "notCalculated": "ATS score not calculated yet for this resume.",
+        "loadFailed": "Couldn't load the saved ATS score. Try Recalculate, or reload the page.",
+        "lastCalculated": "Last calculated {date}",
+        "recalculate": "Recalculate",
+        "recalculating": "Calculating…",
+        "saveFirst": "Save your changes, then recalculate.",
+        "recalculateFailed": "Couldn't calculate an ATS score. If this resume was tailored before scores were saved, tailor it again from the Tailor Resume page."
       }
     },
     "genericItemForm": {
@@ -713,6 +724,23 @@
         "description": "Comprehensive tailoring using the job description."
       }
     },
+    "length": {
+      "pageLimitLabel": "Page limit",
+      "pageLimitDescription": "Trims the least relevant bullets to fit where possible. No limit turns page fitting off.",
+      "pageLimitOptions": {
+        "1": "1 page",
+        "2": "2 pages",
+        "3": "3 pages",
+        "none": "No limit"
+      },
+      "bulletsLabel": "Bullets per role",
+      "bulletsDescription": "Most relevant bullets kept for each job or project.",
+      "bulletOptions": {
+        "3": "Up to 3",
+        "5": "Up to 5",
+        "all": "All"
+      }
+    },
     "analyzeJob": "Analyze Job",
     "generateTailored": "Generate Tailored Resume",
     "setupRequiredTitle": "[ SETUP REQUIRED ]",
@@ -747,6 +775,18 @@
       "rejectButton": "Reject & Regenerate",
       "confirmButton": "Confirm & Save"
     },
+    "atsScore": {
+      "title": "ATS Score Breakdown",
+      "keywordMatch": "Keyword Match",
+      "skillsCoverage": "Skills Coverage",
+      "titleMatch": "Title Match",
+      "sectionCompleteness": "Section Completeness",
+      "dateConsistency": "Date Consistency",
+      "missingKeywords": "Missing Keywords",
+      "injectableKeywords": "Safe to Add (in your master resume)",
+      "recommendations": "Recommendations",
+      "twoColumnWarning": "Two-column layout: many ATS parsers read columns out of order. Switch to a single-column template in the Builder before applying."
+    },
     "regenerateDialog": {
       "title": "Regenerate tailored resume?",
       "description": "This will discard the current preview and request a new AI tailoring result.",
@@ -777,12 +817,13 @@
       "review": "Review the changes and save"
     },
     "selectionSummary": "Kept {kept} of {total} bullets (up to {max} per job or project)",
+    "selectionSummaryAll": "Kept {kept} of {total} bullets",
     "pageFit": {
-      "fits": "Fits on one page",
-      "trimmed": "Trimmed {count} more to fit one page",
-      "over": "Still over one page",
+      "fits": "Fits the page limit",
+      "trimmed": "Trimmed {count} more to fit the page limit",
+      "over": "Over the page limit; all selected bullets kept",
       "unavailable": "Page fit unavailable",
-      "finalOver": "May run over one page after rewriting",
+      "finalOver": "May run over the page limit after rewriting",
       "notRechecked": "Page fit not re-checked after rewriting"
     }
   },

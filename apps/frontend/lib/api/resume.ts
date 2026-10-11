@@ -1,4 +1,5 @@
 import type {
+  ATSScore,
   ImprovedResult,
   InterviewPrepData,
 } from '@/components/common/resume_previewer_context';
@@ -89,7 +90,10 @@ export interface PageFitSettings {
 
 /** Summary of harness-steered bullet selection returned by improve/preview. */
 export interface BulletSelectionSummary {
-  max_per_entry: number;
+  /** Null when no per-entry bullet cap was applied. */
+  max_per_entry: number | null;
+  /** Page limit page fit aimed for; null/absent when page fit was not requested. */
+  max_pages?: number | null;
   bullets_before: number;
   bullets_after: number;
   trimmed_for_fit: number;
@@ -248,7 +252,7 @@ export async function previewImproveResume(
   resumeId: string,
   jobId: string,
   promptId?: string,
-  options?: { maxBulletsPerEntry?: number; pageFit?: PageFitSettings }
+  options?: { maxBulletsPerEntry?: number; pageFit?: PageFitSettings; maxPages?: number }
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
@@ -258,6 +262,7 @@ export async function previewImproveResume(
       ? { max_bullets_per_entry: options.maxBulletsPerEntry }
       : {}),
     ...(options?.pageFit !== undefined ? { page_fit: options.pageFit } : {}),
+    ...(options?.maxPages !== undefined ? { max_pages: options.maxPages } : {}),
   });
 }
 
@@ -514,6 +519,33 @@ export async function retryProcessing(
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to retry processing (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Last calculated ATS score of a saved tailored resume. */
+export interface ATSScoreRecord {
+  score: ATSScore;
+  /** UTC ISO-8601 time of the calculation. */
+  calculated_at: string;
+}
+
+/** Last calculated ATS score, or null when it was never calculated. */
+export async function fetchLastAtsScore(resumeId: string): Promise<ATSScoreRecord | null> {
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/ats-score`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch ATS score (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Recalculates the ATS score from the saved resume and stores it as the last score. */
+export async function recalculateAtsScore(resumeId: string): Promise<ATSScoreRecord> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/ats-score`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to recalculate ATS score (status ${res.status}): ${text}`);
   }
   return res.json();
 }

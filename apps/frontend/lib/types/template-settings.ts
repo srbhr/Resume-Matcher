@@ -14,6 +14,17 @@ export type TemplateType =
   | 'clean'
   | 'vivid';
 
+const TWO_COLUMN_TEMPLATES: ReadonlySet<TemplateType> = new Set([
+  'swiss-two-column',
+  'modern-two-column',
+  'vivid',
+]);
+
+/** Two-column layouts can be read out of order by ATS parsers. */
+export function isTwoColumnTemplate(template: TemplateType): boolean {
+  return TWO_COLUMN_TEMPLATES.has(template);
+}
+
 export type PageSize = 'A4' | 'LETTER';
 
 export type AccentColor = 'blue' | 'green' | 'orange' | 'red';

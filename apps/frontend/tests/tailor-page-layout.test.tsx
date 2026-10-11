@@ -168,7 +168,7 @@ describe('ATS score card', () => {
         }}
       />
     );
-    const card = screen.getByRole('region', { name: 'ATS Score Breakdown' });
+    const card = screen.getByRole('region', { name: 'tailor.atsScore.title' });
     expect(card.className).toContain('shadow-sw-nested');
     expect(card.className).not.toContain('shadow-sw-default');
   });

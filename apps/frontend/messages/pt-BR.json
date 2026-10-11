@@ -320,6 +320,17 @@
         "keywordsExtracted": "{count} palavras-chave extraídas",
         "matchesFound": "{count} correspondências encontradas",
         "matchRateLabel": "Taxa de Correspondência:"
+      },
+      "atsScore": {
+        "description": "Pontua o currículo salvo em relação a esta descrição da vaga. A aba VERIFICAÇÃO ATS testa como o próprio PDF é lido.",
+        "loading": "Carregando a pontuação ATS…",
+        "notCalculated": "A pontuação ATS deste currículo ainda não foi calculada.",
+        "loadFailed": "Não foi possível carregar a pontuação ATS salva. Tente Recalcular ou recarregue a página.",
+        "lastCalculated": "Último cálculo: {date}",
+        "recalculate": "Recalcular",
+        "recalculating": "Calculando…",
+        "saveFirst": "Salve suas alterações e depois recalcule.",
+        "recalculateFailed": "Não foi possível calcular a pontuação ATS. Se este currículo foi adaptado antes de as pontuações serem salvas, adapte-o novamente na página Personalizar Currículo."
       }
     },
     "genericItemForm": {
@@ -713,6 +724,23 @@
         "description": "Personalização abrangente usando a descrição da vaga."
       }
     },
+    "length": {
+      "pageLimitLabel": "Limite de páginas",
+      "pageLimitDescription": "Remove os tópicos menos relevantes para caber quando possível. Sem limite desativa o ajuste de páginas.",
+      "pageLimitOptions": {
+        "1": "1 página",
+        "2": "2 páginas",
+        "3": "3 páginas",
+        "none": "Sem limite"
+      },
+      "bulletsLabel": "Tópicos por cargo",
+      "bulletsDescription": "Tópicos mais relevantes mantidos para cada cargo ou projeto.",
+      "bulletOptions": {
+        "3": "Até 3",
+        "5": "Até 5",
+        "all": "Todos"
+      }
+    },
     "analyzeJob": "Analisar Vaga",
     "generateTailored": "Gerar Currículo Personalizado",
     "setupRequiredTitle": "[ CONFIGURAÇÃO NECESSÁRIA ]",
@@ -747,6 +775,18 @@
       "rejectButton": "Rejeitar e regenerar",
       "confirmButton": "Confirmar e salvar"
     },
+    "atsScore": {
+      "title": "Detalhamento da pontuação ATS",
+      "keywordMatch": "Correspondência de palavras-chave",
+      "skillsCoverage": "Cobertura de habilidades",
+      "titleMatch": "Correspondência de cargo",
+      "sectionCompleteness": "Completude das seções",
+      "dateConsistency": "Consistência de datas",
+      "missingKeywords": "Palavras-chave ausentes",
+      "injectableKeywords": "Seguras para adicionar (no seu currículo principal)",
+      "recommendations": "Recomendações",
+      "twoColumnWarning": "Layout em duas colunas: muitos ATS leem as colunas fora de ordem. Mude para um modelo de uma coluna no editor antes de se candidatar."
+    },
     "regenerateDialog": {
       "title": "Regenerar o currículo personalizado?",
       "description": "Isso descartará a prévia atual e solicitará um novo resultado de personalização por IA.",
@@ -777,13 +817,14 @@
       "review": "Revise as alterações e salve"
     },
     "selectionSummary": "{kept} de {total} marcadores mantidos (até {max} por cargo ou projeto)",
+    "selectionSummaryAll": "{kept} de {total} tópicos mantidos",
     "pageFit": {
-      "fits": "Cabe em uma página",
-      "trimmed": "Marcadores extras removidos para caber em uma página: {count}",
-      "over": "Ainda excede uma página",
+      "fits": "Cabe no limite de páginas",
+      "trimmed": "Mais {count} removidos para caber no limite de páginas",
+      "over": "Acima do limite de páginas; todos os tópicos selecionados foram mantidos",
       "unavailable": "Ajuste de página indisponível",
-      "finalOver": "Pode passar de uma página após a reescrita",
-      "notRechecked": "Ajuste a uma página não verificado após a reescrita"
+      "finalOver": "Pode passar do limite de páginas após a reescrita",
+      "notRechecked": "Ajuste ao limite de páginas não verificado após a reescrita"
     }
   },
   "settings": {

@@ -22,6 +22,18 @@ import {
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
+import {
+  DEFAULT_TAILOR_LENGTH,
+  TAILOR_BULLET_CAPS,
+  TAILOR_PAGE_LIMITS,
+  buildPreviewLengthOptions,
+  readTailorLength,
+  writeTailorLength,
+  type TailorBulletCap,
+  type TailorLengthSettings,
+  type TailorPageLimit,
+} from '@/lib/utils/tailor-length-settings';
+import type { TemplateType } from '@/lib/types/template-settings';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -63,11 +75,25 @@ export default function TailorPage() {
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
   // The last ATS result stays visible after the diff modal closes; cleared when a new run starts.
   const [atsResult, setAtsResult] = useState<ATSScore | null>(null);
+  // Template the preview was fitted with; the ATS card warns on two-column layouts.
+  const [atsTemplate, setAtsTemplate] = useState<TemplateType | undefined>(undefined);
   const [diffConfirmError, setDiffConfirmError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
+  // Page limit / bullet cap for tailoring; loaded from storage after mount.
+  const [tailorLength, setTailorLength] = useState<TailorLengthSettings>(DEFAULT_TAILOR_LENGTH);
+
+  useEffect(() => {
+    setTailorLength(readTailorLength());
+  }, []);
+
+  const updateTailorLength = (patch: Partial<TailorLengthSettings>) => {
+    const next = { ...tailorLength, ...patch };
+    setTailorLength(next);
+    writeTailorLength(next);
+  };
   const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
 
   // Elapsed timer for long operations
@@ -259,10 +285,13 @@ export default function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
-      const result = await previewImproveResume(resumeId, jobId, selectedPromptId, {
-        maxBulletsPerEntry: 3,
-        pageFit: toPageFitSettings(readStoredTemplateSettings(), locale),
-      });
+      const templateSettings = readStoredTemplateSettings();
+      const result = await previewImproveResume(
+        resumeId,
+        jobId,
+        selectedPromptId,
+        buildPreviewLengthOptions(tailorLength, toPageFitSettings(templateSettings, locale))
+      );
       if (!isCurrent(token)) return;
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
@@ -281,6 +310,7 @@ export default function TailorPage() {
       setMissingDiffError(null);
       setPendingResult(result);
       setAtsResult(result.data.ats_score ?? null);
+      setAtsTemplate(templateSettings.template);
       setShowDiffModal(true);
     } catch (err) {
       if (!isCurrent(token)) return;
@@ -543,6 +573,39 @@ export default function TailorPage() {
             />
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Dropdown
+              options={TAILOR_PAGE_LIMITS.map((limit) => ({
+                id: String(limit ?? 'none'),
+                label: t(`tailor.length.pageLimitOptions.${limit ?? 'none'}`),
+              }))}
+              value={String(tailorLength.maxPages ?? 'none')}
+              onChange={(value) =>
+                updateTailorLength({
+                  maxPages: (value === 'none' ? null : Number(value)) as TailorPageLimit,
+                })
+              }
+              label={t('tailor.length.pageLimitLabel')}
+              description={t('tailor.length.pageLimitDescription')}
+              disabled={isLoading}
+            />
+            <Dropdown
+              options={TAILOR_BULLET_CAPS.map((cap) => ({
+                id: String(cap ?? 'all'),
+                label: t(`tailor.length.bulletOptions.${cap ?? 'all'}`),
+              }))}
+              value={String(tailorLength.maxBulletsPerEntry ?? 'all')}
+              onChange={(value) =>
+                updateTailorLength({
+                  maxBulletsPerEntry: (value === 'all' ? null : Number(value)) as TailorBulletCap,
+                })
+              }
+              label={t('tailor.length.bulletsLabel')}
+              description={t('tailor.length.bulletsDescription')}
+              disabled={isLoading}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="job-description">{t('tailor.pasteJobDescription')}</Label>
             <div className="relative">
@@ -600,7 +663,7 @@ export default function TailorPage() {
           </Button>
 
           {/* ATS Score Breakdown: the last preview's score, kept after the diff modal closes */}
-          {atsResult && <ATSScoreCard atsScore={atsResult} />}
+          {atsResult && <ATSScoreCard atsScore={atsResult} template={atsTemplate} />}
         </div>
       </div>
 

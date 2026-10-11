@@ -320,6 +320,17 @@
         "keywordsExtracted": "已提取 {count} 个关键词",
         "matchesFound": "已匹配 {count} 处",
         "matchRateLabel": "匹配率："
+      },
+      "atsScore": {
+        "description": "根据此职位描述为已保存的简历评分。PDF 本身的解析情况请在 ATS 检查标签页中查看。",
+        "loading": "正在加载 ATS 评分…",
+        "notCalculated": "此简历尚未计算 ATS 评分。",
+        "loadFailed": "无法加载已保存的 ATS 评分。请尝试重新计算，或刷新页面。",
+        "lastCalculated": "上次计算：{date}",
+        "recalculate": "重新计算",
+        "recalculating": "计算中…",
+        "saveFirst": "请先保存修改，然后重新计算。",
+        "recalculateFailed": "无法计算 ATS 评分。如果此简历是在保存评分功能之前定制的，请在“定制简历”页面重新定制。"
       }
     },
     "genericItemForm": {
@@ -713,6 +724,23 @@
         "description": "基于职位描述进行全面定制。"
       }
     },
+    "length": {
+      "pageLimitLabel": "页数上限",
+      "pageLimitDescription": "尽可能从相关性最低的要点开始删减以符合页数。选择“不限”则不进行页数调整。",
+      "pageLimitOptions": {
+        "1": "1 页",
+        "2": "2 页",
+        "3": "3 页",
+        "none": "不限"
+      },
+      "bulletsLabel": "每段经历的要点数",
+      "bulletsDescription": "每份工作或项目保留的最相关要点数量。",
+      "bulletOptions": {
+        "3": "最多 3 条",
+        "5": "最多 5 条",
+        "all": "全部"
+      }
+    },
     "analyzeJob": "分析职位",
     "generateTailored": "生成定制简历",
     "setupRequiredTitle": "[ 需要配置 ]",
@@ -747,6 +775,18 @@
       "rejectButton": "拒绝并重新生成",
       "confirmButton": "确认并保存"
     },
+    "atsScore": {
+      "title": "ATS 评分明细",
+      "keywordMatch": "关键词匹配",
+      "skillsCoverage": "技能覆盖",
+      "titleMatch": "职位名称匹配",
+      "sectionCompleteness": "板块完整度",
+      "dateConsistency": "日期格式一致性",
+      "missingKeywords": "缺失关键词",
+      "injectableKeywords": "可安全添加（主简历中已有）",
+      "recommendations": "建议",
+      "twoColumnWarning": "双栏布局：许多 ATS 会错乱读取各栏内容。投递前请在编辑器中切换为单栏模板。"
+    },
     "regenerateDialog": {
       "title": "重新生成定制简历？",
       "description": "这将丢弃当前预览并请求新的 AI 定制结果。",
@@ -777,13 +817,14 @@
       "review": "查看更改并保存"
     },
     "selectionSummary": "已保留 {total} 条要点中的 {kept} 条（每个职位或项目最多 {max} 条）",
+    "selectionSummaryAll": "保留了 {total} 条要点中的 {kept} 条",
     "pageFit": {
-      "fits": "可放入一页",
-      "trimmed": "为适应一页，又精简了 {count} 条",
-      "over": "仍超过一页",
+      "fits": "符合页数上限",
+      "trimmed": "为符合页数上限又删减了 {count} 条",
+      "over": "超出页数上限；已保留所有选中的要点",
       "unavailable": "无法进行页面适配",
-      "finalOver": "改写后可能超过一页",
-      "notRechecked": "改写后未重新检查是否可放入一页"
+      "finalOver": "改写后可能超出页数上限",
+      "notRechecked": "改写后未重新检查是否符合页数上限"
     }
   },
   "settings": {

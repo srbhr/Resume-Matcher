@@ -51,7 +51,11 @@ export interface AdditionalInfo {
 export interface ATSSubScores {
   keyword_match: number;
   skills_coverage: number;
+  /** Null when the job posting has no title. */
+  title_match?: number | null;
   section_completeness: number;
+  /** Null when the resume has fewer than two dates. */
+  date_consistency?: number | null;
 }
 
 export interface ATSScore {

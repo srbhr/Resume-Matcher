@@ -9,6 +9,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.database import Database, DatabaseBusyError
+from app.db_engine import make_sync_engine
 from app.models import Application, Resume
 from app.scripts.copy_sqlite_to_postgres import copy_rows
 from tests.conftest import drop_postgres_schema, postgres_test_url
@@ -135,3 +136,31 @@ async def test_copy_sqlite_into_postgres(
     )
     assert target.get_api_key_ciphertexts() == {"openai": "ciphertext"}
     await source.close()
+
+
+async def test_startup_adds_ats_score_to_an_existing_schema(
+    make_db: Callable[[str | None], Database],
+) -> None:
+    # A schema created before improvements.ats_score existed.
+    schema = f"t_{uuid4().hex[:20]}"
+    engine = make_sync_engine(url=postgres_test_url(), schema=schema)
+    try:
+        with engine.begin() as conn:
+            conn.exec_driver_sql(f'CREATE SCHEMA "{schema}"')
+            conn.exec_driver_sql(
+                "CREATE TABLE improvements (request_id TEXT PRIMARY KEY, "
+                "original_resume_id TEXT NOT NULL, tailored_resume_id TEXT NOT NULL, "
+                "job_id TEXT NOT NULL, improvements JSON, created_at TEXT)"
+            )
+            conn.exec_driver_sql(
+                "INSERT INTO improvements VALUES ('r1', 'm', 't', 'j', '[]', 'now')"
+            )
+    finally:
+        engine.dispose()
+
+    database = make_db(schema)
+    improvement = await database.get_improvement_by_tailored_resume("t")
+    assert improvement is not None and improvement["ats_score"] is None
+    assert await database.set_ats_score("t", {"score": {}, "calculated_at": "now"})
+    stored = await database.get_improvement_by_tailored_resume("t")
+    assert stored is not None and stored["ats_score"]["calculated_at"] == "now"

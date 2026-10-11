@@ -24,7 +24,7 @@ uploadJobDescriptions(descriptions: string[], resumeId: string) → job_id
 
 // Resume improvement
 improveResume(resumeId: string, jobId: string) → ImprovedResult
-previewImproveResume(resumeId, jobId, promptId?, options?: { maxBulletsPerEntry?, pageFit? }) → ImprovedResult
+previewImproveResume(resumeId, jobId, promptId?, options?: { maxBulletsPerEntry?, pageFit?, maxPages? }) → ImprovedResult
 toPageFitSettings(settings: TemplateSettings, locale?: string) → PageFitSettings
 
 // CRUD
@@ -62,6 +62,7 @@ Up to 5 resumes can be masters (`MAX_MASTER_RESUMES`, the same constant in `app/
 - `POST /api/v1/resumes/upload` returns `409` with `"You can keep up to 5 master resumes. Delete one before adding another."` when 5 masters exist. The first master becomes the default. A new upload takes the default over only when the current default is `failed` or `processing`.
 - `POST /api/v1/resumes/{id}/default` → `{ "resume_id", "is_default_master": true }`. `404` if the resume is missing, `400` if it is not a master.
 - Deleting the default master promotes the earliest remaining master.
+- `GET /api/v1/resumes/{id}/ats-score` → `{ score: ATSScore, calculated_at }`: the last calculated score of a tailored resume (stored at confirmation), or `null` if never calculated (`404` is reserved for an unknown resume or a missing job link). `POST` on the same path recalculates from the saved resume and the job's cached keywords (no LLM call), stores the result, and returns it (`409` if the job keywords are not cached or are stale). Both return `400` if the resume is not tailored. Clients: `fetchLastAtsScore(resumeId)` (resolves `null` when never calculated, throws on errors) and `recalculateAtsScore(resumeId)`. See [ats-score.md](../features/ats-score.md).
 - `POST /api/v1/resumes/{id}/duplicate` → `201` `{ resume_id, title, is_master, is_default_master, parent_id }`. The copy is titled `"<title> (Copy)"` (capped at 80 characters). A master copy becomes a new **non-default** master (`409` with the limit message at 5). A tailored copy is a sibling with the same `parent_id` and carries the original's job link (a new `improvements` row with the same job), so `GET /{id}/job-description` and cover-letter/outreach/interview-prep generation work on the copy. `409` if the resume is not `ready`, `503` when the database is busy.
 - `GET /api/v1/resumes/render-drafts/{token}` → `{ "data": { "processed_resume": ... } }`. Serves an unsaved draft to the print route (`/print/resumes/draft?draft=<token>`) so page fit can measure it. Tokens are in-memory, expire after 120 s (at most 32 kept) and `404` once gone. Only the print route calls it.
 
@@ -69,27 +70,31 @@ Up to 5 resumes can be masters (`MAX_MASTER_RESUMES`, the same constant in `app/
 
 Preview returns `data.preview_id` and `data.preview_expires_at`; confirmation forwards `preview_id` with the unchanged proposed resume. Successful retries return the same stored response without creating another resume. An active confirmation returns 409 with `Retry-After: 1`; stale or expired input snapshots require a new preview. See [the complete contract and transaction lifecycle](../features/preview-confirmation.md).
 
-`POST /api/v1/resumes/improve/preview` also accepts two optional fields for [bullet selection](../features/preview-confirmation.md#bullet-selection-harness-steered). Both are absent by default, which keeps the legacy behaviour (no condensing).
+`POST /api/v1/resumes/improve/preview` also accepts three optional fields for [bullet selection](../features/preview-confirmation.md#bullet-selection-harness-steered). `max_bullets_per_entry` and `page_fit` are absent by default, which keeps the legacy behaviour (no condensing).
 
-- `max_bullets_per_entry` (integer 1–10): keep only the top N bullets per work-experience and project entry. The tailor page sends `3`. Selection runs only when this is set.
-- `page_fit` (`PageFitSettings`): the print settings used to measure page count (`template, pageSize, marginTop/Bottom/Left/Right, sectionSpacing, itemSpacing, lineHeight, fontSize, headerScale, headerFont, bodyFont, compactMode, showContactIcons, accentColor, lang`, same bounds as the PDF endpoint query). Page fit runs only when both fields are set.
+- `max_bullets_per_entry` (integer 1–10): keep only the top N bullets per work-experience and project entry. The tailor page sends the user's "Bullets per role" choice (3 or 5), or omits it for "All".
+- `page_fit` (`PageFitSettings`): the print settings used to measure page count (`template, pageSize, marginTop/Bottom/Left/Right, sectionSpacing, itemSpacing, lineHeight, fontSize, headerScale, headerFont, bodyFont, compactMode, showContactIcons, accentColor, lang`, same bounds as the PDF endpoint query). Page fit runs whenever this is set; the tailor page omits it for "No limit".
+- `max_pages` (integer 1–5, default `1`): the page limit page fit trims to. Ignored without `page_fit`.
 
-The response `data.bullet_selection` is `null` unless `max_bullets_per_entry` was sent. Otherwise it is:
+Selection runs when either `max_bullets_per_entry` or `page_fit` is set.
+
+The response `data.bullet_selection` is `null` unless selection ran. Otherwise it is:
 
 ```json
 {
   "max_per_entry": 3,
+  "max_pages": 2,
   "bullets_before": 14,
   "bullets_after": 8,
   "trimmed_for_fit": 1,
   "scoring": "llm",
   "page_fit": "trimmed",
-  "final_pages": 1,
+  "final_pages": 2,
   "final_check": "ok"
 }
 ```
 
-`scoring` is `"llm"` or `"keyword_fallback"`; `page_fit` is `"fits" | "trimmed" | "over" | "unavailable" | "skipped"`; `final_pages` is `null` when nothing was rendered. `final_check` reports the re-render of the rewritten result after a `fits`/`trimmed` fit: `"ok"` means `final_pages` measures it, `"skipped"` means that render failed or ran out of budget (`final_pages` is then the pre-rewrite measurement and the diff modal says the fit was not re-checked), and `null` means no final check applies. `bullets_after` is the count after page-fit trimming (rewriting never adds bullets to selected entries, so it equals the count in `resume_preview`), and `trimmed_for_fit` is how many bullets that step dropped. A scoring fallback, a result still over one page and an unrenderable draft each add an entry to `data.warnings`; none of them fails the preview.
+`max_per_entry` is `null` when no cap was applied, and `max_pages` is `null` when page fit was not requested. `scoring` is `"llm"` or `"keyword_fallback"`; `page_fit` is `"fits" | "trimmed" | "over" | "unavailable" | "skipped"`; `final_pages` is `null` when nothing was rendered. `final_check` reports the re-render of the rewritten result after a `fits`/`trimmed` fit: `"ok"` means `final_pages` measures it, `"skipped"` means that render failed or ran out of budget (`final_pages` is then the pre-rewrite measurement and the diff modal says the fit was not re-checked), and `null` means no final check applies. `bullets_after` is the count after page-fit trimming (rewriting never adds bullets to selected entries, so it equals the count in `resume_preview`), and `trimmed_for_fit` is how many bullets that step dropped. A scoring fallback, a result over the page limit and an unrenderable draft each add an entry to `data.warnings`; none of them fails the preview.
 
 ## Resume Wizard (`lib/api/resume-wizard.ts`)
 

@@ -4,6 +4,8 @@
 
 ## Overview
 
+> The backend ATS score shown in the Tailor review dialog is a separate feature — see [ats-score.md](ats-score.md).
+
 The Resume Builder includes a "JD Match" tab that shows how well a tailored resume matches the original job description.
 
 ## How It Works
