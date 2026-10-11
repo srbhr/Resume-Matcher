@@ -11,6 +11,7 @@ import { CoverLetterPreview } from './cover-letter-preview';
 import { OutreachPreview } from './outreach-preview';
 import { GeneratePrompt } from './generate-prompt';
 import { InterviewPrepView } from './interview-prep-view';
+import { CommunityLinks } from '@/components/common/community-links';
 import { Button } from '@/components/ui/button';
 import { RetroTabs } from '@/components/ui/retro-tabs';
 import { PageHeader } from '@/components/ui/page-header';
@@ -1389,6 +1390,9 @@ const ResumeBuilderContent = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* Community links: quiet ghost actions, left of the tab's own actions */}
+            <CommunityLinks variant="builder" />
+
             {/* Resume tab actions */}
             {activeTab === 'resume' && (
               <>
