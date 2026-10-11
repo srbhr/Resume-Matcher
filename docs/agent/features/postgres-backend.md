@@ -27,7 +27,7 @@ SQLite in `data/resume_matcher.db` stays the default. PostgreSQL is for durabili
 2. **Contention.** SQLSTATE `55P03` (lock timeout), `40001` and `40P01` map to `DatabaseBusyError`, which becomes the existing 503 with `Retry-After: 1` (MCP: "Database is busy").
 3. **Startup** (`db_engine.init_models_sync`).
    - `CREATE SCHEMA IF NOT EXISTS` and `create_all` run in one transaction under an advisory lock, so the web app and the MCP server can start together.
-   - The SQLite-only `ALTER TABLE` migrations are skipped, because Postgres tables are always created current.
+   - The SQLite-only `ALTER TABLE` migrations are skipped. `create_all` only creates missing tables and never alters existing ones, so a later release that adds a column or index needs an explicit migration for a PostgreSQL database created earlier.
    - The default-master partial unique index uses `postgresql_where=is_default_master`.
 4. **Status.** `GET /status` `database_stats.backend` and MCP `get_status` report `sqlite` or `postgresql`.
 
