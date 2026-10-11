@@ -47,7 +47,8 @@
     "settings": "设置",
     "backToDashboard": "返回仪表板",
     "goToSettings": "前往设置",
-    "applicationTracker": "申请追踪"
+    "applicationTracker": "申请追踪",
+    "queue": "定制队列"
   },
   "dashboard": {
     "title": "仪表板",
@@ -1321,6 +1322,60 @@
       "projectFollowUps": "项目追问",
       "skillGaps": "技能差距",
       "talkingPoints": "沟通要点"
+    }
+  },
+  "queue": {
+    "title": "定制队列",
+    "subtitle": "将职位描述加入队列，在后台逐一定制",
+    "form": {
+      "title": "添加职位",
+      "masterDescription": "队列中的每个职位都基于这份主简历进行定制。",
+      "noMaster": "请先在仪表板上传主简历。",
+      "jobDescriptionLabel": "职位描述",
+      "jobDescriptionHint": "职位、公司和职位编号会从文本中识别，无需调用 AI。如有错误请修改。",
+      "detectedTitle": "识别到的信息",
+      "roleLabel": "职位",
+      "rolePlaceholder": "例如：前端工程师",
+      "companyLabel": "公司",
+      "companyPlaceholder": "例如：Stripe",
+      "jobReqIdLabel": "职位编号",
+      "cooldownLabel": "间隔（秒）",
+      "cooldownHint": "每个职位完成后暂停，降低触发服务商速率限制的风险。",
+      "submit": "加入队列",
+      "adding": "正在添加...",
+      "added": "已加入队列。请粘贴下一个职位描述。"
+    },
+    "monitor": {
+      "title": "队列",
+      "count": "职位数：{count}",
+      "refresh": "刷新",
+      "clearCompleted": "清除已完成",
+      "clearAll": "全部清除",
+      "emptyTitle": "队列中没有职位",
+      "emptyDescription": "添加职位描述即可开始定制。",
+      "untitled": "未命名职位",
+      "jobId": "编号 {id}",
+      "viewResume": "查看简历",
+      "remove": "从队列中移除"
+    },
+    "status": {
+      "pending": "排队中",
+      "processing": "定制中",
+      "completed": "已完成",
+      "failed": "失败"
+    },
+    "errors": {
+      "addFailed": "无法添加职位，请重试。",
+      "item": {
+        "not_found": "主简历或职位已被删除。",
+        "too_large": "职位描述或简历过长，无法定制。",
+        "timeout": "定制超时。请重新添加该职位以重试。",
+        "failed": "定制失败。请在设置中检查 AI 服务商，然后重新添加该职位。"
+      },
+      "loadFailed": "无法加载队列。",
+      "deleteFailed": "无法移除该职位，请重试。",
+      "deleteInProgress": "该职位正在定制中，请在完成后再移除。",
+      "clearFailed": "无法清空队列，请重试。"
     }
   }
 }

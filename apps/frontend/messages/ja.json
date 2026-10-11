@@ -47,7 +47,8 @@
     "settings": "設定",
     "backToDashboard": "ダッシュボードに戻る",
     "goToSettings": "設定へ",
-    "applicationTracker": "応募トラッカー"
+    "applicationTracker": "応募トラッカー",
+    "queue": "最適化キュー"
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -1321,6 +1322,60 @@
       "projectFollowUps": "プロジェクト深掘り質問",
       "skillGaps": "スキルギャップ",
       "talkingPoints": "話すべき要点"
+    }
+  },
+  "queue": {
+    "title": "最適化キュー",
+    "subtitle": "求人票をキューに追加し、バックグラウンドで1件ずつ最適化します",
+    "form": {
+      "title": "求人を追加",
+      "masterDescription": "キュー内の各求人は、このマスター履歴書をもとに最適化されます。",
+      "noMaster": "先にダッシュボードでマスター履歴書をアップロードしてください。",
+      "jobDescriptionLabel": "求人票",
+      "jobDescriptionHint": "職種、会社名、求人IDはAIを使わずに本文から検出されます。誤りがあれば修正してください。",
+      "detectedTitle": "検出された情報",
+      "roleLabel": "職種",
+      "rolePlaceholder": "例: フロントエンドエンジニア",
+      "companyLabel": "会社名",
+      "companyPlaceholder": "例: Stripe",
+      "jobReqIdLabel": "求人ID",
+      "cooldownLabel": "待機時間（秒）",
+      "cooldownHint": "各求人の後に待機し、プロバイダーのレート制限に達するリスクを下げます。",
+      "submit": "キューに追加",
+      "adding": "追加中...",
+      "added": "キューに追加しました。次の求人票を貼り付けてください。"
+    },
+    "monitor": {
+      "title": "キュー",
+      "count": "求人数: {count}",
+      "refresh": "更新",
+      "clearCompleted": "完了分を削除",
+      "clearAll": "すべて削除",
+      "emptyTitle": "キューに求人はありません",
+      "emptyDescription": "求人票を追加すると最適化を開始します。",
+      "untitled": "職種未設定",
+      "jobId": "ID {id}",
+      "viewResume": "履歴書を表示",
+      "remove": "キューから削除"
+    },
+    "status": {
+      "pending": "待機中",
+      "processing": "最適化中",
+      "completed": "完了",
+      "failed": "失敗"
+    },
+    "errors": {
+      "addFailed": "求人を追加できませんでした。もう一度お試しください。",
+      "item": {
+        "not_found": "マスター履歴書または求人が削除されました。",
+        "too_large": "求人票または履歴書が長すぎるため最適化できません。",
+        "timeout": "最適化がタイムアウトしました。再試行するには求人をもう一度追加してください。",
+        "failed": "最適化に失敗しました。設定でAIプロバイダーを確認してから、求人をもう一度追加してください。"
+      },
+      "loadFailed": "キューを読み込めませんでした。",
+      "deleteFailed": "求人を削除できませんでした。もう一度お試しください。",
+      "deleteInProgress": "この求人は最適化中です。完了してから削除してください。",
+      "clearFailed": "キューを削除できませんでした。もう一度お試しください。"
     }
   }
 }

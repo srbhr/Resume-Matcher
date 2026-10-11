@@ -47,7 +47,8 @@
     "settings": "Paramètres",
     "backToDashboard": "Retour au tableau de bord",
     "goToSettings": "Accéder aux paramètres",
-    "applicationTracker": "Suivi des candidatures"
+    "applicationTracker": "Suivi des candidatures",
+    "queue": "File d'adaptation"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -1321,6 +1322,60 @@
       "projectFollowUps": "Questions de suivi sur les projets",
       "skillGaps": "Écarts de compétences",
       "talkingPoints": "Arguments clés"
+    }
+  },
+  "queue": {
+    "title": "File d'adaptation",
+    "subtitle": "Mettez des offres en file d'attente et adaptez-les l'une après l'autre en arrière-plan",
+    "form": {
+      "title": "Ajouter une offre",
+      "masterDescription": "Chaque offre en file est adaptée à partir de ce CV principal.",
+      "noMaster": "Importez d'abord un CV principal depuis le tableau de bord.",
+      "jobDescriptionLabel": "Description du poste",
+      "jobDescriptionHint": "Le poste, l'entreprise et l'identifiant de l'offre sont détectés dans le texte sans appel à l'IA. Corrigez-les si besoin.",
+      "detectedTitle": "Informations détectées",
+      "roleLabel": "Poste",
+      "rolePlaceholder": "ex. Ingénieur frontend",
+      "companyLabel": "Entreprise",
+      "companyPlaceholder": "ex. Stripe",
+      "jobReqIdLabel": "ID de l'offre",
+      "cooldownLabel": "Pause (secondes)",
+      "cooldownHint": "Pause après chaque offre pour réduire le risque d'atteindre la limite de débit de votre fournisseur.",
+      "submit": "Ajouter à la file",
+      "adding": "Ajout...",
+      "added": "Ajoutée à la file. Collez la description de poste suivante."
+    },
+    "monitor": {
+      "title": "File",
+      "count": "Offres : {count}",
+      "refresh": "Actualiser",
+      "clearCompleted": "Retirer les terminées",
+      "clearAll": "Tout vider",
+      "emptyTitle": "Aucune offre dans la file",
+      "emptyDescription": "Ajoutez une description de poste pour commencer l'adaptation.",
+      "untitled": "Poste sans titre",
+      "jobId": "ID {id}",
+      "viewResume": "Voir le CV",
+      "remove": "Retirer de la file"
+    },
+    "status": {
+      "pending": "En attente",
+      "processing": "Adaptation",
+      "completed": "Terminé",
+      "failed": "Échec"
+    },
+    "errors": {
+      "addFailed": "Impossible d'ajouter l'offre. Veuillez réessayer.",
+      "item": {
+        "not_found": "Le CV principal ou l'offre a été supprimé.",
+        "too_large": "La description du poste ou le CV est trop long pour être adapté.",
+        "timeout": "L'adaptation a expiré. Ajoutez de nouveau l'offre pour réessayer.",
+        "failed": "L'adaptation a échoué. Vérifiez votre fournisseur d'IA dans les Paramètres, puis ajoutez de nouveau l'offre."
+      },
+      "loadFailed": "Impossible de charger la file.",
+      "deleteFailed": "Impossible de retirer l'offre. Veuillez réessayer.",
+      "deleteInProgress": "Cette offre est en cours d'adaptation. Retirez-la une fois terminée.",
+      "clearFailed": "Impossible de vider la file. Veuillez réessayer."
     }
   }
 }

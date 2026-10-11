@@ -29,4 +29,14 @@ describe('SwissGrid', () => {
     expect(screen.getAllByText(/dashboard\.selectModule/)).toHaveLength(1);
     expect(heading).not.toHaveTextContent('dashboard.selectModule');
   });
+
+  it('links the tailoring queue from the footer as a styled link, not a nested button', () => {
+    render(<SwissGrid>{null}</SwissGrid>);
+
+    const link = screen.getByRole('link', { name: 'nav.queue' });
+    expect(link).toHaveAttribute('href', '/queue');
+    expect(link.querySelector('button')).toBeNull();
+    // The footer actions wrap on narrow screens instead of clipping.
+    expect(link.parentElement).toHaveClass('flex-wrap');
+  });
 });

@@ -96,6 +96,13 @@ describe('tailor page: narrow centred card', () => {
     expect(within(strip).queryAllByRole('link')).toHaveLength(0);
   });
 
+  it('offers the tailoring queue from the header as a link, not a nested button', async () => {
+    await renderPage();
+    const link = screen.getByRole('link', { name: 'nav.queue' });
+    expect(link).toHaveAttribute('href', '/queue');
+    expect(link.querySelector('button')).toBeNull();
+  });
+
   it('names the single master resume being tailored', async () => {
     await renderPage();
     const line = screen.getByText('tailor.tailoringLabel').parentElement as HTMLElement;

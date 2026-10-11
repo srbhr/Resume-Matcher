@@ -85,6 +85,17 @@ class TestGetModelName:
     def test_groq_prefix(self):
         assert get_model_name(_cfg("groq", "llama-3.1-70b")) == "groq/llama-3.1-70b"
 
+    def test_groq_keeps_publisher_namespaced_models_on_groq(self):
+        # "openai/" is a known prefix; without the groq branch this went to OpenAI.
+        assert (
+            get_model_name(_cfg("groq", "openai/gpt-oss-120b"))
+            == "groq/openai/gpt-oss-120b"
+        )
+        assert (
+            get_model_name(_cfg("groq", "groq/openai/gpt-oss-120b"))
+            == "groq/openai/gpt-oss-120b"
+        )
+
     def test_existing_known_prefix_is_preserved(self):
         # Model already carries a known prefix → don't add the provider's.
         assert (

@@ -1017,3 +1017,55 @@ class ImproveDiffResult(BaseModel):
 
     changes: list[ResumeChange] = Field(default_factory=list)
     strategy_notes: str = Field(default="")
+
+
+# Single Queue Models
+MAX_QUEUE_COOLDOWN_SECONDS = 60
+
+
+class JobQueueAddRequest(BaseModel):
+    """Request to queue a single job description for background tailoring."""
+
+    resume_id: str
+    job_description: str
+    role: str | None = None
+    company: str | None = None
+    job_req_id: str | None = None
+    # Cooldown after this item; bounded so one request cannot stall the worker.
+    rate_limit_seconds: float = Field(
+        default=5.0, ge=0, le=MAX_QUEUE_COOLDOWN_SECONDS, allow_inf_nan=False
+    )
+    prompt_id: str | None = None
+
+
+class JobQueueItemResponse(BaseModel):
+    """Item in the tailoring queue."""
+
+    item_id: str
+    resume_id: str
+    job_description_snippet: str
+    role: str
+    company: str
+    job_req_id: str
+    status: str
+    tailored_resume_id: str | None = None
+    title: str | None = None
+    job_id: str | None = None
+    error: str | None = None
+    rate_limit_seconds: float
+    created_at: str
+    updated_at: str
+
+
+class JobMetadataParseRequest(BaseModel):
+    """Request to parse metadata (role, company, id) from job description."""
+
+    job_description: str
+
+
+class JobMetadataParseResponse(BaseModel):
+    """Extracted metadata from a job description."""
+
+    role: str
+    company: str
+    job_req_id: str

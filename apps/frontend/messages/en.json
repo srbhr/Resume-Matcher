@@ -47,7 +47,8 @@
     "settings": "Settings",
     "backToDashboard": "Back to Dashboard",
     "goToSettings": "Go to Settings",
-    "applicationTracker": "Application Tracker"
+    "applicationTracker": "Application Tracker",
+    "queue": "Tailoring Queue"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1321,6 +1322,60 @@
       "projectFollowUps": "Project Follow-Ups",
       "skillGaps": "Skill Gaps",
       "talkingPoints": "Talking Points"
+    }
+  },
+  "queue": {
+    "title": "Tailoring Queue",
+    "subtitle": "Queue job descriptions and tailor them one after another in the background",
+    "form": {
+      "title": "Add a job",
+      "masterDescription": "Every queued job is tailored from this master resume.",
+      "noMaster": "Upload a master resume on the dashboard first.",
+      "jobDescriptionLabel": "Job description",
+      "jobDescriptionHint": "Role, company and job ID are detected from the text without an AI call. Edit them if they are wrong.",
+      "detectedTitle": "Detected details",
+      "roleLabel": "Role",
+      "rolePlaceholder": "e.g. Frontend Engineer",
+      "companyLabel": "Company",
+      "companyPlaceholder": "e.g. Stripe",
+      "jobReqIdLabel": "Job ID",
+      "cooldownLabel": "Cooldown (seconds)",
+      "cooldownHint": "Pause after each job to lower the risk of hitting your provider's rate limit.",
+      "submit": "Add to queue",
+      "adding": "Adding...",
+      "added": "Added to the queue. Paste the next job description."
+    },
+    "monitor": {
+      "title": "Queue",
+      "count": "Jobs: {count}",
+      "refresh": "Refresh",
+      "clearCompleted": "Clear completed",
+      "clearAll": "Clear all",
+      "emptyTitle": "No jobs in the queue",
+      "emptyDescription": "Add a job description to start tailoring.",
+      "untitled": "Untitled role",
+      "jobId": "ID {id}",
+      "viewResume": "View resume",
+      "remove": "Remove from queue"
+    },
+    "status": {
+      "pending": "Queued",
+      "processing": "Tailoring",
+      "completed": "Done",
+      "failed": "Failed"
+    },
+    "errors": {
+      "addFailed": "Couldn't add the job. Please try again.",
+      "item": {
+        "not_found": "The master resume or job was deleted.",
+        "too_large": "The job description or resume is too long to tailor.",
+        "timeout": "Tailoring timed out. Add the job again to retry.",
+        "failed": "Tailoring failed. Check your AI provider in Settings, then add the job again."
+      },
+      "loadFailed": "Couldn't load the queue.",
+      "deleteFailed": "Couldn't remove the job. Please try again.",
+      "deleteInProgress": "This job is being tailored. Remove it once it finishes.",
+      "clearFailed": "Couldn't clear the queue. Please try again."
     }
   }
 }

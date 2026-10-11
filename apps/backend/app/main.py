@@ -64,10 +64,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from app.config import migrate_legacy_keys
 
     migrate_legacy_keys()
+
+    from app.services.queue_worker import queue_manager
+
+    await queue_manager.start()
     # PDF renderer uses lazy initialization - will initialize on first use
     # await init_pdf_renderer()
     yield
     # Shutdown - wrap each cleanup in try-except to ensure all resources are released
+    try:
+        await queue_manager.stop()
+    except Exception:
+        logger.exception("Error stopping the tailoring queue")
+
     try:
         await drain_processing_cleanup_tasks()
     except Exception:

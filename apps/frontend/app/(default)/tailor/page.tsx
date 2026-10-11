@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button, buttonClass } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label, labelClass } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
@@ -38,7 +39,7 @@ import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { SpinnerGap } from '@phosphor-icons/react';
+import { ListNumbers, SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
@@ -468,6 +469,12 @@ export default function TailorPage() {
         <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
         <PageHeader.Title>{t('tailor.heroTitle')}</PageHeader.Title>
         <PageHeader.Subtitle>{t('tailor.subtitle')}</PageHeader.Subtitle>
+        <PageHeader.Actions>
+          <Link href="/queue" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+            <ListNumbers aria-hidden="true" />
+            {t('nav.queue')}
+          </Link>
+        </PageHeader.Actions>
       </PageHeader>
 
       <ol

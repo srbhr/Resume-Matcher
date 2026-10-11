@@ -47,7 +47,8 @@
     "settings": "Configuración",
     "backToDashboard": "Volver al Panel",
     "goToSettings": "Ir a Configuración",
-    "applicationTracker": "Seguimiento de candidaturas"
+    "applicationTracker": "Seguimiento de candidaturas",
+    "queue": "Cola de adaptación"
   },
   "dashboard": {
     "title": "Panel",
@@ -1321,6 +1322,60 @@
       "projectFollowUps": "Seguimiento de proyectos",
       "skillGaps": "Brechas de habilidades",
       "talkingPoints": "Puntos clave"
+    }
+  },
+  "queue": {
+    "title": "Cola de adaptación",
+    "subtitle": "Pon ofertas de empleo en cola y adáptalas una tras otra en segundo plano",
+    "form": {
+      "title": "Añadir una oferta",
+      "masterDescription": "Cada oferta en cola se adapta a partir de este currículum maestro.",
+      "noMaster": "Primero sube un currículum maestro en el panel.",
+      "jobDescriptionLabel": "Descripción del puesto",
+      "jobDescriptionHint": "El puesto, la empresa y el ID de la oferta se detectan del texto sin llamar a la IA. Corrígelos si no son correctos.",
+      "detectedTitle": "Datos detectados",
+      "roleLabel": "Puesto",
+      "rolePlaceholder": "p. ej. Ingeniero frontend",
+      "companyLabel": "Empresa",
+      "companyPlaceholder": "p. ej. Stripe",
+      "jobReqIdLabel": "ID de la oferta",
+      "cooldownLabel": "Pausa (segundos)",
+      "cooldownHint": "Pausa tras cada oferta para reducir el riesgo de alcanzar el límite de uso de tu proveedor.",
+      "submit": "Añadir a la cola",
+      "adding": "Añadiendo...",
+      "added": "Añadida a la cola. Pega la siguiente descripción del puesto."
+    },
+    "monitor": {
+      "title": "Cola",
+      "count": "Ofertas: {count}",
+      "refresh": "Actualizar",
+      "clearCompleted": "Quitar completadas",
+      "clearAll": "Vaciar todo",
+      "emptyTitle": "No hay ofertas en la cola",
+      "emptyDescription": "Añade una descripción del puesto para empezar a adaptar.",
+      "untitled": "Puesto sin título",
+      "jobId": "ID {id}",
+      "viewResume": "Ver currículum",
+      "remove": "Quitar de la cola"
+    },
+    "status": {
+      "pending": "En cola",
+      "processing": "Adaptando",
+      "completed": "Hecho",
+      "failed": "Error"
+    },
+    "errors": {
+      "addFailed": "No se pudo añadir la oferta. Inténtalo de nuevo.",
+      "item": {
+        "not_found": "Se eliminó el currículum maestro o la oferta.",
+        "too_large": "La descripción del puesto o el currículum es demasiado largo para adaptarlo.",
+        "timeout": "Se agotó el tiempo de adaptación. Vuelve a añadir la oferta para reintentarlo.",
+        "failed": "La adaptación falló. Revisa tu proveedor de IA en Ajustes y vuelve a añadir la oferta."
+      },
+      "loadFailed": "No se pudo cargar la cola.",
+      "deleteFailed": "No se pudo quitar la oferta. Inténtalo de nuevo.",
+      "deleteInProgress": "Esta oferta se está adaptando. Quítala cuando termine.",
+      "clearFailed": "No se pudo vaciar la cola. Inténtalo de nuevo."
     }
   }
 }

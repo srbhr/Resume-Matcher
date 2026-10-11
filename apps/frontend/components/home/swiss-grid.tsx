@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SquaresFour } from '@phosphor-icons/react';
+import { ListNumbers, SquaresFour } from '@phosphor-icons/react';
 import { buttonClass } from '@/components/ui/button';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
@@ -42,13 +42,20 @@ export const SwissGrid = ({
       </div>
 
       {/* Footer - stays above hovered cards */}
-      <div className="p-4 bg-canvas flex justify-between items-center font-mono text-xs text-primary border-t border-ink shrink-0 relative z-30">
+      <div className="p-4 bg-canvas flex flex-wrap justify-between items-center gap-4 font-mono text-xs text-primary border-t border-ink shrink-0 relative z-30">
         <div className="flex items-center gap-2">
           <Image src="/logo.svg" alt="" width={20} height={20} className="w-5 h-5" />
           <span className="uppercase font-bold">Resume Matcher</span>
           <span className="text-steel">v{APP_VERSION}</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/queue"
+            className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
+          >
+            <ListNumbers aria-hidden="true" />
+            {t('nav.queue')}
+          </Link>
           <Link
             href="/tracker"
             className={buttonClass({ variant: 'outline', className: 'min-w-36' })}

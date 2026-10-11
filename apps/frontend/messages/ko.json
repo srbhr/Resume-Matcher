@@ -47,7 +47,8 @@
     "settings": "설정",
     "backToDashboard": "대시보드로 돌아가기",
     "goToSettings": "설정으로 이동",
-    "applicationTracker": "지원 현황 트래커"
+    "applicationTracker": "지원 현황 트래커",
+    "queue": "맞춤화 대기열"
   },
   "dashboard": {
     "title": "대시보드",
@@ -1321,6 +1322,60 @@
       "projectFollowUps": "프로젝트 후속 질문",
       "skillGaps": "역량 격차",
       "talkingPoints": "핵심 포인트"
+    }
+  },
+  "queue": {
+    "title": "맞춤화 대기열",
+    "subtitle": "채용 공고를 대기열에 넣고 백그라운드에서 하나씩 맞춤화합니다",
+    "form": {
+      "title": "공고 추가",
+      "masterDescription": "대기열의 모든 공고는 이 마스터 이력서를 바탕으로 맞춤화됩니다.",
+      "noMaster": "먼저 대시보드에서 마스터 이력서를 업로드하세요.",
+      "jobDescriptionLabel": "채용 공고",
+      "jobDescriptionHint": "직무, 회사, 공고 ID는 AI 호출 없이 본문에서 감지됩니다. 틀리면 수정하세요.",
+      "detectedTitle": "감지된 정보",
+      "roleLabel": "직무",
+      "rolePlaceholder": "예: 프론트엔드 엔지니어",
+      "companyLabel": "회사",
+      "companyPlaceholder": "예: Stripe",
+      "jobReqIdLabel": "공고 ID",
+      "cooldownLabel": "대기 시간(초)",
+      "cooldownHint": "공고마다 잠시 멈춰 제공업체의 요청 한도에 걸릴 위험을 줄입니다.",
+      "submit": "대기열에 추가",
+      "adding": "추가 중...",
+      "added": "대기열에 추가했습니다. 다음 채용 공고를 붙여넣으세요."
+    },
+    "monitor": {
+      "title": "대기열",
+      "count": "공고 수: {count}",
+      "refresh": "새로고침",
+      "clearCompleted": "완료 항목 지우기",
+      "clearAll": "모두 지우기",
+      "emptyTitle": "대기열에 공고가 없습니다",
+      "emptyDescription": "채용 공고를 추가하면 맞춤화를 시작합니다.",
+      "untitled": "직무 미지정",
+      "jobId": "ID {id}",
+      "viewResume": "이력서 보기",
+      "remove": "대기열에서 제거"
+    },
+    "status": {
+      "pending": "대기 중",
+      "processing": "맞춤화 중",
+      "completed": "완료",
+      "failed": "실패"
+    },
+    "errors": {
+      "addFailed": "공고를 추가하지 못했습니다. 다시 시도하세요.",
+      "item": {
+        "not_found": "마스터 이력서 또는 공고가 삭제되었습니다.",
+        "too_large": "채용 공고나 이력서가 너무 길어 맞춤화할 수 없습니다.",
+        "timeout": "맞춤화 시간이 초과되었습니다. 다시 시도하려면 공고를 다시 추가하세요.",
+        "failed": "맞춤화에 실패했습니다. 설정에서 AI 제공업체를 확인한 뒤 공고를 다시 추가하세요."
+      },
+      "loadFailed": "대기열을 불러오지 못했습니다.",
+      "deleteFailed": "공고를 제거하지 못했습니다. 다시 시도하세요.",
+      "deleteInProgress": "이 공고는 맞춤화 중입니다. 완료된 뒤 제거하세요.",
+      "clearFailed": "대기열을 지우지 못했습니다. 다시 시도하세요."
     }
   }
 }

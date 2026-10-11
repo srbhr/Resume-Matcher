@@ -34,7 +34,15 @@ from app.db_engine import (
     make_sync_engine,
 )
 from app.db_url import validate_schema_name
-from app.models import ApiKey, Application, Improvement, Job, Resume, TailoringPreview
+from app.models import (
+    ApiKey,
+    Application,
+    Improvement,
+    Job,
+    QueueItem,
+    Resume,
+    TailoringPreview,
+)
 from app.preview import (
     PreviewBusyError,
     PreviewClaim,
@@ -61,6 +69,7 @@ APPLICATION_STATUSES: tuple[str, ...] = (
     "rejected",
 )
 ProcessingFinishOutcome = Literal["committed", "stale", "missing"]
+QueueDeleteOutcome = Literal["deleted", "missing", "in_progress"]
 
 # A user keeps at most this many master resumes (career tracks).
 MAX_MASTER_RESUMES = 5
@@ -294,6 +303,26 @@ class Database:
             "applied_at": row.applied_at,
             "notes": row.notes,
             "position": row.position,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        }
+
+    @staticmethod
+    def _queue_item_to_dict(row: QueueItem) -> dict[str, Any]:
+        return {
+            "item_id": row.item_id,
+            "resume_id": row.resume_id,
+            "job_description": row.job_description,
+            "role": row.role,
+            "company": row.company,
+            "job_req_id": row.job_req_id,
+            "status": row.status,
+            "job_id": row.job_id,
+            "tailored_resume_id": row.tailored_resume_id,
+            "title": row.title,
+            "error": row.error,
+            "rate_limit_seconds": row.rate_limit_seconds,
+            "prompt_id": row.prompt_id,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
         }
@@ -972,6 +1001,18 @@ class Database:
             "created_at": now,
         }
 
+    async def get_improvement_by_job(self, job_id: str) -> dict[str, Any] | None:
+        """Get the latest improvement record tailored against a job, if any."""
+        async with self._session() as session:
+            result = await session.execute(
+                select(Improvement)
+                .where(Improvement.job_id == job_id)
+                .order_by(Improvement.created_at.desc())
+                .limit(1)
+            )
+            row = result.scalars().first()
+            return self._improvement_to_dict(row) if row else None
+
     async def get_improvement_by_tailored_resume(
         self, tailored_resume_id: str
     ) -> dict[str, Any] | None:
@@ -1385,6 +1426,7 @@ class Database:
         reset never wiped the user's stored credentials.
         """
         async with self._write_session() as session:
+            await session.execute(delete(QueueItem))
             await session.execute(delete(TailoringPreview))
             await session.execute(delete(Application))
             await session.execute(delete(Improvement))
@@ -1396,6 +1438,131 @@ class Database:
         if uploads_dir.exists():
             shutil.rmtree(uploads_dir)
             uploads_dir.mkdir(parents=True, exist_ok=True)
+
+    # -- Tailoring queue -----------------------------------------------------
+
+    async def create_queue_item(
+        self,
+        item_id: str,
+        resume_id: str,
+        job_description: str,
+        role: str = "",
+        company: str = "",
+        job_req_id: str = "",
+        rate_limit_seconds: float = 5.0,
+        prompt_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Persist one pending tailoring request."""
+        now = _now()
+        row = QueueItem(
+            item_id=item_id,
+            resume_id=resume_id,
+            job_description=job_description,
+            role=role,
+            company=company,
+            job_req_id=job_req_id,
+            status="pending",
+            rate_limit_seconds=rate_limit_seconds,
+            prompt_id=prompt_id,
+            created_at=now,
+            updated_at=now,
+        )
+        async with self._write_session() as session:
+            session.add(row)
+            await session.commit()
+        return self._queue_item_to_dict(row)
+
+    async def get_queue_item(self, item_id: str) -> dict[str, Any] | None:
+        """Get one queue item by ID."""
+        async with self._session() as session:
+            row = await session.get(QueueItem, item_id)
+            return self._queue_item_to_dict(row) if row else None
+
+    async def get_queue(
+        self, resume_id: str | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        """List queue items, newest first, optionally for one master resume."""
+        stmt = select(QueueItem)
+        if resume_id:
+            stmt = stmt.where(QueueItem.resume_id == resume_id)
+        stmt = stmt.order_by(
+            QueueItem.created_at.desc(), QueueItem.item_id.desc()
+        ).limit(limit)
+        async with self._session() as session:
+            result = await session.execute(stmt)
+            return [self._queue_item_to_dict(row) for row in result.scalars().all()]
+
+    async def update_queue_item(
+        self, item_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Update a queue item's columns; None when it no longer exists."""
+        async with self._write_session() as session:
+            row = await session.get(QueueItem, item_id)
+            if row is None:
+                return None
+            for key, value in updates.items():
+                if key != "item_id" and hasattr(QueueItem, key):
+                    setattr(row, key, value)
+            row.updated_at = _now()
+            await session.commit()
+            return self._queue_item_to_dict(row)
+
+    async def delete_queue_item(self, item_id: str) -> QueueDeleteOutcome:
+        """Delete one queue item, unless the worker is tailoring it right now."""
+        async with self._write_session() as session:
+            row = await session.get(QueueItem, item_id)
+            if row is None:
+                return "missing"
+            if row.status == "processing":
+                return "in_progress"
+            await session.delete(row)
+            await session.commit()
+            return "deleted"
+
+    async def claim_next_queue_item(self) -> dict[str, Any] | None:
+        """Mark the oldest pending item ``processing`` and return it; None when idle."""
+        async with self._write_session() as session:
+            result = await session.execute(
+                select(QueueItem)
+                .where(QueueItem.status == "pending")
+                .order_by(QueueItem.created_at, QueueItem.item_id)
+                .limit(1)
+            )
+            row = result.scalars().first()
+            if row is None:
+                return None
+            row.status = "processing"
+            row.updated_at = _now()
+            await session.commit()
+            return self._queue_item_to_dict(row)
+
+    async def requeue_interrupted_queue_items(self) -> int:
+        """Return items a previous run left ``processing`` to ``pending``. Returns count."""
+        async with self._write_session() as session:
+            result = await session.execute(
+                update(QueueItem)
+                .where(QueueItem.status == "processing")
+                .values(status="pending", updated_at=_now())
+            )
+            await session.commit()
+            return int(result.rowcount or 0)
+
+    async def clear_queue(
+        self, status: str | None = None, resume_id: str | None = None
+    ) -> int:
+        """Delete queue items, optionally by status and master resume. Returns count.
+
+        The item the worker is tailoring is never cleared; it finishes first.
+        """
+        stmt = delete(QueueItem).where(QueueItem.status != "processing")
+        if status:
+            stmt = stmt.where(QueueItem.status == status)
+        if resume_id:
+            stmt = stmt.where(QueueItem.resume_id == resume_id)
+        async with self._write_session() as session:
+            result = await session.execute(stmt)
+            await session.commit()
+            return int(result.rowcount or 0)
 
 
 # Global database instance

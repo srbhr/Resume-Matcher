@@ -561,3 +561,100 @@ export async function fetchJobDescription(
   }
   return res.json();
 }
+
+export type QueueItemStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface QueueItem {
+  item_id: string;
+  resume_id: string;
+  job_description_snippet: string;
+  role: string;
+  company: string;
+  job_req_id: string;
+  status: QueueItemStatus;
+  tailored_resume_id: string | null;
+  title: string | null;
+  job_id: string | null;
+  /** Failure code when status is 'failed': not_found, too_large, timeout or failed. */
+  error: string | null;
+  rate_limit_seconds: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobMetadata {
+  role: string;
+  company: string;
+  job_req_id: string;
+}
+
+/** Queue an individual job description for sequential background tailoring */
+export async function addJobToQueue(
+  resumeId: string,
+  jobDescription: string,
+  rateLimitSeconds: number = 5,
+  role?: string,
+  company?: string,
+  jobReqId?: string,
+  promptId?: string
+): Promise<QueueItem> {
+  const res = await apiPost('/jobs/queue', {
+    resume_id: resumeId,
+    job_description: jobDescription,
+    rate_limit_seconds: rateLimitSeconds,
+    role: role || undefined,
+    company: company || undefined,
+    job_req_id: jobReqId || undefined,
+    prompt_id: promptId || undefined,
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to queue job (${res.status}): ${errorText}`);
+  }
+  return res.json();
+}
+
+/** Fetch all queue items for a resume */
+export async function fetchJobQueue(resumeId?: string): Promise<QueueItem[]> {
+  const path = resumeId ? `/jobs/queue?resume_id=${encodeURIComponent(resumeId)}` : '/jobs/queue';
+  const res = await apiFetch(path);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch job queue (${res.status})`);
+  }
+  return res.json();
+}
+
+/** The worker is tailoring this item right now; it can be removed once it finishes. */
+export class QueueItemInProgressError extends Error {}
+
+/** Delete a specific item from the queue */
+export async function deleteQueueItem(itemId: string): Promise<void> {
+  const res = await apiDelete(`/jobs/queue/${encodeURIComponent(itemId)}`);
+  if (res.status === 409) {
+    throw new QueueItemInProgressError('Queue item is being tailored');
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to delete queue item (${res.status})`);
+  }
+}
+
+/** Clear one master resume's queue items, optionally only those in one status */
+export async function clearQueueItems(resumeId: string, status?: QueueItemStatus): Promise<void> {
+  const params = new URLSearchParams({ resume_id: resumeId });
+  if (status) params.set('status', status);
+  const res = await apiDelete(`/jobs/queue?${params}`);
+  if (!res.ok) {
+    throw new Error(`Failed to clear queue (${res.status})`);
+  }
+}
+
+/** Instantly parse job metadata using heuristics without LLM calls */
+export async function parseJobMetadata(jobDescription: string): Promise<JobMetadata> {
+  const res = await apiPost('/jobs/parse-metadata', {
+    job_description: jobDescription,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to detect job details (${res.status})`);
+  }
+  return res.json();
+}
