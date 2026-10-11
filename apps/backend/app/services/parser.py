@@ -668,8 +668,6 @@ _LINE_LABEL_RE = re.compile(r"^[^:,]{1,80}:\s*")
 # PDF text extraction renders a visual gap (e.g. after a bold label) as 2+ spaces.
 _EXTRACTION_GAP_RE = re.compile(r"\s{2,}")
 _FINAL_CONJUNCTION_RE = re.compile(r"^(?:and|or|&)\s+", re.IGNORECASE)
-# "Rust and Go" closing a list without an Oxford comma holds two skills.
-_INLINE_CONJUNCTION_RE = re.compile(r"\s+(?:and|or|&)\s+", re.IGNORECASE)
 _SKILL_HEADING_RE = re.compile(
     r"^(?:(?:technical|core|key|other)\s+)?"
     r"(?:skills?|technologies|tools|frameworks?|platforms?|tech(?:nology)?\s+stack|stack)$",
@@ -711,10 +709,7 @@ def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
     ):
         return []
     if items:
-        # "Python, Rust, and Go" and "Python, Rust and Go". The split is bounded;
-        # an over-long last item is rejected below anyway.
-        last = _FINAL_CONJUNCTION_RE.sub("", items.pop())
-        items.extend(_INLINE_CONJUNCTION_RE.split(last, maxsplit=_MAX_SKILL_ITEM_WORDS))
+        items[-1] = _FINAL_CONJUNCTION_RE.sub("", items[-1])  # "Python, Rust, and Go"
 
     if len(items) < _MIN_SKILL_LINE_ITEMS:
         return []
