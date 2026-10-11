@@ -359,7 +359,20 @@ POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compo
 
 `POSTGRES_PASSWORD` is copied into `DATABASE_URL` as-is, so use a URL-safe password (letters, digits, `-._~`).
 
-Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`, percent-encoding any special characters in the password. For a remote database add `?sslmode=require` to the URL. Tables are created on startup. To move existing data, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set; it refuses to write into a non-empty database. Keep `data/.secret_key`: it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
+Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`, percent-encoding any special characters in the password. For a remote database add `?sslmode=require` to the URL. Tables are created on startup.
+
+To move existing data from a local install, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set. Its default `--source` is `apps/backend/data/resume_matcher.db`, which only exists for local installs; pass `--source <file>` for another SQLite file. It refuses to write into a non-empty database. Stop the app first: writes made after the copy starts are not copied.
+
+A Docker install keeps its SQLite database in the `resume-data` volume, not on the host. Stop the app, then run the script inside the container, where that volume is the default source:
+
+```bash
+export POSTGRES_PASSWORD=change-me
+docker compose stop
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+Alternatively copy the file out of the stopped container (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) and pass it with `--source ./resume_matcher.db` from a host that can reach the database. Keep `data/.secret_key` (it stays in the volume): it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
 
 ### Important Notes
 
