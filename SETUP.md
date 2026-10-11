@@ -327,9 +327,9 @@ A community-built provider that uses OpenAI's official [Sign in with ChatGPT for
 3. Sign in at OpenAI and allow Resume Matcher to use your ChatGPT plan. The first time, OpenAI registers the app for your account; later sign-ins reuse that registration.
 4. You return to Settings. Pick one of your account's models and click **Save**.
 
-OpenAI sends the browser back to `http://127.0.0.1:<backend port>/auth/callback` (port `8000` by default), and the backend accepts that callback only from `127.0.0.1`. So the browser must run on the machine that runs the backend and reach that port directly. Tokens are stored encrypted in the backend data directory (`chatgpt_credentials.enc`). **Disconnect** revokes the session at OpenAI and deletes the tokens; **Manage usage** opens your ChatGPT usage settings.
+OpenAI sends the browser back to `http://127.0.0.1:<port>/auth/callback`, where `<port>` is the port you opened Resume Matcher on (`3000` by default). The frontend forwards that path to the backend, and the backend accepts the callback only from the machine it runs on. So the browser must run on the machine that runs Resume Matcher, and you must open it as `http://localhost:<port>` or `http://127.0.0.1:<port>`. Tokens are stored encrypted in the backend data directory (`chatgpt_credentials.enc`). **Disconnect** revokes the session at OpenAI and deletes the tokens; **Manage usage** opens your ChatGPT usage settings.
 
-**Docker:** the default setup publishes only port 3000, and connections through Docker's published ports reach the container from Docker's gateway rather than `127.0.0.1`, so sign-in cannot complete. On Linux, run the container with host networking (`network_mode: host`); otherwise run Resume Matcher locally (not in Docker) to use this provider.
+**Docker:** sign-in works with the default setup, which publishes only port 3000: open Resume Matcher at `http://localhost:3000` (or the `PORT` you published) on the machine that runs the container. OpenAI returns the browser to that same port, and the frontend forwards `/auth/callback` to the backend inside the container. It does not work from another computer or through a reverse-proxy domain, because OpenAI only allows `http://127.0.0.1` redirects.
 
 The equivalent `.env` (you still sign in from Settings):
 

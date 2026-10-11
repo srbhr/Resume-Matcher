@@ -24,12 +24,13 @@ from app.config import settings
 from app.database import MAX_MASTER_RESUMES, Database, DatabaseBusyError
 from app.main import app
 from app.mcp_server import tools
-from app.mcp_server.server import build_server
+from app.mcp_server.server import INSTRUCTIONS, build_server
 from app.models import Job
 from app.pdf import PDFRenderError
 from app.routers import resumes as resumes_router
 from app.routers.resumes import _hash_job_content
 from app.services import ats_parse
+from app.services.ats_parse.extract import ExtractedDocument
 from tests.ats_fixtures import john_doe, render
 from tests.unit.test_page_fit import _pdf
 
@@ -117,6 +118,32 @@ async def test_exposes_exactly_the_deterministic_tool_set() -> None:
         assert read_only == {fn.__name__ for fn in tools.READ_ONLY_TOOLS}
 
 
+async def test_overwrite_capable_tools_are_marked_destructive_and_disclosed() -> None:
+    async with connect() as mcp:
+        listed = (await mcp.list_tools()).tools
+    destructive = {t.name for t in listed if t.annotations.destructive_hint}
+    assert destructive == {
+        "update_resume",
+        "set_resume_title",
+        "set_cover_letter",
+        "set_outreach_message",
+        "set_default_master",
+        "set_job_keywords",
+        "export_resume_pdf",
+        "update_application",
+    }
+    additive = {
+        t.name
+        for t in listed
+        if t.annotations.destructive_hint is False and not t.annotations.read_only_hint
+    }
+    assert additive == {fn.__name__ for fn in tools.ADDITIVE_TOOLS}
+    assert "Nothing here deletes data" not in INSTRUCTIONS
+    for name in ("update_resume", "export_resume_pdf"):
+        assert name in INSTRUCTIONS
+    assert "overwrite" in INSTRUCTIONS
+
+
 async def test_master_round_trip_is_visible_to_the_web_api(
     sample_resume: dict[str, Any],
 ) -> None:
@@ -185,6 +212,26 @@ async def test_render_checks_map_invalid_stored_data_to_a_stable_error(
     rendered.assert_not_awaited()
 
 
+async def test_score_resume_maps_invalid_stored_data_to_a_stable_error(
+    isolated_db: Database, sample_resume: dict[str, Any]
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        await isolated_db.update_resume(
+            master["resume_id"], {"processed_data": {"workExperience": "legacy text"}}
+        )
+        message = await call_error(
+            mcp,
+            "score_resume",
+            {
+                "resume_id": master["resume_id"],
+                "keywords": {"required_skills": ["python"]},
+            },
+        )
+    assert "stored data is invalid" in message
+    assert "ValidationError" not in message
+
+
 async def test_create_master_requires_name_and_respects_limit(
     sample_resume: dict[str, Any],
 ) -> None:
@@ -216,6 +263,34 @@ async def test_add_job_caches_keywords_under_the_pipeline_hash(
             == sample_job_keywords["required_skills"]
         )
         assert stored["company"] == "TechCorp"
+
+
+@pytest.mark.parametrize(
+    "empty",
+    [{}, {"company": "TechCorp", "role": "Engineer"}, {"required_skills": [" "]}],
+)
+async def test_empty_keyword_payloads_are_rejected_before_caching(
+    empty: dict[str, Any],
+    isolated_db: Database,
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    async with connect() as mcp:
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+        before = (await isolated_db.get_job(job_id))["job_keywords"]
+        message = await call_error(
+            mcp, "set_job_keywords", {"job_id": job_id, "keywords": empty}
+        )
+        added = await call_error(
+            mcp,
+            "add_job",
+            {"job_description": sample_job_description, "keywords": empty},
+        )
+    assert "at least one of required_skills" in message
+    assert "at least one of required_skills" in added
+    assert (await isolated_db.get_job(job_id))["job_keywords"] == before
+    async with isolated_db._session() as session:
+        assert len((await session.execute(select(Job))).scalars().all()) == 1
 
 
 async def test_add_job_with_keywords_is_one_transaction(
@@ -548,20 +623,14 @@ async def test_file_tools_read_off_the_event_loop(
     (tmp_path / "cv.pdf").write_bytes(render("single-column"))
     watched = {"resume.docx", "notes.md", "cv.pdf"}
     reads: dict[str, int] = {}
-    read_bytes, read_text = Path.read_bytes, Path.read_text
+    path_open = Path.open
 
-    def spy_bytes(self: Path) -> bytes:
+    def spy_open(self: Path, *args: Any, **kwargs: Any) -> Any:
         if self.name in watched:
             reads[self.name] = threading.get_ident()
-        return read_bytes(self)
+        return path_open(self, *args, **kwargs)
 
-    def spy_text(self: Path, *args: Any, **kwargs: Any) -> str:
-        if self.name in watched:
-            reads[self.name] = threading.get_ident()
-        return read_text(self, *args, **kwargs)
-
-    monkeypatch.setattr(Path, "read_bytes", spy_bytes)
-    monkeypatch.setattr(Path, "read_text", spy_text)
+    monkeypatch.setattr(Path, "open", spy_open)
     async with connect() as mcp:
         for tool, name in (
             ("extract_document_text", "resume.docx"),
@@ -571,6 +640,52 @@ async def test_file_tools_read_off_the_event_loop(
             await call(mcp, tool, {"file_path": str(tmp_path / name)})
     assert set(reads) == watched
     assert threading.get_ident() not in reads.values()
+
+
+class _ReadSizes:
+    """Wraps an opened file and records the size argument of every read()."""
+
+    def __init__(self, handle: Any, sizes: list[int | None]) -> None:
+        self._handle, self._sizes = handle, sizes
+
+    def __enter__(self) -> "_ReadSizes":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._handle.close()
+
+    def read(self, size: int | None = -1) -> bytes:
+        self._sizes.append(size)
+        return self._handle.read(size)
+
+
+@pytest.mark.parametrize(
+    ("tool", "name"),
+    [
+        ("extract_document_text", "notes.txt"),
+        ("extract_document_text", "resume.docx"),
+        ("parse_check_file", "cv.pdf"),
+    ],
+)
+async def test_file_tools_read_at_most_the_cap_from_one_handle(
+    tool: str, name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Over the cap by one byte: nothing may be read beyond cap + 1, and the
+    # tool must refuse it without a separate size check that a later write defeats.
+    cap = shared_module.MAX_DOCUMENT_BYTES
+    (tmp_path / name).write_bytes(b"x" * (cap + 1))
+    sizes: list[int | None] = []
+    path_open = Path.open
+
+    def spy_open(self: Path, *args: Any, **kwargs: Any) -> Any:
+        handle = path_open(self, *args, **kwargs)
+        return _ReadSizes(handle, sizes) if self.name == name else handle
+
+    monkeypatch.setattr(Path, "open", spy_open)
+    async with connect() as mcp:
+        message = await call_error(mcp, tool, {"file_path": str(tmp_path / name)})
+    assert "File too large" in message
+    assert sizes == [cap + 1]
 
 
 def test_stdio_stdout_carries_only_protocol_messages(tmp_path: Path) -> None:
@@ -882,6 +997,32 @@ async def test_verify_resume_flags_a_truncated_round_trip(
     assert "roundtrip_truncated" in after["issues"]
 
 
+async def test_verify_resume_flags_a_failed_text_layer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        shared_module,
+        "render_resume_pdf",
+        AsyncMock(return_value=render("single-column")),
+    )
+    # Almost no extractable text, and no round trip to report missing fields.
+    unreadable = ats_parse.build_report(
+        ExtractedDocument(kind="pdf", text="Jane", page_count=1), source="render"
+    )
+    assert {c.id: c.status for c in unreadable.checks}["text_layer"] == "fail"
+    monkeypatch.setattr(
+        ats_parse, "parse_check_pdf", AsyncMock(return_value=unreadable)
+    )
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        result = await call(mcp, "verify_resume", {"resume_id": master["resume_id"]})
+        description = next(
+            t for t in (await mcp.list_tools()).tools if t.name == "verify_resume"
+        ).description
+    assert "text_layer" in result["issues"]
+    assert "text_layer" in description
+
+
 async def test_resume_schema_rules_are_described_as_guidance() -> None:
     async with connect() as mcp:
         listed = (await mcp.list_tools()).tools
@@ -925,3 +1066,19 @@ async def test_tailored_saves_reject_oversized_resume_data_before_writing(
     assert len(await isolated_db.list_resumes()) == 1
     assert await isolated_db.list_applications() == []
     rendered.assert_not_awaited()
+
+
+async def test_validate_tailored_resume_applies_the_same_size_limit_as_the_save() -> (
+    None
+):
+    limit = shared_module.MAX_SOURCE_CHARACTERS
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        oversized = copy.deepcopy(master["resume_data"])
+        oversized["summary"] = "x" * (limit + 1)
+        message = await call_error(
+            mcp,
+            "validate_tailored_resume",
+            {"source_resume_id": master["resume_id"], "resume_data": oversized},
+        )
+    assert f"exceeds {limit} characters" in message

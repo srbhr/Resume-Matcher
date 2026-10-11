@@ -19,7 +19,11 @@ logger = logging.getLogger(__name__)
 INSTRUCTIONS = """\
 Resume Matcher is a deterministic resume editor, validator and renderer. You are \
 the LLM: you write the content, these tools store, check and render it. Nothing \
-here deletes data.
+here deletes a resume or job, but update_resume, set_resume_title, \
+set_cover_letter, set_outreach_message, set_default_master, set_job_keywords and \
+update_application overwrite what is stored, and export_resume_pdf overwrites any \
+existing file at its output path. Check what is there before you pick a target; \
+tailor_and_verify and save_tailored_resume add new versions without overwriting.
 
 Typical flow:
 1. get_status, then list_resumes / get_resume. To import a file: \
@@ -69,8 +73,10 @@ def build_server() -> MCPServer:
     )
     for fn in tools.READ_ONLY_TOOLS:
         server.tool(annotations=tools.READ_ONLY)(fn)
-    for fn in tools.WRITE_TOOLS:
-        server.tool(annotations=tools.WRITE)(fn)
+    for fn in tools.ADDITIVE_TOOLS:
+        server.tool(annotations=tools.ADDITIVE)(fn)
+    for fn in tools.DESTRUCTIVE_TOOLS:
+        server.tool(annotations=tools.DESTRUCTIVE)(fn)
     return server
 
 

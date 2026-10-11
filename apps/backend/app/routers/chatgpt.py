@@ -1,15 +1,16 @@
 """Sign in with ChatGPT endpoints: start sign-in, callback, status, sign-out, models.
 
-The browser goes ``Settings -> auth.openai.com -> 127.0.0.1:<backend
-port>/auth/callback -> Settings``. The callback path is fixed by OpenAI's
-loopback-redirect rule (only the port may change), so it is served at the app
-root rather than under ``/api/v1``.
+The browser goes ``Settings -> auth.openai.com -> 127.0.0.1:<port>/auth/callback
+-> Settings``, where ``<port>`` is the one it opened the app on (the frontend,
+which proxies ``/auth/callback`` to this backend) or the backend's own. The
+callback path is fixed by OpenAI's loopback-redirect rule (only the port may
+change), so it is served at the app root rather than under ``/api/v1``.
 """
 
 import ipaddress
 import logging
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -43,16 +44,74 @@ def _require_loopback(request: Request) -> None:
         )
 
 
+def _caller_origin(request: Request) -> str | None:
+    """The origin the browser declares: ``Origin``, else the ``Referer``'s origin."""
+    origin = request.headers.get("origin")
+    if origin is None:
+        referer = request.headers.get("referer")
+        if not referer:
+            return None
+        parts = urlsplit(referer)
+        origin = f"{parts.scheme}://{parts.netloc}" if parts.netloc else "null"
+    return origin.strip().rstrip("/").lower()
+
+
+def _is_trusted_origin(request: Request, origin: str) -> bool:
+    """Same-origin, a configured frontend/CORS origin, or a loopback page."""
+    parts = urlsplit(origin)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        return False  # includes the opaque "null" origin
+    if origin in {o.rstrip("/").lower() for o in settings.effective_cors_origins}:
+        return True
+    if parts.hostname == "localhost" or _is_loopback(parts.hostname):
+        return True
+    # Same-origin: the Next.js proxy rewrites Host, so also accept the browser's
+    # own Host that it forwards.
+    hosts = (request.headers.get("host"), request.headers.get("x-forwarded-host"))
+    return parts.netloc in {h.strip().lower() for h in hosts if h}
+
+
+def _require_trusted_origin(request: Request) -> None:
+    """Refuse cross-site form posts to the state-changing routes.
+
+    Browsers always send ``Origin`` (or at least ``Referer``) on a cross-site
+    POST, and CORS does not stop a simple form post from being delivered.
+    Requests with neither header are not from a browser page, so they pass.
+    """
+    origin = _caller_origin(request)
+    if origin is not None and not _is_trusted_origin(request, origin):
+        raise HTTPException(status_code=403, detail="Cross-site request blocked.")
+
+
+def _callback_port(request: Request) -> int:
+    """The port the browser reaches this app on, for the loopback redirect.
+
+    A page opened at ``http://localhost:<port>`` (the frontend, which proxies
+    ``/auth/callback`` here, so it is the one port Docker publishes) returns the
+    browser to that same port. Otherwise use the port this backend accepted the
+    connection on, so the redirect also works with uvicorn's ``--port``.
+    """
+    origin = _caller_origin(request)
+    if origin:
+        parts = urlsplit(origin)
+        if parts.scheme == "http" and (
+            parts.hostname == "localhost" or _is_loopback(parts.hostname)
+        ):
+            try:
+                return parts.port or 80
+            except ValueError:
+                pass
+    server = request.scope.get("server")
+    return int(server[1]) if server and server[1] else settings.port
+
+
 @router.post("/login")
 async def start_chatgpt_login(request: Request) -> dict[str, str]:
     """Return the OpenAI authorization URL for the browser to open."""
     _require_loopback(request)
-    # The port this backend actually accepted the connection on, so the
-    # redirect reaches it even when uvicorn was started with --port.
-    server = request.scope.get("server")
-    port = server[1] if server and server[1] else settings.port
+    _require_trusted_origin(request)
     try:
-        url = chatgpt_auth.start_login(int(port))
+        url = chatgpt_auth.start_login(_callback_port(request))
     except Exception:
         logger.exception("Could not start Sign in with ChatGPT")
         raise HTTPException(
@@ -89,8 +148,9 @@ async def chatgpt_status() -> dict[str, Any]:
 
 
 @router.post("/logout")
-async def chatgpt_logout() -> dict[str, bool]:
+async def chatgpt_logout(request: Request) -> dict[str, bool]:
     """Revoke the session at OpenAI and forget the tokens locally."""
+    _require_trusted_origin(request)
     try:
         revoked = await chatgpt_auth.disconnect()
     except Exception:

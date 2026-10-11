@@ -40,6 +40,8 @@ uv.lock
 **/data/.secret_key
 # Sign in with ChatGPT credentials (encrypted) and their refresh lock - NEVER COMMIT
 **/data/chatgpt_credentials.enc
+# save_record() stages the write here; an interrupted process can leave it behind
+**/data/.chatgpt_credentials.enc.*.tmp
 **/data/chatgpt_credentials.lock
 
 # Test artifacts

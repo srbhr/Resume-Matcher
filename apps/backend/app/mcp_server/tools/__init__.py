@@ -51,24 +51,32 @@ READ_ONLY_TOOLS: list[Tool] = [
     list_applications,
 ]
 
-WRITE_TOOLS: list[Tool] = [
+# Create new records, or refresh a value that can be recomputed.
+ADDITIVE_TOOLS: list[Tool] = [
     create_master_resume,
+    add_job,
+    save_tailored_resume,
+    tailor_and_verify,
+    recalculate_ats_score,
+    create_application,
+]
+
+# Replace stored content or settings, or overwrite an existing file.
+DESTRUCTIVE_TOOLS: list[Tool] = [
     update_resume,
     set_resume_title,
     set_cover_letter,
     set_outreach_message,
     set_default_master,
-    add_job,
     set_job_keywords,
-    save_tailored_resume,
-    tailor_and_verify,
-    recalculate_ats_score,
     export_resume_pdf,
-    create_application,
     update_application,
 ]
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, open_world_hint=False)
-WRITE = ToolAnnotations(
+ADDITIVE = ToolAnnotations(
     read_only_hint=False, destructive_hint=False, open_world_hint=False
+)
+DESTRUCTIVE = ToolAnnotations(
+    read_only_hint=False, destructive_hint=True, open_world_hint=False
 )

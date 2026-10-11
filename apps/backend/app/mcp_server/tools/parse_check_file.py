@@ -2,15 +2,13 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import anyio.to_thread
 from mcp.server.mcpserver.exceptions import ToolError
 
+from app.mcp_server.tools._shared import read_document_bytes
 from app.services.ats_parse import parse_check_bytes
 from app.services.ats_parse.extract import SUPPORTED_SUFFIXES
 
 logger = logging.getLogger(__name__)
-
-MAX_DOCUMENT_BYTES = 4 * 1024 * 1024
 
 
 async def parse_check_file(file_path: str) -> dict[str, Any]:
@@ -20,10 +18,8 @@ async def parse_check_file(file_path: str) -> dict[str, Any]:
         raise ToolError("Unsupported file type. Use PDF or DOCX.")
     if not path.is_file():
         raise ToolError(f"File not found: {path}")
-    if path.stat().st_size > MAX_DOCUMENT_BYTES:
-        raise ToolError("File too large. Maximum size is 4MB.")
+    content = await read_document_bytes(path)
     try:
-        content = await anyio.to_thread.run_sync(path.read_bytes)
         report = await parse_check_bytes(content, path.name)
     except Exception as e:
         logger.error("Parse check failed for %s: %s", path, e)

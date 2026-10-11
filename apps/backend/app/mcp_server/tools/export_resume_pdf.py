@@ -22,7 +22,7 @@ async def export_resume_pdf(
     output_path: str | None = None,
     print_settings: PageFitSettings | None = None,
 ) -> dict[str, Any]:
-    """Render a saved resume to PDF and report its page count. Needs the web frontend running."""
+    """Render a saved resume to PDF and report its page count. Needs the web frontend running. Overwrites an existing file at output_path."""
     resume = await require_resume(resume_id)
     require_structured(resume)
     fit = print_settings or PageFitSettings()
