@@ -395,6 +395,23 @@ def _reasoning_effort_kwarg(
     return {"reasoning_effort": reasoning_effort}
 
 
+def _apply_reasoning_effort(
+    config: LLMConfig,
+    kwargs: dict[str, Any],
+    reasoning_effort: str | None,
+    max_tokens: int,
+) -> None:
+    """Add ``reasoning_effort`` to ``kwargs`` and drop what it conflicts with.
+
+    Anthropic rejects extended thinking alongside a temperature other than 1,
+    so a request that carries the effort there goes out without ``temperature``.
+    """
+    effort_kwarg = _reasoning_effort_kwarg(config, reasoning_effort, max_tokens)
+    kwargs.update(effort_kwarg)
+    if effort_kwarg and config.provider == "anthropic":
+        kwargs.pop("temperature", None)
+
+
 _MAX_TOKENS_REJECTED_RE = re.compile(
     r"'max_tokens' is not supported|unsupported parameter:?\s*'max_tokens'"
 )
@@ -1069,7 +1086,7 @@ async def check_llm_health(
         api_version = _azure_foundry_api_version(config)
         if api_version:
             kwargs["api_version"] = api_version
-        kwargs.update(_reasoning_effort_kwarg(config, config.reasoning_effort, 64))
+        _apply_reasoning_effort(config, kwargs, config.reasoning_effort, 64)
 
         response = await _route_acompletion(config, litellm, **kwargs)
         content = _extract_choice_text(response.choices[0])
@@ -1191,9 +1208,7 @@ async def complete(
             model_name, temperature, reasoning_effort=config.reasoning_effort
         ):
             kwargs["temperature"] = temperature
-        kwargs.update(
-            _reasoning_effort_kwarg(config, config.reasoning_effort, max_tokens)
-        )
+        _apply_reasoning_effort(config, kwargs, config.reasoning_effort, max_tokens)
 
         response = await _route_acompletion(config, router, **kwargs)
 
@@ -1781,9 +1796,7 @@ async def complete_json(
             if _uses_opencode_zen_hy3(config):
                 kwargs["extra_body"] = {"reasoning_effort": "no_think"}
             else:
-                kwargs.update(
-                    _reasoning_effort_kwarg(config, reasoning_effort, max_tokens)
-                )
+                _apply_reasoning_effort(config, kwargs, reasoning_effort, max_tokens)
 
             # JSON-012: Fallback to prompt-only JSON mode after JSON-mode failure.
             # LiteLLM registry may report support for models that the upstream
