@@ -301,6 +301,17 @@ def analyze_keyword_gaps(
     )
 
 
+# Plural forms for replacements that don't take a plain "s" ("analysis" ->
+# "analysiss"), keyed by the lowercase blacklisted phrase.
+_PLURAL_REPLACEMENTS: dict[str, str] = {
+    "paradigm": "approaches",
+    "deep dive": "analyses",
+    "bandwidth": "capacities",
+    "low-hanging fruit": "quick wins",
+    "move the needle": "make progress",
+}
+
+
 def _phrase_pattern(phrase: str) -> re.Pattern[str]:
     """Case-insensitive pattern for a blacklisted phrase, matching whole words.
 
@@ -377,14 +388,23 @@ def remove_ai_phrases(
             removed.add(phrase)
             replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
 
-            def substitute(match: re.Match[str], replacement: str = replacement) -> str:
+            plural_replacement = _PLURAL_REPLACEMENTS.get(phrase.lower())
+
+            def substitute(
+                match: re.Match[str],
+                replacement: str = replacement,
+                plural_replacement: str | None = plural_replacement,
+            ) -> str:
+                plural = match.groupdict().get("plural") or ""
+                if plural and plural_replacement:
+                    replacement, plural = plural_replacement, ""
                 # Keep sentence case: "Spearheaded" -> "Led", not "led".
                 if replacement and match.group("phrase")[0].isupper():
                     replacement = replacement[0].upper() + replacement[1:]
                 # The plural "s" belongs to the phrase: "stakeholders" -> "team
                 # members", and a removed "disruptors" leaves nothing behind.
                 if replacement:
-                    replacement += match.groupdict().get("plural") or ""
+                    replacement += plural
                 article = match.groupdict().get("article")
                 if not article:
                     return replacement
