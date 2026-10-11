@@ -453,6 +453,10 @@
         "vivid": {
           "name": "鲜明",
           "description": "彩色双栏布局，强调色标题与箭头项目符号"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "双栏布局，细体姓名、窄左栏与浅灰色标题"
         }
       },
       "accentColor": "强调色",

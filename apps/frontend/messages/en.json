@@ -453,6 +453,10 @@
         "vivid": {
           "name": "Vivid",
           "description": "Colorful two-column layout with accent headers and arrow bullets"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Two-column layout with a hairline name, a narrow left column and light gray headings"
         }
       },
       "accentColor": "Accent Color",

@@ -431,6 +431,10 @@
         "vivid": {
           "name": "비비드",
           "description": "강조 헤더와 화살표 불릿이 있는 화려한 2단 레이아웃"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "가는 글씨의 이름, 좁은 왼쪽 열, 연한 회색 제목이 있는 2단 레이아웃"
         }
       },
       "accentColor": "강조 색상",
