@@ -247,6 +247,11 @@ def contact_info(doc: ExtractedDocument, ctx: Context) -> Check:
     )
 
 
+# What may follow a heading synonym: punctuation ("&", "・", ":") or a joining word
+# from a supported locale ("Habilidades y Premios", "기술 및 수상 내역", "技能与荣誉").
+_HEADING_JOINER = re.compile(r"[^\w\s]|(?:and|y|e|et|및)\s|[与和及]")
+
+
 def _heading_lines(text: str) -> list[str]:
     return [
         line.strip(" :•|")
@@ -255,12 +260,26 @@ def _heading_lines(text: str) -> list[str]:
     ]
 
 
+def is_heading(line: str, names: list[str]) -> bool:
+    """A synonym alone, or joined to more heading text ("skills & awards", "技能与荣誉").
+
+    Prose that merely starts with a synonym ("experience in product engineering",
+    "技術を活用した開発") is not a heading.
+    """
+    for name in names:
+        if line.startswith(name):
+            rest = line[len(name) :].lstrip()
+            if not rest or rest in names or _HEADING_JOINER.match(rest):
+                return True
+    return False
+
+
 def find_sections(text: str, locale: str | None) -> list[str]:
     lines = _heading_lines(text)
     found = []
     for kind in REQUIRED_SECTIONS:
         names = [normalize(name) for name in synonyms(kind, locale)]
-        if any(line.startswith(name) for line in lines for name in names):
+        if any(is_heading(line, names) for line in lines):
             found.append(kind)
     return found
 

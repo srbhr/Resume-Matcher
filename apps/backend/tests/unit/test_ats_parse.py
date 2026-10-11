@@ -12,7 +12,7 @@ from docx import Document
 from pydantic import ValidationError
 
 from app.services.ats_parse import build_report, parse_check_bytes
-from app.services.ats_parse.checks import has_columns, run_checks, score
+from app.services.ats_parse.checks import find_sections, has_columns, run_checks, score
 from app.services.ats_parse.extract import ExtractedDocument, PageLayout, TextBox
 from app.services.ats_parse.headings import HEADINGS
 from app.services.ats_parse.models import Check
@@ -236,6 +236,10 @@ def test_contact_info_found_late_is_a_warning() -> None:
         ("Experience\nEducation\nSkills", "ja", "pass"),
         ("Experience\nSkills", None, "warn"),
         ("Experience with Python and teams across many offices", None, "fail"),
+        # Short prose that starts with a synonym is not a heading.
+        ("Experience in product engineering\nEducation\nSkills", None, "fail"),
+        ("職歴\n学歴\n技術を活用したシステム開発", "ja", "warn"),
+        ("職歴\n学歴\n技術スキル", "ja", "pass"),
     ],
 )
 def test_section_headings(text: str, locale: str | None, status: str) -> None:
@@ -256,6 +260,16 @@ def test_headings_cover_every_frontend_locale_label() -> None:
             assert any(
                 label.startswith(normalize(s)) for s in HEADINGS[locale][kind]
             ), f"{path.name}: {label!r} not in HEADINGS[{locale!r}][{kind!r}]"
+
+
+@pytest.mark.parametrize("skills_key", ["skills", "skillsOnly"])
+def test_frontend_section_labels_read_as_headings(skills_key: str) -> None:
+    # "Skills & Awards", "Habilidades y Premios", "技能与荣誉" and the like.
+    for path in MESSAGES.glob("*.json"):
+        labels = json.loads(path.read_text(encoding="utf-8"))["resume"]["sections"]
+        text = "\n".join(labels[k] for k in ("experience", "education", skills_key))
+        found = find_sections(text, path.stem)
+        assert found == ["experience", "education", "skills"], (path.name, text)
 
 
 def test_score_halves_warnings() -> None:
