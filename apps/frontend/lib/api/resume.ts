@@ -615,7 +615,7 @@ export async function parseJobMetadata(jobDescription: string): Promise<JobMetad
     job_description: jobDescription,
   });
   if (!res.ok) {
-    return { role: '', company: '', job_req_id: '' };
+    throw new Error(`Failed to detect job details (${res.status})`);
   }
   return res.json();
 }
