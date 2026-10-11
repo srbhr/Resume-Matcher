@@ -563,6 +563,7 @@ class PageFitSettings(BaseModel):
         "latex",
         "clean",
         "vivid",
+        "modern-deedy",
     ] = "swiss-single"
     pageSize: Literal["A4", "LETTER"] = "A4"
     marginTop: int = Field(10, ge=5, le=25)

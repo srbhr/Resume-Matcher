@@ -5,3 +5,4 @@ export { ResumeModernTwoColumn } from './resume-modern-two-column';
 export { ResumeLatex } from './resume-latex';
 export { ResumeClean } from './resume-clean';
 export { ResumeVivid } from './resume-vivid';
+export { ResumeModernDeedy } from './resume-modern-deedy';
