@@ -185,6 +185,26 @@ async def test_render_checks_map_invalid_stored_data_to_a_stable_error(
     rendered.assert_not_awaited()
 
 
+async def test_score_resume_maps_invalid_stored_data_to_a_stable_error(
+    isolated_db: Database, sample_resume: dict[str, Any]
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        await isolated_db.update_resume(
+            master["resume_id"], {"processed_data": {"workExperience": "legacy text"}}
+        )
+        message = await call_error(
+            mcp,
+            "score_resume",
+            {
+                "resume_id": master["resume_id"],
+                "keywords": {"required_skills": ["python"]},
+            },
+        )
+    assert "stored data is invalid" in message
+    assert "ValidationError" not in message
+
+
 async def test_create_master_requires_name_and_respects_limit(
     sample_resume: dict[str, Any],
 ) -> None:

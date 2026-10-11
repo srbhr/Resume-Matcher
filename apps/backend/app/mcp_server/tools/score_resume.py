@@ -8,7 +8,7 @@ from app.mcp_server.tools._shared import (
     keyword_score,
     require_job,
     require_resume,
-    require_structured,
+    require_valid_structured,
 )
 from app.routers.resumes import _get_original_resume_data, _grounding_master_data
 from app.schemas import ResumeData
@@ -34,7 +34,7 @@ async def score_resume(
 
     if resume_id is not None:
         resume = await require_resume(resume_id)
-        data = require_structured(resume)
+        data = require_valid_structured(resume)
         master = await _grounding_master_data(resume) or data
     else:
         data = resume_data.model_dump(mode="json")
