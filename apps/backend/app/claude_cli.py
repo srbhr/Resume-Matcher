@@ -109,6 +109,13 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         # that context ($3.07, 18s) versus ~2k tokens ($0.02, 3s) with it off,
         # and hooks would otherwise run on every completion. OAuth login still
         # works, unlike --bare.
+        #
+        # Known risk: never pass --bare here. Bare mode only reads
+        # ANTHROPIC_API_KEY or apiKeyHelper and never reads the OAuth login
+        # this provider relies on. Anthropic has said --bare will become the
+        # default for `-p` in a future release; when it does, this call will
+        # stop seeing the signed-in subscription and need revisiting. We pass
+        # no extra flag for it today because the CLI documents none.
         "--safe-mode",
         # Resumes and job descriptions must not be written to Claude Code's
         # session history on disk.
