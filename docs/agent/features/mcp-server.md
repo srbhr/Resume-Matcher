@@ -45,6 +45,7 @@ Any client works the same way: run the command `uv` with args `run --directory <
    | `garbled_glyphs` | the `garbled_glyphs` check warns or fails |
    | `low_order_fidelity` | round-trip `order_fidelity < 0.9` |
    | `fields_missing` | any round-trip field is `missing` or `garbled` |
+   | `roundtrip_truncated` | the round trip hit its field cap; fields past the cap were not checked |
    | `injectable_keywords` | job keywords the master supports but this resume lacks |
    | `render_failed` | rendering failed; `render_error` names the frontend URL |
 
