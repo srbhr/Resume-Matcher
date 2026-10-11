@@ -100,6 +100,12 @@ describe('AtsScorePanel', () => {
     expect(screen.queryByText('builder.jdMatch.atsScore.notCalculated')).not.toBeInTheDocument();
   });
 
+  it('says it scores against the job, apart from the ATS CHECK parse check', async () => {
+    api.last.mockResolvedValue(null);
+    await renderPanel();
+    expect(screen.getByText('builder.jdMatch.atsScore.description')).toBeInTheDocument();
+  });
+
   it('asks to save first while there are unsaved edits', async () => {
     api.last.mockResolvedValue(record(70));
     await renderPanel(true);

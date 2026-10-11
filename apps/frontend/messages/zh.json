@@ -322,6 +322,7 @@
         "matchRateLabel": "匹配率："
       },
       "atsScore": {
+        "description": "根据此职位描述为已保存的简历评分。PDF 本身的解析情况请在 ATS 检查标签页中查看。",
         "loading": "正在加载 ATS 评分…",
         "notCalculated": "此简历尚未计算 ATS 评分。",
         "loadFailed": "无法加载已保存的 ATS 评分。请尝试重新计算，或刷新页面。",

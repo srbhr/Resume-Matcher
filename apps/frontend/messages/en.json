@@ -322,6 +322,7 @@
         "matchRateLabel": "Match Rate:"
       },
       "atsScore": {
+        "description": "Scores the saved resume against this job description. The ATS CHECK tab tests how the PDF itself parses.",
         "loading": "Loading ATS score…",
         "notCalculated": "ATS score not calculated yet for this resume.",
         "loadFailed": "Couldn't load the saved ATS score. Try Recalculate, or reload the page.",

@@ -300,6 +300,7 @@
         "matchRateLabel": "일치율:"
       },
       "atsScore": {
+        "description": "저장된 이력서를 이 채용공고와 비교해 점수를 매깁니다. PDF 자체가 어떻게 읽히는지는 ATS 검사 탭에서 확인하세요.",
         "loading": "ATS 점수 불러오는 중…",
         "notCalculated": "이 이력서의 ATS 점수가 아직 계산되지 않았습니다.",
         "loadFailed": "저장된 ATS 점수를 불러올 수 없습니다. 다시 계산하거나 페이지를 새로 고치세요.",

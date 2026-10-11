@@ -322,6 +322,7 @@
         "matchRateLabel": "Taxa de Correspondência:"
       },
       "atsScore": {
+        "description": "Pontua o currículo salvo em relação a esta descrição da vaga. A aba VERIFICAÇÃO ATS testa como o próprio PDF é lido.",
         "loading": "Carregando a pontuação ATS…",
         "notCalculated": "A pontuação ATS deste currículo ainda não foi calculada.",
         "loadFailed": "Não foi possível carregar a pontuação ATS salva. Tente Recalcular ou recarregue a página.",

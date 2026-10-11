@@ -322,6 +322,7 @@
         "matchRateLabel": "Tasa de coincidencia:"
       },
       "atsScore": {
+        "description": "Puntúa el currículum guardado frente a esta descripción del puesto. La pestaña REVISIÓN ATS comprueba cómo se lee el propio PDF.",
         "loading": "Cargando la puntuación ATS…",
         "notCalculated": "Aún no se ha calculado la puntuación ATS de este currículum.",
         "loadFailed": "No se pudo cargar la puntuación ATS guardada. Prueba Recalcular o recarga la página.",

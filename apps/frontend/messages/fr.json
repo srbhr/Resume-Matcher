@@ -322,6 +322,7 @@
         "matchRateLabel": "Taux de correspondance :"
       },
       "atsScore": {
+        "description": "Note le CV enregistré par rapport à cette fiche de poste. L'onglet VÉRIF. ATS teste la lecture du PDF lui-même.",
         "loading": "Chargement du score ATS…",
         "notCalculated": "Le score ATS de ce CV n'a pas encore été calculé.",
         "loadFailed": "Impossible de charger le score ATS enregistré. Essayez Recalculer ou rechargez la page.",
