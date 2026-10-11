@@ -3,8 +3,13 @@ from typing import Any
 from mcp.server.mcpserver.exceptions import ToolError
 
 from app.ai_limits import MAX_JOB_CHARACTERS
-from app.database import db
-from app.mcp_server.tools._shared import JobKeywords, guard, job_view, keyword_updates
+from app.mcp_server.tools._shared import (
+    JobKeywords,
+    create_job_with_metadata,
+    guard,
+    job_view,
+    keyword_updates,
+)
 
 
 @guard
@@ -20,11 +25,8 @@ async def add_job(
         raise ToolError("job_description must not be empty.")
     if len(content) > MAX_JOB_CHARACTERS:
         raise ToolError(f"job_description exceeds {MAX_JOB_CHARACTERS} characters.")
-    job = await db.create_job(content)
-    updates = keyword_updates(content, keywords) if keywords else {}
+    metadata = keyword_updates(content, keywords) if keywords else {}
     for key, value in (("company", company), ("role", role)):
         if value and value.strip():
-            updates[key] = value.strip()
-    if updates:
-        job = await db.update_job(job["job_id"], updates) or job
-    return job_view(job)
+            metadata[key] = value.strip()
+    return job_view(await create_job_with_metadata(content, metadata))

@@ -3,6 +3,7 @@ from typing import Any
 from mcp.server.mcpserver.exceptions import ToolError
 
 from app.mcp_server.tools._shared import (
+    ensure_within_size_limit,
     guard,
     require_job,
     require_resume,
@@ -25,6 +26,7 @@ async def save_tailored_resume(
     source = await require_resume(source_resume_id)
     job = await require_job(job_id)
     candidate = resume_data.model_dump()
+    ensure_within_size_limit(candidate)
     report = tailoring_report(require_structured(source), candidate)
     if not report["valid"]:
         raise ToolError(
