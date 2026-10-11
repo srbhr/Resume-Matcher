@@ -193,11 +193,10 @@ info "Checking Playwright browsers..."
 if [ -d "${PLAYWRIGHT_BROWSERS_PATH:-/nonexistent}" ] || [ -d "/root/.cache/ms-playwright" ] || [ -d "/home/appuser/.cache/ms-playwright" ]; then
     status "Playwright browsers found"
 else
-    warn "Installing Playwright Chromium (this may take a moment)..."
-    python -m playwright install chromium || {
-        warn "Playwright install failed — PDF export may not work"
-    }
-    status "Playwright setup complete"
+    # Chromium is installed into the image at build time. The container runs as appuser and
+    # PLAYWRIGHT_BROWSERS_PATH (/ms-playwright) is root-owned, so a runtime install cannot succeed.
+    error "Playwright Chromium is missing from this image — PDF export will not work."
+    error "Rebuild the image (e.g. 'docker compose build --no-cache') to install it."
 fi
 
 # Start backend
