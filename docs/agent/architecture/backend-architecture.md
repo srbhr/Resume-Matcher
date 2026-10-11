@@ -159,7 +159,7 @@ After the LLM call, two deterministic safety nets patch the result from the sour
 
 - `restore_dates_from_markdown` puts back months the LLM dropped.
 - `restore_skills_from_markdown` puts back skills the LLM summarized away. A source line counts as a skill list when it has at least 3 short items and at least 2 of them were parsed into `additional.technicalSkills`; the line's missing items are appended in source order. Items are separated by `,`, `|`, `;`, `•`, `·`, a wide PDF-extraction gap, or a final "and"/"or". A leading label is dropped, whether it's before a colon (`Tools: ...`), before a gap (`Stack  Python, ...`, unless that word is itself a parsed skill) or a heading item (`Technical Skills | Python | ...`).
-  - It skips prose (an item with a function word such as `with`, `for` or `using`, unless the rest is capitalized like a name, e.g. "Ruby on Rails") and sentences wrapped across lines (an item opening with "and" mid-line, or a dangling "and" at the end).
+  - It skips prose (items with a clause word such as `with`, `using` or `by` are always rejected; the name connectors `on`, `of`, `the`, `in` and `for` are allowed only when the remaining words are capitalized like a name, e.g. "Ruby on Rails") and sentences wrapped across lines (an item opening with "and" mid-line, or a dangling "and" at the end).
   - Only the originally parsed skills anchor a line, and it takes two of them, so a restored item or a single match can't pull in an unrelated line (job titles, employers, a spoken-languages line with one language parsed).
   - `PARSE_RESUME_PROMPT` also tells the model to copy every listed skill (spoken languages go to `additional.languages`), which covers lines the safety net can't anchor.
 
