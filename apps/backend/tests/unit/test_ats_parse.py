@@ -195,6 +195,26 @@ async def test_two_column_render_scrambles_reading_order() -> None:
     assert double.overall_score < single.overall_score
 
 
+async def test_modern_deedy_render_is_single_column_and_extracts_cleanly() -> None:
+    # Real render of john_doe(): the small-caps roles and institutions extract as
+    # plain text (unlike clean's), the pipes are real text, and the read order is high.
+    report = await parse_check_bytes(
+        render("modern-deedy"),
+        "d.pdf",
+        source="render",
+        resume_data=john_doe(),
+        template="modern-deedy",
+    )
+    assert report.overall_score == 100
+    assert _status(report.checks, "garbled_glyphs") == "pass"
+    assert _status(report.checks, "multi_column") == "pass"
+    assert report.roundtrip.content_recall == 1.0
+    assert report.roundtrip.order_fidelity >= 0.99
+    text = extract_pdf(render("modern-deedy")).text
+    assert "STRIPE | SENIOR SOFTWARE ENGINEER" in text
+    assert "Technical Skills: Go, Python, Kafka" in text
+
+
 async def test_sparse_sidebar_still_counts_as_two_columns() -> None:
     # A short skills sidebar covers little of the page but still interleaves.
     report = await parse_check_bytes(
