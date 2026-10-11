@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import { blockRank, blocks, easeOutExpo, parseHex, shade } from '@/lib/effects/block-dissolve';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  BLOCK_SIZE,
+  SOFTNESS,
+  blockRank,
+  blocks,
+  easeOutExpo,
+  parseHex,
+  shade,
+  type Block,
+} from '@/lib/effects/block-dissolve';
 
 const W = 1440;
 const H = 900;
@@ -72,6 +81,81 @@ describe('blocks: coverage', () => {
     }
     expect(blocks(W, H, 0, { softness: 0 }).every((b) => b.coverage === 1)).toBe(true);
     expect(blocks(W, H, 1, { softness: 0 }).every((b) => b.coverage === 0)).toBe(true);
+  });
+});
+
+// `blocks` as it was before the layout was cached: every block re-hashed on every call.
+function uncachedBlocks(
+  width: number,
+  height: number,
+  progress: number,
+  { blockSize = BLOCK_SIZE, softness = SOFTNESS, invert = false } = {}
+): Block[] {
+  const size = blockSize * width;
+  const cols = Math.ceil(width / size);
+  const rows = Math.ceil(height / size);
+  const grid: Block[] = [];
+  for (let j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+      const rank = blockRank(i, j, invert);
+      const gone =
+        softness > 0
+          ? Math.min(1, Math.max(0, (progress - rank * (1 - softness)) / softness))
+          : Number(progress > rank);
+      grid.push({ x: i * size, y: j * size, size, coverage: 1 - gone });
+    }
+  }
+  return grid;
+}
+
+describe('blocks: the cached layout', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('gives the blocks the uncached maths gives, for any size, options and progress', () => {
+    const sizes: [number, number][] = [
+      [W, H],
+      [1000, 1000],
+      [375, 667],
+      [2880, 1800],
+      [1, 1],
+    ];
+    const options = [
+      {},
+      { invert: true },
+      { softness: 0 },
+      { blockSize: 0.25, softness: 0.5, invert: true },
+    ];
+    // Sizes and options interleaved, so a layout is looked up again after others were built.
+    for (const opts of options) {
+      for (let p = 0; p <= 1.0001; p += 0.125) {
+        for (const [w, h] of sizes) {
+          expect(blocks(w, h, p, opts)).toEqual(uncachedBlocks(w, h, p, opts));
+        }
+      }
+    }
+  });
+
+  it('is unaffected by the layouts it has cached and dropped', () => {
+    const before = blocks(777, 555, 0.4);
+    for (let w = 300; w < 400; w += 10) blocks(w, 500, 0.4); // more layouts than are kept
+    expect(blocks(777, 555, 0.4)).toEqual(before);
+    expect(before).toEqual(uncachedBlocks(777, 555, 0.4));
+  });
+
+  it('returns fresh blocks each call, so a frame never rewrites the one before', () => {
+    const first = blocks(W, H, 0.2);
+    const snapshot = first.map((b) => b.coverage);
+    const second = blocks(W, H, 0.6);
+    expect(second).not.toBe(first);
+    expect(first.map((b) => b.coverage)).toEqual(snapshot);
+    expect(second.map((b) => b.coverage)).not.toEqual(snapshot);
+  });
+
+  it('hashes the grid once, not on every frame', () => {
+    blocks(1234, 765, 0); // the first frame builds the layout
+    const imul = vi.spyOn(Math, 'imul'); // blockRank's hash
+    for (const p of [0.1, 0.5, 0.9]) blocks(1234, 765, p);
+    expect(imul).not.toHaveBeenCalled();
   });
 });
 
