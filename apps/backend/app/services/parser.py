@@ -662,7 +662,12 @@ _MIN_SKILL_LINE_ITEMS = 3
 _MIN_LINE_ANCHORS = 2
 _MAX_SKILL_ITEM_WORDS = 5
 _MAX_SKILL_ITEM_CHARS = 40
-_SKILL_SEPARATOR_RE = re.compile(r"\s*(?:,|\||;|•|·)\s*")
+# A real skill line has far fewer items; longer lines are rejected without being
+# fully split, so a hostile line can't be expanded into huge lists.
+_MAX_SKILL_LINE_ITEMS = 200
+# No surrounding \s*: it backtracks quadratically on a long run of whitespace.
+# Chunks are stripped instead.
+_SKILL_SEPARATOR_RE = re.compile(r"[,|;•·]")
 _LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+●▪◦‣]|\d+[.)])\s+")
 _LINE_LABEL_RE = re.compile(r"^[^:,]{1,80}:\s*")
 # PDF text extraction renders a visual gap (e.g. after a bold label) as 2+ spaces.
@@ -691,12 +696,20 @@ def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
     text = _LIST_MARKER_RE.sub("", line).strip()
     text = _LINE_LABEL_RE.sub("", text)  # "Tools: Python, Rust" -> "Python, Rust"
 
+    chunks = _SKILL_SEPARATOR_RE.split(text, maxsplit=_MAX_SKILL_LINE_ITEMS)
+    if len(chunks) > _MAX_SKILL_LINE_ITEMS:
+        return []
     items: list[str] = []
-    for index, chunk in enumerate(_SKILL_SEPARATOR_RE.split(text)):
-        segments = [seg for seg in _EXTRACTION_GAP_RE.split(chunk) if seg]
+    for index, chunk in enumerate(chunks):
+        gap_pieces = _EXTRACTION_GAP_RE.split(
+            chunk.strip(), maxsplit=_MAX_SKILL_LINE_ITEMS
+        )
+        segments = [seg for seg in gap_pieces if seg]
         if index == 0 and len(segments) > 1 and segments[0].casefold() not in anchors:
             segments = segments[1:]  # "Stack  TypeScript": drop the label
         items.extend(segments)
+        if len(items) > _MAX_SKILL_LINE_ITEMS:
+            return []
     # Keep a leading dot (".NET"); drop trailing sentence punctuation.
     items = [item.strip().rstrip(".").strip() for item in items]
     items = [item for item in items if item]
