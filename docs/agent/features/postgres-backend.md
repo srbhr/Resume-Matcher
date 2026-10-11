@@ -39,6 +39,7 @@ DATABASE_URL=postgresql://... uv run python -m app.scripts.copy_sqlite_to_postgr
 ```
 
 - The script copies every table, including the `api_keys` ciphertext, in one locked transaction.
+- It reads the SQLite source in one read transaction, so all tables come from the same snapshot. Writes made after that snapshot are not copied: stop the web app and the MCP server before the copy and keep them stopped until you have switched over to `DATABASE_URL`.
 - It refuses if any target table already has rows.
 
 ## Tests

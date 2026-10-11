@@ -1,11 +1,12 @@
 """PostgreSQL configuration and write locking, checked without a server."""
 
+import sqlite3
 from pathlib import Path
 from typing import Any
 
 import pytest
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import event, select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.schema import CreateIndex
@@ -221,6 +222,38 @@ async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
         with pytest.raises(TargetNotEmptyError):
             copy_rows(source, target)
         assert (await target.get_stats())["total_resumes"] == 1
+    finally:
+        await source.close()
+        await target.close()
+
+
+async def test_copy_rows_reads_one_source_snapshot(tmp_path: Path) -> None:
+    source = Database(db_path=tmp_path / "source.db")
+    target = Database(db_path=tmp_path / "target.db")
+    try:
+        await source.create_job("Engineer")
+        assert source._sync_engine is not None
+        wrote_late = False
+
+        @event.listens_for(source._sync_engine, "after_cursor_execute")
+        def write_after_first_table(
+            _conn: Any, _cursor: Any, statement: str, *_args: Any
+        ) -> None:
+            # Commit to a table that is read later, once the first table was read.
+            nonlocal wrote_late
+            if wrote_late or "FROM api_keys" not in statement:
+                return
+            wrote_late = True
+            with sqlite3.connect(source.db_path) as other:
+                other.execute(
+                    "INSERT INTO jobs (job_id, content, created_at, metadata_json)"
+                    " VALUES ('late', 'late', 'now', '{}')"
+                )
+
+        counts = copy_rows(source, target)
+        assert wrote_late
+        assert counts["jobs"] == 1
+        assert (await source.get_stats())["total_jobs"] == 2
     finally:
         await source.close()
         await target.close()
