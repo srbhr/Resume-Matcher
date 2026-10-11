@@ -22,7 +22,6 @@ REVOCATION_URI = "https://auth.openai.com/oauth/revoke"
 ALL_SCOPES = " ".join(chatgpt_auth.SCOPES)
 
 _SIGNING_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-_OTHER_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
 
 def _public_jwk() -> dict[str, Any]:
@@ -38,7 +37,6 @@ def id_token(
     iss: str = chatgpt_auth.ISSUER,
     sub: str = SUBJECT,
     email: str = EMAIL,
-    wrong_key: bool = False,
     expires_in: int = 3600,
 ) -> str:
     now = int(time.time())
@@ -51,8 +49,7 @@ def id_token(
         "iat": now,
         "exp": now + expires_in,
     }
-    key = _OTHER_KEY if wrong_key else _SIGNING_KEY
-    return jwt.encode(claims, key, algorithm="RS256", headers={"kid": KID})
+    return jwt.encode(claims, _SIGNING_KEY, algorithm="RS256", headers={"kid": KID})
 
 
 def mount_discovery(router: respx.MockRouter) -> None:
