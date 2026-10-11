@@ -328,6 +328,31 @@ async def test_save_tailored_links_job_and_creates_tracker_card(
         assert moved["status"] == "interview"
 
 
+async def test_save_tailored_stores_the_ats_score(
+    isolated_db: Database,
+    sample_resume: dict[str, Any],
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+        saved = await call(
+            mcp,
+            "save_tailored_resume",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": master["resume_data"],
+            },
+        )
+    improvement = await isolated_db.get_improvement_by_tailored_resume(
+        saved["resume_id"]
+    )
+    assert improvement["ats_score"] == saved["ats_score"]
+    assert saved["ats_score"]["score"]["overall_score"] > 0
+
+
 async def test_update_application_keeps_omitted_and_applies_explicit_null(
     sample_resume: dict[str, Any],
     sample_job_description: str,

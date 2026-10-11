@@ -15,8 +15,11 @@ from app.config import settings
 from app.database import DatabaseBusyError, ResumeNotFoundError, db
 from app.pdf import render_resume_pdf
 from app.routers.resumes import (
+    _cached_job_keywords,
     _get_original_resume_data,
+    _grounding_master_data,
     _hash_job_content,
+    _score_tailored_data,
     _validate_confirm_payload,
 )
 from app.schemas import ResumeData, normalize_resume_data
@@ -262,6 +265,18 @@ async def store_tailored_resume(
     """Save a validated tailored resume, link it to the job and add a tracker card."""
     source_id = source["resume_id"]
     title = clean_title(title) or clean_title(job.get("role"))
+    # The builder's last ATS score, as stored when preview confirmation saves a resume.
+    ats_record: dict[str, Any] | None = None
+    job_keywords = _cached_job_keywords(job)
+    if job_keywords:
+        try:
+            ats_record = _score_tailored_data(
+                candidate,
+                job_keywords,
+                await _grounding_master_data(source) or candidate,
+            )
+        except Exception:  # noqa: BLE001 - the score is recalculable, never block the save
+            logger.warning("ATS score at save failed", exc_info=True)
     tailored = await db.create_tailored_resume(
         request_id=str(uuid4()),
         original_resume_id=source_id,
@@ -277,8 +292,9 @@ async def store_tailored_resume(
             "title": title,
         },
         improvements=generate_improvements(job.get("job_keywords") or {}),
+        ats_score=ats_record,
     )
-    result = summary(tailored)
+    result = {**summary(tailored), "ats_score": ats_record}
     if track_application:
         try:
             application = await db.create_application(
