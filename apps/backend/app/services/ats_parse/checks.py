@@ -17,7 +17,8 @@ COLUMN_MIN_COVERAGE = 0.05
 COLUMN_MIN_BOXES = 3
 MAX_COMFORTABLE_PAGES = 2
 
-EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# Bounded local part keeps search linear on long "a.a.a..." runs (see normalize._TOKEN).
+EMAIL_RE = re.compile(r"[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+")
 PHONE_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
 YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 GARBLED_RE = re.compile(r"\(cid:\d+\)|�|[-]")

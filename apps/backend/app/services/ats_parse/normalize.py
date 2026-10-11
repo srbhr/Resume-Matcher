@@ -8,7 +8,9 @@ _HYPHEN_BREAK = re.compile(r"(\w)-\n\s*(\w)")
 # Three or more single letters separated by single spaces: "S U M M A R Y".
 _LETTER_SPACED = re.compile(r"(?<!\S)(?:\w )+\w(?!\S)")
 # Email addresses stay whole so their parts never match name or other fields.
-_TOKEN = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+|\w+", re.UNICODE)
+# The local part is bounded (RFC 5321: 64) so a long "a.a.a..." run without "@"
+# costs linear time instead of a full backtrack from every position.
+_TOKEN = re.compile(r"[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+|\w+", re.UNICODE)
 _CJK = re.compile(r"[぀-ヿ㐀-鿿가-힯]")
 
 

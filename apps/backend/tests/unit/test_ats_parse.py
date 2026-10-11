@@ -3,6 +3,7 @@
 import copy
 import io
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,7 @@ from app.services.ats_parse.checks import has_columns, run_checks, score
 from app.services.ats_parse.extract import ExtractedDocument, PageLayout, TextBox
 from app.services.ats_parse.headings import HEADINGS
 from app.services.ats_parse.models import Check
-from app.services.ats_parse.normalize import normalize, rejoin_letter_spacing
+from app.services.ats_parse.normalize import normalize, rejoin_letter_spacing, tokens
 from app.services.ats_parse.roundtrip import (
     compute_roundtrip,
     expected_fields,
@@ -52,6 +53,19 @@ def test_letter_spaced_headings_are_rejoined() -> None:
     assert rejoin_letter_spacing("S U M M A R Y") == "SUMMARY"
     assert normalize("E X P E R I E N C E\nAcme") == "experience\nacme"
     assert rejoin_letter_spacing("I am a dev") == "I am a dev"
+
+
+def test_email_matching_is_linear_on_dotted_runs() -> None:
+    # Unbounded, both patterns backtracked from every position: about a minute.
+    text = "a." * 100_000
+    start = time.perf_counter()
+    assert tokens(text) == ["a"] * 100_000
+    assert _status(run_checks(_text_doc(text), {}), "contact_info") == "fail"
+    assert time.perf_counter() - start < 2
+    assert tokens("Mail john.doe+cv@mail.example.com") == [
+        "mail",
+        "john.doe+cv@mail.example.com",
+    ]
 
 
 def test_normalize_strips_inline_html_and_keeps_real_hyphens() -> None:
