@@ -130,6 +130,10 @@ def test_cjk_split_keeps_latin_runs_whole() -> None:
     assert by_field["additional.technicalSkills"] == "found"
 
 
+def test_normalize_casefolds_so_sharp_s_matches_ss() -> None:
+    assert tokens("Straße") == tokens("STRASSE") == ["strasse"]
+
+
 def test_normalize_strips_inline_html_and_keeps_real_hyphens() -> None:
     assert (
         normalize("<strong>Led</strong> open-\nsource work") == "led open-source work"
