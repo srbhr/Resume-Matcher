@@ -108,7 +108,6 @@ async def add_to_queue(request: JobQueueAddRequest) -> JobQueueItemResponse:
     job_req_id = (request.job_req_id or "").strip() or extracted.get("job_req_id", "")
 
     item_id = str(uuid4())
-    rate_limit = max(0.0, float(request.rate_limit_seconds))
 
     item = await db.create_queue_item(
         item_id=item_id,
@@ -117,7 +116,7 @@ async def add_to_queue(request: JobQueueAddRequest) -> JobQueueItemResponse:
         role=role,
         company=company,
         job_req_id=job_req_id,
-        rate_limit_seconds=rate_limit,
+        rate_limit_seconds=request.rate_limit_seconds,
         prompt_id=request.prompt_id,
     )
 

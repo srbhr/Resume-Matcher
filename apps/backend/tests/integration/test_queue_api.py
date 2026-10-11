@@ -1,5 +1,6 @@
 """Tailoring queue endpoints and storage against the real per-test database."""
 
+import json
 from unittest.mock import MagicMock
 
 import pytest
@@ -201,3 +202,60 @@ async def test_reset_database_clears_the_queue(isolated_db: Database) -> None:
     await isolated_db.create_queue_item("q1", "r1", "JD one")
     await isolated_db.reset_database()
     assert await isolated_db.get_queue() == []
+
+
+@pytest.mark.parametrize("cooldown", [-1, 60.5, 86400])
+async def test_add_rejects_cooldowns_outside_zero_to_sixty_seconds(
+    isolated_db: Database, enqueue: MagicMock, client: AsyncClient, cooldown: float
+) -> None:
+    resume_id = await _master(isolated_db)
+    async with client:
+        resp = await client.post(
+            "/api/v1/jobs/queue",
+            json={
+                "resume_id": resume_id,
+                "job_description": JOB_DESCRIPTION,
+                "rate_limit_seconds": cooldown,
+            },
+        )
+    assert resp.status_code == 422
+    assert await isolated_db.get_queue() == []
+    enqueue.assert_not_called()
+
+
+@pytest.mark.parametrize("cooldown", ["1e400", "Infinity", "NaN"])
+async def test_add_never_queues_a_non_finite_cooldown(
+    isolated_db: Database, enqueue: MagicMock, cooldown: str
+) -> None:
+    resume_id = await _master(isolated_db)
+    body = json.dumps({"resume_id": resume_id, "job_description": JOB_DESCRIPTION})
+    # Python's JSON parser accepts these; validation must still refuse them.
+    # (FastAPI then cannot echo the non-finite input in its 422 body.)
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/api/v1/jobs/queue",
+            content=body[:-1] + f', "rate_limit_seconds": {cooldown}}}',
+            headers={"content-type": "application/json"},
+        )
+    assert resp.status_code != 200
+    assert await isolated_db.get_queue() == []
+    enqueue.assert_not_called()
+
+
+@pytest.mark.parametrize("cooldown", [0, 60])
+async def test_add_accepts_cooldown_bounds(
+    isolated_db: Database, enqueue: MagicMock, client: AsyncClient, cooldown: float
+) -> None:
+    resume_id = await _master(isolated_db)
+    async with client:
+        resp = await client.post(
+            "/api/v1/jobs/queue",
+            json={
+                "resume_id": resume_id,
+                "job_description": JOB_DESCRIPTION,
+                "rate_limit_seconds": cooldown,
+            },
+        )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["rate_limit_seconds"] == cooldown

@@ -996,6 +996,9 @@ class ImproveDiffResult(BaseModel):
 
 
 # Single Queue Models
+MAX_QUEUE_COOLDOWN_SECONDS = 60
+
+
 class JobQueueAddRequest(BaseModel):
     """Request to queue a single job description for background tailoring."""
 
@@ -1004,7 +1007,10 @@ class JobQueueAddRequest(BaseModel):
     role: str | None = None
     company: str | None = None
     job_req_id: str | None = None
-    rate_limit_seconds: float = 5.0
+    # Cooldown after this item; bounded so one request cannot stall the worker.
+    rate_limit_seconds: float = Field(
+        default=5.0, ge=0, le=MAX_QUEUE_COOLDOWN_SECONDS, allow_inf_nan=False
+    )
     prompt_id: str | None = None
 
 
