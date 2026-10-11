@@ -272,7 +272,7 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
       <div className={`w-16 h-20 border ${borderColor} bg-white p-2 flex flex-col gap-1`}>
         {/* Thin first name + heavier last name, contact line */}
         <div className="flex flex-col items-center gap-1">
-          <div className="flex items-center gap-0.5 w-3/4">
+          <div className="flex items-center gap-1 w-3/4">
             <div className={`h-1.5 ${lineColor} w-3/5 opacity-30`}></div>
             <div className={`h-1.5 ${lineColor} w-2/5`}></div>
           </div>
