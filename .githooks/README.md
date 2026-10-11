@@ -52,6 +52,3 @@ cd apps/backend && uv run pytest          # backend suite
 python3 scripts/check_locale_parity.py    # locale parity (from repo root)
 cd apps/frontend && npm run test          # frontend suite (vitest)
 ```
-
-See [`docs/agent/testing-strategy.md`](../docs/agent/testing-strategy.md) for the
-full testing strategy this gate enforces.

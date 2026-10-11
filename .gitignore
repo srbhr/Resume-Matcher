@@ -138,3 +138,8 @@ config.json
 
 # Superpowers brainstorming visual-companion scratch (local only)
 /.superpowers/
+
+# Local agent context, not shipped
+/docs/superpowers/
+/docs/agent/
+/docs/portable/

@@ -17,8 +17,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     // The `motion/react` entry (`import * as fm`) makes Turbopack keep all of framer-motion
     // whenever `m` is imported, which also defeats LazyMotion's lazy features chunk (+43 KB gzip
-    // on product routes). The same API straight from `framer-motion` tree-shakes. See
-    // docs/agent/architecture/first-load-js.md.
+    // on product routes). The same API straight from `framer-motion` tree-shakes.
     resolveAlias: { 'motion/react': 'framer-motion' },
   },
   experimental: {

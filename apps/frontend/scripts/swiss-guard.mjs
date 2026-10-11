@@ -1,7 +1,6 @@
 /**
- * Swiss guard — flags patterns the Swiss design system bans
- * (docs/portable/swiss-design-system/anti-patterns.md, spec §9.1) in app/
- * and components/, and ratchets the counts against
+ * Swiss guard — flags patterns the Swiss design system bans (the rules and their hints
+ * are LINE_RULES below) in app/ and components/, and ratchets the counts against
  * tests/swiss-guard.allowlist.json. The allowlist may only shrink.
  *
  *   node scripts/swiss-guard.mjs [path-prefix…]        report violations

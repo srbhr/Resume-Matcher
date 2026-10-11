@@ -5,9 +5,6 @@ Deterministic tests answer *"is the plumbing correct?"* They can't answer
 **evals**. This directory holds the eval harness for the Resume-Matcher
 backend, in two deliberately separate layers.
 
-See [`docs/agent/testing-strategy.md`](../../../../docs/agent/testing-strategy.md)
-§3 (Phase 5) for the full rationale.
-
 ---
 
 ## The two layers
