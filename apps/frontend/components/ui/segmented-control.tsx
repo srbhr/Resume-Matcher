@@ -36,7 +36,9 @@ export function SegmentedControl<T extends string>({
   const enabled = items
     .map((item, index) => ({ item, index }))
     .filter(({ item }) => !item.disabled);
-  const selectedIndex = items.findIndex((item) => item.value === value);
+  // A disabled button cannot take focus, so a disabled selection hands the tab stop to the
+  // first enabled option instead of leaving the group unreachable by keyboard.
+  const selectedIndex = items.findIndex((item) => item.value === value && !item.disabled);
   const tabStop = selectedIndex >= 0 ? selectedIndex : (enabled[0]?.index ?? -1);
 
   const move = (from: number, delta: number) => {

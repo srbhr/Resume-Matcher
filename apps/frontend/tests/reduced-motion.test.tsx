@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -96,5 +99,22 @@ describe('reduced motion: surfaces only fade', () => {
     expect(scaleOf(listbox, 'data-initial')).toBe(1);
     expect(scaleOf(listbox, 'data-exit')).toBe(1);
     expect(JSON.parse(listbox.getAttribute('data-initial') ?? '{}').opacity).toBe(0);
+  });
+});
+
+describe('reduced motion: global stylesheet', () => {
+  const css = fs.readFileSync(
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../app/(default)/css/globals.css'),
+    'utf8'
+  );
+
+  it('stops CSS animations (spinners, loops) as well as transitions', () => {
+    const rule = css.match(
+      /prefers-reduced-motion: reduce\)\s*\{\s*\*,\s*::before,\s*::after\s*\{([^}]*)\}/
+    );
+    expect(rule, 'universal reduced-motion rule').not.toBeNull();
+    expect(rule![1]).toMatch(/transition-duration:\s*0ms !important/);
+    expect(rule![1]).toMatch(/animation-duration:\s*0\.01ms !important/);
+    expect(rule![1]).toMatch(/animation-iteration-count:\s*1 !important/);
   });
 });

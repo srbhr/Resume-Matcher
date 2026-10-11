@@ -23,9 +23,14 @@ export interface RetroTabsProps {
   tabs: Tab[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
-  /** When set, tabs get ids `${idPrefix}-tab-${id}` and aria-controls `${idPrefix}-panel-${id}`. */
+  /**
+   * When set, tabs get ids `${idPrefix}-tab-${id}`, and the selected tab gets aria-controls
+   * `${idPrefix}-panel-${id}`. Only the selected tab's panel is rendered, so only it is referenced.
+   */
   idPrefix?: string;
   className?: string;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 }
 
 export const RetroTabs: React.FC<RetroTabsProps> = ({
@@ -34,9 +39,14 @@ export const RetroTabs: React.FC<RetroTabsProps> = ({
   onTabChange,
   idPrefix,
   className,
+  ...aria
 }) => {
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const enabled = tabs.map((tab, i) => ({ tab, i })).filter(({ tab }) => !tab.disabled);
+  // A disabled button cannot take focus, so when the active tab is disabled the first
+  // enabled one holds the tab stop instead of leaving the group unreachable by keyboard.
+  const activeIndex = tabs.findIndex((tab) => tab.id === activeTab && !tab.disabled);
+  const tabStop = activeIndex >= 0 ? activeIndex : (enabled[0]?.i ?? -1);
 
   const focusTab = (from: number, delta: number) => {
     const pos = enabled.findIndex(({ i }) => i === from);
@@ -47,7 +57,7 @@ export const RetroTabs: React.FC<RetroTabsProps> = ({
   };
 
   return (
-    <div role="tablist" className={cn('flex gap-0 border-b border-ink', className)}>
+    <div role="tablist" {...aria} className={cn('flex gap-0 border-b border-ink', className)}>
       {tabs.map((tab, i) => {
         const isActive = activeTab === tab.id;
         return (
@@ -59,9 +69,9 @@ export const RetroTabs: React.FC<RetroTabsProps> = ({
             type="button"
             role="tab"
             id={idPrefix ? `${idPrefix}-tab-${tab.id}` : undefined}
-            aria-controls={idPrefix ? `${idPrefix}-panel-${tab.id}` : undefined}
+            aria-controls={idPrefix && isActive ? `${idPrefix}-panel-${tab.id}` : undefined}
             aria-selected={isActive}
-            tabIndex={isActive ? 0 : -1}
+            tabIndex={i === tabStop ? 0 : -1}
             disabled={tab.disabled}
             onClick={() => !tab.disabled && onTabChange(tab.id)}
             onKeyDown={(e) => {

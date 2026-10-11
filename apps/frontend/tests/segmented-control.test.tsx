@@ -53,6 +53,24 @@ describe('SegmentedControl', () => {
     );
   });
 
+  it('keeps the tab stop on an enabled option when the selected one is disabled', () => {
+    render(
+      <SegmentedControl
+        aria-label="Page size"
+        value="legal"
+        onChange={() => {}}
+        items={[
+          { value: 'a4', label: 'A4' },
+          { value: 'letter', label: 'Letter' },
+          { value: 'legal', label: 'Legal', disabled: true },
+        ]}
+      />
+    );
+    expect(screen.getByRole('radio', { name: 'Legal' })).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('radio', { name: 'A4' })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('radio', { name: 'Letter' })).toHaveAttribute('tabindex', '-1');
+  });
+
   it('moves with arrow keys, skipping disabled options and wrapping', () => {
     render(<Harness />);
     fireEvent.keyDown(screen.getByRole('radio', { name: 'A4' }), { key: 'ArrowRight' });

@@ -78,6 +78,20 @@ describe('ManualAddApplicationDialog feedback', () => {
     expect(field).toHaveAccessibleDescription('tracker.manualAdd.validation');
   });
 
+  it('does not tie an unrelated failure to the job description field', async () => {
+    vi.mocked(createApplication).mockRejectedValue(new Error('offline'));
+    render(<ManualAddApplicationDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+    await screen.findByRole('button', { name: 'tracker.manualAdd.resume Main CV' });
+    const field = screen.getByRole('textbox', { name: 'tracker.manualAdd.jobDescription' });
+    fireEvent.change(field, { target: { value: 'Build things.' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'tracker.manualAdd.submit' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('tracker.manualAdd.failed');
+    expect(field).not.toHaveAttribute('aria-invalid', 'true');
+    expect(field).not.toHaveAttribute('aria-describedby');
+  });
+
   it('keeps the submit button named while it is saving', async () => {
     vi.mocked(createApplication).mockReturnValue(new Promise(() => {}));
     render(<ManualAddApplicationDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);

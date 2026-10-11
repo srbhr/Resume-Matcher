@@ -10,12 +10,14 @@ describe('Card', () => {
     expect(card.className).not.toMatch(/-translate-|transition-all|hover:shadow-sw/);
   });
 
-  it('gives interactive cards a visible focus ring', () => {
-    render(<Card variant="interactive" data-testid="c" />);
-    expect(screen.getByTestId('c')).toHaveClass(
-      'focus-visible:ring-2',
-      'focus-visible:ring-primary'
+  it('leaves the focus ring to the link or button inside, since the card itself is not focusable', () => {
+    render(
+      <Card variant="interactive" data-testid="c">
+        <button type="button">Open</button>
+      </Card>
     );
+    expect(screen.getByTestId('c').className).not.toMatch(/focus-visible/);
+    expect(screen.getByTestId('c')).not.toHaveAttribute('tabindex');
   });
 
   it('offers a raised resting frame for cards on bare canvas', () => {

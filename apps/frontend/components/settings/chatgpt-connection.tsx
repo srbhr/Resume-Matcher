@@ -39,6 +39,8 @@ export interface ChatGptConnectionProps {
   returnOutcome?: ChatGptReturnOutcome | null;
   /** Called after a disconnect so cached LLM status can refresh. */
   onConnectionChange?: () => void;
+  /** Reports whether the account is connected; `null` while that is still being checked. */
+  onStatusChange?: (connected: boolean | null) => void;
 }
 
 /**
@@ -52,6 +54,7 @@ export function ChatGptConnection({
   onModelChange,
   returnOutcome = null,
   onConnectionChange,
+  onStatusChange,
 }: ChatGptConnectionProps) {
   const { t } = useTranslations();
   const [status, setStatus] = useState<ChatGptStatus | null>(null);
@@ -81,6 +84,9 @@ export function ChatGptConnection({
   }, [t]);
 
   const connected = status?.connected ?? false;
+  useEffect(() => {
+    onStatusChange?.(status === null ? null : status.connected);
+  }, [status, onStatusChange]);
   useEffect(() => {
     if (!connected) return;
     let cancelled = false;

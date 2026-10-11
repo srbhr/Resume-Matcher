@@ -989,7 +989,8 @@
       "disconnectFailed": "No se pudo desconectar ChatGPT. Inténtalo de nuevo.",
       "statusFailed": "No se pudo comprobar la conexión con ChatGPT.",
       "modelsFailed": "No se pudieron cargar tus modelos de ChatGPT. Escribe el nombre de un modelo.",
-      "modelHint": "Después de iniciar sesión, los modelos provienen de tu cuenta de ChatGPT."
+      "modelHint": "Después de iniciar sesión, los modelos provienen de tu cuenta de ChatGPT.",
+      "connectToSave": "Inicia sesión con ChatGPT para guardar este proveedor."
     },
     "contentGeneration": {
       "title": "Generación de contenido",

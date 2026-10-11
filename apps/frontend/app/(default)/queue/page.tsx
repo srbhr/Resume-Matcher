@@ -183,11 +183,15 @@ export default function QueuePage() {
 
   // Only the newest read may update the list; mutations also retire reads in flight.
   const queueRequest = useRef(0);
+  // The master whose rows are on screen: a late answer about another one is dropped.
+  const activeMaster = useRef('');
 
   const loadQueue = useCallback(async () => {
+    // No master means no queue: an unfiltered read would list every master's jobs.
+    if (!selectedResumeId || selectedResumeId !== activeMaster.current) return;
     const request = ++queueRequest.current;
     try {
-      const items = await fetchJobQueue(selectedResumeId || undefined);
+      const items = await fetchJobQueue(selectedResumeId);
       if (request !== queueRequest.current) return;
       setQueueItems(items);
       setQueueLoad('ready');
@@ -197,11 +201,21 @@ export default function QueuePage() {
     }
   }, [selectedResumeId]);
 
-  // Wait for the master selection so an unfiltered read never lands last.
+  // Wait for the master selection so an unfiltered read never lands last. A new
+  // selection retires the read in flight and drops the previous master's rows, so
+  // none stay actionable while the new queue loads.
   useEffect(() => {
     if (resumesLoading) return;
+    activeMaster.current = selectedResumeId;
+    queueRequest.current++;
+    setQueueItems([]);
+    if (!selectedResumeId) {
+      setQueueLoad('ready');
+      return;
+    }
+    setQueueLoad('loading');
     loadQueue();
-  }, [loadQueue, resumesLoading]);
+  }, [loadQueue, resumesLoading, selectedResumeId]);
 
   const hasActiveItems = queueItems.some(
     (item) => item.status === 'pending' || item.status === 'processing'
@@ -268,9 +282,11 @@ export default function QueuePage() {
   };
 
   const handleDeleteItem = async (itemId: string) => {
+    const resumeId = selectedResumeId;
     setActionError(null);
     try {
       await deleteQueueItem(itemId);
+      if (activeMaster.current !== resumeId) return;
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.item_id !== itemId));
     } catch (err) {
@@ -285,9 +301,12 @@ export default function QueuePage() {
   };
 
   const handleClearCompleted = async () => {
+    const resumeId = selectedResumeId;
+    if (!resumeId) return;
     setActionError(null);
     try {
-      await clearQueueItems(selectedResumeId, 'completed');
+      await clearQueueItems(resumeId, 'completed');
+      if (activeMaster.current !== resumeId) return;
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status !== 'completed'));
     } catch (err) {
@@ -297,9 +316,12 @@ export default function QueuePage() {
   };
 
   const handleClearAll = async () => {
+    const resumeId = selectedResumeId;
+    if (!resumeId) return;
     setActionError(null);
     try {
-      await clearQueueItems(selectedResumeId);
+      await clearQueueItems(resumeId);
+      if (activeMaster.current !== resumeId) return;
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status === 'processing'));
     } catch (err) {

@@ -1382,7 +1382,7 @@ const ResumeBuilderContent = () => {
             </p>
             <span role="status">
               {resumeSaveStatus && (
-                <StatusIndicator tone={resumeSaveStatus.tone}>
+                <StatusIndicator tone={resumeSaveStatus.tone} live={false}>
                   {resumeSaveStatus.label}
                 </StatusIndicator>
               )}
@@ -1681,9 +1681,14 @@ const ResumeBuilderContent = () => {
           <div className="bg-panel overflow-hidden flex flex-col no-print">
             {/* Panel caption and tabs */}
             <div className="px-3 pt-3 md:px-4 shrink-0 bg-panel">
-              <PanelHeader tone="output" title={t('builder.panels.preview')} />
+              <PanelHeader
+                tone="output"
+                title={t('builder.panels.preview')}
+                titleId="builder-preview-heading"
+              />
               <RetroTabs
                 idPrefix="builder"
+                aria-labelledby="builder-preview-heading"
                 tabs={[
                   { id: 'resume', label: t('builder.previewTabs.resume') },
                   {

@@ -21,6 +21,20 @@ describe('PanelHeader', () => {
   });
 });
 
+describe('PanelHeader actions slot', () => {
+  it('renders a numeric 0 inside the slot instead of a bare 0 beside it', () => {
+    const { container } = render(<PanelHeader title="Queue">{0}</PanelHeader>);
+    const slot = screen.getByText('0');
+    expect(slot).toHaveClass('flex', 'shrink-0');
+    expect(slot.parentElement).toBe(container.firstElementChild);
+  });
+
+  it.each([[null], [undefined], [false]])('renders no slot for %s', (children) => {
+    const { container } = render(<PanelHeader title="Queue">{children}</PanelHeader>);
+    expect(container.firstElementChild?.children).toHaveLength(1);
+  });
+});
+
 describe('EmptyState', () => {
   it('is left-aligned with no icon tile and at most one action', () => {
     const { container } = render(

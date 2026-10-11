@@ -989,7 +989,8 @@
       "disconnectFailed": "ChatGPT 연결을 해제하지 못했습니다. 다시 시도하세요.",
       "statusFailed": "ChatGPT 연결 상태를 확인하지 못했습니다.",
       "modelsFailed": "ChatGPT 모델을 불러오지 못했습니다. 대신 모델 이름을 입력하세요.",
-      "modelHint": "로그인하면 모델 목록을 ChatGPT 계정에서 불러옵니다."
+      "modelHint": "로그인하면 모델 목록을 ChatGPT 계정에서 불러옵니다.",
+      "connectToSave": "이 제공업체를 저장하려면 ChatGPT로 로그인하세요."
     },
     "contentGeneration": {
       "title": "콘텐츠 생성",

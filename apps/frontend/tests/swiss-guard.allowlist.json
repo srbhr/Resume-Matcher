@@ -1,7 +1,6 @@
 {
   "components/settings/api-key-menu.tsx": {
     "ink-tint": 1,
-    "legacy-token": 3,
     "palette": 5,
     "transition": 2
   }
