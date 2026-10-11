@@ -606,10 +606,11 @@ export async function deleteQueueItem(itemId: string): Promise<void> {
   }
 }
 
-/** Clear items from the queue (optionally filtered by status) */
-export async function clearQueueItems(status?: string): Promise<void> {
-  const path = status ? `/jobs/queue?status=${encodeURIComponent(status)}` : '/jobs/queue';
-  const res = await apiDelete(path);
+/** Clear one master resume's queue items, optionally only those in one status */
+export async function clearQueueItems(resumeId: string, status?: QueueItemStatus): Promise<void> {
+  const params = new URLSearchParams({ resume_id: resumeId });
+  if (status) params.set('status', status);
+  const res = await apiDelete(`/jobs/queue?${params}`);
   if (!res.ok) {
     throw new Error(`Failed to clear queue (${res.status})`);
   }

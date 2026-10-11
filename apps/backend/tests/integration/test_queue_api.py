@@ -292,3 +292,25 @@ async def test_the_item_being_tailored_is_neither_deleted_nor_cleared(
     assert refused.status_code == 409
     assert cleared.json() == {"cleared_count": 1}
     assert [item["item_id"] for item in await isolated_db.get_queue()] == ["busy"]
+
+
+async def test_clear_is_scoped_to_one_master_resume(
+    isolated_db: Database, client: AsyncClient
+) -> None:
+    await isolated_db.create_queue_item("mine-done", "r1", "JD one")
+    await isolated_db.update_queue_item("mine-done", {"status": "completed"})
+    await isolated_db.create_queue_item("mine-waiting", "r1", "JD two")
+    await isolated_db.create_queue_item("theirs-done", "r2", "JD three")
+    await isolated_db.update_queue_item("theirs-done", {"status": "completed"})
+    async with client:
+        completed = await client.delete(
+            "/api/v1/jobs/queue", params={"status": "completed", "resume_id": "r1"}
+        )
+        everything = await client.delete(
+            "/api/v1/jobs/queue", params={"resume_id": "r1"}
+        )
+    assert completed.json() == {"cleared_count": 1}
+    assert everything.json() == {"cleared_count": 1}
+    assert [item["item_id"] for item in await isolated_db.get_queue()] == [
+        "theirs-done"
+    ]

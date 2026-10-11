@@ -1524,14 +1524,18 @@ class Database:
             await session.commit()
             return int(result.rowcount or 0)
 
-    async def clear_queue(self, status: str | None = None) -> int:
-        """Delete queue items, optionally only those in one status. Returns count.
+    async def clear_queue(
+        self, status: str | None = None, resume_id: str | None = None
+    ) -> int:
+        """Delete queue items, optionally by status and master resume. Returns count.
 
         The item the worker is tailoring is never cleared; it finishes first.
         """
         stmt = delete(QueueItem).where(QueueItem.status != "processing")
         if status:
             stmt = stmt.where(QueueItem.status == status)
+        if resume_id:
+            stmt = stmt.where(QueueItem.resume_id == resume_id)
         async with self._write_session() as session:
             result = await session.execute(stmt)
             await session.commit()

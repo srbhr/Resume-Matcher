@@ -400,3 +400,19 @@ describe('cooldown', () => {
     expect(addJob.mock.calls[0][2]).toBe(expected);
   });
 });
+
+describe('clearing', () => {
+  it("clears only the selected master resume's jobs", async () => {
+    fetchQueue.mockResolvedValue([item('a', 'completed'), item('b', 'failed')]);
+    clearItems.mockResolvedValue(undefined);
+    render(<QueuePage />);
+    await screen.findByText('a role');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.clearCompleted' }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.clearAll' }));
+    });
+    expect(clearItems.mock.calls).toEqual([['m1', 'completed'], ['m1']]);
+  });
+});

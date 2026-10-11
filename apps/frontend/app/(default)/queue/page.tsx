@@ -287,7 +287,7 @@ export default function QueuePage() {
   const handleClearCompleted = async () => {
     setActionError(null);
     try {
-      await clearQueueItems('completed');
+      await clearQueueItems(selectedResumeId, 'completed');
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status !== 'completed'));
     } catch (err) {
@@ -299,7 +299,7 @@ export default function QueuePage() {
   const handleClearAll = async () => {
     setActionError(null);
     try {
-      await clearQueueItems();
+      await clearQueueItems(selectedResumeId);
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status === 'processing'));
     } catch (err) {

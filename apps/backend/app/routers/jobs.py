@@ -149,9 +149,9 @@ async def delete_queue_item(item_id: str) -> dict:
 
 
 @router.delete("/queue")
-async def clear_queue(status: str | None = None) -> dict:
-    """Clear completed, failed, or all queue items."""
-    count = await db.clear_queue(status=status)
+async def clear_queue(status: str | None = None, resume_id: str | None = None) -> dict:
+    """Clear queue items, optionally only one status and one master resume's items."""
+    count = await db.clear_queue(status=status, resume_id=resume_id)
     return {"cleared_count": count}
 
 
