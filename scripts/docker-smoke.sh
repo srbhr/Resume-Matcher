@@ -13,6 +13,8 @@
 #   SMOKE_PORT            host port to start looking from (default 3100; the next
 #                         free port is used if it is taken)
 #   SMOKE_HEALTH_TIMEOUT  seconds to wait for the app to become healthy (default 120)
+#   DEBIAN_MIRROR, PLAYWRIGHT_DOWNLOAD_HOST
+#                         forwarded to the build as --build-arg when set (slow networks)
 #
 # Safe by design: the container gets a throwaway named volume for
 # /app/backend/data (your real data is never touched), has no LLM key configured,
@@ -31,7 +33,7 @@ KEEP=0
 CLEAN=0
 
 usage() {
-    sed -n '3,20p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,22p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 while [ $# -gt 0 ]; do
@@ -92,7 +94,14 @@ fi
 if [ "$BUILD" = 1 ]; then
     echo "==> Building ${TAG} (uses the build cache)"
     BUILD_START=$SECONDS
-    docker build -t "$TAG" .
+    BUILD_ARGS=()
+    for var in DEBIAN_MIRROR PLAYWRIGHT_DOWNLOAD_HOST; do
+        if [ -n "${!var:-}" ]; then
+            BUILD_ARGS+=(--build-arg "${var}=${!var}")
+            echo "    (forwarding ${var}=${!var})"
+        fi
+    done
+    docker build ${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"} -t "$TAG" .
     BUILD_SECONDS=$((SECONDS - BUILD_START))
     echo "==> Build finished in ${BUILD_SECONDS}s"
 else

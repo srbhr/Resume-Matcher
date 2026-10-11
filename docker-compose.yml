@@ -1,7 +1,13 @@
 services:
   resume-matcher:
     image: ghcr.io/srbhr/resume-matcher
-    build: .
+    build:
+      context: .
+      # Optional, for slow networks (empty by default = no change):
+      #   DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian docker compose build
+      args:
+        - DEBIAN_MIRROR=${DEBIAN_MIRROR:-}
+        - PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST:-}
     container_name: resume-matcher
     ports:
       - "${PORT:-3000}:3000"
