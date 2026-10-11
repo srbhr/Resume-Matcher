@@ -227,6 +227,103 @@ describe('queue reads', () => {
   });
 });
 
+const masterRow = (id: string, title: string, isDefault = false) => ({
+  resume_id: id,
+  title,
+  filename: `${id}.pdf`,
+  is_master: true,
+  is_default_master: isDefault,
+  processing_status: 'ready',
+  created_at: '2026-01-01',
+  updated_at: '2026-01-01',
+  parent_id: null,
+});
+
+const chooseMaster = (title: string) => {
+  fireEvent.click(screen.getByRole('button', { name: /tailor\.selectResume/ }));
+  fireEvent.click(screen.getByRole('option', { name: new RegExp(title) }));
+};
+
+describe('without a master resume', () => {
+  it.each([
+    ['has none', () => listResumes.mockResolvedValue([])],
+    ['cannot be loaded', () => listResumes.mockRejectedValue(new Error('offline'))],
+  ])('never reads or clears the unfiltered queue when the resume list %s', async (_, setup) => {
+    setup();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<QueuePage />);
+
+    expect(await screen.findByText('queue.monitor.emptyTitle')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.refresh' }));
+    await act(async () => {});
+
+    expect(fetchQueue).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'queue.monitor.clearAll' })).toBeNull();
+    expect(clearItems).not.toHaveBeenCalled();
+  });
+});
+
+describe('switching master resumes', () => {
+  beforeEach(() => {
+    listResumes.mockResolvedValue([
+      masterRow('m1', 'Backend track', true),
+      masterRow('m2', 'Design track'),
+    ]);
+  });
+
+  it('drops the previous master rows at once instead of leaving them actionable', async () => {
+    const second = deferred<QueueItem[]>();
+    fetchQueue.mockImplementation((id: string) =>
+      id === 'm1' ? Promise.resolve([item('first', 'completed')]) : second.promise
+    );
+    render(<QueuePage />);
+    await screen.findByText('first role');
+
+    chooseMaster('Design track');
+
+    expect(screen.queryByText('first role')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'queue.monitor.clearAll' })).toBeNull();
+    expect(screen.getByText('common.loading')).toBeTruthy();
+    expect(fetchQueue).toHaveBeenLastCalledWith('m2');
+    await act(async () => second.resolve([item('second', 'completed')]));
+    expect(screen.getByText('second role')).toBeTruthy();
+  });
+
+  it('ignores a read for the previous master that lands after the switch', async () => {
+    const slow = deferred<QueueItem[]>();
+    fetchQueue.mockImplementation((id: string) =>
+      id === 'm1' ? slow.promise : Promise.resolve([item('second', 'completed')])
+    );
+    render(<QueuePage />);
+    await waitFor(() => expect(fetchQueue).toHaveBeenCalledWith('m1'));
+
+    chooseMaster('Design track');
+    expect(await screen.findByText('second role')).toBeTruthy();
+    await act(async () => slow.resolve([item('stale', 'completed')]));
+
+    expect(screen.queryByText('stale role')).toBeNull();
+    expect(screen.getByText('second role')).toBeTruthy();
+  });
+
+  it('keeps the new master rows when a clear for the previous one finishes late', async () => {
+    const cleared = deferred<void>();
+    clearItems.mockReturnValue(cleared.promise);
+    fetchQueue.mockImplementation((id: string) =>
+      Promise.resolve([item(id === 'm1' ? 'first' : 'second', 'completed')])
+    );
+    render(<QueuePage />);
+    await screen.findByText('first role');
+
+    fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.clearAll' }));
+    chooseMaster('Design track');
+    expect(await screen.findByText('second role')).toBeTruthy();
+    await act(async () => cleared.resolve());
+
+    expect(clearItems).toHaveBeenCalledWith('m1');
+    expect(screen.getByText('second role')).toBeTruthy();
+  });
+});
+
 describe('queue list states', () => {
   it('shows loading, not "empty", while the first read is pending', async () => {
     const first = deferred<QueueItem[]>();
