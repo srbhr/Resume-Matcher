@@ -42,6 +42,20 @@ describe('FormattingControls', () => {
     );
   });
 
+  it('offers the Deedy template without the accent colour control', () => {
+    const onChange = renderControls();
+    fireEvent.click(screen.getByRole('radio', { name: 'builder.formatting.templates.deedy.name' }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ template: 'deedy' }));
+
+    render(
+      <FormattingControls
+        settings={{ ...DEFAULT_TEMPLATE_SETTINGS, template: 'deedy' }}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.queryByText('builder.formatting.accentColor')).not.toBeInTheDocument();
+  });
+
   it('sets spacing levels and page size through radio groups', () => {
     const onChange = renderControls();
     const sectionSpacing = screen.getByRole('radiogroup', {
