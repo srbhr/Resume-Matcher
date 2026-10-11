@@ -46,13 +46,22 @@ def _flatten_content(content: Any) -> str:
     return content or ""
 
 
-def _messages_to_prompt(messages: list[dict]) -> str:
-    parts: list[str] = []
+def _split_messages(messages: list[dict]) -> tuple[str, str]:
+    """Split chat messages into (system prompt text, user prompt text).
+
+    System-role messages (the app's instructions, e.g. ``complete_json``'s
+    "respond with valid JSON only") go to ``--system-prompt`` so they keep their
+    priority; everything else is sent on stdin.
+    """
+    system_parts: list[str] = []
+    prompt_parts: list[str] = []
     for m in messages:
         text = _flatten_content(m.get("content"))
-        if text:
-            parts.append(text)
-    return "\n\n".join(parts).strip()
+        if not text:
+            continue
+        is_system = m.get("role") in ("system", "developer")
+        (system_parts if is_system else prompt_parts).append(text)
+    return "\n\n".join(system_parts).strip(), "\n\n".join(prompt_parts).strip()
 
 
 def _shape_response(content: str) -> SimpleNamespace:
@@ -75,7 +84,8 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
     does not finish within ``timeout`` seconds.
     """
     messages = kwargs.get("messages") or []
-    prompt = _messages_to_prompt(messages)
+    system_text, prompt = _split_messages(messages)
+    system_prompt = f"{RAW_SYSTEM}\n\n{system_text}" if system_text else RAW_SYSTEM
 
     args = [
         CLAUDE_BIN,
@@ -83,7 +93,7 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         "--output-format",
         "json",
         "--system-prompt",
-        RAW_SYSTEM,
+        system_prompt,
         "--exclude-dynamic-system-prompt-sections",
     ]
     try:

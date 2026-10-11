@@ -14,6 +14,7 @@ import pytest
 
 from app.claude_cli import (
     DEFAULT_TIMEOUT_SECONDS,
+    RAW_SYSTEM,
     ClaudeCliNotFoundError,
     claude_acompletion,
 )
@@ -223,3 +224,44 @@ class TestMissingBinary:
 
         assert result["healthy"] is False
         assert result["error_code"] == "health_check_failed"
+
+
+class TestSystemMessages:
+    @staticmethod
+    async def _run(messages: list[dict]) -> tuple[list[str], bytes]:
+        process = _FakeProcess(stdout=_envelope())
+        spawn = _spawn(process)
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", spawn):
+            await claude_acompletion(messages=messages)
+        assert process.stdin_data is not None
+        return list(spawn.call_args.args), process.stdin_data
+
+    async def test_system_message_goes_to_system_prompt_not_stdin(self):
+        args, stdin = await self._run(
+            [
+                {"role": "system", "content": "Respond with valid JSON only."},
+                {"role": "user", "content": "Resume: Ada Lovelace"},
+            ]
+        )
+
+        system_prompt = args[args.index("--system-prompt") + 1]
+        assert system_prompt.startswith(RAW_SYSTEM)
+        assert "Respond with valid JSON only." in system_prompt
+        assert stdin == b"Resume: Ada Lovelace"
+
+    async def test_without_a_system_message_only_the_base_prompt_is_used(self):
+        args, stdin = await self._run([{"role": "user", "content": "Hi"}])
+
+        assert args[args.index("--system-prompt") + 1] == RAW_SYSTEM
+        assert stdin == b"Hi"
+
+    async def test_list_content_parts_are_flattened(self):
+        args, stdin = await self._run(
+            [
+                {"role": "system", "content": [{"type": "text", "text": "Be brief."}]},
+                {"role": "user", "content": [{"type": "text", "text": "Hi"}]},
+            ]
+        )
+
+        assert args[args.index("--system-prompt") + 1].endswith("Be brief.")
+        assert stdin == b"Hi"
