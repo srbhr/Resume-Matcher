@@ -862,6 +862,7 @@
       "claudeCliShortName": "Claude plan",
       "claudeCliWarningTitle": "Not officially supported",
       "claudeCliWarning": "Anthropic does not officially support third-party apps using Claude Pro or Max subscriptions, so this may stop working if its policy changes; for guaranteed access, use an Anthropic API key. Resume Matcher never sees or stores your Claude credentials: it runs your own Claude Code CLI, which you sign in to yourself with `claude auth login`. Requests count toward your Claude plan's usage limits, and Anthropic may draw them from usage credits instead.",
+      "communityBuilt": "Community-built feature.",
       "chatgptName": "ChatGPT plan (Sign in with ChatGPT)",
       "chatgptShortName": "ChatGPT plan",
       "chatgptWarningTitle": "Preview",

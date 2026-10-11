@@ -955,7 +955,8 @@ export default function SettingsPage() {
                     tone="warning"
                     title={t('settings.llmConfiguration.claudeCliWarningTitle')}
                   >
-                    {t('settings.llmConfiguration.claudeCliWarning')}
+                    <p>{t('settings.llmConfiguration.claudeCliWarning')}</p>
+                    <p className="mt-2">{t('settings.llmConfiguration.communityBuilt')}</p>
                   </Alert>
                 </>
               ) : usesChatGptSignIn ? (

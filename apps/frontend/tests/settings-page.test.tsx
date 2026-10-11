@@ -229,6 +229,7 @@ describe('settings page (Swiss sweep)', () => {
     expect(warning).not.toBeNull();
     expect(warning).toHaveClass('border-2', 'border-warning', 'bg-warning-tint');
     expect(warning).toHaveTextContent('settings.llmConfiguration.claudeCliWarningTitle');
+    expect(warning).toHaveTextContent('settings.llmConfiguration.communityBuilt');
 
     fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
     expect(screen.queryByText('settings.llmConfiguration.claudeCliWarning')).toBeNull();

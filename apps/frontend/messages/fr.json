@@ -862,6 +862,7 @@
       "claudeCliShortName": "Forfait Claude",
       "claudeCliWarningTitle": "Non pris en charge officiellement",
       "claudeCliWarning": "Anthropic ne prend pas officiellement en charge l'utilisation des abonnements Claude Pro ou Max par des applications tierces, et cela peut cesser de fonctionner si sa politique change ; pour un accès garanti, utilisez une clé API Anthropic. Resume Matcher ne voit ni ne stocke jamais vos identifiants Claude : il exécute votre propre CLI Claude Code, à laquelle vous vous connectez vous-même avec `claude auth login`. Les requêtes comptent dans les limites d'utilisation de votre forfait Claude, et Anthropic peut les imputer à des crédits d'utilisation à la place.",
+      "communityBuilt": "Fonctionnalité créée par la communauté.",
       "chatgptName": "Forfait ChatGPT (Se connecter avec ChatGPT)",
       "chatgptShortName": "Forfait ChatGPT",
       "chatgptWarningTitle": "Aperçu",
