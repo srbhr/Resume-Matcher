@@ -17,7 +17,6 @@ from app.llm import (
     _openai_compatible_supports_json_mode,
     _supports_temperature,
     _uses_opencode_zen_hy3,
-    get_llm_config,
     get_model_name,
     get_safe_max_tokens,
     resolve_api_key,
@@ -1225,7 +1224,8 @@ class TestGetLlmConfigApiBase:
             reasoning_effort = None
 
         monkeypatch.setattr(
-            "app.llm.load_config_file", lambda: {"api_base": "https://stored.example/v1"}
+            "app.llm.load_config_file",
+            lambda: {"api_base": "https://stored.example/v1"},
         )
         monkeypatch.setattr("app.llm.settings", FakeSettings())
 
