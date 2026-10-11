@@ -24,7 +24,7 @@ Recalculation makes no LLM call. It uses:
 
 It returns `409` when the keywords are missing or stale, or the resume data is empty. Confirmation uses the same helper (`_score_tailored_data`) and skips scoring silently when the keywords aren't cached. Both the preview and the confirmation score the resume after refinement, so for one tailoring run the stored numbers match the review dialog's. Only the keyword lists can differ: the preview takes `missing_keywords`/`injectable_keywords` (both ordered as the job posting lists them, so the top ten are stable) from the gap analysis that `refine_resume` runs *before* injecting keywords, while confirmation and recalculation analyze the final resume. A `DatabaseBusyError` while storing a recalculated score surfaces as the app's retryable `503`. Resumes with none of the four structured sections fall back to scanning the text for section headings; structured contact info still counts there, but contact details can't be detected from free text.
 
-The Builder's **JD Match** tab shows the last score in the left panel (`components/builder/ats-score-panel.tsx`), with its calculation time and a **Recalculate** button. The button is disabled while the builder has unsaved changes, because recalculation scores the saved version. A failed recalculation keeps the last score on screen. Duplicating a tailored resume does not copy its score; recalculate on the copy.
+The Builder's **JD Match** tab shows the last score in the left panel (`components/builder/ats-score-panel.tsx`), with its calculation time and a **Recalculate** button. The button is disabled while the builder has unsaved changes, because recalculation scores the saved version. A failed recalculation keeps the last score on screen. The panel's first line says it scores against the job and points to the **ATS CHECK** tab, which is the separate, job-independent parse check ([ats-parse-check](ats-parse-check.md)). Duplicating a tailored resume does not copy its score; recalculate on the copy.
 
 ## Sub-scores
 
@@ -58,7 +58,7 @@ The backend doesn't know which template will be exported. The Tailor page captur
 | Wiring | `apps/backend/app/routers/resumes.py` (`_build_ats_score`) |
 | Schema | `apps/backend/app/schemas/models.py` (`ATSSubScores`, `ATSScore`) |
 | Endpoints | `apps/backend/app/routers/resumes.py` (`get_ats_score_for_resume`, `recalculate_ats_score_for_resume`, `_score_tailored_data`) |
-| Storage | `Improvement.ats_score` (`apps/backend/app/models.py`), migration in `db_engine.py`, `Database.set_ats_score` |
+| Storage | `Improvement.ats_score` (`apps/backend/app/models.py`), `_add_missing_column` in `db_engine.py` (SQLite and PostgreSQL), `Database.set_ats_score` |
 | UI | `apps/frontend/components/tailor/ats-score-card.tsx` (rendered by `app/(default)/tailor/page.tsx`), `components/builder/ats-score-panel.tsx` |
 | API client | `fetchLastAtsScore`, `recalculateAtsScore` in `apps/frontend/lib/api/resume.ts` |
 | i18n | `tailor.atsScore.*` in every `apps/frontend/messages/*.json` |
