@@ -8,7 +8,7 @@ vi.mock('@/lib/context/language-context', () => ({
   useLanguage: () => ({ uiLanguage: 'en' }),
 }));
 
-const VARIANTS: CommunityLinksVariant[] = ['hero', 'strip', 'builder', 'about'];
+const VARIANTS: CommunityLinksVariant[] = ['hero', 'strip', 'builder', 'settings', 'about'];
 
 const names = (variant: CommunityLinksVariant) => {
   const { unmount } = render(<CommunityLinks variant={variant} />);
@@ -56,6 +56,7 @@ describe('community links', () => {
     expect(names('hero')).toEqual(['Follow @srbhr', 'Sponsor', 'Discord']);
     expect(names('strip')).toEqual(['Follow @srbhr', 'Star', 'Sponsor', 'Discord', 'Contributors']);
     expect(names('builder')).toEqual(['Join Discord', 'Star on GitHub']);
+    expect(names('settings')).toEqual(['Sponsor the project', 'Join the Discord']);
     expect(names('about')).toEqual([
       'Follow @srbhr',
       'Star on GitHub',

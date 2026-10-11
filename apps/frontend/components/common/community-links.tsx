@@ -21,7 +21,7 @@ const ICONS: Record<CommunityLinkId, ReactNode> = {
   discord: <DiscordLogo aria-hidden="true" className="size-4 shrink-0" />,
 };
 
-export type CommunityLinksVariant = 'hero' | 'strip' | 'builder' | 'about';
+export type CommunityLinksVariant = 'hero' | 'strip' | 'builder' | 'settings' | 'about';
 
 /** Which links each placement shows, in order, with the label key each one uses there. */
 const LAYOUTS: Record<CommunityLinksVariant, ReadonlyArray<readonly [CommunityLinkId, string]>> = {
@@ -36,6 +36,10 @@ const LAYOUTS: Record<CommunityLinksVariant, ReadonlyArray<readonly [CommunityLi
     ['sponsor', 'community.sponsor'],
     ['discord', 'community.discord'],
     ['contributors', 'community.contributors'],
+  ],
+  settings: [
+    ['sponsor', 'community.sponsorProject'],
+    ['discord', 'community.joinTheDiscord'],
   ],
   builder: [
     ['discord', 'community.joinDiscord'],
@@ -61,6 +65,7 @@ const QUIET_LINK = cn(
 const STYLES: Record<CommunityLinksVariant, { list: string; link: string }> = {
   hero: { list: 'gap-x-6 gap-y-2', link: QUIET_LINK },
   strip: { list: 'gap-x-6 gap-y-2', link: QUIET_LINK },
+  settings: { list: 'gap-x-4 gap-y-1', link: cn(QUIET_LINK, 'text-primary underline') },
   builder: { list: 'gap-x-2 gap-y-1', link: buttonClass({ variant: 'ghost', size: 'sm' }) },
   about: { list: 'gap-3', link: buttonClass({ variant: 'outline', size: 'sm' }) },
 };
