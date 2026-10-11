@@ -48,15 +48,17 @@ ENV PYTHONUNBUFFERED=1 \
 # DEBIAN_MIRROR is the mirror's /debian URL (packages and updates). Most mirrors do not
 # carry debian-security, so that stays on the stock deb.debian.org unless you also set
 # DEBIAN_SECURITY_MIRROR (a /debian-security URL). Both are empty by default: the image's
-# stock sources are used unchanged.
+# stock sources are used unchanged. esc() backslash-escapes `&`, `|` (the sed delimiter)
+# and `\` so any URL is inserted literally into the sed replacement.
 ARG DEBIAN_MIRROR
 ARG DEBIAN_SECURITY_MIRROR
-RUN if [ -n "${DEBIAN_MIRROR}" ]; then \
-        sed -i "s|^URIs: http://deb.debian.org/debian\$|URIs: ${DEBIAN_MIRROR%/}|" \
+RUN esc() { printf '%s' "$1" | sed 's/[&|\\]/\\&/g'; } \
+    && if [ -n "${DEBIAN_MIRROR}" ]; then \
+        sed -i "s|^URIs: http://deb.debian.org/debian\$|URIs: $(esc "${DEBIAN_MIRROR%/}")|" \
             /etc/apt/sources.list.d/debian.sources; \
     fi \
     && if [ -n "${DEBIAN_SECURITY_MIRROR}" ]; then \
-        sed -i "s|^URIs: http://deb.debian.org/debian-security|URIs: ${DEBIAN_SECURITY_MIRROR%/}|" \
+        sed -i "s|^URIs: http://deb.debian.org/debian-security|URIs: $(esc "${DEBIAN_SECURITY_MIRROR%/}")|" \
             /etc/apt/sources.list.d/debian.sources; \
     fi
 
