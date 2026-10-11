@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { type PageSize, type MarginSettings } from '@/lib/types/template-settings';
 import { getContentAreaPx } from '@/lib/constants/page-dimensions';
+import { collectKeepZones, computePageStarts } from './page-breaks';
 
 export interface PageBreak {
   pageNumber: number;
@@ -25,7 +26,8 @@ interface UsePaginationResult {
 
 /**
  * Custom hook for calculating page breaks based on content height.
- * Respects section boundaries to avoid splitting content mid-section.
+ * Follows the PDF's break rules (see ./page-breaks.ts): entries stay whole, long
+ * entries split between bullets, and headings stay with what follows them.
  */
 export function usePagination({
   pageSize,
@@ -64,100 +66,8 @@ export function usePagination({
         return;
       }
 
-      // Find individual items that should not be split (NOT entire sections)
-      // - .resume-item: Individual job entries, project entries, education entries
-      // - [data-no-break]: Explicitly marked elements
-      // NOTE: We do NOT include .resume-section because sections SHOULD span pages
-      const items = container.querySelectorAll('.resume-item, [data-no-break]');
-      const itemBounds: { top: number; bottom: number; element: Element }[] = [];
-      const containerRect = container.getBoundingClientRect();
-
-      items.forEach((item) => {
-        const rect = item.getBoundingClientRect();
-        itemBounds.push({
-          top: rect.top - containerRect.top,
-          bottom: rect.bottom - containerRect.top,
-          element: item,
-        });
-      });
-
-      // CRITICAL: Prevent section headers from being orphaned at page bottom
-      // A section header should stay with at least its first content element
-      const sectionTitles = container.querySelectorAll(
-        '.resume-section-title, .resume-section-title-sm'
-      );
-      sectionTitles.forEach((title) => {
-        const titleRect = title.getBoundingClientRect();
-        const section = title.closest('.resume-section');
-        if (section) {
-          // Find the first content element after the title
-          // Could be: .resume-item, .resume-items > first-child, p, ul, etc.
-          const firstContent =
-            section.querySelector('.resume-item') ||
-            section.querySelector('.resume-items > *:first-child') ||
-            title.nextElementSibling; // Fallback to immediate sibling (p, ul, etc.)
-
-          if (firstContent && firstContent !== title) {
-            const firstContentRect = firstContent.getBoundingClientRect();
-            // Create an unbreakable zone from title top to first content bottom
-            itemBounds.push({
-              top: titleRect.top - containerRect.top,
-              bottom: firstContentRect.bottom - containerRect.top,
-              element: title,
-            });
-          } else {
-            // No content found, just protect the title with some space after it
-            itemBounds.push({
-              top: titleRect.top - containerRect.top,
-              bottom: titleRect.bottom - containerRect.top + 50, // Add 50px buffer
-              element: title,
-            });
-          }
-        }
-      });
-
-      // Sort by top position for easier processing
-      itemBounds.sort((a, b) => a.top - b.top);
-
-      // Calculate page breaks
-      const breakPoints: number[] = [0]; // Start positions of each page
-      let currentOffset = 0;
-
-      while (currentOffset + pageHeight < contentHeight) {
-        let nextBreak = currentOffset + pageHeight;
-
-        // Check if this break would split an individual item
-        for (const bound of itemBounds) {
-          // If an item straddles the page break
-          if (bound.top < nextBreak && bound.bottom > nextBreak) {
-            // Move break to before this item starts
-            // But only if it doesn't push us back too far (at least 50% of page used)
-            // This ensures we fill pages well before moving items
-            const proposedBreak = bound.top;
-            if (proposedBreak > currentOffset + pageHeight * 0.5) {
-              nextBreak = proposedBreak;
-              break;
-            }
-            // If item is too large or would leave too much empty space,
-            // just let it break naturally
-          }
-        }
-
-        // Safety: ensure we make progress (at least 100px per page)
-        if (nextBreak <= currentOffset + 100) {
-          nextBreak = currentOffset + pageHeight;
-        }
-
-        currentOffset = nextBreak;
-
-        // Only add break point if there's more content and it's not a duplicate
-        if (currentOffset < contentHeight) {
-          const lastBreak = breakPoints[breakPoints.length - 1];
-          if (currentOffset - lastBreak > 1) {
-            breakPoints.push(currentOffset);
-          }
-        }
-      }
+      // Break where the PDF does: the templates' data-resume-* hooks become keep zones.
+      const breakPoints = computePageStarts(contentHeight, pageHeight, collectKeepZones(container));
 
       // Convert break points to page objects with start and end
       const newPages: PageBreak[] = breakPoints.map((offset, index) => ({
