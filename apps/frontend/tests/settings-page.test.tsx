@@ -19,6 +19,8 @@ const api = vi.hoisted(() => ({
 }));
 // Module-level so the page's load effect (deps: [t]) runs once.
 const t = (key: string) => key;
+// The picker label comes from i18n (the mocked t returns the key).
+const CLAUDE_CLI_LABEL = 'settings.llmConfiguration.claudeCliShortName';
 let currentStatus: typeof systemStatus | null = null;
 const systemStatus = {
   status: 'setup_required' as const,
@@ -168,24 +170,24 @@ describe('settings page (Swiss sweep)', () => {
     expect(api.setContentLanguage).toHaveBeenCalledWith('es');
   });
 
-  it('offers the Claude Code CLI provider in the picker', async () => {
+  it('offers the Claude subscription provider in the picker', async () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
 
-    fireEvent.click(within(providers).getByRole('radio', { name: 'Claude' }));
+    fireEvent.click(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL }));
 
-    expect(within(providers).getByRole('radio', { name: 'Claude' })).toHaveAttribute(
+    expect(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL })).toHaveAttribute(
       'aria-checked',
       'true'
     );
   });
 
-  it('replaces the key, model, endpoint and effort fields with a note for the Claude Code CLI', async () => {
+  it('replaces the key, model, endpoint and effort fields with a note for the Claude subscription', async () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
     expect(document.getElementById('apiKey')).not.toBeNull();
 
-    fireEvent.click(within(providers).getByRole('radio', { name: 'Claude' }));
+    fireEvent.click(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL }));
 
     expect(document.getElementById('apiKey')).toBeNull();
     expect(document.getElementById('apiBase')).toBeNull();
@@ -199,6 +201,25 @@ describe('settings page (Swiss sweep)', () => {
     expect(screen.queryByText('settings.llmConfiguration.claudeCliNote')).toBeNull();
   });
 
+  it('warns that the Claude subscription route is unofficial only while it is selected', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    expect(screen.queryByText('settings.llmConfiguration.claudeCliWarning')).toBeNull();
+
+    fireEvent.click(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL }));
+
+    // Alert tone="warning" renders role="alert" with the 2px warning border.
+    const warning = screen
+      .getByText('settings.llmConfiguration.claudeCliWarning')
+      .closest('[role="alert"]');
+    expect(warning).not.toBeNull();
+    expect(warning).toHaveClass('border-2', 'border-warning', 'bg-warning-tint');
+    expect(warning).toHaveTextContent('settings.llmConfiguration.claudeCliWarningTitle');
+
+    fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
+    expect(screen.queryByText('settings.llmConfiguration.claudeCliWarning')).toBeNull();
+  });
+
   it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {
     api.fetchLlmConfig.mockResolvedValue({
       provider: 'claude_cli',
@@ -209,7 +230,7 @@ describe('settings page (Swiss sweep)', () => {
     render(<SettingsPage />);
 
     const providers = await screen.findByRole('radiogroup', { name: 'settings.providerLabel' });
-    expect(await within(providers).findByRole('radio', { name: 'Claude' })).toHaveAttribute(
+    expect(await within(providers).findByRole('radio', { name: CLAUDE_CLI_LABEL })).toHaveAttribute(
       'aria-checked',
       'true'
     );
@@ -232,7 +253,7 @@ describe('settings page (Swiss sweep)', () => {
       'DeepSeek',
       'Groq',
       'Ollama',
-      'Claude',
+      CLAUDE_CLI_LABEL,
     ]) {
       const mark = within(providers).getByRole('radio', { name }).querySelector('svg');
       expect(mark, `${name} mark`).not.toBeNull();

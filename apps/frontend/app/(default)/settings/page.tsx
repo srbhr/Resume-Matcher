@@ -881,7 +881,9 @@ export default function SettingsPage() {
                     label: (
                       <span className="inline-flex items-center gap-2">
                         {hasBrandIcon(p) && <BrandIcon name={p} className="size-4 shrink-0" />}
-                        {PROVIDER_INFO[p].name.split(' ')[0]}
+                        {p === 'claude_cli'
+                          ? t('settings.llmConfiguration.claudeCliShortName')
+                          : PROVIDER_INFO[p].name.split(' ')[0]}
                       </span>
                     ),
                   }))}
@@ -890,13 +892,24 @@ export default function SettingsPage() {
                 />
                 <p className="text-xs text-steel font-mono">
                   {t('settings.llmConfiguration.selectedProvider', {
-                    provider: providerInfo.name,
+                    provider:
+                      provider === 'claude_cli'
+                        ? t('settings.llmConfiguration.claudeCliName')
+                        : providerInfo.name,
                   })}
                 </p>
               </div>
 
               {usesLocalCli ? (
-                <Alert tone="info">{t('settings.llmConfiguration.claudeCliNote')}</Alert>
+                <>
+                  <Alert tone="info">{t('settings.llmConfiguration.claudeCliNote')}</Alert>
+                  <Alert
+                    tone="warning"
+                    title={t('settings.llmConfiguration.claudeCliWarningTitle')}
+                  >
+                    {t('settings.llmConfiguration.claudeCliWarning')}
+                  </Alert>
+                </>
               ) : (
                 <>
                   {/* Model Input */}

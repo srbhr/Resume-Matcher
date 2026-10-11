@@ -858,6 +858,10 @@
     "llmConfiguration": {
       "selectedProvider": "SÉLECTIONNÉ : {provider}",
       "claudeCliNote": "Exécute la CLI Claude Code installée et connectée sur cette machine, aucune clé API n'est donc nécessaire ici. Claude Code envoie toujours vos prompts à Anthropic via votre compte et utilise son propre modèle par défaut.",
+      "claudeCliName": "Abonnement Claude (via Claude Code)",
+      "claudeCliShortName": "Forfait Claude",
+      "claudeCliWarningTitle": "Non pris en charge officiellement",
+      "claudeCliWarning": "Anthropic ne prend pas officiellement en charge l'utilisation des abonnements Claude Pro ou Max par des applications tierces, et cela peut cesser de fonctionner si sa politique change ; pour un accès garanti, utilisez une clé API Anthropic. Resume Matcher ne voit ni ne stocke jamais vos identifiants Claude : il exécute votre propre CLI Claude Code, à laquelle vous vous connectez vous-même avec `claude auth login`. Les requêtes comptent dans les limites d'utilisation de votre forfait Claude, et Anthropic peut les imputer à des crédits d'utilisation à la place.",
       "modelLabel": "Modèle",
       "defaultModel": "PAR DÉFAUT : {model}",
       "apiKeyLabel": "Clé API",

@@ -210,9 +210,11 @@ export const PROVIDER_INFO: Record<
     defaultBaseUrl: 'http://localhost:11434',
   },
   // Runs the `claude` CLI already signed in on this machine. The CLI picks its own
-  // model, so defaultModel is only the sentinel the backend stores.
+  // model, so defaultModel is only the sentinel the backend stores. The settings page
+  // shows a translated name (settings.llmConfiguration.claudeCliName); this is the
+  // English fallback.
   claude_cli: {
-    name: 'Claude Code CLI',
+    name: 'Claude subscription (via Claude Code)',
     defaultModel: 'claude_cli',
     requiresKey: false,
     localCli: true,

@@ -858,6 +858,10 @@
     "llmConfiguration": {
       "selectedProvider": "選択中: {provider}",
       "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はあなたのアカウント経由でプロンプトを Anthropic に送信し、独自の既定モデルを使用します。",
+      "claudeCliName": "Claude サブスクリプション（Claude Code 経由）",
+      "claudeCliShortName": "Claude プラン",
+      "claudeCliWarningTitle": "公式サポート対象外",
+      "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Pro / Max サブスクリプションを利用することを公式にはサポートしておらず、ポリシーが変更されると動作しなくなる可能性があります（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher があなたの Claude 認証情報を見たり保存したりすることはなく、あなた自身が `claude auth login` でサインインした Claude Code CLI を実行するだけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
       "modelLabel": "モデル",
       "defaultModel": "既定: {model}",
       "apiKeyLabel": "API キー",

@@ -858,6 +858,10 @@
     "llmConfiguration": {
       "selectedProvider": "已选择：{provider}",
       "claudeCliNote": "运行本机已安装并已登录的 Claude Code CLI，因此这里无需 API 密钥。Claude Code 仍会通过你的账户将提示词发送给 Anthropic，并使用其自带的默认模型。",
+      "claudeCliName": "Claude 订阅（通过 Claude Code）",
+      "claudeCliShortName": "Claude 订阅",
+      "claudeCliWarningTitle": "非官方支持",
+      "claudeCliWarning": "Anthropic 并未正式支持第三方应用使用 Claude Pro 或 Max 订阅，若其政策变更，此功能可能失效；如需稳定可靠的访问，请使用 Anthropic API 密钥。Resume Matcher 不会看到或存储你的 Claude 凭据，它只是运行你自己的 Claude Code CLI，你需要自行通过 `claude auth login` 登录。请求会计入你的 Claude 订阅用量上限，Anthropic 也可能改为从用量额度中扣除。",
       "modelLabel": "模型",
       "defaultModel": "默认：{model}",
       "apiKeyLabel": "API 密钥",
