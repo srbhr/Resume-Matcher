@@ -185,3 +185,63 @@ async def _wait_for_status(database: Database, item_id: str, status: str) -> Non
             await asyncio.sleep(0.01)
 
     await asyncio.wait_for(poll(), timeout=5)
+
+
+async def test_shutdown_mid_item_requeues_it_for_the_next_start(
+    isolated_db: Database,
+    stub_pipeline: Callable[[Pipeline], None],
+    cooldowns: list[float],
+) -> None:
+    entered = asyncio.Event()
+
+    async def hang(*, resume_id: str, job_id: str, prompt_id: str | None) -> tuple:
+        del resume_id, job_id, prompt_id
+        entered.set()
+        await asyncio.Event().wait()
+        raise AssertionError("unreachable")
+
+    stub_pipeline(hang)
+    await isolated_db.create_queue_item("q1", "r1", "First JD")
+    drain = asyncio.create_task(QueueManager().drain())
+    await asyncio.wait_for(entered.wait(), timeout=5)
+    drain.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await drain
+
+    item = await isolated_db.get_queue_item("q1")
+    assert item is not None
+    assert (item["status"], item["error"]) == ("pending", None)
+    assert item["job_id"]
+    assert cooldowns == []
+
+
+async def test_recovered_item_reuses_a_resume_saved_before_the_interruption(
+    isolated_db: Database,
+    stub_pipeline: Callable[[Pipeline], None],
+    calls: list[dict[str, Any]],
+    cooldowns: list[float],
+) -> None:
+    job = await isolated_db.create_job("Saved JD", resume_id="r1")
+    saved = await isolated_db.create_tailored_resume(
+        request_id="req-1",
+        original_resume_id="r1",
+        job_id=job["job_id"],
+        resume_fields={"content": "{}", "title": "Saved @ Co", "is_master": False},
+        improvements=[],
+    )
+    await isolated_db.create_queue_item("q1", "r1", "Saved JD")
+    await isolated_db.update_queue_item(
+        "q1", {"status": "processing", "job_id": job["job_id"]}
+    )
+
+    await isolated_db.requeue_interrupted_queue_items()
+    await QueueManager().drain()
+
+    assert calls == []
+    item = await isolated_db.get_queue_item("q1")
+    assert item is not None
+    assert (item["status"], item["tailored_resume_id"], item["title"]) == (
+        "completed",
+        saved["resume_id"],
+        "Saved @ Co",
+    )

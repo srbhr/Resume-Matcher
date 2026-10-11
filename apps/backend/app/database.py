@@ -997,6 +997,18 @@ class Database:
             "created_at": now,
         }
 
+    async def get_improvement_by_job(self, job_id: str) -> dict[str, Any] | None:
+        """Get the latest improvement record tailored against a job, if any."""
+        async with self._session() as session:
+            result = await session.execute(
+                select(Improvement)
+                .where(Improvement.job_id == job_id)
+                .order_by(Improvement.created_at.desc())
+                .limit(1)
+            )
+            row = result.scalars().first()
+            return self._improvement_to_dict(row) if row else None
+
     async def get_improvement_by_tailored_resume(
         self, tailored_resume_id: str
     ) -> dict[str, Any] | None:

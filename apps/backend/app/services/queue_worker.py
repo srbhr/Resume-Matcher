@@ -169,22 +169,13 @@ class QueueManager:
 
     async def _process_item(self, item: dict[str, Any]) -> None:
         """Tailor one claimed item and record the outcome on its row."""
-        from app.routers import resumes
-
         item_id = item["item_id"]
         try:
-            job_id = item.get("job_id")
-            if not job_id:
-                job = await db.create_job(
-                    content=item["job_description"], resume_id=item["resume_id"]
-                )
-                job_id = job["job_id"]
-                await db.update_queue_item(item_id, {"job_id": job_id})
-            tailored_resume, *_ = await resumes.execute_tailoring_pipeline(
-                resume_id=item["resume_id"],
-                job_id=job_id,
-                prompt_id=item.get("prompt_id"),
-            )
+            tailored_resume = await self._tailor(item)
+        except asyncio.CancelledError:
+            # Shutdown: hand the item back so the next start resumes it.
+            await self._requeue(item_id)
+            raise
         except Exception as error:
             logger.exception("Tailoring queue item %s failed.", item_id)
             await db.update_queue_item(
@@ -206,6 +197,43 @@ class QueueManager:
             item_id,
             tailored_resume["resume_id"],
         )
+
+    async def _tailor(self, item: dict[str, Any]) -> dict[str, Any]:
+        from app.routers import resumes
+
+        job_id = item.get("job_id")
+        if job_id:
+            # An interrupted run may already have saved its resume; never tailor twice.
+            improvement = await db.get_improvement_by_job(job_id)
+            saved = (
+                await db.get_resume(improvement["tailored_resume_id"])
+                if improvement
+                else None
+            )
+            if saved is not None:
+                return saved
+        else:
+            job = await db.create_job(
+                content=item["job_description"], resume_id=item["resume_id"]
+            )
+            job_id = job["job_id"]
+            await db.update_queue_item(item["item_id"], {"job_id": job_id})
+        tailored_resume, *_ = await resumes.execute_tailoring_pipeline(
+            resume_id=item["resume_id"],
+            job_id=job_id,
+            prompt_id=item.get("prompt_id"),
+        )
+        return tailored_resume
+
+    @staticmethod
+    async def _requeue(item_id: str) -> None:
+        try:
+            await db.update_queue_item(item_id, {"status": "pending"})
+        except Exception:
+            logger.exception(
+                "Could not requeue interrupted item %s; the next start recovers it.",
+                item_id,
+            )
 
 
 _RETRY_DELAY_SECONDS = 1.0
