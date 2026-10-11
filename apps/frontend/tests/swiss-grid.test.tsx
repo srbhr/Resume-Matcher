@@ -39,4 +39,24 @@ describe('SwissGrid', () => {
     // The footer actions wrap on narrow screens instead of clipping.
     expect(link.parentElement).toHaveClass('flex-wrap');
   });
+
+  it('closes the page with a slim community strip under the footer row', () => {
+    render(<SwissGrid>{null}</SwissGrid>);
+
+    const strip = screen.getByRole('link', { name: 'community.follow' }).closest('div');
+    for (const name of [
+      'community.follow',
+      'community.star',
+      'community.sponsor',
+      'community.discord',
+      'community.contributors',
+    ]) {
+      expect(strip).toContainElement(screen.getByRole('link', { name }));
+    }
+    // A separate row after the footer, so the footer's own layout is untouched.
+    const footer = screen.getByRole('link', { name: 'nav.queue' }).closest('div.border-t');
+    expect(footer).not.toContainElement(strip);
+    expect(footer!.nextElementSibling).toBe(strip);
+    expect(strip).toHaveClass('border-t', 'border-ink', 'bg-canvas');
+  });
 });

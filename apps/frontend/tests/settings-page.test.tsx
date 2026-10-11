@@ -135,6 +135,7 @@ describe('settings page (Swiss sweep)', () => {
       'settings.languageTitle',
       'settings.display.title',
       'settings.dangerZone',
+      'community.aboutTitle',
     ]);
     for (const heading of sections) {
       expect(heading).toHaveClass('font-serif', 'font-bold', 'text-ink');

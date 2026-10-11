@@ -40,6 +40,19 @@
     "docs": "문서",
     "launchApp": "앱 실행"
   },
+  "community": {
+    "follow": "@srbhr 팔로우",
+    "star": "스타",
+    "starOnGithub": "GitHub에서 스타 누르기",
+    "sponsor": "후원",
+    "discord": "Discord",
+    "joinDiscord": "Discord 참여",
+    "contributors": "기여자",
+    "settingsPrompt": "Resume Matcher가 마음에 드시나요?",
+    "sponsorProject": "프로젝트 후원하기",
+    "joinTheDiscord": "Discord 참여하기",
+    "aboutTitle": "정보"
+  },
   "nav": {
     "dashboard": "대시보드",
     "builder": "이력서 빌더",

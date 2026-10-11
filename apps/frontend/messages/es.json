@@ -40,6 +40,19 @@
     "docs": "Guía de uso",
     "launchApp": "Iniciar app"
   },
+  "community": {
+    "follow": "Seguir a @srbhr",
+    "star": "Destacar",
+    "starOnGithub": "Destacar en GitHub",
+    "sponsor": "Patrocinar",
+    "discord": "Discord",
+    "joinDiscord": "Unirse a Discord",
+    "contributors": "Colaboradores",
+    "settingsPrompt": "¿Te gusta Resume Matcher?",
+    "sponsorProject": "Patrocina el proyecto",
+    "joinTheDiscord": "Únete al Discord",
+    "aboutTitle": "Acerca de"
+  },
   "nav": {
     "dashboard": "Panel",
     "builder": "Constructor de CV",
