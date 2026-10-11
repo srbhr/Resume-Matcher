@@ -392,7 +392,7 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w 
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-Como alternativa, copia el archivo fuera del contenedor detenido (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) y pásalo con `--source ./resume_matcher.db` desde un host que pueda acceder a la base de datos. Conserva `data/.secret_key` (permanece en el volumen): descifra tus API keys guardadas. Detalles: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
+Como alternativa, copia el archivo fuera del contenedor detenido (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) y pásalo con `--source ./resume_matcher.db` desde un host que pueda acceder a la base de datos. Conserva `data/.secret_key` (permanece en el volumen): descifra tus API keys guardadas.
 
 ### Notas importantes sobre Docker
 
@@ -468,7 +468,7 @@ Cursor, Codex y otros clientes usan el mismo comando (`uv`) y los mismos argumen
 - **Frontend para PDF y verify.** La exportación a PDF, `verify_resume`, `tailor_and_verify` y `parse_check_resume` necesitan el frontend en ejecución (por defecto <http://localhost:3000>, configurable con `FRONTEND_BASE_URL`). Las demás herramientas funcionan sin él.
 - **Docker aún no está soportado.** La base de datos de la app vive dentro del volumen de Docker, así que un servidor iniciado en el host vería una base de datos vacía.
 
-Lista de herramientas y detalles internos: [docs/agent/features/mcp-server.md](docs/agent/features/mcp-server.md).
+El servidor expone herramientas para listar y leer currículums y descripciones de puesto, crear un currículum maestro, guardar una descripción de puesto, adaptar y verificar un currículum (`tailor_and_verify`), revisar su compatibilidad con ATS y puntuarlo, exportar un PDF (`export_resume_pdf`) y gestionar postulaciones. Tu cliente las lista al conectarse, y las instrucciones integradas del servidor guían a Claude por el flujo de trabajo.
 
 ---
 
@@ -643,15 +643,7 @@ Resume-Matcher/
 
 - **Comunidad de Discord:** [dsc.gg/resume-matcher](https://dsc.gg/resume-matcher) - Comunidad activa para preguntas y discusiones
 - **Issues de GitHub:** [Abrir un issue](https://github.com/srbhr/Resume-Matcher/issues) para bugs o solicitudes de funcionalidades
-- **Documentación:** revisa la carpeta [docs/agent/](docs/agent/) para guías detalladas
-
-### Documentación útil
-
-| Documento | Descripción |
-|----------|-------------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Arquitectura del backend y detalles de la API |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | Flujo de usuario y arquitectura de componentes |
-| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | Sistema de diseño UI (Swiss International Style) — paquete portable |
+- **Documentación:** consulta la [documentación en línea](https://resumematcher.fyi/docs/) para guías detalladas
 
 ---
 

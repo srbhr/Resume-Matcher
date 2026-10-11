@@ -392,7 +392,7 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w 
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-別の方法として、停止したコンテナからファイルをコピーし（`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`）、データベースに到達できるホストから `--source ./resume_matcher.db` で指定します。`data/.secret_key`（ボリューム内に残ります）は必ず保持してください。保存済みの API キーの復号に使われます。詳細: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md)。
+別の方法として、停止したコンテナからファイルをコピーし（`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`）、データベースに到達できるホストから `--source ./resume_matcher.db` で指定します。`data/.secret_key`（ボリューム内に残ります）は必ず保持してください。保存済みの API キーの復号に使われます。
 
 ### Docker の注意点
 
@@ -468,7 +468,7 @@ Cursor、Codex などのクライアントも同じコマンド（`uv`）と引�
 - **PDF と verify にはフロントエンドが必要。** PDF エクスポート、`verify_resume`、`tailor_and_verify`、`parse_check_resume` には、フロントエンドが起動している必要があります（既定は <http://localhost:3000>、`FRONTEND_BASE_URL` で変更できます）。その他のツールはフロントエンドなしで動作します。
 - **Docker にはまだ対応していません。** アプリのデータベースは Docker ボリューム内にあるため、ホスト上で起動したサーバからは空のデータベースに見えます。
 
-ツール一覧と内部仕様: [docs/agent/features/mcp-server.md](docs/agent/features/mcp-server.md)。
+サーバーには、履歴書と求人票の一覧・取得、マスター履歴書の作成、求人票の登録、履歴書の調整と検証（`tailor_and_verify`）、ATS 向けのパースチェックとスコア算出、PDF の書き出し（`export_resume_pdf`）、応募状況の管理を行うツールが用意されています。接続するとクライアントにツール一覧が表示され、サーバー組み込みの指示が Claude に作業の流れを案内します。
 
 ---
 
@@ -643,15 +643,7 @@ Resume-Matcher/
 
 - **Discord:** [dsc.gg/resume-matcher](https://dsc.gg/resume-matcher) - 質問・議論に活発です
 - **GitHub Issues:** [Issue を作成](https://github.com/srbhr/Resume-Matcher/issues)（バグ報告や要望）
-- **ドキュメント:** 詳細は [docs/agent/](docs/agent/) を参照
-
-### 参考ドキュメント
-
-| ドキュメント | 内容 |
-|-------------|------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | バックエンドのアーキテクチャと API 詳細 |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | ユーザーフローとコンポーネント構成 |
-| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI デザインシステム（Swiss International Style）— ポータブルパック |
+- **ドキュメント:** 詳細は[オンラインドキュメント](https://resumematcher.fyi/docs/)を参照
 
 ---
 

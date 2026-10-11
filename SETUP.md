@@ -454,7 +454,7 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w 
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-Alternatively copy the file out of the stopped container (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) and pass it with `--source ./resume_matcher.db` from a host that can reach the database. Keep `data/.secret_key` (it stays in the volume): it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
+Alternatively copy the file out of the stopped container (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) and pass it with `--source ./resume_matcher.db` from a host that can reach the database. Keep `data/.secret_key` (it stays in the volume): it decrypts your stored API keys.
 
 ### Important Notes
 
@@ -526,7 +526,7 @@ Cursor, Codex and other clients use the same command (`uv`) and args (`run --dir
 - **Frontend for PDF and verify.** PDF export, `verify_resume`, `tailor_and_verify` and `parse_check_resume` need the frontend running (default <http://localhost:3000>, set with `FRONTEND_BASE_URL`). The other tools work without it.
 - **Docker is not supported yet.** The app's database lives inside the Docker volume, so a server started on the host would see an empty database.
 
-Tool list and internals: [docs/agent/features/mcp-server.md](docs/agent/features/mcp-server.md).
+The server exposes tools to list and read resumes and jobs, create a master resume, add a job, tailor and verify a resume (`tailor_and_verify`), parse-check and score it for ATS, export a PDF (`export_resume_pdf`) and track job applications. Your client lists them once connected, and the server's built-in instructions walk Claude through the workflow.
 
 ---
 
@@ -725,15 +725,7 @@ Stuck? Here are your options:
 
 - **Discord Community:** [dsc.gg/resume-matcher](https://dsc.gg/resume-matcher) - Active community for questions and discussions
 - **GitHub Issues:** [Open an issue](https://github.com/srbhr/Resume-Matcher/issues) for bugs or feature requests
-- **Documentation:** Check the [docs/agent/](docs/agent/) folder for detailed guides
-
-### Useful Documentation
-
-| Document | Description |
-|----------|-------------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Backend architecture and API details |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | User flow and component architecture |
-| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI design system (Swiss International Style) — portable pack |
+- **Documentation:** Browse the [online docs](https://resumematcher.fyi/docs/) for detailed guides
 
 ---
 

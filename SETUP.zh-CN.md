@@ -392,7 +392,7 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w 
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-或者，从已停止的容器中把文件复制出来（`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`），然后在能够连接到该数据库的主机上通过 `--source ./resume_matcher.db` 传入。请保留 `data/.secret_key`（它仍留在卷中）：它用于解密你已保存的 API Key。详情见：[docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md)。
+或者，从已停止的容器中把文件复制出来（`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`），然后在能够连接到该数据库的主机上通过 `--source ./resume_matcher.db` 传入。请保留 `data/.secret_key`（它仍留在卷中）：它用于解密你已保存的 API Key。
 
 ### Docker 重要说明
 
@@ -468,7 +468,7 @@ Cursor、Codex 和其他客户端使用相同的命令（`uv`）和参数（`run
 - **PDF 和 verify 需要前端。** PDF 导出、`verify_resume`、`tailor_and_verify` 和 `parse_check_resume` 需要前端处于运行状态（默认 <http://localhost:3000>，可通过 `FRONTEND_BASE_URL` 设置）。其他工具无需前端即可使用。
 - **暂不支持 Docker。** 应用的数据库位于 Docker 卷中，因此在主机上启动的服务器看到的会是一个空数据库。
 
-工具列表和内部实现：[docs/agent/features/mcp-server.md](docs/agent/features/mcp-server.md)。
+该服务器提供的工具可用于列出和读取简历与职位描述、创建主简历、添加职位描述、定制并验证简历（`tailor_and_verify`）、进行 ATS 解析检查并评分、导出 PDF（`export_resume_pdf`）以及管理投递记录。连接后客户端会列出这些工具，服务器内置的说明也会引导 Claude 完成整个流程。
 
 ---
 
@@ -643,15 +643,7 @@ Resume-Matcher/
 
 - **Discord 社区：** [dsc.gg/resume-matcher](https://dsc.gg/resume-matcher) - 提问与讨论都很活跃
 - **GitHub Issues：** [提交 Issue](https://github.com/srbhr/Resume-Matcher/issues) 反馈 bug 或提出需求
-- **项目文档：** 查看 [docs/agent/](docs/agent/) 获取更详细的指南
-
-### 推荐文档
-
-| 文档 | 说明 |
-|------|------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | 后端架构与 API 细节 |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | 用户流程与组件架构 |
-| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI 设计系统（Swiss International Style）— 便携包 |
+- **项目文档：** 查看[在线文档](https://resumematcher.fyi/docs/)获取更详细的指南
 
 ---
 
