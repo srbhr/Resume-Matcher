@@ -12,8 +12,18 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from app.claude_cli import DEFAULT_TIMEOUT_SECONDS, claude_acompletion
-from app.llm import LLMConfig, complete, complete_json, get_router
+from app.claude_cli import (
+    DEFAULT_TIMEOUT_SECONDS,
+    ClaudeCliNotFoundError,
+    claude_acompletion,
+)
+from app.llm import (
+    LLMConfig,
+    check_llm_health,
+    complete,
+    complete_json,
+    get_router,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -185,3 +195,31 @@ class TestSubprocessTimeout:
 
         assert response.choices[0].message.content == "pong"
         assert not process.killed
+
+
+class TestMissingBinary:
+    @staticmethod
+    def _missing() -> AsyncMock:
+        return AsyncMock(side_effect=FileNotFoundError(2, "No such file", "claude"))
+
+    async def test_raises_a_descriptive_error(self):
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", self._missing()):
+            with pytest.raises(ClaudeCliNotFoundError, match="claude auth login"):
+                await claude_acompletion(messages=[{"role": "user", "content": "Hi"}])
+
+    async def test_health_check_reports_claude_cli_not_found(self):
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", self._missing()):
+            result = await check_llm_health(_cli_config(), include_details=True)
+
+        assert result["healthy"] is False
+        assert result["error_code"] == "claude_cli_not_found"
+        assert "claude auth login" in result["error_detail"]
+
+    async def test_other_cli_failures_keep_the_generic_health_code(self):
+        process = _FakeProcess(stderr=b"boom", returncode=1)
+
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", _spawn(process)):
+            result = await check_llm_health(_cli_config())
+
+        assert result["healthy"] is False
+        assert result["error_code"] == "health_check_failed"

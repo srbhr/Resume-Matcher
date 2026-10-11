@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 
 CLAUDE_BIN = "claude"
 
+
+class ClaudeCliNotFoundError(RuntimeError):
+    """The ``claude`` executable is not installed or not on PATH."""
+
+
 # Used when the caller passes no ``timeout``. Every subprocess call is bounded.
 DEFAULT_TIMEOUT_SECONDS = 120.0
 
@@ -81,12 +86,18 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         RAW_SYSTEM,
         "--exclude-dynamic-system-prompt-sections",
     ]
-    proc = await asyncio.create_subprocess_exec(
-        *args,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *args,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError as exc:
+        raise ClaudeCliNotFoundError(
+            f"Claude Code CLI ('{CLAUDE_BIN}') was not found on PATH. Install "
+            "Claude Code and sign in with `claude auth login`."
+        ) from exc
     try:
         out, err = await asyncio.wait_for(
             proc.communicate(prompt.encode("utf-8")),

@@ -895,7 +895,8 @@
         "health_check_failed": "상태 확인에 실패했습니다.",
         "duplicate_v1_path": "상태 확인에 실패했습니다. 기본 URL에 /v1 경로가 중복되어 있을 수 있습니다.",
         "not_found_404": "상태 확인에 실패했습니다. 404 Not Found - 기본 URL이 제공업체와 일치하는지 확인하세요.",
-        "html_response": "상태 확인에 실패했습니다. 기본 URL이 HTML을 반환했습니다. 콘솔 URL이거나 지원되지 않는 게이트웨이 경로일 수 있습니다."
+        "html_response": "상태 확인에 실패했습니다. 기본 URL이 HTML을 반환했습니다. 콘솔 URL이거나 지원되지 않는 게이트웨이 경로일 수 있습니다.",
+        "claude_cli_not_found": "Claude Code CLI를 찾을 수 없습니다. Claude Code를 설치하고 `claude auth login`을 실행하세요."
       },
       "healthWarnings": {
         "empty_content": "상태 확인 시 LLM이 빈 응답을 반환했습니다."

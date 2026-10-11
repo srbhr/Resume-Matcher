@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from app.ai_budget import remaining_timeout
 from app.ai_limits import validate_prompt_size
-from app.claude_cli import claude_acompletion
+from app.claude_cli import ClaudeCliNotFoundError, claude_acompletion
 from app.config import load_config_file, save_config_file, settings
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
@@ -979,7 +979,9 @@ async def check_llm_health(
         # Provide a minimal, actionable client-facing hint without leaking secrets.
         error_code = "health_check_failed"
         message = str(e)
-        if "404" in message and "/v1/v1/" in message:
+        if isinstance(e, ClaudeCliNotFoundError):
+            error_code = "claude_cli_not_found"
+        elif "404" in message and "/v1/v1/" in message:
             error_code = "duplicate_v1_path"
         elif "404" in message:
             error_code = "not_found_404"
