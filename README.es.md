@@ -168,6 +168,7 @@ Exporta tu currículum adaptado y tu carta de presentación en PDF.
 | **LaTeX** | ![LaTeX](assets/pdf-templates/latex.webp) | Diseño académico clásico con tipografía serif y encabezados con líneas. [Ver PDF](assets/pdf-templates/latex.pdf) |
 | **Limpio** | ![Limpio](assets/pdf-templates/clean.webp) | Diseño minimalista sans con encabezados grandes y sobrios. [Ver PDF](assets/pdf-templates/clean.pdf) |
 | **Vívido** | ![Vívido](assets/pdf-templates/vivid.webp) | Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha. [Ver PDF](assets/pdf-templates/vivid.pdf) |
+| **Deedy** | ![Deedy](assets/pdf-templates/deedy.webp) | Diseño de dos columnas con nombre en trazo fino, columna izquierda estrecha y encabezados en gris claro. [Ver PDF](assets/pdf-templates/deedy.pdf) |
 
 ### Internacionalización
 
