@@ -51,7 +51,7 @@ DATABASE_URL=postgresql://... uv run python -m app.scripts.copy_sqlite_to_postgr
   ```
   - `tests/integration/test_postgres_backend.py` (marker `postgres`) runs only in this mode. It covers writer waiting and lock timeout, schema isolation, the partial index, concurrent startup and an end-to-end copy.
   - Tests marked `sqlite_only` open `sqlite3` directly and are skipped in this mode.
-- The suite always clears `DATABASE_URL`, so a developer's own database is never touched.
+- The suite always clears `DATABASE_URL`, so a developer's own database is never touched. Parity mode uses `TEST_DATABASE_URL` instead and creates and drops throwaway schemas there, so point it only at a disposable database.
 
 ## Key Files
 
