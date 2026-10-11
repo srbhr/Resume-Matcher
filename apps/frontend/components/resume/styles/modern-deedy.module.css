@@ -50,7 +50,7 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  font-size: calc(var(--font-size-base) * 0.85);
+  font-size: calc(var(--font-size-base) * 0.8);
   color: var(--deedy-meta);
 }
 
@@ -153,9 +153,6 @@
   flex-shrink: 0;
   align-self: baseline;
   font-size: 0.85em;
-  /* Lato's bullet sits above the x-height centre; drop it so it reads as a round dot. */
-  position: relative;
-  top: 0.13em;
 }
 
 .skills {

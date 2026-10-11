@@ -166,6 +166,7 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 | **LaTeX** | ![LaTeX](assets/pdf-templates/latex.webp) | 罫線付き見出しのクラシックなセリフ体レイアウト。[PDF を見る](assets/pdf-templates/latex.pdf) |
 | **クリーン** | ![クリーン](assets/pdf-templates/clean.webp) | 大きく控えめな見出しのミニマルなサンセリフ体レイアウト。[PDF を見る](assets/pdf-templates/clean.pdf) |
 | **ビビッド** | ![ビビッド](assets/pdf-templates/vivid.webp) | アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト。[PDF を見る](assets/pdf-templates/vivid.pdf) |
+| **Modern Deedy** | ![Modern Deedy](assets/pdf-templates/modern-deedy.webp) | Lato書体の1ページ向け高密度レイアウト。見出しは淡いグレーの大文字。[PDF を見る](assets/pdf-templates/modern-deedy.pdf) |
 
 ### 国際化
 
