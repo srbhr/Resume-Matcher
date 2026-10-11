@@ -18,6 +18,7 @@ from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers import resumes as resumes_router
 from app.routers.ats import TOO_LARGE_DETAIL
 from app.routers.resumes import MAX_FILE_SIZE
+from app.schemas import normalize_resume_data
 from app.services.parser import DocumentResourceLimitError
 from tests.ats_fixtures import john_doe, render
 
@@ -149,6 +150,26 @@ async def test_rendered_resume_errors(
     res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
     assert res.status_code == 503
     assert "chromium detail" not in res.text
+
+
+@pytest.mark.parametrize(
+    ("key", "value"), [("personalInfo", "bogus"), ("workExperience", ["bogus"])]
+)
+async def test_rendered_resume_with_malformed_data_is_422(
+    client: AsyncClient,
+    isolated_db: Database,
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+    value: Any,
+) -> None:
+    # Both used to reach the round trip and fail with a 500 on `.get`.
+    resume_id = await _resume(isolated_db, normalize_resume_data({key: value}))
+    check_render = AsyncMock(return_value=render("single-column"))
+    monkeypatch.setattr(services.ats_parse, "render_resume_pdf", check_render)
+    res = await client.post(f"/api/v1/resumes/{resume_id}/parse-check")
+    assert res.status_code == 422
+    assert "bogus" not in res.text
+    check_render.assert_not_awaited()
 
 
 async def test_rendered_resume_render_timeout_is_504(

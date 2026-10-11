@@ -3,6 +3,7 @@
 from collections import Counter, defaultdict
 from typing import Any
 
+from app.schemas.models import ResumeData, normalize_resume_data
 from app.services.ats_parse.models import FieldStatus, RoundTrip, RoundTripField
 from app.services.ats_parse.normalize import tokens
 
@@ -12,6 +13,16 @@ GARBLED_THRESHOLD = 0.5
 MATCH_PREFIX = 6
 
 Field = tuple[str, str]
+
+
+def canonical_resume_data(data: Any) -> dict[str, Any]:
+    """Stored resume data as the print page renders it: normalized, then validated.
+
+    Raises ``pydantic.ValidationError`` for malformed data, so the round trip
+    never walks nodes of the wrong type.
+    """
+    raw = normalize_resume_data(dict(data)) if isinstance(data, dict) else data
+    return ResumeData.model_validate(raw).model_dump(mode="json")
 
 
 def _join(values: Any) -> str:
@@ -180,7 +191,7 @@ def kendall_fidelity(positions: list[int]) -> float:
 
 
 def compute_roundtrip(data: dict[str, Any], extracted_text: str) -> RoundTrip:
-    fields, hidden = expected_fields(data)
+    fields, hidden = expected_fields(canonical_resume_data(data))
     truncated = len(fields) > MAX_FIELDS
     fields = fields[:MAX_FIELDS]
     doc_tokens = tokens(extracted_text)

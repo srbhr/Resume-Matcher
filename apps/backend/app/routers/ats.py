@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from pydantic import ValidationError
 
 from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
 from app.database import db
@@ -17,6 +18,7 @@ from app.schemas.models import PageFitSettings
 from app.services.ats_parse import parse_check_bytes, parse_check_render
 from app.services.ats_parse.extract import SUPPORTED_SUFFIXES
 from app.services.ats_parse.models import ParseCheckReport
+from app.services.ats_parse.roundtrip import canonical_resume_data
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
     MAX_UNPACKED_DOCUMENT_BYTES,
@@ -77,6 +79,14 @@ async def parse_check_resume(
         raise HTTPException(
             status_code=422, detail="Resume has no structured data to check yet."
         )
+    try:
+        data = canonical_resume_data(data)
+    except ValidationError as e:
+        logger.warning("Parse check found invalid resume data for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=422,
+            detail="Resume data is not in a valid format, so it cannot be checked.",
+        ) from e
     try:
         return await parse_check_render(resume_id, data, fit or PageFitSettings())
     except PDFRenderTimeoutError as e:

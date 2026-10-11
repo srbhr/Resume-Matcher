@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 from docx import Document
+from pydantic import ValidationError
 
 from app.services.ats_parse import build_report, parse_check_bytes
 from app.services.ats_parse.checks import has_columns, run_checks, score
@@ -257,3 +258,12 @@ def test_roundtrip_reports_missing_and_hidden() -> None:
     statuses = {f.field: f.status for f in hidden_result.fields}
     assert statuses["section.education"] == "hidden"
     assert not any(name.startswith("education[") for name in statuses)
+
+
+def test_roundtrip_validates_stored_data() -> None:
+    with pytest.raises(ValidationError):
+        compute_roundtrip({"workExperience": ["bogus"]}, "text")
+    # Data without sectionMeta renders the default sections, as the print page does.
+    legacy = {"workExperience": [{"title": "Staff Engineer", "company": "Acme"}]}
+    fields = {f.field for f in compute_roundtrip(legacy, "Staff Engineer Acme").fields}
+    assert {"workExperience[0].title", "workExperience[0].company"} <= fields
