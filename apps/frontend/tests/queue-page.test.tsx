@@ -15,10 +15,11 @@ const translate = (key: string, params?: Record<string, string | number>) =>
   params ? `${key}:${Object.values(params).join(',')}` : key;
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: translate, locale: 'en' }) }));
+const systemStatus = vi.hoisted(() => ({ loading: false }));
 vi.mock('@/lib/context/status-cache', () => ({
   useStatusCache: () => ({
-    status: { llm_configured: true },
-    isLoading: false,
+    status: systemStatus.loading ? null : { llm_configured: true },
+    isLoading: systemStatus.loading,
     incrementJobs: vi.fn(),
   }),
 }));
@@ -67,6 +68,7 @@ beforeEach(() => {
     fn.mockReset();
   }
   localStorage.clear();
+  systemStatus.loading = false;
   listResumes.mockResolvedValue([
     {
       resume_id: 'm1',
@@ -414,5 +416,16 @@ describe('clearing', () => {
       fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.clearAll' }));
     });
     expect(clearItems.mock.calls).toEqual([['m1', 'completed'], ['m1']]);
+  });
+});
+
+describe('provider status', () => {
+  it('says it is checking, not that a key is missing, while the status loads', async () => {
+    systemStatus.loading = true;
+    render(<QueuePage />);
+    await screen.findByText('Backend track');
+    const add = screen.getByRole('button', { name: 'common.checking' });
+    expect(add).toBeDisabled();
+    expect(screen.queryByText('tailor.configureApiKeyFirst')).toBeNull();
   });
 });

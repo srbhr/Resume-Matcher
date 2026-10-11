@@ -462,6 +462,11 @@ export default function QueuePage() {
                 <SpinnerGap className="animate-spin" aria-hidden="true" />
                 {t('queue.form.adding')}
               </>
+            ) : statusLoading ? (
+              <>
+                <SpinnerGap className="animate-spin" aria-hidden="true" />
+                {t('common.checking')}
+              </>
             ) : !isLlmConfigured ? (
               t('tailor.configureApiKeyFirst')
             ) : (
