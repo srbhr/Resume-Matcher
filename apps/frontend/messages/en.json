@@ -1327,7 +1327,8 @@
         "too_large": "The job description or resume is too long to tailor.",
         "timeout": "Tailoring timed out. Add the job again to retry.",
         "failed": "Tailoring failed. Check your AI provider in Settings, then add the job again."
-      }
+      },
+      "loadFailed": "Couldn't load the queue."
     }
   }
 }

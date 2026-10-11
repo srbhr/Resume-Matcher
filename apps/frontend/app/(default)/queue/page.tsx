@@ -66,6 +66,7 @@ export default function QueuePage() {
 
   // Queue state
   const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
+  const [queueLoad, setQueueLoad] = useState<'loading' | 'ready' | 'error'>('loading');
   const [isRefreshingQueue, setIsRefreshingQueue] = useState(false);
   const [isAddingToQueue, setIsAddingToQueue] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
@@ -160,9 +161,12 @@ export default function QueuePage() {
     const request = ++queueRequest.current;
     try {
       const items = await fetchJobQueue(selectedResumeId || undefined);
-      if (request === queueRequest.current) setQueueItems(items);
+      if (request !== queueRequest.current) return;
+      setQueueItems(items);
+      setQueueLoad('ready');
     } catch (err) {
       console.error('Failed to load queue', err);
+      if (request === queueRequest.current) setQueueLoad('error');
     }
   }, [selectedResumeId]);
 
@@ -459,12 +463,36 @@ export default function QueuePage() {
             )}
           </div>
 
+          {queueLoad === 'error' && (
+            <Alert tone="error" title={t('queue.errors.loadFailed')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={handleRefresh}
+                disabled={isRefreshingQueue}
+              >
+                <ArrowsClockwise aria-hidden="true" />
+                {t('common.retry')}
+              </Button>
+            </Alert>
+          )}
+
           {queueItems.length === 0 ? (
-            <EmptyState
-              variant="framed"
-              title={t('queue.monitor.emptyTitle')}
-              description={t('queue.monitor.emptyDescription')}
-            />
+            queueLoad === 'loading' ? (
+              <p className="flex items-center gap-2 py-6 font-mono text-xs uppercase text-steel">
+                <SpinnerGap className="animate-spin" aria-hidden="true" />
+                {t('common.loading')}
+              </p>
+            ) : (
+              queueLoad === 'ready' && (
+                <EmptyState
+                  variant="framed"
+                  title={t('queue.monitor.emptyTitle')}
+                  description={t('queue.monitor.emptyDescription')}
+                />
+              )
+            )
           ) : (
             <ul className="space-y-3">
               {queueItems.map((item) => (

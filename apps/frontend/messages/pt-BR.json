@@ -1327,7 +1327,8 @@
         "too_large": "A descrição da vaga ou o currículo é longo demais para personalizar.",
         "timeout": "A personalização excedeu o tempo limite. Adicione a vaga de novo para tentar outra vez.",
         "failed": "A personalização falhou. Verifique seu provedor de IA nas Configurações e adicione a vaga de novo."
-      }
+      },
+      "loadFailed": "Não foi possível carregar a fila."
     }
   }
 }

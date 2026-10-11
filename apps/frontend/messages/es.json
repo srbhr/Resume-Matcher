@@ -1327,7 +1327,8 @@
         "too_large": "La descripción del puesto o el currículum es demasiado largo para adaptarlo.",
         "timeout": "Se agotó el tiempo de adaptación. Vuelve a añadir la oferta para reintentarlo.",
         "failed": "La adaptación falló. Revisa tu proveedor de IA en Ajustes y vuelve a añadir la oferta."
-      }
+      },
+      "loadFailed": "No se pudo cargar la cola."
     }
   }
 }

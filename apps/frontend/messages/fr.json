@@ -1327,7 +1327,8 @@
         "too_large": "La description du poste ou le CV est trop long pour être adapté.",
         "timeout": "L'adaptation a expiré. Ajoutez de nouveau l'offre pour réessayer.",
         "failed": "L'adaptation a échoué. Vérifiez votre fournisseur d'IA dans les Paramètres, puis ajoutez de nouveau l'offre."
-      }
+      },
+      "loadFailed": "Impossible de charger la file."
     }
   }
 }

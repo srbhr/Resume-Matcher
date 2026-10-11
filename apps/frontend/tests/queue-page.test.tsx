@@ -219,3 +219,30 @@ describe('queue reads', () => {
     expect(screen.getByText('b role')).toBeTruthy();
   });
 });
+
+describe('queue list states', () => {
+  it('shows loading, not "empty", while the first read is pending', async () => {
+    const first = deferred<QueueItem[]>();
+    fetchQueue.mockReturnValueOnce(first.promise);
+    render(<QueuePage />);
+    await waitFor(() => expect(fetchQueue).toHaveBeenCalled());
+    expect(screen.getByText('common.loading')).toBeTruthy();
+    expect(screen.queryByText('queue.monitor.emptyTitle')).toBeNull();
+
+    await act(async () => first.resolve([]));
+    expect(screen.getByText('queue.monitor.emptyTitle')).toBeTruthy();
+  });
+
+  it('reports a failed read instead of an empty queue, and retries', async () => {
+    fetchQueue
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce([item('back', 'completed')]);
+    render(<QueuePage />);
+
+    expect(await screen.findByText('queue.errors.loadFailed')).toBeTruthy();
+    expect(screen.queryByText('queue.monitor.emptyTitle')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(await screen.findByText('back role')).toBeTruthy();
+    expect(screen.queryByText('queue.errors.loadFailed')).toBeNull();
+  });
+});
