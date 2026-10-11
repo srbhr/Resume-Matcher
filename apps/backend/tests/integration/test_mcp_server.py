@@ -998,3 +998,19 @@ async def test_tailored_saves_reject_oversized_resume_data_before_writing(
     assert len(await isolated_db.list_resumes()) == 1
     assert await isolated_db.list_applications() == []
     rendered.assert_not_awaited()
+
+
+async def test_validate_tailored_resume_applies_the_same_size_limit_as_the_save() -> (
+    None
+):
+    limit = shared_module.MAX_SOURCE_CHARACTERS
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        oversized = copy.deepcopy(master["resume_data"])
+        oversized["summary"] = "x" * (limit + 1)
+        message = await call_error(
+            mcp,
+            "validate_tailored_resume",
+            {"source_resume_id": master["resume_id"], "resume_data": oversized},
+        )
+    assert f"exceeds {limit} characters" in message
