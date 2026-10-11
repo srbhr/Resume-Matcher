@@ -8,6 +8,7 @@ services:
       args:
         - DEBIAN_MIRROR=${DEBIAN_MIRROR:-}
         - DEBIAN_SECURITY_MIRROR=${DEBIAN_SECURITY_MIRROR:-}
+        - PIP_INDEX_URL=${PIP_INDEX_URL:-}
         - PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST:-}
     container_name: resume-matcher
     ports:

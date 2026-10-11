@@ -98,6 +98,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 WORKDIR /app/backend
 COPY apps/backend/pyproject.toml /app/backend/
 
+# Optional Python package index mirror for slow networks, e.g.
+#   docker build --build-arg PIP_INDEX_URL=https://pypi.mirrors.ustc.edu.cn/simple .
+# pip reads PIP_INDEX_URL from the environment (an empty value is ignored), so both pip
+# installs below use it when set and the default PyPI otherwise.
+ARG PIP_INDEX_URL
+
 # Install the dependency list from pyproject.toml (read with tomllib so it never
 # drifts), without the package itself. The package is installed after the code copy.
 RUN --mount=type=cache,target=/root/.cache/pip \
