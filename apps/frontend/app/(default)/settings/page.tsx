@@ -164,6 +164,8 @@ export default function SettingsPage() {
   // Read once per mount (refs survive Strict Mode's effect replay).
   const chatGptReturnRef = useRef<ChatGptReturnOutcome | null | undefined>(undefined);
   const [chatGptReturn, setChatGptReturn] = useState<ChatGptReturnOutcome | null>(null);
+  // `null` until the sign-in panel has checked: Save stays off until the account is connected.
+  const [chatGptConnected, setChatGptConnected] = useState<boolean | null>(null);
   const readChatGptReturn = useCallback((): ChatGptReturnOutcome | null => {
     if (chatGptReturnRef.current === undefined) chatGptReturnRef.current = takeChatGptReturn();
     return chatGptReturnRef.current;
@@ -727,6 +729,8 @@ export default function SettingsPage() {
   const requiresApiBase = providerInfo.requiresBaseUrl ?? false;
   const usesLocalCli = providerInfo.localCli ?? false;
   const usesChatGptSignIn = providerInfo.chatgptSignIn ?? false;
+  // Saving would activate a provider whose every call fails until the user signs in.
+  const chatGptSaveBlocked = usesChatGptSignIn && chatGptConnected !== true;
   const fullNameKey = FULL_NAME_KEYS[provider];
   // M-04: provider-specific base-URL copy comes from the message catalogs, not
   // English literals in PROVIDER_INFO — otherwise this whole block reverted to
@@ -969,6 +973,7 @@ export default function SettingsPage() {
                     onModelChange={setModel}
                     returnOutcome={chatGptReturn}
                     onConnectionChange={refreshStatus}
+                    onStatusChange={setChatGptConnected}
                   />
                   <Alert tone="warning" title={t('settings.llmConfiguration.chatgptWarningTitle')}>
                     <p>{t('settings.llmConfiguration.chatgptWarning')}</p>
@@ -1132,7 +1137,8 @@ export default function SettingsPage() {
                 <Button
                   type="button"
                   onClick={handleSave}
-                  disabled={status === 'saving' || status === 'loading'}
+                  disabled={status === 'saving' || status === 'loading' || chatGptSaveBlocked}
+                  aria-describedby={chatGptSaveBlocked ? 'chatgpt-save-hint' : undefined}
                   className="flex-1"
                 >
                   <AnimatePresence mode="wait" initial={false}>
@@ -1181,6 +1187,12 @@ export default function SettingsPage() {
                   )}
                 </Button>
               </div>
+
+              {usesChatGptSignIn && chatGptConnected === false && (
+                <p id="chatgpt-save-hint" className="text-xs text-steel font-mono">
+                  {t('settings.chatgpt.connectToSave')}
+                </p>
+              )}
 
               {/* Error Message */}
               {error && (

@@ -989,7 +989,8 @@
       "disconnectFailed": "无法断开 ChatGPT 连接，请重试。",
       "statusFailed": "无法检查 ChatGPT 连接状态。",
       "modelsFailed": "无法加载你的 ChatGPT 模型，请直接输入模型名称。",
-      "modelHint": "登录后，模型列表来自你的 ChatGPT 账户。"
+      "modelHint": "登录后，模型列表来自你的 ChatGPT 账户。",
+      "connectToSave": "请先通过 ChatGPT 登录，再保存此提供商。"
     },
     "contentGeneration": {
       "title": "内容生成",

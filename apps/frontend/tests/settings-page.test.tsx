@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsPage from '@/app/(default)/settings/page';
 import { FeaturePromptsError } from '@/lib/api/config';
@@ -263,6 +263,38 @@ describe('settings page (Swiss sweep)', () => {
     fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
     expect(screen.queryByText('settings.llmConfiguration.chatgptWarning')).toBeNull();
     expect(document.getElementById('apiKey')).not.toBeNull();
+  });
+
+  it('keeps Save off, with a hint, while ChatGPT is not connected', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    fireEvent.click(within(providers).getByRole('radio', { name: CHATGPT_LABEL }));
+
+    const hint = await screen.findByText('settings.chatgpt.connectToSave');
+    const save = screen.getByRole('button', { name: 'common.save' });
+    expect(save).toBeDisabled();
+    expect(save).toHaveAttribute('aria-describedby', hint.id);
+    expect(api.updateLlmConfig).not.toHaveBeenCalled();
+
+    // Back to a key provider: Save works again and the hint is gone.
+    fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeEnabled();
+    expect(screen.queryByText('settings.chatgpt.connectToSave')).toBeNull();
+  });
+
+  it('allows saving the ChatGPT provider once the account is connected', async () => {
+    api.fetchChatGptStatus.mockResolvedValue({
+      connected: true,
+      email: 'me@example.com',
+      plan_declined: false,
+    });
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    fireEvent.click(within(providers).getByRole('radio', { name: CHATGPT_LABEL }));
+
+    expect(await screen.findByText('settings.chatgpt.connected')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'common.save' })).toBeEnabled());
+    expect(screen.queryByText('settings.chatgpt.connectToSave')).toBeNull();
   });
 
   it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {

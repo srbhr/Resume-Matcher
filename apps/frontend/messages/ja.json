@@ -989,7 +989,8 @@
       "disconnectFailed": "ChatGPT との接続を解除できませんでした。もう一度お試しください。",
       "statusFailed": "ChatGPT の接続状態を確認できませんでした。",
       "modelsFailed": "ChatGPT のモデルを読み込めませんでした。モデル名を入力してください。",
-      "modelHint": "サインイン後、モデルは ChatGPT アカウントから取得されます。"
+      "modelHint": "サインイン後、モデルは ChatGPT アカウントから取得されます。",
+      "connectToSave": "このプロバイダーを保存するには、ChatGPT でサインインしてください。"
     },
     "contentGeneration": {
       "title": "コンテンツ生成",

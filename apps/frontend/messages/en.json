@@ -989,7 +989,8 @@
       "disconnectFailed": "Couldn't disconnect ChatGPT. Try again.",
       "statusFailed": "Couldn't check the ChatGPT connection.",
       "modelsFailed": "Couldn't load your ChatGPT models. Enter a model name instead.",
-      "modelHint": "After you sign in, models come from your ChatGPT account."
+      "modelHint": "After you sign in, models come from your ChatGPT account.",
+      "connectToSave": "Sign in with ChatGPT to save this provider."
     },
     "contentGeneration": {
       "title": "Content generation",
