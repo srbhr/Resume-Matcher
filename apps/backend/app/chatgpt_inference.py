@@ -191,16 +191,18 @@ def _shape_response(content: str, model: str) -> SimpleNamespace:
     return SimpleNamespace(choices=[choice], model=model, usage=None)
 
 
-async def chatgpt_acompletion(model: str, **kwargs: Any) -> SimpleNamespace:
+async def chatgpt_acompletion(model_slug: str, **kwargs: Any) -> SimpleNamespace:
     """Drop-in for ``router.acompletion`` when the provider is ``chatgpt``.
 
-    Only ``messages`` and ``timeout`` are read. ``temperature``, ``max_tokens``,
+    ``model_slug`` is the account's model; ``kwargs["model"]`` is LiteLLM's
+    Router alias and is ignored. Only ``messages`` and ``timeout`` are read from
+    ``kwargs``. ``temperature``, ``max_tokens``,
     ``reasoning_effort``, ``response_format``, ``api_key`` and ``api_base`` are
     deliberately ignored: the plan route rejects the sampling and output-length
     fields, and the bearer token comes from the sign-in store. ``timeout``
     bounds the whole call, including a token refresh.
     """
-    body = build_request_body(model, kwargs.get("messages") or [])
+    body = build_request_body(model_slug, kwargs.get("messages") or [])
     timeout = float(kwargs.get("timeout") or DEFAULT_TIMEOUT_SECONDS)
     async with asyncio.timeout(timeout):
         token = await get_access_token()
@@ -218,7 +220,7 @@ async def chatgpt_acompletion(model: str, **kwargs: Any) -> SimpleNamespace:
                     await response.aread()
                     raise _http_error(response)
                 content = await _read_completion(response)
-    return _shape_response(content, model)
+    return _shape_response(content, model_slug)
 
 
 async def list_models() -> list[dict[str, str]]:
