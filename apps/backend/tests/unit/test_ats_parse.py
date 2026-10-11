@@ -325,6 +325,9 @@ def test_contact_info_found_late_is_a_warning() -> None:
         ("Acme 03.2019 - 06.2022", False),
         ("2019 - 2022\n+44 20 7946 0958", True),
         ("(415) 555-0142", True),
+        # Seven-digit local numbers.
+        ("555-1234", True),
+        ("5551234", True),
     ],
 )
 def test_contact_info_needs_a_phone_shaped_number(text: str, phone: bool) -> None:

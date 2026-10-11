@@ -19,7 +19,9 @@ MAX_COMFORTABLE_PAGES = 2
 
 # Bounded local part keeps search linear on long "a.a.a..." runs (see normalize._TOKEN).
 EMAIL_RE = re.compile(r"[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+")
-PHONE_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
+# Seven characters at least, so local numbers like "555-1234" count; has_phone
+# then needs seven digits that are not all date parts.
+PHONE_RE = re.compile(r"(?:\+?\d[\d\s().-]{5,}\d)")
 # Digit groups of a year range ("2019 - 2022") or numeric date ("03.2019").
 _DATE_PART = re.compile(r"(?:19|20)\d{2}|0?[1-9]|1[0-2]")
 YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
