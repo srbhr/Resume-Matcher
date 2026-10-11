@@ -72,6 +72,33 @@ Datadog is the monitoring and security platform for cloud applications...
         assert (details["role"], details["company"]) == (role, company)
 
     @pytest.mark.parametrize(
+        ("text", "role", "company"),
+        [
+            # A header first line is skipped; the title is on line two.
+            (
+                "About Us\nSenior Platform Engineer\nWe build things.",
+                "Senior Platform Engineer",
+                "",
+            ),
+            # The "Role at Company" pattern is found on a later line too.
+            ("Welcome!\nStaff Engineer at Acme\nRemote", "Staff Engineer", "Acme"),
+            # The company name as a header is not the role.
+            (
+                "Stripe\nPayments Engineer\nCompany: Stripe",
+                "Payments Engineer",
+                "Stripe",
+            ),
+            # Only the first three non-empty lines are considered.
+            ("About Us\n\nOverview\nWelcome\nBackend Engineer", "", ""),
+        ],
+    )
+    def test_role_fallback_checks_the_first_three_nonempty_lines(
+        self, text, role, company
+    ):
+        details = extract_job_details(text)
+        assert (details["role"], details["company"]) == (role, company)
+
+    @pytest.mark.parametrize(
         "prefix", ["role-", "client-", "job id", "req #", "a", "x at"]
     )
     def test_long_whitespace_runs_are_parsed_in_linear_time(self, prefix):

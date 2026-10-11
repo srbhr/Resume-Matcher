@@ -84,19 +84,26 @@ def extract_job_details(text: str) -> dict[str, str]:
                 details["job_req_id"] = m_id.group(1).strip()
 
     # 2. If role is still empty, look at first 3 non-empty lines
-    if not details["role"] and lines:
-        first_line = lines[0]
-        # Pattern like "Senior Software Engineer at Stripe" or "Frontend Developer @ Google"
-        at_split = _split_role_at_company(first_line)
-        if at_split:
-            details["role"] = at_split[0]
-            if not details["company"]:
-                details["company"] = at_split[1]
-        elif len(first_line) < 70 and not any(
-            w in first_line.lower()
-            for w in ["about us", "overview", "description", "welcome"]
-        ):
-            details["role"] = first_line
+    if not details["role"]:
+        for line in lines[:3]:
+            # Pattern like "Senior Software Engineer at Stripe" or "Frontend Developer @ Google"
+            at_split = _split_role_at_company(line)
+            if at_split:
+                details["role"] = at_split[0]
+                if not details["company"]:
+                    details["company"] = at_split[1]
+                break
+            # A short title-like line; skip section headers and the company name itself.
+            if (
+                len(line) < 70
+                and not any(
+                    w in line.lower()
+                    for w in ["about us", "overview", "description", "welcome"]
+                )
+                and line.casefold() != details["company"].casefold()
+            ):
+                details["role"] = line
+                break
 
     # 3. If company is still empty, check for "About <Company>" or "<Company> is looking for"
     if not details["company"]:
