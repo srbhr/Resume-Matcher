@@ -530,6 +530,8 @@ export async function fetchJobDescription(
   return res.json();
 }
 
+export type QueueItemStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
 export interface QueueItem {
   item_id: string;
   resume_id: string;
@@ -537,10 +539,11 @@ export interface QueueItem {
   role: string;
   company: string;
   job_req_id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: QueueItemStatus;
   tailored_resume_id: string | null;
   title: string | null;
   job_id: string | null;
+  /** Failure code when status is 'failed': not_found, too_large, timeout or failed. */
   error: string | null;
   rate_limit_seconds: number;
   created_at: string;

@@ -1279,5 +1279,55 @@
       "skillGaps": "Lacunas de habilidades",
       "talkingPoints": "Pontos de conversa"
     }
+  },
+  "queue": {
+    "title": "Fila de personalização",
+    "subtitle": "Coloque vagas na fila e personalize uma após a outra em segundo plano",
+    "form": {
+      "title": "Adicionar uma vaga",
+      "masterDescription": "Cada vaga na fila é personalizada a partir deste currículo principal.",
+      "noMaster": "Envie primeiro um currículo principal no painel.",
+      "jobDescriptionLabel": "Descrição da vaga",
+      "jobDescriptionHint": "Cargo, empresa e ID da vaga são detectados no texto sem chamar a IA. Corrija-os se estiverem errados.",
+      "detectedTitle": "Dados detectados",
+      "roleLabel": "Cargo",
+      "rolePlaceholder": "ex.: Engenheiro frontend",
+      "companyLabel": "Empresa",
+      "companyPlaceholder": "ex.: Stripe",
+      "jobReqIdLabel": "ID da vaga",
+      "cooldownLabel": "Pausa (segundos)",
+      "cooldownHint": "Pausa após cada vaga para reduzir o risco de atingir o limite de uso do seu provedor.",
+      "submit": "Adicionar à fila",
+      "adding": "Adicionando...",
+      "added": "Adicionada à fila. Cole a próxima descrição de vaga."
+    },
+    "monitor": {
+      "title": "Fila",
+      "count": "Vagas: {count}",
+      "refresh": "Atualizar",
+      "clearCompleted": "Limpar concluídas",
+      "clearAll": "Limpar tudo",
+      "emptyTitle": "Nenhuma vaga na fila",
+      "emptyDescription": "Adicione uma descrição de vaga para começar a personalizar.",
+      "untitled": "Cargo sem título",
+      "jobId": "ID {id}",
+      "viewResume": "Ver currículo",
+      "remove": "Remover da fila"
+    },
+    "status": {
+      "pending": "Na fila",
+      "processing": "Personalizando",
+      "completed": "Concluído",
+      "failed": "Falhou"
+    },
+    "errors": {
+      "addFailed": "Não foi possível adicionar a vaga. Tente novamente.",
+      "item": {
+        "not_found": "O currículo principal ou a vaga foi excluído.",
+        "too_large": "A descrição da vaga ou o currículo é longo demais para personalizar.",
+        "timeout": "A personalização excedeu o tempo limite. Adicione a vaga de novo para tentar outra vez.",
+        "failed": "A personalização falhou. Verifique seu provedor de IA nas Configurações e adicione a vaga de novo."
+      }
+    }
   }
 }
