@@ -2,9 +2,6 @@
 
 An **opt-in, on-demand** harness that drives the real Resume-Matcher app end to end, captures a durable evidence bundle, and has a Claude Code skill judge it. It is a **report, never a gate** — it informs; it never blocks a push and is never wired into CI.
 
-- Design spec: [`docs/superpowers/specs/2026-06-01-agentic-e2e-monitor-design.md`](../../../docs/superpowers/specs/2026-06-01-agentic-e2e-monitor-design.md)
-- Implementation plan: [`docs/superpowers/plans/2026-06-01-agentic-e2e-monitor.md`](../../../docs/superpowers/plans/2026-06-01-agentic-e2e-monitor.md)
-
 ---
 
 ## Install
