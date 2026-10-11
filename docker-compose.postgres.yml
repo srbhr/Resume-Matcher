@@ -1,6 +1,8 @@
 # Optional PostgreSQL backend. SQLite stays the default without this file.
 #   POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up
 # data/.secret_key still lives in the resume-data volume; keep it with the database.
+# POSTGRES_PASSWORD is copied into DATABASE_URL as-is: use only URL-safe characters
+# (letters, digits, -._~). Characters such as @ : / ? # % would break the URL.
 services:
   resume-matcher:
     environment:

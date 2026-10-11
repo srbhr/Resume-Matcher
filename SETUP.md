@@ -357,7 +357,9 @@ SQLite is the default and needs no setup. For backups or remote/shared hosting y
 POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`. Tables are created on startup. To move existing data, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set; it refuses to write into a non-empty database. Keep `data/.secret_key`: it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
+`POSTGRES_PASSWORD` is copied into `DATABASE_URL` as-is, so use a URL-safe password (letters, digits, `-._~`).
+
+Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`, percent-encoding any special characters in the password. Tables are created on startup. To move existing data, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set; it refuses to write into a non-empty database. Keep `data/.secret_key`: it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
 
 ### Important Notes
 

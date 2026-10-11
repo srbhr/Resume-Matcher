@@ -15,7 +15,7 @@ SQLite in `data/resume_matcher.db` stays the default. PostgreSQL is for durabili
 
 - **Driver.** `psycopg` 3 serves both engines: async for the documents and sync for `api_keys`.
 - **API keys.** `data/.secret_key` still lives in `DATA_DIR`, and the encrypted API keys can't be read without it. Keep it with the database.
-- **Docker.** `docker-compose.postgres.yml` is an opt-in override: a `postgres:17-alpine` service, `DATABASE_URL` and `depends_on: service_healthy`. It needs `POSTGRES_PASSWORD`.
+- **Docker.** `docker-compose.postgres.yml` is an opt-in override: a `postgres:17-alpine` service, `DATABASE_URL` and `depends_on: service_healthy`. It needs `POSTGRES_PASSWORD`. The password is placed in `DATABASE_URL` as-is, so it must be URL-safe (letters, digits and `-._~`); characters such as `@ : / ? # %` break the URL.
 
 ## How It Works
 
