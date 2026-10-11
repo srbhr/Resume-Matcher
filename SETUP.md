@@ -138,7 +138,7 @@ Open **<http://localhost:3000>** in your browser.
 
 > **PDF export:** Resume Matcher renders PDFs with headless Chromium. If Playwright's browser is not installed, the backend falls back to an installed Microsoft Edge or Google Chrome (Edge ships with Windows 11). You can also install Playwright's Chromium from `apps\backend` with `uv run playwright install chromium`.
 
-> **Prefer Docker?** Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) and follow [Docker Deployment](#docker-deployment). To set variables like `PORT` in PowerShell, use `$env:PORT="4000"; docker compose up -d`.
+> **Prefer Docker?** Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) and follow [Docker Deployment](#docker-deployment). To set variables like `PORT` in PowerShell, use `$env:PORT="4000"; docker compose up -d`. For the [optional PostgreSQL setup](#optional-postgresql), run `$env:POSTGRES_PASSWORD="change-me"; docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; outside Docker, set `DATABASE_URL` in `apps\backend\.env`.
 
 ---
 
