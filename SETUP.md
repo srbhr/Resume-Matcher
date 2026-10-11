@@ -480,7 +480,7 @@ Edits under `apps/backend/app` are synced into the running container, which rest
 
 If a build step downloads slowly, point it at a mirror. Both build args are empty by default (no change):
 
-- `DEBIAN_MIRROR`: if `apt-get` is slow, build with `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (or your local mirror; give its `/debian` URL).
+- `DEBIAN_MIRROR`: if `apt-get` is slow, build with `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (or your local mirror; give its `/debian` URL). Security updates stay on `deb.debian.org` unless you also set `DEBIAN_SECURITY_MIRROR` (a `/debian-security` URL; most mirrors don't carry it).
 - `PLAYWRIGHT_DOWNLOAD_HOST`: if the Chromium download is slow (Playwright's default CDN can be throttled in some regions), set it to your mirror's URL.
 
 ```bash

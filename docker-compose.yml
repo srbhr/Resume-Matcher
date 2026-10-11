@@ -7,6 +7,7 @@ services:
       #   DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian docker compose build
       args:
         - DEBIAN_MIRROR=${DEBIAN_MIRROR:-}
+        - DEBIAN_SECURITY_MIRROR=${DEBIAN_SECURITY_MIRROR:-}
         - PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST:-}
     container_name: resume-matcher
     ports:

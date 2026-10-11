@@ -13,7 +13,7 @@
 #   SMOKE_PORT            host port to start looking from (default 3100; the next
 #                         free port is used if it is taken)
 #   SMOKE_HEALTH_TIMEOUT  seconds to wait for the app to become healthy (default 120)
-#   DEBIAN_MIRROR, PLAYWRIGHT_DOWNLOAD_HOST
+#   DEBIAN_MIRROR, DEBIAN_SECURITY_MIRROR, PLAYWRIGHT_DOWNLOAD_HOST
 #                         forwarded to the build as --build-arg when set (slow networks)
 #
 # Safe by design: the container gets a throwaway named volume for
@@ -95,7 +95,7 @@ if [ "$BUILD" = 1 ]; then
     echo "==> Building ${TAG} (uses the build cache)"
     BUILD_START=$SECONDS
     BUILD_ARGS=()
-    for var in DEBIAN_MIRROR PLAYWRIGHT_DOWNLOAD_HOST; do
+    for var in DEBIAN_MIRROR DEBIAN_SECURITY_MIRROR PLAYWRIGHT_DOWNLOAD_HOST; do
         if [ -n "${!var:-}" ]; then
             BUILD_ARGS+=(--build-arg "${var}=${!var}")
             echo "    (forwarding ${var}=${!var})"

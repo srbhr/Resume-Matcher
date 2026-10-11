@@ -43,15 +43,20 @@ ENV PYTHONUNBUFFERED=1 \
     NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 
-# Optional Debian mirror for slow networks, e.g.
+# Optional Debian mirrors for slow networks, e.g.
 #   docker build --build-arg DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian .
-# Expects the mirror's /debian URL (the matching /debian-security is derived from it).
-# Empty by default: the image's stock deb.debian.org sources are used unchanged.
+# DEBIAN_MIRROR is the mirror's /debian URL (packages and updates). Most mirrors do not
+# carry debian-security, so that stays on the stock deb.debian.org unless you also set
+# DEBIAN_SECURITY_MIRROR (a /debian-security URL). Both are empty by default: the image's
+# stock sources are used unchanged.
 ARG DEBIAN_MIRROR
+ARG DEBIAN_SECURITY_MIRROR
 RUN if [ -n "${DEBIAN_MIRROR}" ]; then \
-        sed -i \
-            -e "s|^URIs: http://deb.debian.org/debian-security|URIs: ${DEBIAN_MIRROR%/}-security|" \
-            -e "s|^URIs: http://deb.debian.org/debian\$|URIs: ${DEBIAN_MIRROR%/}|" \
+        sed -i "s|^URIs: http://deb.debian.org/debian\$|URIs: ${DEBIAN_MIRROR%/}|" \
+            /etc/apt/sources.list.d/debian.sources; \
+    fi \
+    && if [ -n "${DEBIAN_SECURITY_MIRROR}" ]; then \
+        sed -i "s|^URIs: http://deb.debian.org/debian-security|URIs: ${DEBIAN_SECURITY_MIRROR%/}|" \
             /etc/apt/sources.list.d/debian.sources; \
     fi
 
