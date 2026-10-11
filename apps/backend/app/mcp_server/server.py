@@ -32,7 +32,8 @@ validates, saves, renders once, parse-checks and scores. If saved is false, fix 
 the violations and call it again.
 5. For each code in issues, edit with update_resume, then verify_resume. On \
 multi_column or low_order_fidelity, suggest a single-column template. PDF \
-rendering needs the web frontend running.
+rendering needs the web frontend running. recalculate_ats_score refreshes the \
+score the builder shows after edits.
 6. export_resume_pdf to write the final file.
 The single-step tools (validate_tailored_resume, save_tailored_resume, \
 score_resume, parse_check_resume) remain available.
