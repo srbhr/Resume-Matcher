@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ListNumbers, SquaresFour } from '@phosphor-icons/react';
+import { CommunityLinks } from '@/components/common/community-links';
 import { buttonClass } from '@/components/ui/button';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
@@ -70,6 +71,11 @@ export const SwissGrid = ({
             {t('nav.settings')}
           </Link>
         </div>
+      </div>
+
+      {/* Community strip - a slim second row, same canvas and z-layer as the footer */}
+      <div className="px-4 py-2 bg-canvas border-t border-ink shrink-0 relative z-30">
+        <CommunityLinks variant="strip" />
       </div>
     </PageFrame>
   );
