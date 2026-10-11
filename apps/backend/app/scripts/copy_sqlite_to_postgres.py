@@ -29,7 +29,8 @@ def copy_rows(source: Database, target: Database) -> dict[str, int]:
     """Copy every table from source to target in one locked target transaction."""
     source._ensure_initialized()
     target._ensure_initialized()
-    assert source._sync_engine is not None and target._sync_engine is not None
+    if source._sync_engine is None or target._sync_engine is None:
+        raise ValueError("copy_rows needs initialized source and target databases.")
     tables = Base.metadata.sorted_tables
     counts: dict[str, int] = {}
     with source._sync_engine.connect() as src, target._sync_engine.begin() as dst:

@@ -17,6 +17,7 @@ from app.database import (
     _translate_write_errors,
     _write_lock_statements,
 )
+from app.db_engine import make_async_engine, make_sync_engine
 from app.db_url import normalize_database_url, redact, validate_schema_name
 from app.models import Resume
 from app.scripts.copy_sqlite_to_postgres import TargetNotEmptyError, copy_rows
@@ -145,6 +146,24 @@ def test_default_master_index_is_partial_on_postgres() -> None:
     )
     ddl = str(CreateIndex(index).compile(dialect=postgresql.dialect()))
     assert "WHERE is_default_master" in ddl
+
+
+def test_sqlite_engine_factories_require_a_path() -> None:
+    with pytest.raises(ValueError):
+        make_async_engine()
+    with pytest.raises(ValueError):
+        make_sync_engine()
+
+
+def test_copy_rows_rejects_uninitialized_databases(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = Database(db_path=tmp_path / "source.db")
+    target = Database(db_path=tmp_path / "target.db")
+    monkeypatch.setattr(source, "_ensure_initialized", lambda: None)
+    monkeypatch.setattr(target, "_ensure_initialized", lambda: None)
+    with pytest.raises(ValueError):
+        copy_rows(source, target)
 
 
 async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
