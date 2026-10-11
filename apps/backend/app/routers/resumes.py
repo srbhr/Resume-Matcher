@@ -1308,7 +1308,9 @@ async def _improve_preview_flow(
 
     source_content = resume["content"]
     bullet_selection = None
-    if original_resume_data and request.max_bullets_per_entry:
+    if original_resume_data and (
+        request.max_bullets_per_entry is not None or request.page_fit is not None
+    ):
         progress["stage"] = "select_bullets"
         selection = await run_bullet_selection(
             source_data=original_resume_data,
@@ -1316,6 +1318,7 @@ async def _improve_preview_flow(
             job_keywords=job_keywords,
             max_per_entry=request.max_bullets_per_entry,
             page_fit=request.page_fit,
+            max_pages=request.max_pages,
         )
         # The condensed, fitted source replaces the full master for every
         # downstream step so preservation contracts hold at confirm time.
@@ -1498,7 +1501,7 @@ async def _improve_preview_flow(
         bullet_selection.final_check = "skipped" if final_pages is None else "ok"
         if final_pages is not None:
             bullet_selection.final_pages = final_pages
-            if final_pages > 1:
+            if final_pages > request.max_pages:
                 response_warnings.append(PAGE_FIT_FINAL_OVER_WARNING)
 
     progress["stage"] = "register_preview"

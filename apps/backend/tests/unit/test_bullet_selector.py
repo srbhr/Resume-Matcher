@@ -6,7 +6,7 @@ from app.services.bullet_selector import (
     PageMeasureError,
     count_bullets,
     drop_bullets,
-    fit_to_one_page,
+    fit_to_page_limit,
     select_bullets,
     trim_order,
 )
@@ -118,7 +118,7 @@ async def test_fit_returns_untouched_when_first_render_fits() -> None:
         calls.append(count_bullets(d))
         return 1
 
-    result = await fit_to_one_page(sel.data, sel.scores, measure)
+    result = await fit_to_page_limit(sel.data, sel.scores, measure)
     assert (result.status, result.trimmed, result.renders) == ("fits", 0, 1)
     assert calls == [8]
 
@@ -129,22 +129,26 @@ async def test_fit_binary_searches_smallest_trim_that_fits() -> None:
     async def measure(d: dict) -> int:
         return 1 if count_bullets(d) <= 5 else 2  # need to drop 3 of 8
 
-    result = await fit_to_one_page(sel.data, sel.scores, measure)
+    result = await fit_to_page_limit(sel.data, sel.scores, measure)
     assert result.status == "trimmed"
     assert result.trimmed == 3
     assert count_bullets(result.data) == 5
     assert result.renders <= 6
 
 
-async def test_fit_reports_over_when_even_max_trim_spills() -> None:
+async def test_fit_reports_over_and_keeps_selection_when_even_max_trim_spills() -> None:
     sel = select_bullets(_resume(), SCORES, 3)
 
     async def measure(d: dict) -> int:
         return 2
 
-    result = await fit_to_one_page(sel.data, sel.scores, measure)
+    result = await fit_to_page_limit(sel.data, sel.scores, measure)
     assert result.status == "over"
-    assert count_bullets(result.data) == 3  # min one bullet per entry
+    # Cutting every entry to one bullet would not reach the limit anyway, so the
+    # selection is kept intact rather than gutted for no gain.
+    assert (result.trimmed, result.pages) == (0, 2)
+    assert result.data == sel.data
+    assert count_bullets(result.data) == 8
 
 
 async def test_fit_reports_unavailable_when_renderer_fails() -> None:
@@ -153,7 +157,7 @@ async def test_fit_reports_unavailable_when_renderer_fails() -> None:
     async def measure(d: dict) -> int:
         raise PageMeasureError("no chromium")
 
-    result = await fit_to_one_page(sel.data, sel.scores, measure)
+    result = await fit_to_page_limit(sel.data, sel.scores, measure)
     assert (result.status, result.trimmed) == ("unavailable", 0)
     assert result.data == sel.data
 
@@ -167,7 +171,7 @@ async def test_fit_respects_render_cap() -> None:
         renders += 1
         return 1 if count_bullets(d) <= 4 else 2
 
-    result = await fit_to_one_page(sel.data, sel.scores, measure, max_renders=3)
+    result = await fit_to_page_limit(sel.data, sel.scores, measure, max_renders=3)
     assert renders == 3
     assert result.status == "trimmed"
     assert count_bullets(result.data) <= 4  # smallest KNOWN fitting k, may over-trim
@@ -193,9 +197,42 @@ async def test_fit_keeps_known_fitting_trim_when_renderer_fails_mid_search(
             raise PageMeasureError("render timed out")
         return 1 if count_bullets(d) <= fits_up_to else 2
 
-    result = await fit_to_one_page(sel.data, sel.scores, measure)
+    result = await fit_to_page_limit(sel.data, sel.scores, measure)
     order = trim_order(sel.data, sel.scores)
     assert (result.status, result.trimmed, result.pages) == ("trimmed", known_fit_k, 1)
     assert result.renders == failing_render
     assert result.data == drop_bullets(sel.data, order[:known_fit_k])
     assert count_bullets(result.data) == 8 - known_fit_k  # the smallest fit measured
+
+
+def test_select_without_cap_keeps_every_bullet() -> None:
+    sel = select_bullets(_resume(), SCORES, None)
+    assert (sel.bullets_before, sel.bullets_after) == (12, 12)
+    assert sel.data == _resume()
+
+
+async def test_fit_leaves_a_draft_within_a_multi_page_limit_untouched() -> None:
+    sel = select_bullets(_resume(), SCORES, None)
+
+    async def measure(d: dict) -> int:
+        return 2
+
+    result = await fit_to_page_limit(sel.data, sel.scores, measure, max_pages=2)
+    assert (result.status, result.trimmed, result.pages) == ("fits", 0, 2)
+    assert result.data == sel.data
+
+
+async def test_fit_trims_only_down_to_the_page_limit() -> None:
+    sel = select_bullets(_resume(), SCORES, None)  # 12 bullets, 9 droppable
+
+    async def measure(d: dict) -> int:
+        n = count_bullets(d)
+        return 3 if n > 9 else 2 if n > 5 else 1
+
+    two = await fit_to_page_limit(sel.data, sel.scores, measure, max_pages=2)
+    assert (two.status, two.trimmed, two.pages) == ("trimmed", 3, 2)
+    assert count_bullets(two.data) == 9
+
+    one = await fit_to_page_limit(sel.data, sel.scores, measure, max_pages=1)
+    assert (one.status, one.trimmed, one.pages) == ("trimmed", 7, 1)
+    assert count_bullets(one.data) == 5

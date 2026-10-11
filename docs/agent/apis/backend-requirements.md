@@ -48,7 +48,7 @@ POST /resumes/{id}/default → {resume_id, is_default_master}   (masters only; 4
 POST /resumes/{id}/duplicate → 201 {resume_id, title, is_master, is_default_master, parent_id}
 POST /resumes/improve      ← {resume_id, job_id}
                            → {data, cover_letter?, outreach_message?, interview_prep?}
-POST /resumes/improve/preview ← {resume_id, job_id, prompt_id?, max_bullets_per_entry?, page_fit?}
+POST /resumes/improve/preview ← {resume_id, job_id, prompt_id?, max_bullets_per_entry?, page_fit?, max_pages?}
                            → {request_id, data: {request_id, preview_id, preview_expires_at, resume_preview, ..., bullet_selection?}}
 POST /resumes/{id}/generate-interview-prep
                            → {interview_prep, message}

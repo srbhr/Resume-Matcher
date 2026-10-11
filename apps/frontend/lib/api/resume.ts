@@ -89,7 +89,10 @@ export interface PageFitSettings {
 
 /** Summary of harness-steered bullet selection returned by improve/preview. */
 export interface BulletSelectionSummary {
-  max_per_entry: number;
+  /** Null when no per-entry bullet cap was applied. */
+  max_per_entry: number | null;
+  /** Page limit page fit aimed for; null/absent when page fit was not requested. */
+  max_pages?: number | null;
   bullets_before: number;
   bullets_after: number;
   trimmed_for_fit: number;
@@ -248,7 +251,7 @@ export async function previewImproveResume(
   resumeId: string,
   jobId: string,
   promptId?: string,
-  options?: { maxBulletsPerEntry?: number; pageFit?: PageFitSettings }
+  options?: { maxBulletsPerEntry?: number; pageFit?: PageFitSettings; maxPages?: number }
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
@@ -258,6 +261,7 @@ export async function previewImproveResume(
       ? { max_bullets_per_entry: options.maxBulletsPerEntry }
       : {}),
     ...(options?.pageFit !== undefined ? { page_fit: options.pageFit } : {}),
+    ...(options?.maxPages !== undefined ? { max_pages: options.maxPages } : {}),
   });
 }
 

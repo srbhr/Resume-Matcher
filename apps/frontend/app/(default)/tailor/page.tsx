@@ -22,6 +22,17 @@ import {
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
+import {
+  DEFAULT_TAILOR_LENGTH,
+  TAILOR_BULLET_CAPS,
+  TAILOR_PAGE_LIMITS,
+  buildPreviewLengthOptions,
+  readTailorLength,
+  writeTailorLength,
+  type TailorBulletCap,
+  type TailorLengthSettings,
+  type TailorPageLimit,
+} from '@/lib/utils/tailor-length-settings';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -68,6 +79,18 @@ export default function TailorPage() {
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
+  // Page limit / bullet cap for tailoring; loaded from storage after mount.
+  const [tailorLength, setTailorLength] = useState<TailorLengthSettings>(DEFAULT_TAILOR_LENGTH);
+
+  useEffect(() => {
+    setTailorLength(readTailorLength());
+  }, []);
+
+  const updateTailorLength = (patch: Partial<TailorLengthSettings>) => {
+    const next = { ...tailorLength, ...patch };
+    setTailorLength(next);
+    writeTailorLength(next);
+  };
   const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
 
   // Elapsed timer for long operations
@@ -259,10 +282,15 @@ export default function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
-      const result = await previewImproveResume(resumeId, jobId, selectedPromptId, {
-        maxBulletsPerEntry: 3,
-        pageFit: toPageFitSettings(readStoredTemplateSettings(), locale),
-      });
+      const result = await previewImproveResume(
+        resumeId,
+        jobId,
+        selectedPromptId,
+        buildPreviewLengthOptions(
+          tailorLength,
+          toPageFitSettings(readStoredTemplateSettings(), locale)
+        )
+      );
       if (!isCurrent(token)) return;
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
@@ -540,6 +568,39 @@ export default function TailorPage() {
               label={t('tailor.promptLabel')}
               description={t('tailor.promptDescription')}
               disabled={isLoading || promptLoading}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Dropdown
+              options={TAILOR_PAGE_LIMITS.map((limit) => ({
+                id: String(limit ?? 'none'),
+                label: t(`tailor.length.pageLimitOptions.${limit ?? 'none'}`),
+              }))}
+              value={String(tailorLength.maxPages ?? 'none')}
+              onChange={(value) =>
+                updateTailorLength({
+                  maxPages: (value === 'none' ? null : Number(value)) as TailorPageLimit,
+                })
+              }
+              label={t('tailor.length.pageLimitLabel')}
+              description={t('tailor.length.pageLimitDescription')}
+              disabled={isLoading}
+            />
+            <Dropdown
+              options={TAILOR_BULLET_CAPS.map((cap) => ({
+                id: String(cap ?? 'all'),
+                label: t(`tailor.length.bulletOptions.${cap ?? 'all'}`),
+              }))}
+              value={String(tailorLength.maxBulletsPerEntry ?? 'all')}
+              onChange={(value) =>
+                updateTailorLength({
+                  maxBulletsPerEntry: (value === 'all' ? null : Number(value)) as TailorBulletCap,
+                })
+              }
+              label={t('tailor.length.bulletsLabel')}
+              description={t('tailor.length.bulletsDescription')}
+              disabled={isLoading}
             />
           </div>
 
