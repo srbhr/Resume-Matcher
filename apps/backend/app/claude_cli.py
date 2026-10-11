@@ -99,6 +99,9 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         # files must not be able to, whatever RAW_SYSTEM says.
         "--tools",
         "",
+        # Resumes and job descriptions must not be written to Claude Code's
+        # session history on disk.
+        "--no-session-persistence",
     ]
     try:
         proc = await asyncio.create_subprocess_exec(
