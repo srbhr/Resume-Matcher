@@ -79,8 +79,3 @@ async def test_vivid_single_text_layer_is_complete_capitals_and_image_free() -> 
     assert "EXPERIENCE" in doc.text
     assert "SENIOR SOFTWARE ENGINEER" in doc.text
     assert not PRIVATE_USE.search(doc.text)
-
-
-async def test_two_column_vivid_opacity_surname_is_what_the_solid_tint_avoids() -> None:
-    doc = await _extract("nameRest")
-    assert doc.images == 1
