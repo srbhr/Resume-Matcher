@@ -211,6 +211,7 @@ async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
             improvements=[{"suggestion": "s"}],
         )
         source.set_api_key_ciphertext("openai", "ciphertext")
+        await source.create_queue_item("q1", resume["resume_id"], "Engineer")
 
         counts = copy_rows(source, target)
         assert counts == {table.name: 1 for table in Base.metadata.sorted_tables}
