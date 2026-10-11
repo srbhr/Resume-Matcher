@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECIONADO: {provider}",
+      "claudeCliNote": "Executa a CLI do Claude Code instalada e conectada nesta máquina, então nenhuma chave de API é necessária aqui. O Claude Code ainda envia seus prompts à Anthropic pela sua conta e usa o próprio modelo padrão.",
       "modelLabel": "Modelo",
       "defaultModel": "PADRÃO: {model}",
       "apiKeyLabel": "Chave de API",

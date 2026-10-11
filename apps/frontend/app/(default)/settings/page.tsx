@@ -679,6 +679,7 @@ export default function SettingsPage() {
 
   const requiresApiKey = providerInfo.requiresKey ?? true;
   const requiresApiBase = providerInfo.requiresBaseUrl ?? false;
+  const usesLocalCli = providerInfo.localCli ?? false;
   // M-04: provider-specific base-URL copy comes from the message catalogs, not
   // English literals in PROVIDER_INFO — otherwise this whole block reverted to
   // English inside an otherwise fully-translated settings page.
@@ -894,61 +895,67 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              {/* Model Input */}
-              <div className="space-y-2">
-                <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
-                <Input
-                  id="model"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={providerInfo.defaultModel}
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="font-mono"
-                />
-                <p className="text-xs text-steel font-mono">
-                  {t('settings.llmConfiguration.defaultModel', {
-                    model: providerInfo.defaultModel,
-                  })}
-                </p>
-              </div>
+              {usesLocalCli ? (
+                <Alert tone="info">{t('settings.llmConfiguration.claudeCliNote')}</Alert>
+              ) : (
+                <>
+                  {/* Model Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
+                    <Input
+                      id="model"
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      placeholder={providerInfo.defaultModel}
+                      autoComplete="off"
+                      spellCheck={false}
+                      className="font-mono"
+                    />
+                    <p className="text-xs text-steel font-mono">
+                      {t('settings.llmConfiguration.defaultModel', {
+                        model: providerInfo.defaultModel,
+                      })}
+                    </p>
+                  </div>
 
-              {/* API Key Input — always enabled. For providers that don't
+                  {/* API Key Input — always enabled. For providers that don't
                   require a key (Ollama, OpenAI-Compatible local servers), the
                   field is marked optional so users can STILL enter a key if
                   their deployment needs auth (e.g., a secured LM Studio or a
                   hosted OpenAI-compatible proxy). Save-time validation only
                   fails when `requiresApiKey` is true. */}
-              <div className="space-y-2">
-                <Label htmlFor="apiKey">
-                  {t('settings.llmConfiguration.apiKeyLabel')}{' '}
-                  {!requiresApiKey && (
-                    <span className="text-steel">
-                      {t('settings.llmConfiguration.apiKeyOptional')}
-                    </span>
-                  )}
-                </Label>
-                <Input
-                  id="apiKey"
-                  name="llm-api-key"
-                  type="password"
-                  autoComplete="new-password"
-                  spellCheck={false}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={
-                    requiresApiKey
-                      ? t('settings.llmConfiguration.apiKeyPlaceholder')
-                      : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
-                  }
-                  className="font-mono"
-                />
-                {hasStoredApiKey && !apiKey && (
-                  <p className="text-xs text-steel font-mono">
-                    {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
-                  </p>
-                )}
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="apiKey">
+                      {t('settings.llmConfiguration.apiKeyLabel')}{' '}
+                      {!requiresApiKey && (
+                        <span className="text-steel">
+                          {t('settings.llmConfiguration.apiKeyOptional')}
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="apiKey"
+                      name="llm-api-key"
+                      type="password"
+                      autoComplete="new-password"
+                      spellCheck={false}
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder={
+                        requiresApiKey
+                          ? t('settings.llmConfiguration.apiKeyPlaceholder')
+                          : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
+                      }
+                      className="font-mono"
+                    />
+                    {hasStoredApiKey && !apiKey && (
+                      <p className="text-xs text-steel font-mono">
+                        {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Saved per-provider keys — each provider keeps its own encrypted
                   key, so switching providers never wipes another's. */}
@@ -988,48 +995,59 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
-              <div className="space-y-2">
-                <Label htmlFor="apiBase">
-                  {baseUrlLabel} {requiresApiBase && <span className="text-destructive">*</span>}
-                </Label>
-                <Input
-                  id="apiBase"
-                  type="url"
-                  inputMode="url"
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-required={requiresApiBase}
-                  value={apiBase}
-                  onChange={(e) => setApiBase(e.target.value)}
-                  placeholder={baseUrlPlaceholder}
-                  className="font-mono"
-                />
-                <p className="text-xs text-steel font-mono">{baseUrlDescription}</p>
-              </div>
+              {!usesLocalCli && (
+                <>
+                  {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="apiBase">
+                      {baseUrlLabel}{' '}
+                      {requiresApiBase && <span className="text-destructive">*</span>}
+                    </Label>
+                    <Input
+                      id="apiBase"
+                      type="url"
+                      inputMode="url"
+                      autoComplete="off"
+                      spellCheck={false}
+                      aria-required={requiresApiBase}
+                      value={apiBase}
+                      onChange={(e) => setApiBase(e.target.value)}
+                      placeholder={baseUrlPlaceholder}
+                      className="font-mono"
+                    />
+                    <p className="text-xs text-steel font-mono">{baseUrlDescription}</p>
+                  </div>
 
-              {/* Reasoning Effort (optional, only applies to reasoning-capable models) */}
-              <div className="space-y-2">
-                <Dropdown
-                  label={t('settings.llmConfiguration.reasoningEffortLabel')}
-                  value={reasoningEffort}
-                  onChange={(value) => setReasoningEffort(value as ReasoningEffort | 'auto')}
-                  options={[
-                    {
-                      id: 'auto',
-                      label: t('settings.llmConfiguration.reasoningEffortAuto'),
-                      description: t('settings.llmConfiguration.reasoningEffortAutoDesc'),
-                    },
-                    { id: 'minimal', label: t('settings.llmConfiguration.reasoningEffortMinimal') },
-                    { id: 'low', label: t('settings.llmConfiguration.reasoningEffortLow') },
-                    { id: 'medium', label: t('settings.llmConfiguration.reasoningEffortMedium') },
-                    { id: 'high', label: t('settings.llmConfiguration.reasoningEffortHigh') },
-                  ]}
-                />
-                <p className="text-xs text-steel font-mono">
-                  {t('settings.llmConfiguration.reasoningEffortDescription')}
-                </p>
-              </div>
+                  {/* Reasoning Effort (optional, only applies to reasoning-capable models) */}
+                  <div className="space-y-2">
+                    <Dropdown
+                      label={t('settings.llmConfiguration.reasoningEffortLabel')}
+                      value={reasoningEffort}
+                      onChange={(value) => setReasoningEffort(value as ReasoningEffort | 'auto')}
+                      options={[
+                        {
+                          id: 'auto',
+                          label: t('settings.llmConfiguration.reasoningEffortAuto'),
+                          description: t('settings.llmConfiguration.reasoningEffortAutoDesc'),
+                        },
+                        {
+                          id: 'minimal',
+                          label: t('settings.llmConfiguration.reasoningEffortMinimal'),
+                        },
+                        { id: 'low', label: t('settings.llmConfiguration.reasoningEffortLow') },
+                        {
+                          id: 'medium',
+                          label: t('settings.llmConfiguration.reasoningEffortMedium'),
+                        },
+                        { id: 'high', label: t('settings.llmConfiguration.reasoningEffortHigh') },
+                      ]}
+                    />
+                    <p className="text-xs text-steel font-mono">
+                      {t('settings.llmConfiguration.reasoningEffortDescription')}
+                    </p>
+                  </div>
+                </>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-4">

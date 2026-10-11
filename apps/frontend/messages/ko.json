@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "선택됨: {provider}",
+      "claudeCliNote": "이 컴퓨터에 설치되어 로그인된 Claude Code CLI를 실행하므로 여기에서는 API 키가 필요하지 않습니다. Claude Code는 계정을 통해 프롬프트를 Anthropic으로 전송하며 자체 기본 모델을 사용합니다.",
       "modelLabel": "모델",
       "defaultModel": "기본값: {model}",
       "apiKeyLabel": "API 키",

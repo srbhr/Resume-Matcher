@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "選択中: {provider}",
+      "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はあなたのアカウント経由でプロンプトを Anthropic に送信し、独自の既定モデルを使用します。",
       "modelLabel": "モデル",
       "defaultModel": "既定: {model}",
       "apiKeyLabel": "API キー",

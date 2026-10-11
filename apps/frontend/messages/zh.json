@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "已选择：{provider}",
+      "claudeCliNote": "运行本机已安装并已登录的 Claude Code CLI，因此这里无需 API 密钥。Claude Code 仍会通过你的账户将提示词发送给 Anthropic，并使用其自带的默认模型。",
       "modelLabel": "模型",
       "defaultModel": "默认：{model}",
       "apiKeyLabel": "API 密钥",

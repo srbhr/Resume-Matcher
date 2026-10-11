@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECTED: {provider}",
+      "claudeCliNote": "Runs the Claude Code CLI installed and signed in on this machine, so no API key is needed here. Claude Code still sends your prompts to Anthropic through your account, and it uses its own default model.",
       "modelLabel": "Model",
       "defaultModel": "DEFAULT: {model}",
       "apiKeyLabel": "API Key",
