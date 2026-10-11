@@ -20,6 +20,8 @@ MAX_COMFORTABLE_PAGES = 2
 # Bounded local part keeps search linear on long "a.a.a..." runs (see normalize._TOKEN).
 EMAIL_RE = re.compile(r"[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+")
 PHONE_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
+# Digit groups of a year range ("2019 - 2022") or numeric date ("03.2019").
+_DATE_PART = re.compile(r"(?:19|20)\d{2}|0?[1-9]|1[0-2]")
 YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 GARBLED_RE = re.compile(r"\(cid:\d+\)|�|[-]")
 
@@ -226,9 +228,20 @@ def page_count(doc: ExtractedDocument, ctx: Context) -> Check | None:
     )
 
 
+def has_phone(text: str) -> bool:
+    """A phone-shaped digit run: at least 7 digits that are not all date parts."""
+    for match in PHONE_RE.finditer(text):
+        groups = re.findall(r"\d+", match.group())
+        if sum(len(g) for g in groups) >= 7 and not all(
+            _DATE_PART.fullmatch(g) for g in groups
+        ):
+            return True
+    return False
+
+
 def contact_info(doc: ExtractedDocument, ctx: Context) -> Check:
     email = EMAIL_RE.search(doc.text)
-    phone = PHONE_RE.search(doc.text)
+    phone = has_phone(doc.text)
     position = round(email.start() / max(1, len(doc.text)), 2) if email else None
     if not email:
         status: Status = "fail"
@@ -242,7 +255,7 @@ def contact_info(doc: ExtractedDocument, ctx: Context) -> Check:
         "high",
         status,
         email=bool(email),
-        phone=bool(phone),
+        phone=phone,
         email_position=position,
     )
 

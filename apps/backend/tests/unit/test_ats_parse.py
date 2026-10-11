@@ -230,6 +230,22 @@ def test_contact_info_found_late_is_a_warning() -> None:
 
 
 @pytest.mark.parametrize(
+    ("text", "phone"),
+    [
+        ("Acme 2019 - 2022", False),
+        ("Acme 03.2019 - 06.2022", False),
+        ("2019 - 2022\n+44 20 7946 0958", True),
+        ("(415) 555-0142", True),
+    ],
+)
+def test_contact_info_needs_a_phone_shaped_number(text: str, phone: bool) -> None:
+    checks = run_checks(_text_doc(f"Jane jane@x.com\n{text}\n" + "word " * 50), {})
+    check = next(c for c in checks if c.id == "contact_info")
+    assert check.params["phone"] is phone
+    assert check.status == ("pass" if phone else "warn")
+
+
+@pytest.mark.parametrize(
     ("text", "locale", "status"),
     [
         ("Experiencia\nEducación\nHabilidades", "es", "pass"),
