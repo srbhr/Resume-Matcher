@@ -12,7 +12,8 @@ export type TemplateType =
   | 'modern-two-column'
   | 'latex'
   | 'clean'
-  | 'vivid';
+  | 'vivid'
+  | 'vivid-single';
 
 const TWO_COLUMN_TEMPLATES: ReadonlySet<TemplateType> = new Set([
   'swiss-two-column',
@@ -288,6 +289,11 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     id: 'vivid',
     name: 'Vivid',
     description: 'Colorful two-column layout with accent headers and arrow bullets',
+  },
+  {
+    id: 'vivid-single',
+    name: 'Vivid Single Column',
+    description: 'Colorful single-column layout with accent headers and arrow bullets',
   },
 ];
 

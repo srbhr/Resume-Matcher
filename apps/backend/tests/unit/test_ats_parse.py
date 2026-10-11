@@ -304,6 +304,27 @@ async def test_small_caps_glyphs_are_flagged_and_not_matched_elsewhere() -> None
     assert _status(report.checks, "section_headings") == "pass"
 
 
+async def test_vivid_single_render_is_fully_parseable_and_in_order() -> None:
+    # A real Chromium render of john_doe() with the vivid-single template. Small caps
+    # and an opacity tint would put private-use glyphs or an unread "image" in the
+    # text layer; the single column must not be flagged as columns either.
+    report = await parse_check_bytes(
+        fixture("vivid-single"),
+        "v.pdf",
+        source="render",
+        resume_data=john_doe(),
+        template="vivid-single",
+    )
+    assert report.overall_score == 100
+    for check_id in ("garbled_glyphs", "images", "multi_column", "section_headings"):
+        assert _status(report.checks, check_id) == "pass", check_id
+    multi = next(c for c in report.checks if c.id == "multi_column")
+    assert multi.params["expected_by_template"] is False
+    assert report.roundtrip.content_recall == 1.0
+    assert report.roundtrip.order_fidelity == 1.0
+    assert "John Doe" in report.extracted_text_preview
+
+
 async def test_roundtrip_uses_the_template_contact_order() -> None:
     # The clean template renders location, phone, then email.
     report = await parse_check_bytes(
@@ -353,6 +374,7 @@ def test_roundtrip_links_follow_template_display_and_order() -> None:
         "clean": ["location", "phone", "email", "linkedin", "github", "website"],
         "latex": ["location", "phone", "email", "linkedin", "github", "website"],
         "vivid": ["website", "linkedin", "github", "email", "phone", "location"],
+        "vivid-single": ["website", "linkedin", "github", "email", "phone", "location"],
     }
     for template, order in expected.items():
         fields = expected_fields(data, template)[0][2:8]
@@ -380,6 +402,8 @@ TEMPLATE_ENTRY_TEXT = {
     "Trinity College\nBSc Physics\n2016",
     "vivid": "Acme Corp | Staff Engineer\n2020 - 2023 | Dublin\n"
     "Trinity College\nBSc Physics\n2016",
+    "vivid-single": "Acme Corp | STAFF ENGINEER\n2020 - 2023 | Dublin\n"
+    "Trinity College | BSC PHYSICS\n2016",
     "swiss-two-column": "Staff Engineer\nAcme Corp • Dublin\n2020 - 2023\n"
     "Trinity College | 2016\nBSc Physics",
 }

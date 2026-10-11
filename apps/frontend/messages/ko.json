@@ -431,6 +431,10 @@
         "vivid": {
           "name": "비비드",
           "description": "강조 헤더와 화살표 불릿이 있는 화려한 2단 레이아웃"
+        },
+        "vividSingle": {
+          "name": "비비드 단일 열",
+          "description": "강조 헤더와 화살표 불릿이 있는 화려한 단일 열 레이아웃"
         }
       },
       "accentColor": "강조 색상",

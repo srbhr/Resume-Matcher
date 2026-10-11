@@ -66,7 +66,7 @@ describe('ATSScoreCard', () => {
     }
   );
 
-  it.each(['swiss-single', 'modern', 'latex', 'clean'] as const)(
+  it.each(['swiss-single', 'modern', 'latex', 'clean', 'vivid-single'] as const)(
     'shows no layout warning for the single-column %s template',
     (template) => {
       render(<ATSScoreCard atsScore={atsScore} template={template} />);

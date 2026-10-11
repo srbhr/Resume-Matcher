@@ -3,6 +3,9 @@ import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'luci
 import type {
   ResumeData,
   SectionMeta,
+  PersonalInfo,
+  Experience,
+  Project,
   ResumeSectionHeadings,
   ResumeFallbackLabels,
 } from '@/components/dashboard/resume-component';
@@ -18,6 +21,226 @@ interface ResumeVividProps {
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
 }
+
+/** Drop empty and non-string entries from a string list. */
+export const cleanItems = (items?: string[]): string[] =>
+  (items ?? []).filter((item): item is string => typeof item === 'string' && item.trim() !== '');
+
+/** Section headings with the English fallbacks used when none are passed in. */
+export const getVividHeadings = (
+  sectionHeadings?: Partial<ResumeSectionHeadings>
+): ResumeSectionHeadings => ({
+  summary: sectionHeadings?.summary ?? 'Summary',
+  experience: sectionHeadings?.experience ?? 'Experience',
+  education: sectionHeadings?.education ?? 'Education',
+  projects: sectionHeadings?.projects ?? 'Projects',
+  certifications: sectionHeadings?.certifications ?? 'Training & Certifications',
+  skills: sectionHeadings?.skills ?? 'Skills',
+  languages: sectionHeadings?.languages ?? 'Languages',
+  awards: sectionHeadings?.awards ?? 'Awards',
+  links: sectionHeadings?.links ?? 'Links',
+});
+
+const contactIcons: Record<string, React.ReactNode> = {
+  Email: <Mail size={11} />,
+  Phone: <Phone size={11} />,
+  Location: <MapPin size={11} />,
+  Website: <Globe size={11} />,
+  LinkedIn: <Linkedin size={11} />,
+  GitHub: <Github size={11} />,
+};
+
+export const renderContactDetail = (
+  showContactIcons: boolean,
+  label: string,
+  value?: string,
+  hrefPrefix: string = ''
+) => {
+  if (!value) return null;
+
+  let finalHrefPrefix = hrefPrefix;
+  if (
+    ['Website', 'LinkedIn', 'GitHub'].includes(label) &&
+    !value.startsWith('http') &&
+    !value.startsWith('//')
+  ) {
+    finalHrefPrefix = 'https://';
+  }
+
+  const href = finalHrefPrefix + value;
+  const isLink =
+    finalHrefPrefix.startsWith('http') ||
+    finalHrefPrefix.startsWith('mailto:') ||
+    finalHrefPrefix.startsWith('tel:');
+
+  let displayText = value;
+  if (isLink && (label === 'LinkedIn' || label === 'GitHub' || label === 'Website')) {
+    displayText = value.replace(/^https?:\/\//, '').replace(/^www\./, '');
+  }
+
+  return (
+    <span className={styles.contactChip}>
+      {showContactIcons && <span className={styles.iconCircle}>{contactIcons[label]}</span>}
+      {isLink ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${baseStyles['resume-link']} hover:underline`}
+        >
+          {displayText}
+        </a>
+      ) : (
+        <span>{displayText}</span>
+      )}
+    </span>
+  );
+};
+
+export const renderArrowBullets = (
+  items?: string[],
+  textClass: string = baseStyles['resume-text-xs'],
+  itemStyles?: ('bullet' | 'plain')[]
+) => (
+  <DescriptionList
+    items={items}
+    styles={itemStyles}
+    textClassName={textClass}
+    marker="➜"
+    markerClassName={`mr-1.5 ${styles.arrow}`}
+  />
+);
+
+/**
+ * Header: two-tone accent name, monospace title, and the contact row.
+ * Two-tone name: bold accent first token, lighter accent for the rest.
+ */
+export const VividHeader: React.FC<{
+  personalInfo?: PersonalInfo;
+  showContactIcons: boolean;
+  nameFallback?: string;
+  nameRestClassName?: string;
+}> = ({
+  personalInfo,
+  showContactIcons,
+  nameFallback = 'Your Name',
+  nameRestClassName = styles.nameRest,
+}) => {
+  const fullName = personalInfo?.name || nameFallback;
+  const firstSpace = fullName.indexOf(' ');
+  const nameFirst = firstSpace === -1 ? fullName : fullName.slice(0, firstSpace);
+  const nameRest = firstSpace === -1 ? '' : fullName.slice(firstSpace + 1);
+
+  return (
+    <div className={baseStyles['resume-header']}>
+      <h1 className={baseStyles['resume-name']}>
+        <span className={styles.nameFirst}>{nameFirst}</span>
+        {nameRest && <span className={nameRestClassName}> {nameRest}</span>}
+      </h1>
+      {personalInfo?.title && <div className={styles.titleLine}>{personalInfo.title}</div>}
+      {personalInfo && (
+        <div className={`flex flex-wrap gap-x-4 gap-y-1 mt-2 ${styles.contactRow}`}>
+          {renderContactDetail(showContactIcons, 'Website', personalInfo.website)}
+          {renderContactDetail(showContactIcons, 'LinkedIn', personalInfo.linkedin)}
+          {renderContactDetail(showContactIcons, 'GitHub', personalInfo.github)}
+          {renderContactDetail(showContactIcons, 'Email', personalInfo.email, 'mailto:')}
+          {renderContactDetail(showContactIcons, 'Phone', personalInfo.phone, 'tel:')}
+          {renderContactDetail(showContactIcons, 'Location', personalInfo.location)}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** One experience entry. `roleClassName` lets a layout swap the role's small caps. */
+export const VividExperienceItem: React.FC<{ exp: Experience; roleClassName?: string }> = ({
+  exp,
+  roleClassName = styles.entryRole,
+}) => (
+  <div className={baseStyles['resume-item']}>
+    <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
+      <span>
+        <span className={styles.entryCompany}>{exp.company}</span>
+        {exp.title && (
+          <>
+            <span className={styles.entrySep}>|</span>
+            <span className={roleClassName}>{exp.title}</span>
+          </>
+        )}
+      </span>
+    </div>
+    <div className={`${baseStyles['resume-row-tight']} ${styles.entryMeta}`}>
+      {[formatDateRange(exp.years), exp.location].filter(Boolean).join(' | ')}
+    </div>
+    {renderArrowBullets(exp.description, baseStyles['resume-text-xs'], exp.descriptionStyles)}
+  </div>
+);
+
+/** One project entry. `roleClassName` lets a layout swap the role's small caps. */
+export const VividProjectItem: React.FC<{ project: Project; roleClassName?: string }> = ({
+  project,
+  roleClassName = styles.entryRole,
+}) => (
+  <div className={baseStyles['resume-item']}>
+    <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
+      <span className="flex items-baseline gap-1.5 min-w-0">
+        <span className={styles.entryCompany}>{project.name}</span>
+        {project.role && (
+          <>
+            <span className={styles.entrySep}>|</span>
+            <span className={roleClassName}>{project.role}</span>
+          </>
+        )}
+        {(project.github || project.website) && (
+          <span className="flex gap-1">
+            {project.github && (
+              <a
+                href={
+                  project.github.startsWith('http') ? project.github : `https://${project.github}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className={baseStyles['resume-link-pill']}
+              >
+                <Github size={9} />
+                {project.github
+                  .replace(/^https?:\/\//, '')
+                  .replace(/^www\./, '')
+                  .replace(/\/$/, '')}
+              </a>
+            )}
+            {project.website && (
+              <a
+                href={
+                  project.website.startsWith('http')
+                    ? project.website
+                    : `https://${project.website}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className={baseStyles['resume-link-pill']}
+              >
+                <ExternalLink size={9} />
+                {project.website
+                  .replace(/^https?:\/\//, '')
+                  .replace(/^www\./, '')
+                  .replace(/\/$/, '')}
+              </a>
+            )}
+          </span>
+        )}
+      </span>
+      {project.years && (
+        <span className={`${styles.entryMeta} ml-2`}>{formatDateRange(project.years)}</span>
+      )}
+    </div>
+    {renderArrowBullets(
+      project.description,
+      baseStyles['resume-text-xs'],
+      project.descriptionStyles
+    )}
+  </div>
+);
 
 /**
  * Vivid Resume Template
@@ -38,30 +261,15 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
-  const clean = (items?: string[]) =>
-    (items ?? []).filter((item): item is string => typeof item === 'string' && item.trim() !== '');
-
-  const technicalSkills = clean(additional?.technicalSkills);
-  const languages = clean(additional?.languages);
-  const certificationsTraining = clean(additional?.certificationsTraining);
-  const awards = clean(additional?.awards);
+  const technicalSkills = cleanItems(additional?.technicalSkills);
+  const languages = cleanItems(additional?.languages);
+  const certificationsTraining = cleanItems(additional?.certificationsTraining);
+  const awards = cleanItems(additional?.awards);
 
   const sortedSections = getSortedSections(data);
   const allSections = getSectionMeta(data);
 
-  const headingFallbacks: ResumeSectionHeadings = {
-    summary: sectionHeadings?.summary ?? 'Summary',
-    experience: sectionHeadings?.experience ?? 'Experience',
-    education: sectionHeadings?.education ?? 'Education',
-    projects: sectionHeadings?.projects ?? 'Projects',
-    certifications: sectionHeadings?.certifications ?? 'Training & Certifications',
-    skills: sectionHeadings?.skills ?? 'Skills',
-    languages: sectionHeadings?.languages ?? 'Languages',
-    awards: sectionHeadings?.awards ?? 'Awards',
-    links: sectionHeadings?.links ?? 'Links',
-  };
-
-  const nameFallback = fallbackLabels?.name ?? 'Your Name';
+  const headingFallbacks = getVividHeadings(sectionHeadings);
 
   const getSectionDisplayName = (sectionKey: string, fallback: string): string => {
     const section = sortedSections.find((s) => s.key === sectionKey);
@@ -75,97 +283,13 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 
   const customSections = sortedSections.filter((s) => !s.isDefault);
 
-  // Two-tone name: bold accent first token, lighter accent for the rest.
-  const fullName = personalInfo?.name || nameFallback;
-  const firstSpace = fullName.indexOf(' ');
-  const nameFirst = firstSpace === -1 ? fullName : fullName.slice(0, firstSpace);
-  const nameRest = firstSpace === -1 ? '' : fullName.slice(firstSpace + 1);
-
-  const contactIcons: Record<string, React.ReactNode> = {
-    Email: <Mail size={11} />,
-    Phone: <Phone size={11} />,
-    Location: <MapPin size={11} />,
-    Website: <Globe size={11} />,
-    LinkedIn: <Linkedin size={11} />,
-    GitHub: <Github size={11} />,
-  };
-
-  const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
-    if (!value) return null;
-
-    let finalHrefPrefix = hrefPrefix;
-    if (
-      ['Website', 'LinkedIn', 'GitHub'].includes(label) &&
-      !value.startsWith('http') &&
-      !value.startsWith('//')
-    ) {
-      finalHrefPrefix = 'https://';
-    }
-
-    const href = finalHrefPrefix + value;
-    const isLink =
-      finalHrefPrefix.startsWith('http') ||
-      finalHrefPrefix.startsWith('mailto:') ||
-      finalHrefPrefix.startsWith('tel:');
-
-    let displayText = value;
-    if (isLink && (label === 'LinkedIn' || label === 'GitHub' || label === 'Website')) {
-      displayText = value.replace(/^https?:\/\//, '').replace(/^www\./, '');
-    }
-
-    return (
-      <span className={styles.contactChip}>
-        {showContactIcons && <span className={styles.iconCircle}>{contactIcons[label]}</span>}
-        {isLink ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${baseStyles['resume-link']} hover:underline`}
-          >
-            {displayText}
-          </a>
-        ) : (
-          <span>{displayText}</span>
-        )}
-      </span>
-    );
-  };
-
-  const renderArrowBullets = (
-    items?: string[],
-    textClass: string = baseStyles['resume-text-xs'],
-    itemStyles?: ('bullet' | 'plain')[]
-  ) => (
-    <DescriptionList
-      items={items}
-      styles={itemStyles}
-      textClassName={textClass}
-      marker="➜"
-      markerClassName={`mr-1.5 ${styles.arrow}`}
-    />
-  );
-
   return (
     <>
-      {/* Header */}
-      <div className={baseStyles['resume-header']}>
-        <h1 className={baseStyles['resume-name']}>
-          <span className={styles.nameFirst}>{nameFirst}</span>
-          {nameRest && <span className={styles.nameRest}> {nameRest}</span>}
-        </h1>
-        {personalInfo?.title && <div className={styles.titleLine}>{personalInfo.title}</div>}
-        {personalInfo && (
-          <div className={`flex flex-wrap gap-x-4 gap-y-1 mt-2 ${styles.contactRow}`}>
-            {renderContactDetail('Website', personalInfo.website)}
-            {renderContactDetail('LinkedIn', personalInfo.linkedin)}
-            {renderContactDetail('GitHub', personalInfo.github)}
-            {renderContactDetail('Email', personalInfo.email, 'mailto:')}
-            {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
-            {renderContactDetail('Location', personalInfo.location)}
-          </div>
-        )}
-      </div>
+      <VividHeader
+        personalInfo={personalInfo}
+        showContactIcons={showContactIcons}
+        nameFallback={fallbackLabels?.name}
+      />
 
       {/* Two-Column Grid */}
       <div className={styles.grid}>
@@ -187,29 +311,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
               </h3>
               <div className={baseStyles['resume-items']}>
                 {workExperience.map((exp) => (
-                  <div key={exp.id} className={baseStyles['resume-item']}>
-                    <div
-                      className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-                    >
-                      <span>
-                        <span className={styles.entryCompany}>{exp.company}</span>
-                        {exp.title && (
-                          <>
-                            <span className={styles.entrySep}>|</span>
-                            <span className={styles.entryRole}>{exp.title}</span>
-                          </>
-                        )}
-                      </span>
-                    </div>
-                    <div className={`${baseStyles['resume-row-tight']} ${styles.entryMeta}`}>
-                      {[formatDateRange(exp.years), exp.location].filter(Boolean).join(' | ')}
-                    </div>
-                    {renderArrowBullets(
-                      exp.description,
-                      baseStyles['resume-text-xs'],
-                      exp.descriptionStyles
-                    )}
-                  </div>
+                  <VividExperienceItem key={exp.id} exp={exp} />
                 ))}
               </div>
             </div>
@@ -224,71 +326,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
                 </h3>
                 <div className={baseStyles['resume-items']}>
                   {personalProjects.map((project) => (
-                    <div key={project.id} className={baseStyles['resume-item']}>
-                      <div
-                        className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-                      >
-                        <span className="flex items-baseline gap-1.5 min-w-0">
-                          <span className={styles.entryCompany}>{project.name}</span>
-                          {project.role && (
-                            <>
-                              <span className={styles.entrySep}>|</span>
-                              <span className={styles.entryRole}>{project.role}</span>
-                            </>
-                          )}
-                          {(project.github || project.website) && (
-                            <span className="flex gap-1">
-                              {project.github && (
-                                <a
-                                  href={
-                                    project.github.startsWith('http')
-                                      ? project.github
-                                      : `https://${project.github}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={baseStyles['resume-link-pill']}
-                                >
-                                  <Github size={9} />
-                                  {project.github
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .replace(/\/$/, '')}
-                                </a>
-                              )}
-                              {project.website && (
-                                <a
-                                  href={
-                                    project.website.startsWith('http')
-                                      ? project.website
-                                      : `https://${project.website}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={baseStyles['resume-link-pill']}
-                                >
-                                  <ExternalLink size={9} />
-                                  {project.website
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .replace(/\/$/, '')}
-                                </a>
-                              )}
-                            </span>
-                          )}
-                        </span>
-                        {project.years && (
-                          <span className={`${styles.entryMeta} ml-2`}>
-                            {formatDateRange(project.years)}
-                          </span>
-                        )}
-                      </div>
-                      {renderArrowBullets(
-                        project.description,
-                        baseStyles['resume-text-xs'],
-                        project.descriptionStyles
-                      )}
-                    </div>
+                    <VividProjectItem key={project.id} project={project} />
                   ))}
                 </div>
               </div>
@@ -302,12 +340,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
           )}
 
           {customSections.map((section) => (
-            <DynamicResumeSectionVivid
-              key={section.id}
-              sectionMeta={section}
-              resumeData={data}
-              renderArrowBullets={renderArrowBullets}
-            />
+            <DynamicResumeSectionVivid key={section.id} sectionMeta={section} resumeData={data} />
           ))}
         </div>
 
@@ -378,13 +411,19 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
                   className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}
                 >
                   {personalInfo.linkedin && (
-                    <div>{renderContactDetail('LinkedIn', personalInfo.linkedin)}</div>
+                    <div>
+                      {renderContactDetail(showContactIcons, 'LinkedIn', personalInfo.linkedin)}
+                    </div>
                   )}
                   {personalInfo.github && (
-                    <div>{renderContactDetail('GitHub', personalInfo.github)}</div>
+                    <div>
+                      {renderContactDetail(showContactIcons, 'GitHub', personalInfo.github)}
+                    </div>
                   )}
                   {personalInfo.website && (
-                    <div>{renderContactDetail('Website', personalInfo.website)}</div>
+                    <div>
+                      {renderContactDetail(showContactIcons, 'Website', personalInfo.website)}
+                    </div>
                   )}
                 </div>
               </div>
@@ -400,15 +439,17 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
  * Uses the accent small-caps section title and accent arrow bullets so custom
  * sections match the rest of the template (rather than the plain shared styling).
  */
-const DynamicResumeSectionVivid: React.FC<{
+export const DynamicResumeSectionVivid: React.FC<{
   sectionMeta: SectionMeta;
   resumeData: ResumeData;
-  renderArrowBullets: (
-    items?: string[],
-    textClass?: string,
-    itemStyles?: ('bullet' | 'plain')[]
-  ) => React.ReactNode;
-}> = ({ sectionMeta, resumeData, renderArrowBullets }) => {
+  titleClassName?: string;
+  roleClassName?: string;
+}> = ({
+  sectionMeta,
+  resumeData,
+  titleClassName = styles.sectionTitle,
+  roleClassName = styles.entryRole,
+}) => {
   const customSection = resumeData.customSections?.[sectionMeta.key];
   if (!customSection) return null;
 
@@ -429,7 +470,7 @@ const DynamicResumeSectionVivid: React.FC<{
 
   return (
     <div className={baseStyles['resume-section']}>
-      <h3 className={styles.sectionTitle}>{sectionMeta.displayName}</h3>
+      <h3 className={titleClassName}>{sectionMeta.displayName}</h3>
       {sectionMeta.sectionType === 'text' && customSection.text?.trim() && (
         <p className={`text-justify ${baseStyles['resume-text']}`}>{customSection.text}</p>
       )}
@@ -445,7 +486,7 @@ const DynamicResumeSectionVivid: React.FC<{
                   {item.subtitle && (
                     <>
                       <span className={styles.entrySep}>|</span>
-                      <span className={styles.entryRole}>{item.subtitle}</span>
+                      <span className={roleClassName}>{item.subtitle}</span>
                     </>
                   )}
                 </span>

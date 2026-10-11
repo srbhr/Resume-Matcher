@@ -453,6 +453,10 @@
         "vivid": {
           "name": "鲜明",
           "description": "彩色双栏布局，强调色标题与箭头项目符号"
+        },
+        "vividSingle": {
+          "name": "鲜明单栏",
+          "description": "彩色单栏布局，强调色标题与箭头项目符号"
         }
       },
       "accentColor": "强调色",

@@ -10,6 +10,7 @@ import { ResumeModernTwoColumn } from '@/components/resume/resume-modern-two-col
 import { ResumeSingleColumn } from '@/components/resume/resume-single-column';
 import { ResumeTwoColumn } from '@/components/resume/resume-two-column';
 import { ResumeVivid } from '@/components/resume/resume-vivid';
+import { ResumeVividSingle } from '@/components/resume/resume-vivid-single';
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (k: string) => k }) }));
 
@@ -48,6 +49,7 @@ const TEMPLATES: [string, React.ComponentType<{ data: ResumeData }>][] = [
   ['ResumeSingleColumn', ResumeSingleColumn],
   ['ResumeTwoColumn', ResumeTwoColumn],
   ['ResumeVivid', ResumeVivid],
+  ['ResumeVividSingle', ResumeVividSingle],
 ];
 
 const rowFor = (container: HTMLElement, text: string): HTMLElement => {

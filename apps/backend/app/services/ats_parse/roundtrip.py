@@ -20,6 +20,7 @@ CONTACT_ORDER_BY_TEMPLATE: dict[str, tuple[str, ...]] = {
     "clean": ("location", "phone", "email", "linkedin", "github", "website"),
     "latex": ("location", "phone", "email", "linkedin", "github", "website"),
     "vivid": ("website", "linkedin", "github", "email", "phone", "location"),
+    "vivid-single": ("website", "linkedin", "github", "email", "phone", "location"),
 }
 LINK_FIELDS = frozenset({"website", "linkedin", "github"})
 
@@ -43,6 +44,7 @@ ENTRY_ORDER_BY_TEMPLATE: dict[str, dict[str, tuple[str, ...]]] = {
     "clean": {"workExperience": ("company", "title", "location", "years")},
     "latex": {"workExperience": ("company", "title", "years", "location")},
     "vivid": {"workExperience": ("company", "title", "years", "location")},
+    "vivid-single": {"workExperience": ("company", "title", "years", "location")},
 }
 
 

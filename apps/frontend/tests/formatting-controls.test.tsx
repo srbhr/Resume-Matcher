@@ -42,6 +42,33 @@ describe('FormattingControls', () => {
     );
   });
 
+  it('offers the accent colours for both Vivid layouts but not for the plain ones', () => {
+    for (const template of ['vivid', 'vivid-single'] as const) {
+      const { unmount } = render(
+        <FormattingControls
+          settings={{ ...DEFAULT_TEMPLATE_SETTINGS, template }}
+          onChange={vi.fn()}
+        />
+      );
+      expect(
+        screen.getByRole('radiogroup', { name: 'builder.formatting.accentColor' })
+      ).toBeInTheDocument();
+      unmount();
+    }
+    renderControls();
+    expect(
+      screen.queryByRole('radiogroup', { name: 'builder.formatting.accentColor' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('picks the Vivid single-column template from the tiles', () => {
+    const onChange = renderControls();
+    fireEvent.click(
+      screen.getByRole('radio', { name: 'builder.formatting.templates.vividSingle.name' })
+    );
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ template: 'vivid-single' }));
+  });
+
   it('sets spacing levels and page size through radio groups', () => {
     const onChange = renderControls();
     const sectionSpacing = screen.getByRole('radiogroup', {

@@ -453,6 +453,10 @@
         "vivid": {
           "name": "Vivid",
           "description": "Colorful two-column layout with accent headers and arrow bullets"
+        },
+        "vividSingle": {
+          "name": "Vivid Single Column",
+          "description": "Colorful single-column layout with accent headers and arrow bullets"
         }
       },
       "accentColor": "Accent Color",
