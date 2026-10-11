@@ -21,6 +21,14 @@ describe('Hero entrance', () => {
     for (const link of links) expect(link.className).not.toContain('hero-enter');
   });
 
+  it('links the Docs button to the docs section in a new tab', () => {
+    render(<Hero />);
+    const docs = screen.getByRole('link', { name: 'home.docs' });
+    expect(docs).toHaveAttribute('href', 'https://resumematcher.fyi/docs/');
+    expect(docs).toHaveAttribute('target', '_blank');
+    expect(docs).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
   it('sits on plain Canvas, ready for the background effect behind its frame', () => {
     const { container } = render(<Hero />);
     expect(container.firstChild).toHaveClass('relative', 'isolate', 'bg-canvas');

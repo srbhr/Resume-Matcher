@@ -31,7 +31,7 @@ export default function Hero() {
             GitHub
           </a>
           <a
-            href="https://resumematcher.fyi"
+            href="https://resumematcher.fyi/docs/"
             target="_blank"
             rel="noopener noreferrer"
             className={buttonClass({ variant: 'outline', size: 'lg' })}
