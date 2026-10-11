@@ -196,8 +196,9 @@ async def test_two_column_render_scrambles_reading_order() -> None:
 
 
 async def test_modern_deedy_render_is_single_column_and_extracts_cleanly() -> None:
-    # Real render of john_doe(): the small-caps roles and institutions extract as
-    # plain text (unlike clean's), the pipes are real text, and the read order is high.
+    # Real render of john_doe(): the roles and institutions are uppercase text, not
+    # font small caps (which reach the text layer as private-use glyphs, as in clean),
+    # the pipes are real text, and the read order is high.
     report = await parse_check_bytes(
         render("modern-deedy"),
         "d.pdf",

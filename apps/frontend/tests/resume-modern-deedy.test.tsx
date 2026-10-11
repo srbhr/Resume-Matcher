@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ResumeModernDeedy } from '@/components/resume/resume-modern-deedy';
@@ -208,5 +210,24 @@ describe('ResumeModernDeedy', () => {
     expect(text(container)).not.toContain('Fernway |');
     expect(text(container)).not.toContain('| Remote');
     expect(container.querySelectorAll('h3')).toHaveLength(1);
+  });
+});
+
+describe('modern-deedy.module.css', () => {
+  // Font small caps reach the PDF text layer as private-use glyphs ("Snior Softwar Enginr")
+  // and partially transparent text becomes a transparency group the text extractor skips,
+  // so an ATS would misread the role, the institution or the tech stack.
+  const css = readFileSync(
+    join(process.cwd(), 'components/resume/styles/modern-deedy.module.css'),
+    'utf8'
+  ).replace(/\/\*[\s\S]*?\*\//g, '');
+
+  it('fakes small caps with uppercase instead of font small caps', () => {
+    expect(css).not.toMatch(/small-caps|smcp|font-feature-settings|font-variant-caps/);
+    expect(css).toMatch(/\.smallCaps\s*\{[^}]*text-transform:\s*uppercase/);
+  });
+
+  it('uses solid colours only, never opacity', () => {
+    expect(css).not.toMatch(/opacity/);
   });
 });
