@@ -231,11 +231,7 @@
 /* Individual item within a section */
 .resume-item {
   margin-bottom: var(--item-gap);
-  /* Prevent items from splitting across pages/columns in PDF and print output */
-  break-inside: avoid;
-  page-break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  -moz-column-break-inside: avoid;
+  /* Page breaks: see [data-resume-item] in app/(default)/css/globals.css. */
 }
 
 .resume-item:last-child {
@@ -289,18 +285,6 @@
 }
 
 @media print {
-  /* Ensure the main resume container respects page boundaries */
-  .resume-body {
-    page-break-inside: avoid !important;
-    break-inside: avoid-page !important;
-  }
-
-  /* Avoid breaking individual resume items across pages */
-  .resume-item {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
   /* Prevent section titles from being separated from their content */
   .resume-section-title,
   .resume-section-title-sm {
