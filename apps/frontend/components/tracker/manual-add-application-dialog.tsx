@@ -93,6 +93,9 @@ export function ManualAddApplicationDialog({
     }
   };
 
+  // Only the empty-description error belongs to the field; the alert announces the rest.
+  const descriptionMissing = Boolean(error) && !jobDescription.trim();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg">
@@ -118,8 +121,8 @@ export function ManualAddApplicationDialog({
               onKeyDown={handleNotesKeyDown}
               placeholder={t('tracker.manualAdd.jobDescriptionPlaceholder')}
               rows={5}
-              aria-invalid={Boolean(error) && !jobDescription.trim()}
-              aria-describedby={error ? 'manual-add-error' : undefined}
+              aria-invalid={descriptionMissing}
+              aria-describedby={descriptionMissing ? 'manual-add-error' : undefined}
             />
           </div>
 
