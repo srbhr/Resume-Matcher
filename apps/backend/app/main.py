@@ -63,6 +63,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # non-clobbering), then strip them from config.json.
     from app.config import migrate_legacy_keys
 
+    migrate_legacy_keys()
+
     from app.services.queue_worker import queue_manager
 
     await queue_manager.start()
