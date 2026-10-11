@@ -409,7 +409,9 @@ export function ResumeUploadDialog({
 
           {uploadFeedback?.type === 'success' && (
             <Alert tone="success" className="mt-4">
-              <StatusIndicator tone="ready">{uploadFeedback.message}</StatusIndicator>
+              <StatusIndicator tone="ready" live={false}>
+                {uploadFeedback.message}
+              </StatusIndicator>
             </Alert>
           )}
         </DialogBody>

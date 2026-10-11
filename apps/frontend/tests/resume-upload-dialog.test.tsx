@@ -387,6 +387,22 @@ it.each([
   expect(await screen.findByText(message)).toBeVisible();
 });
 
+it('announces the upload confirmation through one live region, not one nested in another', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({ resume_id: 'resume-1', processing_status: 'ready', is_master: false }),
+      { status: 200, headers: { 'content-type': 'application/json' } }
+    )
+  );
+  render(<ControlledDialog onUploadComplete={vi.fn()} />);
+  chooseResume();
+  const region = (await screen.findByText('dashboard.uploadDialog.success')).closest(
+    '[role="status"]'
+  );
+  expect(region).toHaveClass('border-success');
+  expect(region?.parentElement?.closest('[role="status"]')).toBeNull();
+});
+
 it('confirms a non-default upload as the master when the dashboard will make it the default', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(
     new Response(

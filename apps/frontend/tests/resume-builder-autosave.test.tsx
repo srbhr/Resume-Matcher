@@ -266,6 +266,21 @@ describe('resume builder autosave', () => {
     expect(localStorage.getItem('resume_builder_draft')).not.toBeNull();
   });
 
+  it('announces the save status through one live region, not one nested in another', async () => {
+    fetchResume.mockResolvedValue({ processed_resume: REAL_RESUME, parent_id: null, title: 'r' });
+    updateResume.mockRejectedValue(new Error('offline'));
+    const ResumeBuilder = await importBuilder();
+    render(<ResumeBuilder />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+      screen.getByTestId('edit').click();
+    });
+
+    const region = screen.getByText('builder.autoSave.localDraft').closest('[role="status"]');
+    expect(region).not.toBeNull();
+    expect(region?.parentElement?.closest('[role="status"]')).toBeNull();
+  });
+
   it('reports unavailable browser backup and gives a truthful leave warning', async () => {
     fetchResume.mockResolvedValue({ processed_resume: REAL_RESUME, parent_id: null, title: 'r' });
     updateResume.mockRejectedValue(new Error('offline'));

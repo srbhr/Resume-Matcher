@@ -763,7 +763,9 @@ export default function SettingsPage() {
           {/* API Key Not Configured Warning */}
           {!statusLoading && systemStatus && !systemStatus.llm_configured && (
             <Alert tone="warning">
-              <StatusIndicator tone="warning">{t('settings.setupRequired.title')}</StatusIndicator>
+              <StatusIndicator tone="warning" live={false}>
+                {t('settings.setupRequired.title')}
+              </StatusIndicator>
               <p className="mt-2">{t('settings.setupRequired.description')}</p>
             </Alert>
           )}
@@ -1205,7 +1207,7 @@ export default function SettingsPage() {
               {healthCheck && (
                 <Alert tone={healthCheck.healthy ? 'success' : 'error'} className="break-words">
                   <div className="mb-2">
-                    <StatusIndicator tone={healthCheck.healthy ? 'ready' : 'error'}>
+                    <StatusIndicator tone={healthCheck.healthy ? 'ready' : 'error'} live={false}>
                       {healthCheck.healthy
                         ? t('settings.llmConfiguration.connectionSuccessful')
                         : t('settings.llmConfiguration.connectionFailed')}

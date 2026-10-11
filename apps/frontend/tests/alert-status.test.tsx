@@ -38,4 +38,25 @@ describe('StatusIndicator', () => {
     expect(label.previousElementSibling).toHaveClass('size-3', 'bg-success');
     expect(label.previousElementSibling).toHaveAttribute('aria-hidden', 'true');
   });
+
+  it('is a live region, so a label that changes is announced', () => {
+    const { rerender } = render(<StatusIndicator tone="neutral">Checking</StatusIndicator>);
+    const region = screen.getByRole('status');
+    expect(region).toHaveTextContent('Checking');
+    rerender(<StatusIndicator tone="ready">Connected</StatusIndicator>);
+    expect(screen.getByRole('status')).toBe(region);
+    expect(region).toHaveTextContent('Connected');
+  });
+
+  it('drops the live region with live={false}, inside a region that already announces', () => {
+    render(
+      <Alert tone="success">
+        <StatusIndicator tone="ready" live={false}>
+          Saved
+        </StatusIndicator>
+      </Alert>
+    );
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.getByText('Saved').closest('[role="status"]')).toBe(screen.getByRole('status'));
+  });
 });

@@ -1382,7 +1382,7 @@ const ResumeBuilderContent = () => {
             </p>
             <span role="status">
               {resumeSaveStatus && (
-                <StatusIndicator tone={resumeSaveStatus.tone}>
+                <StatusIndicator tone={resumeSaveStatus.tone} live={false}>
                   {resumeSaveStatus.label}
                 </StatusIndicator>
               )}

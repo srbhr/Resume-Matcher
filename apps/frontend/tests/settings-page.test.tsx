@@ -208,7 +208,9 @@ describe('settings page (Swiss sweep)', () => {
     expect(document.getElementById('apiBase')).toBeNull();
     expect(screen.queryByLabelText('settings.llmConfiguration.modelLabel')).toBeNull();
     expect(screen.queryByText('settings.llmConfiguration.reasoningEffortLabel')).toBeNull();
-    expect(screen.getByRole('status')).toHaveTextContent('settings.llmConfiguration.claudeCliNote');
+    expect(
+      screen.getByText('settings.llmConfiguration.claudeCliNote').closest('[role="status"]')
+    ).not.toBeNull();
 
     // Switching back restores the full form and drops the note.
     fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
@@ -295,6 +297,13 @@ describe('settings page (Swiss sweep)', () => {
     expect(await screen.findByText('settings.chatgpt.connected')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'common.save' })).toBeEnabled());
     expect(screen.queryByText('settings.chatgpt.connectToSave')).toBeNull();
+  });
+
+  it('announces the setup warning once: a status label inside an alert is not a second region', async () => {
+    await renderLoaded();
+    const label = screen.getByText('settings.setupRequired.title');
+    expect(label.closest('[role="alert"]')).not.toBeNull();
+    expect(label.closest('[role="status"]')).toBeNull();
   });
 
   it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {
@@ -434,7 +443,7 @@ describe('settings page (Swiss sweep)', () => {
         screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
       );
     });
-    await screen.findByRole('status');
+    await screen.findByText('settings.llmConfiguration.connectionSuccessful');
 
     const statBoxes = [
       'settings.statusCards.llm',
@@ -505,11 +514,11 @@ describe('settings page (Swiss sweep)', () => {
       );
     });
 
-    const result = await screen.findByRole('status');
-    expectStatusSquare(
-      within(result).getByText('settings.llmConfiguration.connectionSuccessful'),
-      'bg-success'
-    );
+    const label = await screen.findByText('settings.llmConfiguration.connectionSuccessful');
+    // The result Alert is the one live region; the label inside it is not a second.
+    const result = label.closest('[role="status"]') as HTMLElement;
+    expect(result).toHaveClass('border-success');
+    expectStatusSquare(label, 'bg-success');
     for (const text of ['ping prompt', 'pong output', 'thinking trace']) {
       const block = within(result).getByText(text);
       expect(block.tagName).toBe('PRE');
