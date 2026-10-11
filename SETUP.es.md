@@ -632,7 +632,6 @@ Resume-Matcher/
 │     ├─ lib/                  # Utilities and API client
 │     ├─ .env.sample           # Environment template
 │     └─ package.json          # Node.js dependencies
-├─ docs/                        # Additional documentation
 ├─ docker-compose.yml           # Docker configuration
 ├─ Dockerfile                   # Container build instructions
 └─ README.md                    # Project overview
