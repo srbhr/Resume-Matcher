@@ -278,6 +278,19 @@ def test_roundtrip_reports_missing_and_hidden() -> None:
     assert not any(name.startswith("education[") for name in statuses)
 
 
+def test_roundtrip_word_satisfies_one_field_only() -> None:
+    data = {
+        "personalInfo": {"name": "Jane Roe", "title": "Python Developer"},
+        "additional": {"technicalSkills": ["Python"]},
+    }
+    skill = "additional.technicalSkills"
+    omitted = compute_roundtrip(data, "Jane Roe\nPython Developer")
+    listed = compute_roundtrip(data, "Jane Roe\nPython Developer\nSkills\nPython")
+    assert {f.field: f.status for f in omitted.fields}[skill] == "missing"
+    assert {f.field: f.status for f in listed.fields}[skill] == "found"
+    assert listed.content_recall == 1.0
+
+
 def test_roundtrip_checks_rendered_locations() -> None:
     data = john_doe()
     data["workExperience"][0]["location"] = "Dublin, Ireland"

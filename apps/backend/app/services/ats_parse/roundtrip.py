@@ -1,6 +1,6 @@
 """Round trip: how much of the structured resume survives extraction, and in what order."""
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from typing import Any
 
 from app.schemas.models import ResumeData, normalize_resume_data
@@ -133,30 +133,89 @@ def _is_list_field(name: str) -> bool:
     return name.startswith("additional.") or name.endswith(".strings")
 
 
-def _take(wanted: list[Any], available: Counter[Any]) -> float:
-    """Share of ``wanted`` found in ``available``; matches are used up."""
-    hits = 0
-    for item in wanted:
-        if available[item] > 0:
-            available[item] -= 1
-            hits += 1
-    return hits / len(wanted)
+def _uses_words(name: str, field_tokens: list[str]) -> bool:
+    """Lists and one-word fields score word recall; phrases score adjacent pairs."""
+    return len(field_tokens) == 1 or _is_list_field(name)
 
 
-def _field_score(
-    name: str,
+def _claim_words(
     field_tokens: list[str],
-    unigrams: Counter[str],
-    bigrams: Counter[tuple[str, str]],
+    index: dict[str, list[int]],
+    owner: list[int | None],
+    field_id: int,
 ) -> float:
+    """Share of the words found at text positions no other field has claimed."""
+    hits = 0
+    for token in field_tokens:
+        pos = next((p for p in index.get(token, ()) if owner[p] is None), None)
+        if pos is not None:
+            owner[pos] = field_id
+            hits += 1
+    return hits / len(field_tokens)
+
+
+def _claim_pairs(
+    field_tokens: list[str],
+    doc_tokens: list[str],
+    pair_index: dict[tuple[str, str], list[int]],
+    owner: list[int | None],
+    field_id: int,
+) -> float:
+    """Share of adjacent pairs found; a field's own pairs may share a word.
+
+    A pair continues the previous pair's match when it can, so a phrase is
+    claimed where it appears whole rather than piecemeal across the text.
+    """
+    used: set[int] = set()
+
+    def free(p: int) -> bool:
+        return p not in used and {owner[p], owner[p + 1]} <= {None, field_id}
+
+    pairs = list(zip(field_tokens, field_tokens[1:]))
+    pos: int | None = None
+    for pair in pairs:
+        follow = -1 if pos is None else pos + 1
+        if (
+            0 <= follow < len(doc_tokens) - 1
+            and (doc_tokens[follow], doc_tokens[follow + 1]) == pair
+            and free(follow)
+        ):
+            pos = follow
+        else:
+            pos = next((p for p in pair_index.get(pair, ()) if free(p)), None)
+        if pos is not None:
+            used.add(pos)
+            owner[pos] = owner[pos + 1] = field_id
+    return len(used) / len(pairs)
+
+
+def _field_scores(
+    fields: list[tuple[str, list[str]]], doc_tokens: list[str]
+) -> list[float]:
     """Adjacent-pair recall, so interleaved columns score lower; lists use word recall.
 
-    Each occurrence in the text can satisfy one field only, so a phrase repeated
-    in the header cannot stand in for a body field that failed to extract.
+    Each word in the text can satisfy one field only, so a phrase repeated in
+    the header cannot stand in for a body field that failed to extract. Phrases
+    claim their words first: a title such as "Python Developer" cannot also make
+    an omitted "Python" skill look found.
     """
-    if len(field_tokens) == 1 or _is_list_field(name):
-        return _take(field_tokens, unigrams)
-    return _take(list(zip(field_tokens, field_tokens[1:])), bigrams)
+    index: dict[str, list[int]] = defaultdict(list)
+    pair_index: dict[tuple[str, str], list[int]] = defaultdict(list)
+    for i, token in enumerate(doc_tokens):
+        index[token].append(i)
+        if i + 1 < len(doc_tokens):
+            pair_index[(token, doc_tokens[i + 1])].append(i)
+    owner: list[int | None] = [None] * len(doc_tokens)
+    scores = [0.0] * len(fields)
+    for field_id, (name, field_tokens) in enumerate(fields):
+        if not _uses_words(name, field_tokens):
+            scores[field_id] = _claim_pairs(
+                field_tokens, doc_tokens, pair_index, owner, field_id
+            )
+    for field_id, (name, field_tokens) in enumerate(fields):
+        if _uses_words(name, field_tokens):
+            scores[field_id] = _claim_words(field_tokens, index, owner, field_id)
+    return scores
 
 
 def _position(
@@ -209,19 +268,17 @@ def compute_roundtrip(
     truncated = len(fields) > MAX_FIELDS
     fields = fields[:MAX_FIELDS]
     doc_tokens = tokens(extracted_text)
-    unigrams = Counter(doc_tokens)
-    bigrams = Counter(zip(doc_tokens, doc_tokens[1:]))
     index: dict[str, list[int]] = defaultdict(list)
     for i, token in enumerate(doc_tokens):
         index[token].append(i)
+    tokenized = [(name, tokens(text)) for name, text in fields]
+    scores = _field_scores(tokenized, doc_tokens)
 
     results: list[RoundTripField] = []
     positions: list[int] = []
     weighted = total = 0.0
     last = -1
-    for name, text in fields:
-        field_tokens = tokens(text)
-        value = _field_score(name, field_tokens, unigrams, bigrams)
+    for (name, field_tokens), value in zip(tokenized, scores):
         status: FieldStatus = (
             "found"
             if value >= FOUND_THRESHOLD
