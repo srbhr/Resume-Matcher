@@ -143,7 +143,7 @@ Abre **<http://localhost:3000>** en el navegador.
 
 > **Exportar PDF:** Resume Matcher genera los PDF con Chromium headless. Si el navegador de Playwright no está instalado, el backend recurre a Microsoft Edge o Google Chrome si están instalados (Edge viene con Windows 11). También puedes instalar el Chromium de Playwright desde `apps\backend` con `uv run playwright install chromium`.
 
-> **¿Prefieres Docker?** Instala [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/) y sigue [Despliegue con Docker](#docker-deployment). Para definir variables como `PORT` en PowerShell, usa `$env:PORT="4000"; docker compose up -d`. Para la [configuración opcional de PostgreSQL](#optional-postgresql), ejecuta `$env:POSTGRES_PASSWORD="change-me"; docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; fuera de Docker, define `DATABASE_URL` en `apps\backend\.env`.
+> **¿Prefieres Docker?** Instala [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/) y sigue [Despliegue con Docker](#docker-deployment). Para definir variables como `PORT` en PowerShell, usa `$env:PORT="4000"; docker compose up -d`. Para la [configuración opcional de PostgreSQL](#optional-postgresql), ejecuta `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; fuera de Docker, define `DATABASE_URL` en `apps\backend\.env`.
 
 ---
 
@@ -378,19 +378,19 @@ SQLite es la opción por defecto y no requiere configuración. Para copias de se
 Para iniciarlo con Docker Compose:
 
 ```bash
-POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-`POSTGRES_PASSWORD` se copia tal cual en `DATABASE_URL`, así que usa una contraseña apta para URL (letras, dígitos, `-._~`).
+`POSTGRES_PASSWORD` se copia tal cual en `DATABASE_URL`, así que usa una contraseña apta para URL (letras, dígitos, `-._~`); `openssl rand -hex 32` genera una. No uses un valor fácil de adivinar. Conserva la contraseña: PostgreSQL la guarda en el volumen `postgres-data` en el primer arranque, y todos los comandos `docker compose` posteriores necesitan el mismo valor (expórtala de nuevo o ponla como `POSTGRES_PASSWORD=...` en un archivo `.env` junto a `docker-compose.yml`).
 
 Fuera de Docker, define `DATABASE_URL=postgresql://user:password@host:5432/dbname` (y opcionalmente `DATABASE_SCHEMA`) en `apps/backend/.env`, codificando con porcentaje cualquier carácter especial de la contraseña. Para una base de datos remota, añade `?sslmode=require` a la URL. Las tablas se crean al iniciar.
 
 Para mover los datos existentes de una instalación local, ejecuta `uv run python -m app.scripts.copy_sqlite_to_postgres` desde `apps/backend` con `DATABASE_URL` definida. Su `--source` por defecto es `apps/backend/data/resume_matcher.db`, que solo existe en instalaciones locales; pasa `--source <file>` para usar otro archivo SQLite. Se niega a escribir en una base de datos que no esté vacía. Detén primero la app: las escrituras posteriores al inicio de la copia no se copian.
 
-Una instalación con Docker guarda su base de datos SQLite en el volumen `resume-data`, no en el host. Detén la app y ejecuta el script dentro del contenedor, donde ese volumen es el origen por defecto:
+Una instalación con Docker guarda su base de datos SQLite en el volumen `resume-data`, no en el host. Detén la app y ejecuta el script dentro del contenedor, donde ese volumen es el origen por defecto (con el mismo `POSTGRES_PASSWORD` definido que antes):
 
 ```bash
-export POSTGRES_PASSWORD=change-me
 docker compose stop
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d

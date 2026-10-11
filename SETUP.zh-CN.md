@@ -143,7 +143,7 @@ npm run dev
 
 > **PDF 导出：** Resume Matcher 使用无头 Chromium 渲染 PDF。如果未安装 Playwright 的浏览器，后端会回退到已安装的 Microsoft Edge 或 Google Chrome（Windows 11 自带 Edge）。你也可以在 `apps\backend` 中运行 `uv run playwright install chromium` 来安装 Playwright 的 Chromium。
 
-> **更喜欢 Docker？** 请安装 [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)，并按照 [Docker 部署](#docker-deployment) 操作。要在 PowerShell 中设置 `PORT` 之类的变量，请使用 `$env:PORT="4000"; docker compose up -d`。对于 [可选的 PostgreSQL 配置](#optional-postgresql)，运行 `$env:POSTGRES_PASSWORD="change-me"; docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`；在 Docker 之外，请在 `apps\backend\.env` 中设置 `DATABASE_URL`。
+> **更喜欢 Docker？** 请安装 [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)，并按照 [Docker 部署](#docker-deployment) 操作。要在 PowerShell 中设置 `PORT` 之类的变量，请使用 `$env:PORT="4000"; docker compose up -d`。对于 [可选的 PostgreSQL 配置](#optional-postgresql)，运行 `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`；在 Docker 之外，请在 `apps\backend\.env` 中设置 `DATABASE_URL`。
 
 ---
 
@@ -378,19 +378,19 @@ SQLite 是默认选项，无需任何设置。如果需要备份，或想把数�
 使用 Docker Compose 启动：
 
 ```bash
-POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-`POSTGRES_PASSWORD` 会原样复制到 `DATABASE_URL` 中，因此请使用对 URL 安全的密码（字母、数字、`-._~`）。
+`POSTGRES_PASSWORD` 会原样复制到 `DATABASE_URL` 中，因此请使用对 URL 安全的密码（字母、数字、`-._~`），可用 `openssl rand -hex 32` 生成。不要使用容易被猜到的值。请保存好这个密码：PostgreSQL 会在首次启动时把它存入 `postgres-data` 卷，之后每次执行 `docker compose` 命令都需要相同的值（重新 export，或在 `docker-compose.yml` 同目录的 `.env` 文件中写入 `POSTGRES_PASSWORD=...`）。
 
 在 Docker 之外，请在 `apps/backend/.env` 中设置 `DATABASE_URL=postgresql://user:password@host:5432/dbname`（以及可选的 `DATABASE_SCHEMA`），并对密码中的特殊字符进行百分号编码。对于远程数据库，请在 URL 末尾加上 `?sslmode=require`。数据表会在启动时创建。
 
 要迁移本地安装中的现有数据，请在设置好 `DATABASE_URL` 的情况下，在 `apps/backend` 中运行 `uv run python -m app.scripts.copy_sqlite_to_postgres`。其默认的 `--source` 是 `apps/backend/data/resume_matcher.db`，该文件只存在于本地安装中；如需使用其他 SQLite 文件，请传入 `--source <file>`。如果目标数据库非空，脚本会拒绝写入。请先停止应用：复制开始之后产生的写入不会被复制。
 
-Docker 安装会把 SQLite 数据库保存在 `resume-data` 卷中，而不是主机上。请先停止应用，然后在容器内运行该脚本，此时该卷就是默认的源：
+Docker 安装会把 SQLite 数据库保存在 `resume-data` 卷中，而不是主机上。请先停止应用，然后在容器内运行该脚本，此时该卷就是默认的源（需先设置与上文相同的 `POSTGRES_PASSWORD`）：
 
 ```bash
-export POSTGRES_PASSWORD=change-me
 docker compose stop
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d

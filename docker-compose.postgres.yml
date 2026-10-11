@@ -1,8 +1,12 @@
 # Optional PostgreSQL backend. SQLite stays the default without this file.
-#   POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up
+#   export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+#   docker compose -f docker-compose.yml -f docker-compose.postgres.yml up
+# Use a random password, not a guessable one. Keep it: PostgreSQL stores it in the
+# postgres-data volume on first start, and every later compose command needs the same value.
 # data/.secret_key still lives in the resume-data volume; keep it with the database.
 # POSTGRES_PASSWORD is copied into DATABASE_URL as-is: use only URL-safe characters
-# (letters, digits, -._~). Characters such as @ : / ? # % would break the URL.
+# (letters, digits, -._~; `openssl rand -hex 32` qualifies). Characters such as @ : / ? # %
+# would break the URL.
 services:
   resume-matcher:
     environment:

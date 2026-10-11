@@ -143,7 +143,7 @@ npm run dev
 
 > **PDF エクスポート:** Resume Matcher はヘッドレス Chromium で PDF を生成します。Playwright のブラウザがインストールされていない場合、バックエンドはインストール済みの Microsoft Edge または Google Chrome にフォールバックします（Edge は Windows 11 に標準搭載です）。`apps\backend` で `uv run playwright install chromium` を実行して、Playwright の Chromium をインストールすることもできます。
 
-> **Docker を使いたい場合:** [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) をインストールし、[Docker デプロイ](#docker-deployment) に従ってください。PowerShell で `PORT` などの変数を設定するには、`$env:PORT="4000"; docker compose up -d` を使います。[オプションの PostgreSQL 構成](#optional-postgresql) では、`$env:POSTGRES_PASSWORD="change-me"; docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d` を実行します。Docker を使わない場合は、`apps\backend\.env` に `DATABASE_URL` を設定します。
+> **Docker を使いたい場合:** [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) をインストールし、[Docker デプロイ](#docker-deployment) に従ってください。PowerShell で `PORT` などの変数を設定するには、`$env:PORT="4000"; docker compose up -d` を使います。[オプションの PostgreSQL 構成](#optional-postgresql) では、`$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d` を実行します。Docker を使わない場合は、`apps\backend\.env` に `DATABASE_URL` を設定します。
 
 ---
 
@@ -378,19 +378,19 @@ SQLite が既定で、セットアップは不要です。バックアップが�
 Docker Compose で起動するには：
 
 ```bash
-POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-`POSTGRES_PASSWORD` はそのまま `DATABASE_URL` にコピーされるため、URL で安全に使えるパスワード（英字、数字、`-._~`）にしてください。
+`POSTGRES_PASSWORD` はそのまま `DATABASE_URL` にコピーされるため、URL で安全に使えるパスワード（英字、数字、`-._~`）にしてください。`openssl rand -hex 32` で生成できます。推測されやすい値は使わないでください。パスワードは必ず保管してください。PostgreSQL は初回起動時にこれを `postgres-data` ボリュームに保存し、以降の `docker compose` コマンドでも同じ値が必要です（再度 `export` するか、`docker-compose.yml` と同じ場所の `.env` ファイルに `POSTGRES_PASSWORD=...` と記述します）。
 
 Docker を使わない場合は、`apps/backend/.env` に `DATABASE_URL=postgresql://user:password@host:5432/dbname`（必要に応じて `DATABASE_SCHEMA` も）を設定し、パスワード中の特殊文字はパーセントエンコードします。リモートデータベースの場合は URL に `?sslmode=require` を付けます。テーブルは起動時に作成されます。
 
 ローカルインストールの既存データを移行するには、`DATABASE_URL` を設定した状態で `apps/backend` から `uv run python -m app.scripts.copy_sqlite_to_postgres` を実行します。既定の `--source` は `apps/backend/data/resume_matcher.db` で、これはローカルインストールにのみ存在します。別の SQLite ファイルを使う場合は `--source <file>` を指定してください。空でないデータベースには書き込みません。先にアプリを停止してください。コピー開始後に行われた書き込みはコピーされません。
 
-Docker インストールでは SQLite データベースはホストではなく `resume-data` ボリューム内にあります。アプリを停止してから、そのボリュームが既定のソースとなるコンテナ内でスクリプトを実行します：
+Docker インストールでは SQLite データベースはホストではなく `resume-data` ボリューム内にあります。アプリを停止してから、そのボリュームが既定のソースとなるコンテナ内でスクリプトを実行します（上記と同じ `POSTGRES_PASSWORD` を設定しておきます）：
 
 ```bash
-export POSTGRES_PASSWORD=change-me
 docker compose stop
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
