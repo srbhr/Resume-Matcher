@@ -3,9 +3,9 @@ from typing import Any
 from mcp.server.mcpserver.exceptions import ToolError
 
 from app.ai_limits import MAX_JOB_CHARACTERS
+from app.database import db
 from app.mcp_server.tools._shared import (
     JobKeywords,
-    create_job_with_metadata,
     guard,
     job_view,
     keyword_updates,
@@ -29,4 +29,4 @@ async def add_job(
     for key, value in (("company", company), ("role", role)):
         if value and value.strip():
             metadata[key] = value.strip()
-    return job_view(await create_job_with_metadata(content, metadata))
+    return job_view(await db.create_job(content, metadata=metadata))

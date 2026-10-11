@@ -653,10 +653,23 @@ class Database:
     # -- Job operations -----------------------------------------------------
 
     async def create_job(
-        self, content: str, resume_id: str | None = None
+        self,
+        content: str,
+        resume_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Create one job description using the atomic batch writer."""
-        return (await self.create_jobs([content], resume_id))[0]
+        """Create one job description; ``metadata`` is stored with it in one transaction."""
+        row = Job(
+            job_id=str(uuid4()),
+            content=content,
+            resume_id=resume_id,
+            created_at=_now(),
+            metadata_json=copy.deepcopy(metadata) if metadata else {},
+        )
+        async with self._write_session() as session:
+            session.add(row)
+            await session.commit()
+        return self._job_to_dict(row)
 
     async def create_jobs(
         self, contents: list[str], resume_id: str | None = None

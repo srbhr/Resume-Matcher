@@ -12,8 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.ai_limits import MAX_SOURCE_CHARACTERS
 from app.config import settings
-from app.database import DatabaseBusyError, ResumeNotFoundError, _now, db
-from app.models import Job
+from app.database import DatabaseBusyError, ResumeNotFoundError, db
 from app.pdf import render_resume_pdf
 from app.routers.resumes import (
     _get_original_resume_data,
@@ -146,23 +145,6 @@ def job_view(job: dict[str, Any]) -> dict[str, Any]:
         "job_keywords": job.get("job_keywords"),
         "created_at": job.get("created_at"),
     }
-
-
-async def create_job_with_metadata(
-    content: str, metadata: dict[str, Any]
-) -> dict[str, Any]:
-    """Insert a job and its dynamic fields in one transaction, so a retry cannot duplicate it."""
-    async with db._write_session() as session:
-        row = Job(
-            job_id=str(uuid4()),
-            content=content,
-            resume_id=None,
-            created_at=_now(),
-            metadata_json=metadata,
-        )
-        session.add(row)
-        await session.commit()
-        return db._job_to_dict(row)
 
 
 def keyword_updates(content: str, keywords: JobKeywords) -> dict[str, Any]:
