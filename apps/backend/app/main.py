@@ -24,6 +24,8 @@ from app.pdf import close_pdf_renderer
 from app.routers import (
     applications_router,
     ats_router,
+    chatgpt_callback_router,
+    chatgpt_router,
     config_router,
     enrichment_router,
     health_router,
@@ -124,6 +126,9 @@ app.include_router(enrichment_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
 app.include_router(resume_wizard_router, prefix="/api/v1")
 app.include_router(ats_router, prefix="/api/v1")
+app.include_router(chatgpt_router, prefix="/api/v1")
+# OpenAI redirects to 127.0.0.1:<port>/auth/callback; the path is fixed.
+app.include_router(chatgpt_callback_router)
 
 
 @app.get("/")
