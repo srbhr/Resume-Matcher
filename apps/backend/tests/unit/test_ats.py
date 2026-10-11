@@ -125,7 +125,9 @@ class TestDateConsistency:
         # the dominant style covers 2 of 5 dates.
         assert score == pytest.approx(40.0)
 
-    def test_non_english_month_names_count_as_one_style(self) -> None:
+    def test_non_english_month_names_are_not_month_dates(self) -> None:
+        # Parsers only know English months: "Ene 2020" and "Dic 2019" read as bare
+        # years, so the three English dates are the dominant style (3 of 5).
         resume = _resume(
             workExperience=[
                 {"title": "PM", "years": "Ene 2020 - Actual"},
@@ -133,7 +135,7 @@ class TestDateConsistency:
             ],
             education=[{"degree": "Grado", "years": "Sep 2012 - Jun 2016"}],
         )
-        assert compute_date_consistency(resume) == 100.0
+        assert compute_date_consistency(resume) == pytest.approx(60.0)
 
     def test_present_markers_are_ignored(self) -> None:
         resume = _resume(

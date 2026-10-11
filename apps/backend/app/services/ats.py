@@ -50,14 +50,19 @@ _TITLE_STOPWORDS = frozenset(
     {"a", "an", "and", "the", "of", "for", "in", "to", "at", "&"}
 )
 
-# Date styles, tried left to right at each position. Month names are matched as
-# any run of 3+ letters so the check works in every content language.
+# Date styles, tried left to right at each position. Only English month names and
+# abbreviations count as month dates: parsers don't recognise "Ene 2020", so that
+# reads as a bare year.
 _YEAR = r"(?:19|20)\d{2}"
+_MONTH = (
+    r"(?i:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?"
+    r"|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
+)
 _DATE_PATTERN = re.compile(
     rf"(?P<iso>\b{_YEAR}[-/]\d{{1,2}}\b)"
     rf"|(?P<numeric>\b\d{{1,2}}[/.-]{_YEAR}\b)"
-    rf"|(?P<name_year>\b[^\W\d_]{{3,}}\.?,?\s+{_YEAR}\b)"
-    rf"|(?P<name_short_year>\b[^\W\d_]{{3,}}\.?\s+'\d{{2}}\b)"
+    rf"|(?P<name_year>\b{_MONTH}\.?,?\s+{_YEAR}\b)"
+    rf"|(?P<name_short_year>\b{_MONTH}\.?\s+'\d{{2}}\b)"
     rf"|(?P<year>\b{_YEAR}\b)"
 )
 _MIN_DATES_FOR_CONSISTENCY = 2
