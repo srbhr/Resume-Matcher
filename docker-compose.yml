@@ -1,14 +1,16 @@
 services:
   resume-matcher:
-    image: ghcr.io/srbhr/resume-matcher
+    # TEST BRANCH ONLY: always build this checkout (never pull from ghcr),
+    # with fast download mirrors on by default. Do not merge into dev/main.
+    image: resume-matcher:test
+    pull_policy: build
     build:
       context: .
-      # Optional, for slow networks (empty by default = no change):
-      #   DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian docker compose build
+      # Override any mirror with an env var, or set it to "" to use the default source.
       args:
-        - DEBIAN_MIRROR=${DEBIAN_MIRROR:-}
+        - DEBIAN_MIRROR=${DEBIAN_MIRROR-https://mirrors.edge.kernel.org/debian}
         - DEBIAN_SECURITY_MIRROR=${DEBIAN_SECURITY_MIRROR:-}
-        - PIP_INDEX_URL=${PIP_INDEX_URL:-}
+        - PIP_INDEX_URL=${PIP_INDEX_URL-https://pypi.mirrors.ustc.edu.cn/simple}
         - PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST:-}
     container_name: resume-matcher
     ports:

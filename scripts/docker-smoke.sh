@@ -26,6 +26,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 TAG="resume-matcher:smoke"
+
+# TEST BRANCH ONLY: fast download mirrors by default (export VAR="" to disable).
+: "${DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian}"
+: "${PIP_INDEX_URL=https://pypi.mirrors.ustc.edu.cn/simple}"
+export DEBIAN_MIRROR PIP_INDEX_URL
 PORT="${SMOKE_PORT:-3100}"
 HEALTH_TIMEOUT="${SMOKE_HEALTH_TIMEOUT:-120}"
 BUILD=1
