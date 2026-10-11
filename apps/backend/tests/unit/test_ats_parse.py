@@ -46,6 +46,36 @@ def _docx(build: Any) -> bytes:
     return buffer.getvalue()
 
 
+def _form_xobject_pdf(text: str) -> bytes:
+    """One page whose only text is drawn inside a form XObject (``/Fx Do``)."""
+    form = f"BT /F1 12 Tf 72 700 Td ({text}) Tj ET"
+    objs = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        "/Resources << /XObject << /Fx 5 0 R >> >> /Contents 4 0 R >>",
+        "<< /Length 9 >> stream\n/Fx Do\n\nendstream",
+        "<< /Type /XObject /Subtype /Form /BBox [0 0 612 792] "
+        "/Resources << /Font << /F1 6 0 R >> >> "
+        f"/Length {len(form)} >> stream\n{form}\nendstream",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    out = io.BytesIO(b"%PDF-1.4\n")
+    offsets = []
+    for n, body in enumerate(objs, start=1):
+        offsets.append(out.tell())
+        out.write(f"{n} 0 obj {body} endobj\n".encode())
+    xref = out.tell()
+    out.write(f"xref\n0 {len(objs) + 1}\n0000000000 65535 f \n".encode())
+    for off in offsets:
+        out.write(f"{off:010d} 00000 n \n".encode())
+    out.write(
+        f"trailer << /Size {len(objs) + 1} /Root 1 0 R >>\n"
+        f"startxref\n{xref}\n%%EOF".encode()
+    )
+    return out.getvalue()
+
+
 # -- normalize -----------------------------------------------------------------
 
 
@@ -200,6 +230,13 @@ async def test_pdf_without_text_is_not_extractable() -> None:
     report = await parse_check_bytes(_pdf(1), "scan.pdf")
     assert report.extractability == "none"
     assert _status(report.checks, "text_layer") == "fail"
+
+
+async def test_pdf_text_inside_form_xobjects_is_extracted() -> None:
+    line = "Jane Doe jane@example.com Senior Engineer at Acme since 2019"
+    report = await parse_check_bytes(_form_xobject_pdf(line), "form.pdf")
+    assert line in report.extracted_text_preview
+    assert _status(report.checks, "text_layer") == "pass"
 
 
 async def test_docx_tables_and_header_contact_are_flagged() -> None:

@@ -72,19 +72,35 @@ def _count_images(item: LTContainer) -> int:
     return count
 
 
+def _text_boxes(item: LTContainer) -> list[TextBox]:
+    """Text containers in layout order, including those inside form XObjects."""
+    boxes: list[TextBox] = []
+    for child in item:
+        if isinstance(child, LTTextContainer):
+            text = child.get_text().strip()
+            if text:
+                boxes.append(TextBox(child.x0, child.y0, child.x1, child.y1, text))
+        elif isinstance(child, LTFigure):
+            boxes.extend(_text_boxes(child))
+    return boxes
+
+
 def extract_pdf(content: bytes) -> ExtractedDocument:
-    """pdfminer default layout order, the same reading MarkItDown and simple ATSs use."""
+    """pdfminer default layout order, the same reading MarkItDown and simple ATSs use.
+
+    ``all_texts`` lays out text drawn inside form XObjects too; without it that
+    text stays as loose characters and never reaches the report.
+    """
     page_count = len(list(PDFPage.get_pages(io.BytesIO(content))))
     pages: list[PageLayout] = []
     for page in extract_pages(
-        io.BytesIO(content), laparams=LAParams(), maxpages=MAX_PARSE_CHECK_PAGES
+        io.BytesIO(content),
+        laparams=LAParams(all_texts=True),
+        maxpages=MAX_PARSE_CHECK_PAGES,
     ):
-        boxes = [
-            TextBox(item.x0, item.y0, item.x1, item.y1, item.get_text().strip())
-            for item in page
-            if isinstance(item, LTTextContainer) and item.get_text().strip()
-        ]
-        pages.append(PageLayout(page.width, page.height, boxes, _count_images(page)))
+        pages.append(
+            PageLayout(page.width, page.height, _text_boxes(page), _count_images(page))
+        )
     text = "\n\n".join(page.text for page in pages)
     return ExtractedDocument(
         kind="pdf",
