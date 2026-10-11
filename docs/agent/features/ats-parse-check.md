@@ -14,9 +14,9 @@ It covers two inputs:
 
 1. **Extraction** (`services/ats_parse/extract.py`).
    - It runs under the same bounded worker, limiter and deadline as `parse_document`, via `parser.run_bounded_document_job`.
-   - PDFs go through the existing bounded preflight first (it interprets at most the first 100 pages, `MAX_PDF_PREFLIGHT_PAGES`; every stream is still decoded under the shared budget), then pdfminer `extract_pages` with default `LAParams`. That is the reading order MarkItDown and simple ATS readers produce.
+   - PDFs go through the existing bounded preflight first (it rejects a PDF with more than 100 pages, `MAX_PDF_PREFLIGHT_PAGES`, with a 413; every stream is still decoded under the shared budget), then pdfminer `extract_pages` with default `LAParams`. That is the reading order MarkItDown and simple ATS readers produce.
    - DOCX body text and tables are read in document order. Headers, footers and text boxes are kept apart.
-   - Pages beyond 10 are not analysed. `page_count` stops at 100 (`MAX_COUNTED_PAGES`): longer documents report 100 and are marked truncated.
+   - Pages beyond 10 are not analysed. `page_count` stops at 100 (`MAX_COUNTED_PAGES`); the upload route never reaches that cap because the preflight rejects longer PDFs first.
 2. **Checks** (`checks.py`). Each check returns an id, category, severity, status and params. The UI localises the text from the id and params.
 3. **Scores.**
    - `overall_score` (parseability) covers the extraction and layout checks; `content_score` covers the content checks.

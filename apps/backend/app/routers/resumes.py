@@ -94,7 +94,9 @@ from app.services.interview_prep import generate_interview_prep
 from app.services.page_fit import render_drafts
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
+    MAX_PDF_PREFLIGHT_PAGES,
     MAX_UNPACKED_DOCUMENT_BYTES,
+    DocumentPageLimitError,
     DocumentResourceLimitError,
     has_meaningful_resume_content,
     parse_document,
@@ -996,6 +998,15 @@ async def upload_resume(
     # Convert to markdown
     try:
         markdown_content = await parse_document(content, file.filename or "resume.pdf")
+    except DocumentPageLimitError as e:
+        logger.warning("PDF page limit exceeded for %s: %s", file.filename, e)
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"PDF has more than {MAX_PDF_PREFLIGHT_PAGES} pages. "
+                "Please upload a shorter document."
+            ),
+        )
     except DocumentResourceLimitError as e:
         logger.warning("Document resource limit exceeded for %s: %s", file.filename, e)
         raise HTTPException(

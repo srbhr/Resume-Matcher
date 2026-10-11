@@ -58,8 +58,9 @@ MAX_EXTRACTED_TEXT_BYTES = 2 * 1024 * 1024
 # Decoder row buffers can allocate from dimensions before consuming input.
 MAX_PDF_SCANLINE_COLUMNS = 32_768
 MAX_PDF_SCANLINE_BYTES = 256 * 1024
-# The container preflight interprets at most this many pages, so a huge page tree
-# costs a bounded walk. Every stream is still decoded under the shared budget.
+# PDFs with more pages are rejected by the container preflight, before any page
+# is interpreted past the budget or the document is converted. Every stream is
+# still decoded under the shared budget.
 MAX_PDF_PREFLIGHT_PAGES = 100
 DOCUMENT_CONVERSION_WORKERS = 2
 DOCUMENT_CONVERSION_TIMEOUT_SECONDS = 120.0
@@ -73,6 +74,10 @@ class DocumentValidationError(ValueError):
 
 class DocumentResourceLimitError(ValueError):
     """Raised when a valid document exceeds a bounded processing budget."""
+
+
+class DocumentPageLimitError(DocumentResourceLimitError):
+    """Raised when a PDF has more pages than ``MAX_PDF_PREFLIGHT_PAGES``."""
 
 
 _COMPOUND_FILE_SIGNATURE = bytes.fromhex("D0CF11E0A1B11AE1")
@@ -325,7 +330,8 @@ class _BoundedPDFParser(PDFParser):
 def _validate_pdf_container(path: Path) -> None:
     """Require a readable PDF whose decoded streams fit a shared budget.
 
-    Only the first ``MAX_PDF_PREFLIGHT_PAGES`` pages are interpreted.
+    Only the first ``MAX_PDF_PREFLIGHT_PAGES`` pages are interpreted; a PDF with
+    more pages is rejected before the rest of the document is scanned.
     """
     try:
         with path.open("rb") as stream:
@@ -334,7 +340,12 @@ def _validate_pdf_container(path: Path) -> None:
             manager = PDFResourceManager(caching=False)
             interpreter = PDFPageInterpreter(manager, PDFDevice(manager))
             has_pages = False
-            for page in islice(PDFPage.create_pages(document), MAX_PDF_PREFLIGHT_PAGES):
+            pages = islice(PDFPage.create_pages(document), MAX_PDF_PREFLIGHT_PAGES + 1)
+            for index, page in enumerate(pages):
+                if index >= MAX_PDF_PREFLIGHT_PAGES:
+                    raise DocumentPageLimitError(
+                        f"PDF has more than {MAX_PDF_PREFLIGHT_PAGES} pages."
+                    )
                 has_pages = True
                 # Follow the real text consumer's references under the same
                 # bounded stream decoder. A forged /Image label on a content
