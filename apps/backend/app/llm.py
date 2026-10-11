@@ -346,6 +346,45 @@ def _output_token_kwarg(config: LLMConfig, max_tokens: int) -> dict[str, int]:
     return {"max_tokens": max_tokens}
 
 
+#: Thinking budget (tokens) LiteLLM maps each ``reasoning_effort`` to on
+#: Anthropic's extended-thinking API. Anthropic rejects a request unless
+#: ``max_tokens`` exceeds the budget, and LiteLLM only raises ``max_tokens``
+#: itself when the caller sends none.
+_ANTHROPIC_THINKING_BUDGETS: dict[str, int] = {
+    "minimal": 1024,
+    "low": 1024,
+    "medium": 2048,
+    "high": 4096,
+}
+
+
+def _reasoning_effort_kwarg(
+    config: LLMConfig, reasoning_effort: str | None, max_tokens: int
+) -> dict[str, str]:
+    """Build the ``reasoning_effort`` kwarg, or nothing when it would 400.
+
+    A stored effort can outlive the model it was set for (the gpt-5 migration
+    persists ``minimal``). On Anthropic it becomes a thinking budget of at least
+    1024 tokens, so a call capped at or below that budget (the 64-token health
+    probe, short cover-letter calls) is rejected with "`max_tokens` must be
+    greater than `thinking.budget_tokens`". Such a call cannot hold the thinking
+    anyway, so it runs without it. Other providers pass the effort through.
+    """
+    if not reasoning_effort:
+        return {}
+    if config.provider == "anthropic" and max_tokens <= (
+        _ANTHROPIC_THINKING_BUDGETS.get(reasoning_effort, 0)
+    ):
+        logging.info(
+            "Omitting reasoning_effort=%s: max_tokens=%d is not above the "
+            "Anthropic thinking budget",
+            reasoning_effort,
+            max_tokens,
+        )
+        return {}
+    return {"reasoning_effort": reasoning_effort}
+
+
 _MAX_TOKENS_REJECTED_RE = re.compile(
     r"'max_tokens' is not supported|unsupported parameter:?\s*'max_tokens'"
 )
@@ -1020,8 +1059,7 @@ async def check_llm_health(
         api_version = _azure_foundry_api_version(config)
         if api_version:
             kwargs["api_version"] = api_version
-        if config.reasoning_effort:
-            kwargs["reasoning_effort"] = config.reasoning_effort
+        kwargs.update(_reasoning_effort_kwarg(config, config.reasoning_effort, 64))
 
         response = await _route_acompletion(config, litellm, **kwargs)
         content = _extract_choice_text(response.choices[0])
@@ -1143,8 +1181,9 @@ async def complete(
             model_name, temperature, reasoning_effort=config.reasoning_effort
         ):
             kwargs["temperature"] = temperature
-        if config.reasoning_effort:
-            kwargs["reasoning_effort"] = config.reasoning_effort
+        kwargs.update(
+            _reasoning_effort_kwarg(config, config.reasoning_effort, max_tokens)
+        )
 
         response = await _route_acompletion(config, router, **kwargs)
 
@@ -1731,8 +1770,10 @@ async def complete_json(
             # no_think setting. Scope it to structured-output requests only.
             if _uses_opencode_zen_hy3(config):
                 kwargs["extra_body"] = {"reasoning_effort": "no_think"}
-            elif reasoning_effort:
-                kwargs["reasoning_effort"] = reasoning_effort
+            else:
+                kwargs.update(
+                    _reasoning_effort_kwarg(config, reasoning_effort, max_tokens)
+                )
 
             # JSON-012: Fallback to prompt-only JSON mode after JSON-mode failure.
             # LiteLLM registry may report support for models that the upstream
