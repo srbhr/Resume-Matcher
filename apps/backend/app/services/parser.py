@@ -677,8 +677,9 @@ _LINE_LABEL_RE = re.compile(r"^[^:,]{1,80}:\s*")
 # PDF text extraction renders a visual gap (e.g. after a bold label) as 2+ spaces.
 _EXTRACTION_GAP_RE = re.compile(r"\s{2,}")
 _FINAL_CONJUNCTION_RE = re.compile(r"^(?:and|or|&)\s+", re.IGNORECASE)
-# "Rust and Go" closing a list without an Oxford comma holds two skills.
-_INLINE_CONJUNCTION_RE = re.compile(r"\s+(?:and|or|&)\s+", re.IGNORECASE)
+# "Rust and Go" closing a list without an Oxford comma holds two skills; "&"
+# stays whole: "Drag & Drop", "R & D".
+_INLINE_CONJUNCTION_RE = re.compile(r"\s+(?:and|or)\s+", re.IGNORECASE)
 _SKILL_HEADING_RE = re.compile(
     r"^(?:(?:technical|core|key|other)\s+)?"
     r"(?:skills?|technologies|tools|frameworks?|platforms?|tech(?:nology)?\s+stack|stack)$",

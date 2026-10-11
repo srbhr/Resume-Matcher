@@ -38,7 +38,6 @@ def test_line_over_the_item_limit_is_rejected(separator: str) -> None:
         "Python, Java, Rust and Go",
         "Python, Java, Rust, and Go",
         "Python, Java, Rust or Go",
-        "Python, Java, Rust & Go",
     ],
 )
 def test_final_conjunction_without_oxford_comma_splits_into_skills(line: str) -> None:
@@ -52,3 +51,17 @@ def test_conjunction_rules_from_the_wrapped_sentence_guard_still_apply() -> None
         "Java",
     ]
     assert _restore(["Python", "Java"], "Python, Java, Rust and") == ["Python", "Java"]
+
+
+def test_final_ampersand_skill_is_not_split() -> None:
+    assert _restore(["Python", "Java"], "Python, Java, Drag & Drop") == [
+        "Python",
+        "Java",
+        "Drag & Drop",
+    ]
+    assert _restore(["Python", "Java"], "Python, Java, Rust and Go") == [
+        "Python",
+        "Java",
+        "Rust",
+        "Go",
+    ]
