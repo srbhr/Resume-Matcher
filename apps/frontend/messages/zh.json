@@ -582,7 +582,7 @@
       "contentRecall": "内容召回率",
       "orderFidelity": "阅读顺序",
       "allFieldsFound": "所有字段都出现在提取的文本中。",
-      "fieldsTruncated": "此简历的字段数超出检查上限，仅检查了前面的字段。超出上限的字段不会在此显示。",
+      "fieldsTruncated": "此简历的字段数超出检查上限，仅检查了前面的字段。超出上限的字段不会体现在检查结果中。",
       "fieldStatus": {
         "found": "已找到",
         "garbled": "乱码",
@@ -622,7 +622,7 @@
         "tables": {
           "title": "表格",
           "pass": "没有表格。",
-          "warn": "发现 {count} 个表格。部分 ATS 会打散或跳过表格单元格。"
+          "warn": "发现 {count} 个表格。部分 ATS 会打乱或跳过表格单元格。"
         },
         "text_boxes": {
           "title": "文本框",
@@ -800,7 +800,7 @@
       "missingKeywords": "缺失关键词",
       "injectableKeywords": "可安全添加（主简历中已有）",
       "recommendations": "建议",
-      "twoColumnWarning": "双栏布局：许多 ATS 会错乱读取各栏内容。投递前请在编辑器中切换为单栏模板。"
+      "twoColumnWarning": "双栏布局：许多 ATS 会打乱各栏的阅读顺序。投递前请在简历生成器中切换为单栏模板。"
     },
     "regenerateDialog": {
       "title": "重新生成定制简历？",
@@ -858,7 +858,7 @@
     "display": {
       "title": "显示",
       "backgroundEffects": "背景效果",
-      "backgroundEffectsDescription": "页面背后以及 AI 工作时显示的动画背景。关闭后将使用纯色背景。"
+      "backgroundEffectsDescription": "页面背景及 AI 处理期间显示的动画背景。关闭后将使用纯色背景。"
     },
     "theme": "主题",
     "themeDescription": "选择您喜欢的颜色主题",
@@ -922,7 +922,7 @@
       "chatgptName": "ChatGPT 订阅（使用 ChatGPT 登录）",
       "chatgptShortName": "ChatGPT 订阅",
       "chatgptWarningTitle": "预览版",
-      "chatgptWarning": "此方式使用 OpenAI 面向开源应用的官方“使用 ChatGPT 登录”（Sign in with ChatGPT），目前为预览版，可能会有变化。适用于 ChatGPT Plus 和 Pro。请求从你的电脑直接发送到 OpenAI 的 API，登录令牌加密保存在这台电脑上。用量计入你的 ChatGPT 套餐限额：Plus 的五小时限额与你其他使用该套餐的应用共享；Pro 没有五小时限额。如需稳定可用，请使用 OpenAI API Key。",
+      "chatgptWarning": "此方式使用 OpenAI 面向开源应用的官方“使用 ChatGPT 登录”（Sign in with ChatGPT），目前为预览版，可能会有变化。适用于 ChatGPT Plus 和 Pro。请求从你的电脑直接发送到 OpenAI 的 API，登录令牌加密保存在这台电脑上。用量计入你的 ChatGPT 订阅限额：Plus 的五小时限额与你其他使用该订阅的应用共享；Pro 没有五小时限额。如需稳定可用，请使用 OpenAI API 密钥。",
       "modelLabel": "模型",
       "defaultModel": "默认：{model}",
       "apiKeyLabel": "API 密钥",
@@ -963,9 +963,9 @@
         "not_found_404": "健康检查失败。404 未找到，请检查 Base URL 是否与提供方匹配。",
         "html_response": "健康检查失败。Base URL 返回了 HTML，可能是控制台地址或网关不支持该路径。",
         "claude_cli_not_found": "未找到 Claude Code CLI。请安装 Claude Code 并运行 `claude auth login`。",
-        "chatgpt_not_connected": "尚未使用 ChatGPT 登录。请在设置中选择 ChatGPT 订阅，然后通过 ChatGPT 继续。",
-        "chatgpt_usage_limit": "此应用已达到你的 ChatGPT 套餐用量上限。请在 ChatGPT 设置的“用量”中查看。",
-        "chatgpt_not_eligible": "此账户无法使用 ChatGPT 套餐。需要 ChatGPT Plus 或 Pro；否则请使用 OpenAI API Key。"
+        "chatgpt_not_connected": "尚未使用 ChatGPT 登录。请在设置中选择 ChatGPT 订阅，然后点击“通过 ChatGPT 继续”。",
+        "chatgpt_usage_limit": "此应用已达到你的 ChatGPT 订阅用量上限。请在 ChatGPT 设置的“用量”中查看。",
+        "chatgpt_not_eligible": "此账户无法使用 ChatGPT 订阅用量。需要 ChatGPT Plus 或 Pro；否则请使用 OpenAI API 密钥。"
       },
       "healthWarnings": {
         "empty_content": "健康检查返回了空内容。"
@@ -980,10 +980,10 @@
       "manageUsage": "管理用量",
       "disconnected": "已断开与 ChatGPT 的连接。",
       "revocationUnconfirmed": "已在这台电脑上退出，但 OpenAI 未确认会话已结束。你也可以在 ChatGPT 设置中断开 Resume Matcher 的连接。",
-      "returnConnected": "已连接到你的 ChatGPT 套餐。请选择模型，然后保存。",
+      "returnConnected": "已连接到你的 ChatGPT 订阅。请选择模型，然后保存。",
       "returnCancelled": "已取消 ChatGPT 登录。",
       "returnError": "ChatGPT 登录未完成，请重试。",
-      "planDeclined": "未允许使用 ChatGPT 套餐。请再次通过 ChatGPT 继续并允许，或使用 OpenAI API Key。",
+      "planDeclined": "未允许使用 ChatGPT 订阅。请再次点击“通过 ChatGPT 继续”并允许，或使用 OpenAI API 密钥。",
       "sameMachineOnly": "请在运行 Resume Matcher 的电脑上的浏览器中登录。",
       "signInFailed": "无法开始 ChatGPT 登录，请重试。",
       "disconnectFailed": "无法断开 ChatGPT 连接，请重试。",
@@ -1378,7 +1378,7 @@
       "masterDescription": "队列中的每个职位都基于这份主简历进行定制。",
       "noMaster": "请先在仪表板上传主简历。",
       "jobDescriptionLabel": "职位描述",
-      "jobDescriptionHint": "职位、公司和职位编号会从文本中识别，无需调用 AI。如有错误请修改。",
+      "jobDescriptionHint": "职位名称、公司和职位编号会直接从文本中识别，无需调用 AI。如有错误请修改。",
       "detectedTitle": "识别到的信息",
       "roleLabel": "职位",
       "rolePlaceholder": "例如：前端工程师",

@@ -61,7 +61,7 @@
     "backToDashboard": "ダッシュボードに戻る",
     "goToSettings": "設定へ",
     "applicationTracker": "応募トラッカー",
-    "queue": "最適化キュー"
+    "queue": "カスタマイズキュー"
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -336,7 +336,7 @@
         "matchRateLabel": "一致率:"
       },
       "atsScore": {
-        "description": "保存済みの履歴書をこの求人票と照らして採点します。PDF自体の読み取りはATSチェックタブで確認できます。",
+        "description": "保存済みの履歴書をこの求人内容に照らして採点します。PDF自体の読み取りはATSチェックタブで確認できます。",
         "loading": "ATSスコアを読み込み中…",
         "notCalculated": "この履歴書のATSスコアはまだ計算されていません。",
         "loadFailed": "保存されたATSスコアを読み込めませんでした。再計算するか、ページを再読み込みしてください。",
@@ -344,7 +344,7 @@
         "recalculate": "再計算",
         "recalculating": "計算中…",
         "saveFirst": "変更を保存してから再計算してください。",
-        "recalculateFailed": "ATSスコアを計算できませんでした。スコア保存機能の前に調整した履歴書の場合は、「履歴書をカスタマイズ」ページでもう一度調整してください。"
+        "recalculateFailed": "ATSスコアを計算できませんでした。スコアが保存される前にカスタマイズした履歴書の場合は、「履歴書をカスタマイズ」ページでもう一度カスタマイズしてください。"
       }
     },
     "genericItemForm": {
@@ -564,7 +564,7 @@
       "running": "チェック中...",
       "emptyState": "チェックを実行すると、現在のテンプレートでATSがこの履歴書をどう読むか確認できます。",
       "saveFirst": "チェックを実行する前に履歴書を保存してください。",
-      "unsavedNotice": "未保存の編集は含まれません。最後に保存した版をチェックします。",
+      "unsavedNotice": "未保存の編集は含まれません。最後に保存したバージョンをチェックします。",
       "error": "チェックに失敗しました。バックエンドとフロントエンドが起動しているか確認して、もう一度お試しください。",
       "parseability": "読み取りやすさ",
       "content": "内容",
@@ -584,7 +584,7 @@
       "allFieldsFound": "すべての項目が抽出テキストに含まれています。",
       "fieldsTruncated": "この履歴書には検査の上限を超える項目があるため、先頭の項目のみ確認しました。上限を超えた項目はここに反映されません。",
       "fieldStatus": {
-        "found": "検出",
+        "found": "検出済み",
         "garbled": "文字化け",
         "missing": "欠落",
         "hidden": "非表示"
@@ -622,7 +622,7 @@
         "tables": {
           "title": "表",
           "pass": "表はありません。",
-          "warn": "{count}個の表があります。一部のATSは表のセルを平坦化または無視します。"
+          "warn": "{count}個の表があります。一部のATSは表のセルを崩して読み取ったり、読み飛ばしたりします。"
         },
         "text_boxes": {
           "title": "テキストボックス",
@@ -660,7 +660,7 @@
         },
         "dates": {
           "title": "日付",
-          "pass": "日付に{years}個の年が見つかりました。",
+          "pass": "日付に年の記載が{years}件見つかりました。",
           "warn": "認識できる日付が見つかりません。"
         }
       }
@@ -913,15 +913,15 @@
     },
     "llmConfiguration": {
       "selectedProvider": "選択中: {provider}",
-      "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はあなたのアカウント経由でプロンプトを Anthropic に送信し、独自の既定モデルを使用します。",
+      "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はお使いのアカウント経由でプロンプトを Anthropic に送信し、独自の既定モデルを使用します。",
       "claudeCliName": "Claude サブスクリプション（Claude Code 経由）",
       "claudeCliShortName": "Claude プラン",
       "claudeCliWarningTitle": "公式サポート対象外",
-      "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Pro / Max サブスクリプションを利用することを公式にはサポートしておらず、ポリシーが変更されると動作しなくなる可能性があります（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher があなたの Claude 認証情報を見たり保存したりすることはなく、あなた自身が `claude auth login` でサインインした Claude Code CLI を実行するだけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
+      "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Pro / Max サブスクリプションを利用することを公式にはサポートしておらず、ポリシーが変更されると動作しなくなる可能性があります（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher が Claude の認証情報を見たり保存したりすることはありません。実行するのは、ご自身で `claude auth login` からサインインした Claude Code CLI だけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
       "communityBuilt": "コミュニティが開発した機能です。",
       "chatgptName": "ChatGPT プラン（Sign in with ChatGPT）",
       "chatgptShortName": "ChatGPT プラン",
-      "chatgptWarningTitle": "プレビュー",
+      "chatgptWarningTitle": "プレビュー版",
       "chatgptWarning": "OpenAI 公式のオープンソースアプリ向け Sign in with ChatGPT を使用します。これはプレビュー版のため、変更される可能性があります。ChatGPT Plus と Pro で利用できます。リクエストはお使いのマシンから OpenAI の API に直接送信され、サインイン用のトークンはこのマシンに暗号化して保存されます。利用量は ChatGPT プランの上限に含まれます。Plus では 5 時間の上限を、プランを使う他のアプリと共有します。Pro には 5 時間の上限はありません。確実に利用するには、OpenAI の API キーを使用してください。",
       "modelLabel": "モデル",
       "defaultModel": "既定: {model}",
@@ -1371,13 +1371,13 @@
     }
   },
   "queue": {
-    "title": "最適化キュー",
-    "subtitle": "求人票をキューに追加し、バックグラウンドで1件ずつ最適化します",
+    "title": "カスタマイズキュー",
+    "subtitle": "求人内容をキューに追加し、バックグラウンドで1件ずつカスタマイズします",
     "form": {
       "title": "求人を追加",
-      "masterDescription": "キュー内の各求人は、このマスター履歴書をもとに最適化されます。",
+      "masterDescription": "キュー内の各求人は、このマスター履歴書をもとにカスタマイズされます。",
       "noMaster": "先にダッシュボードでマスター履歴書をアップロードしてください。",
-      "jobDescriptionLabel": "求人票",
+      "jobDescriptionLabel": "求人内容",
       "jobDescriptionHint": "職種、会社名、求人IDはAIを使わずに本文から検出されます。誤りがあれば修正してください。",
       "detectedTitle": "検出された情報",
       "roleLabel": "職種",
@@ -1389,7 +1389,7 @@
       "cooldownHint": "各求人の後に待機し、プロバイダーのレート制限に達するリスクを下げます。",
       "submit": "キューに追加",
       "adding": "追加中...",
-      "added": "キューに追加しました。次の求人票を貼り付けてください。"
+      "added": "キューに追加しました。次の求人内容を貼り付けてください。"
     },
     "monitor": {
       "title": "キュー",
@@ -1398,7 +1398,7 @@
       "clearCompleted": "完了分を削除",
       "clearAll": "すべて削除",
       "emptyTitle": "キューに求人はありません",
-      "emptyDescription": "求人票を追加すると最適化を開始します。",
+      "emptyDescription": "求人内容を追加するとカスタマイズを開始します。",
       "untitled": "職種未設定",
       "jobId": "ID {id}",
       "viewResume": "履歴書を表示",
@@ -1406,7 +1406,7 @@
     },
     "status": {
       "pending": "待機中",
-      "processing": "最適化中",
+      "processing": "カスタマイズ中",
       "completed": "完了",
       "failed": "失敗"
     },
@@ -1414,13 +1414,13 @@
       "addFailed": "求人を追加できませんでした。もう一度お試しください。",
       "item": {
         "not_found": "マスター履歴書または求人が削除されました。",
-        "too_large": "求人票または履歴書が長すぎるため最適化できません。",
-        "timeout": "最適化がタイムアウトしました。再試行するには求人をもう一度追加してください。",
-        "failed": "最適化に失敗しました。設定でAIプロバイダーを確認してから、求人をもう一度追加してください。"
+        "too_large": "求人内容または履歴書が長すぎるため、カスタマイズできません。",
+        "timeout": "カスタマイズがタイムアウトしました。再試行するには求人をもう一度追加してください。",
+        "failed": "カスタマイズに失敗しました。設定でAIプロバイダーを確認してから、求人をもう一度追加してください。"
       },
       "loadFailed": "キューを読み込めませんでした。",
       "deleteFailed": "求人を削除できませんでした。もう一度お試しください。",
-      "deleteInProgress": "この求人は最適化中です。完了してから削除してください。",
+      "deleteInProgress": "この求人はカスタマイズ中です。完了してから削除してください。",
       "clearFailed": "キューを削除できませんでした。もう一度お試しください。"
     }
   }
