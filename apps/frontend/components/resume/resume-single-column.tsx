@@ -10,6 +10,7 @@ import { formatDateRange } from '@/lib/utils';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
 import { TagList } from './tag-list';
+import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-single.module.css';
 
@@ -100,8 +101,10 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       case 'summary':
         if (!summary) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+              {section.displayName}
+            </h3>
             <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
           </div>
         );
@@ -109,11 +112,17 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       case 'workExperience':
         if (!workExperience || workExperience.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {workExperience.map((exp) => (
-                <div key={exp.id} className={baseStyles['resume-item']}>
+                <div
+                  key={exp.id}
+                  {...resumeItem(exp.description)}
+                  className={baseStyles['resume-item']}
+                >
                   <div
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
@@ -138,11 +147,17 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       case 'personalProjects':
         if (!personalProjects || personalProjects.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {personalProjects.map((project) => (
-                <div key={project.id} className={baseStyles['resume-item']}>
+                <div
+                  key={project.id}
+                  {...resumeItem(project.description)}
+                  className={baseStyles['resume-item']}
+                >
                   <div
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
@@ -212,11 +227,13 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       case 'education':
         if (!education || education.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {education.map((edu) => (
-                <div key={edu.id} className={baseStyles['resume-item']}>
+                <div key={edu.id} {...resumeItem()} className={baseStyles['resume-item']}>
                   <div
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
@@ -378,29 +395,31 @@ const AdditionalSection: React.FC<{
   if (!hasContent) return null;
 
   return (
-    <div className={baseStyles['resume-section']}>
-      <h3 className={baseStyles['resume-section-title']}>{displayName}</h3>
+    <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+      <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+        {displayName}
+      </h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
             <TagList items={technicalSkills} />
           </div>
         )}
         {languages.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
             <TagList items={languages} />
           </div>
         )}
         {certificationsTraining.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
             <TagList items={certificationsTraining} />
           </div>
         )}
         {awards.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
             <TagList items={awards} />
           </div>

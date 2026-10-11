@@ -9,6 +9,7 @@ import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
 import { TagList } from './tag-list';
+import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/modern.module.css';
 
@@ -100,8 +101,10 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
       case 'summary':
         if (!summary) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles['section-title-accent']}>
+              {section.displayName}
+            </h3>
             <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
           </div>
         );
@@ -109,11 +112,17 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
       case 'workExperience':
         if (!workExperience || workExperience.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles['section-title-accent']}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {workExperience.map((exp) => (
-                <div key={exp.id} className={baseStyles['resume-item']}>
+                <div
+                  key={exp.id}
+                  {...resumeItem(exp.description)}
+                  className={baseStyles['resume-item']}
+                >
                   <div
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
@@ -138,11 +147,17 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
       case 'personalProjects':
         if (!personalProjects || personalProjects.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles['section-title-accent']}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {personalProjects.map((project) => (
-                <div key={project.id} className={baseStyles['resume-item']}>
+                <div
+                  key={project.id}
+                  {...resumeItem(project.description)}
+                  className={baseStyles['resume-item']}
+                >
                   <div
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
@@ -212,11 +227,13 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
       case 'education':
         if (!education || education.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={styles['section-title-accent']}>
+              {section.displayName}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {education.map((edu) => (
-                <div key={edu.id} className={baseStyles['resume-item']}>
+                <div key={edu.id} {...resumeItem()} className={baseStyles['resume-item']}>
                   <div
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
@@ -380,29 +397,31 @@ const AdditionalSection: React.FC<{
   if (!hasContent) return null;
 
   return (
-    <div className={baseStyles['resume-section']}>
-      <h3 className={styles['section-title-accent']}>{displayName}</h3>
+    <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+      <h3 {...RESUME_SECTION_TITLE} className={styles['section-title-accent']}>
+        {displayName}
+      </h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
             <TagList items={technicalSkills} />
           </div>
         )}
         {languages.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
             <TagList items={languages} />
           </div>
         )}
         {certificationsTraining.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
             <TagList items={certificationsTraining} />
           </div>
         )}
         {awards.length > 0 && (
-          <div className="flex items-baseline">
+          <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
             <TagList items={awards} />
           </div>
@@ -442,8 +461,10 @@ const DynamicResumeSectionModern: React.FC<{
   if (!hasContent) return null;
 
   return (
-    <div className={baseStyles['resume-section']}>
-      <h3 className={styles['section-title-accent']}>{sectionMeta.displayName}</h3>
+    <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+      <h3 {...RESUME_SECTION_TITLE} className={styles['section-title-accent']}>
+        {sectionMeta.displayName}
+      </h3>
       {renderDynamicContent(sectionMeta.sectionType, customSection)}
     </div>
   );
@@ -466,7 +487,11 @@ function renderDynamicContent(
       return (
         <div className={baseStyles['resume-items']}>
           {customSection.items.map((item) => (
-            <div key={item.id} className={baseStyles['resume-item']}>
+            <div
+              key={item.id}
+              {...resumeItem(item.description)}
+              className={baseStyles['resume-item']}
+            >
               <div
                 className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
               >

@@ -12,6 +12,7 @@ import type {
 import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
+import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/vivid.module.css';
 
@@ -157,7 +158,7 @@ export const VividExperienceItem: React.FC<{ exp: Experience; roleClassName?: st
   exp,
   roleClassName = styles.entryRoleCaps,
 }) => (
-  <div className={baseStyles['resume-item']}>
+  <div {...resumeItem(exp.description)} className={baseStyles['resume-item']}>
     <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
       <span>
         <span className={styles.entryCompany}>{exp.company}</span>
@@ -181,7 +182,7 @@ export const VividProjectItem: React.FC<{ project: Project; roleClassName?: stri
   project,
   roleClassName = styles.entryRoleCaps,
 }) => (
-  <div className={baseStyles['resume-item']}>
+  <div {...resumeItem(project.description)} className={baseStyles['resume-item']}>
     <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
       <span className="flex items-baseline gap-1.5 min-w-0">
         <span className={styles.entryCompany}>{project.name}</span>
@@ -296,8 +297,8 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
         {/* Main Column - Left */}
         <div className={styles.mainColumn}>
           {isSectionVisible('summary') && summary && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleCaps}>
+            <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+              <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleCaps}>
                 {getSectionDisplayName('summary', headingFallbacks.summary)}
               </h3>
               <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
@@ -305,8 +306,8 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
           )}
 
           {isSectionVisible('workExperience') && workExperience && workExperience.length > 0 && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleCaps}>
+            <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+              <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleCaps}>
                 {getSectionDisplayName('workExperience', headingFallbacks.experience)}
               </h3>
               <div className={baseStyles['resume-items']}>
@@ -320,8 +321,8 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
           {isSectionVisible('personalProjects') &&
             personalProjects &&
             personalProjects.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={styles.sectionTitleCaps}>
+              <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+                <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleCaps}>
                   {getSectionDisplayName('personalProjects', headingFallbacks.projects)}
                 </h3>
                 <div className={baseStyles['resume-items']}>
@@ -333,8 +334,10 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
             )}
 
           {isSectionVisible('additional') && certificationsTraining.length > 0 && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleCaps}>{headingFallbacks.certifications}</h3>
+            <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+              <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleCaps}>
+                {headingFallbacks.certifications}
+              </h3>
               {renderArrowBullets(certificationsTraining)}
             </div>
           )}
@@ -347,27 +350,31 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
         {/* Sidebar Column - Right */}
         <div className={styles.sidebarColumn}>
           {isSectionVisible('additional') && technicalSkills.length > 0 && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleSm}>{headingFallbacks.skills}</h3>
+            <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+              <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleSm}>
+                {headingFallbacks.skills}
+              </h3>
               <p className={baseStyles['resume-text-xs']}>{technicalSkills.join(' • ')}</p>
             </div>
           )}
 
           {isSectionVisible('additional') && languages.length > 0 && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleSm}>{headingFallbacks.languages}</h3>
+            <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+              <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleSm}>
+                {headingFallbacks.languages}
+              </h3>
               <p className={baseStyles['resume-text-xs']}>{languages.join(' • ')}</p>
             </div>
           )}
 
           {isSectionVisible('education') && education && education.length > 0 && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleSm}>
+            <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+              <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleSm}>
                 {getSectionDisplayName('education', headingFallbacks.education)}
               </h3>
               <div className={baseStyles['resume-stack']}>
                 {education.map((edu) => (
-                  <div key={edu.id}>
+                  <div key={edu.id} {...resumeItem()}>
                     <h4
                       className={`${baseStyles['resume-item-title-sm']} ${baseStyles['sidebar-text-wrap']}`}
                     >
@@ -391,8 +398,10 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
           )}
 
           {isSectionVisible('additional') && awards.length > 0 && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleSm}>{headingFallbacks.awards}</h3>
+            <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+              <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleSm}>
+                {headingFallbacks.awards}
+              </h3>
               <ul className={baseStyles['resume-list']}>
                 {awards.map((award, index) => (
                   <li key={index} className={baseStyles['resume-text-xs']}>
@@ -405,8 +414,10 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 
           {personalInfo &&
             (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={styles.sectionTitleSm}>{headingFallbacks.links}</h3>
+              <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+                <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleSm}>
+                  {headingFallbacks.links}
+                </h3>
                 <div
                   className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}
                 >
@@ -469,15 +480,21 @@ export const DynamicResumeSectionVivid: React.FC<{
   if (!hasContent) return null;
 
   return (
-    <div className={baseStyles['resume-section']}>
-      <h3 className={titleClassName}>{sectionMeta.displayName}</h3>
+    <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+      <h3 {...RESUME_SECTION_TITLE} className={titleClassName}>
+        {sectionMeta.displayName}
+      </h3>
       {sectionMeta.sectionType === 'text' && customSection.text?.trim() && (
         <p className={`text-justify ${baseStyles['resume-text']}`}>{customSection.text}</p>
       )}
       {sectionMeta.sectionType === 'itemList' && customSection.items?.length ? (
         <div className={baseStyles['resume-items']}>
           {customSection.items.map((item) => (
-            <div key={item.id} className={baseStyles['resume-item']}>
+            <div
+              key={item.id}
+              {...resumeItem(item.description)}
+              className={baseStyles['resume-item']}
+            >
               <div
                 className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
               >

@@ -17,6 +17,7 @@ import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
 import { SafeHtml } from './safe-html';
+import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/deedy.module.css';
 
@@ -209,7 +210,11 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
       </React.Fragment>
     ));
 
-  const sectionTitle = (title: string) => <h3 className={styles.sectionTitle}>{title}</h3>;
+  const sectionTitle = (title: string) => (
+    <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitle}>
+      {title}
+    </h3>
+  );
 
   const bullets = (items?: string[], itemStyles?: ('bullet' | 'plain')[]) => (
     <DescriptionList
@@ -261,11 +266,11 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   const renderEducation = (section: SectionMeta) =>
     education && education.length > 0 ? (
-      <section key={section.id} className={styles.section}>
+      <section {...RESUME_SECTION} key={section.id} className={styles.section}>
         {sectionTitle(section.displayName)}
         <div className={styles.entries}>
           {education.map((edu) => (
-            <div key={edu.id} className={baseStyles['resume-item']}>
+            <div key={edu.id} {...resumeItem()} className={baseStyles['resume-item']}>
               {edu.institution && (
                 <div className={`${styles.entryHeading} ${styles.entryTitle}`}>
                   {edu.institution}
@@ -291,7 +296,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   const linksSection =
     profileLinks.length > 0 ? (
-      <section key="links" className={styles.section}>
+      <section {...RESUME_SECTION} key="links" className={styles.section}>
         {sectionTitle(headings.links)}
         <div className={styles.lines}>
           {profileLinks.map(({ label, value }) => (
@@ -311,11 +316,11 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   const renderSkills = (section: SectionMeta) =>
     skillGroups.length > 0 ? (
-      <section key={`${section.id}-skills`} className={styles.section}>
+      <section {...RESUME_SECTION} key={`${section.id}-skills`} className={styles.section}>
         {sectionTitle(headings.skills)}
         <div className={styles.entries}>
           {skillGroups.map((group) => (
-            <div key={group.label} className={baseStyles['resume-item']}>
+            <div key={group.label} {...resumeItem()} className={baseStyles['resume-item']}>
               <p className={styles.text}>{group.label}</p>
               {group.inline ? dotList(group.items) : lineList(group.items)}
             </div>
@@ -329,7 +334,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   const renderAwards = (section: SectionMeta) =>
     awards.length > 0 ? (
-      <section key={`${section.id}-awards`} className={styles.section}>
+      <section {...RESUME_SECTION} key={`${section.id}-awards`} className={styles.section}>
         {sectionTitle(headings.awards)}
         {hasAwardYears ? (
           <div className={`${styles.awards} ${hasAwardRanks ? styles.awardsRanked : ''}`}>
@@ -349,7 +354,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   const renderSummary = (section: SectionMeta) =>
     summary ? (
-      <section key={section.id} className={styles.section}>
+      <section {...RESUME_SECTION} key={section.id} className={styles.section}>
         {sectionTitle(section.displayName)}
         <p className={styles.text}>{summary}</p>
       </section>
@@ -357,11 +362,15 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   const renderExperience = (section: SectionMeta) =>
     workExperience && workExperience.length > 0 ? (
-      <section key={section.id} className={styles.section}>
+      <section {...RESUME_SECTION} key={section.id} className={styles.section}>
         {sectionTitle(section.displayName)}
         <div className={styles.entries}>
           {workExperience.map((exp) => (
-            <div key={exp.id} className={baseStyles['resume-item']}>
+            <div
+              key={exp.id}
+              {...resumeItem(exp.description)}
+              className={baseStyles['resume-item']}
+            >
               {entryHeading(exp.company || exp.title, exp.company ? exp.title : undefined)}
               {entryMeta(joinPresent([formatDateRange(exp.years), exp.location]))}
               {bullets(exp.description, exp.descriptionStyles)}
@@ -373,7 +382,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   const renderProjects = (section: SectionMeta) =>
     personalProjects && personalProjects.length > 0 ? (
-      <section key={section.id} className={styles.section}>
+      <section {...RESUME_SECTION} key={section.id} className={styles.section}>
         {sectionTitle(section.displayName)}
         <div className={styles.entries}>
           {personalProjects.map((project) => {
@@ -381,7 +390,11 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
               Boolean(value)
             );
             return (
-              <div key={project.id} className={baseStyles['resume-item']}>
+              <div
+                key={project.id}
+                {...resumeItem(project.description)}
+                className={baseStyles['resume-item']}
+              >
                 {entryHeading(project.name, project.role)}
                 {entryMeta(
                   (project.years || links.length > 0) &&
@@ -440,7 +453,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
     const numbered = column === 'right' && NUMBERED_CUSTOM_SECTION.test(section.displayName);
 
     return (
-      <section key={section.id} className={styles.section}>
+      <section {...RESUME_SECTION} key={section.id} className={styles.section}>
         {sectionTitle(section.displayName)}
         {text && <p className={styles.text}>{custom.text}</p>}
         {numbered && (items.length > 0 || strings.length > 0) ? (
@@ -448,6 +461,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
             {(items.length > 0 ? items : strings).map((entry, index) => (
               <li
                 key={typeof entry === 'string' ? index : entry.id}
+                {...resumeItem()}
                 className={`${styles.numberedItem} ${baseStyles['resume-item']}`}
               >
                 <span className={styles.number}>[{index + 1}]</span>
@@ -466,7 +480,11 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
             {items.length > 0 && (
               <div className={styles.entries}>
                 {items.map((item) => (
-                  <div key={item.id} className={baseStyles['resume-item']}>
+                  <div
+                    key={item.id}
+                    {...resumeItem(item.description)}
+                    className={baseStyles['resume-item']}
+                  >
                     {entryHeading(item.title, item.subtitle)}
                     {entryMeta(joinPresent([formatDateRange(item.years), item.location]))}
                     {bullets(item.description, item.descriptionStyles)}

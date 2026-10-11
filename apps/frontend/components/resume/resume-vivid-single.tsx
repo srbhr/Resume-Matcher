@@ -7,6 +7,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
+import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/vivid.module.css';
 import {
@@ -76,8 +77,10 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
       case 'summary':
         if (!summary) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={titleClass}>{section.displayName || headings.summary}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+              {section.displayName || headings.summary}
+            </h3>
             <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
           </div>
         );
@@ -85,8 +88,10 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
       case 'workExperience':
         if (!workExperience || workExperience.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={titleClass}>{section.displayName || headings.experience}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+              {section.displayName || headings.experience}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {workExperience.map((exp) => (
                 <VividExperienceItem key={exp.id} exp={exp} roleClassName={roleClass} />
@@ -98,11 +103,13 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
       case 'education':
         if (!education || education.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={titleClass}>{section.displayName || headings.education}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+              {section.displayName || headings.education}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {education.map((edu) => (
-                <div key={edu.id} className={baseStyles['resume-item']}>
+                <div key={edu.id} {...resumeItem()} className={baseStyles['resume-item']}>
                   <div className={baseStyles['resume-row-tight']}>
                     <span className={styles.entryCompany}>{edu.institution}</span>
                     {edu.degree && (
@@ -129,8 +136,10 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
       case 'personalProjects':
         if (!personalProjects || personalProjects.length === 0) return null;
         return (
-          <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={titleClass}>{section.displayName || headings.projects}</h3>
+          <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
+            <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+              {section.displayName || headings.projects}
+            </h3>
             <div className={baseStyles['resume-items']}>
               {personalProjects.map((project) => (
                 <VividProjectItem key={project.id} project={project} roleClassName={roleClass} />
@@ -144,26 +153,34 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
         return (
           <React.Fragment key={section.id}>
             {technicalSkills.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={titleClass}>{headings.skills}</h3>
+              <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+                <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+                  {headings.skills}
+                </h3>
                 <p className={baseStyles['resume-text-xs']}>{technicalSkills.join(' • ')}</p>
               </div>
             )}
             {languages.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={titleClass}>{headings.languages}</h3>
+              <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+                <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+                  {headings.languages}
+                </h3>
                 <p className={baseStyles['resume-text-xs']}>{languages.join(' • ')}</p>
               </div>
             )}
             {certificationsTraining.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={titleClass}>{headings.certifications}</h3>
+              <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+                <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+                  {headings.certifications}
+                </h3>
                 {renderArrowBullets(certificationsTraining)}
               </div>
             )}
             {awards.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={titleClass}>{headings.awards}</h3>
+              <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+                <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+                  {headings.awards}
+                </h3>
                 {renderArrowBullets(awards)}
               </div>
             )}
@@ -196,8 +213,10 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
       {sortedSections.map((section) => renderSection(section))}
 
       {links.length > 0 && (
-        <div className={baseStyles['resume-section']}>
-          <h3 className={titleClass}>{headings.links}</h3>
+        <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
+          <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
+            {headings.links}
+          </h3>
           <div
             className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${baseStyles['resume-meta-sm']}`}
           >
