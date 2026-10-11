@@ -105,6 +105,7 @@ Three concrete mechanisms, applied to every change in this initiative:
    - `get_model_name` — `ollama_chat/` prefix and OpenRouter nested prefixes.
    - Empty-extracted-text rejection on upload (`resumes.py:546`, PR #794).
    - `restore_dates_from_markdown` — months survive LLM parsing.
+   - `restore_skills_from_markdown` — skills from long skill lists survive LLM parsing (`tests/unit/test_parse_skills.py`).
 
 ---
 
