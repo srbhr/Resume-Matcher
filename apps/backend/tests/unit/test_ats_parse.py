@@ -72,6 +72,26 @@ def test_supplementary_han_is_split_per_character() -> None:
     assert tokens("\U0002000b\U00020089") == ["\U0002000b", "\U00020089"]
 
 
+def test_cjk_split_keeps_latin_runs_whole() -> None:
+    assert tokens("Java开发 Python3工程师") == [
+        "java",
+        "开",
+        "发",
+        "python3",
+        "工",
+        "程",
+        "师",
+    ]
+    data = {
+        "personalInfo": {"name": "Li Wei"},
+        "additional": {"technicalSkills": ["Java"]},
+    }
+    by_field = {
+        f.field: f.status for f in compute_roundtrip(data, "Li Wei\nJava开发").fields
+    }
+    assert by_field["additional.technicalSkills"] == "found"
+
+
 def test_normalize_strips_inline_html_and_keeps_real_hyphens() -> None:
     assert (
         normalize("<strong>Led</strong> open-\nsource work") == "led open-source work"
