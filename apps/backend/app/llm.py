@@ -338,6 +338,25 @@ def _output_token_kwarg(config: LLMConfig, max_tokens: int) -> dict[str, int]:
     return {"max_tokens": max_tokens}
 
 
+_MAX_TOKENS_REJECTED_RE = re.compile(
+    r"'max_tokens' is not supported|unsupported parameter:?\s*'max_tokens'"
+)
+
+
+def _is_max_tokens_unsupported(error: Exception) -> bool:
+    """Return True if a 400 says ``max_tokens`` is unsupported in favour of
+    ``max_completion_tokens`` (issue #1030).
+
+    Matches OpenAI's "Unsupported parameter: 'max_tokens' is not supported with
+    this model. Use 'max_completion_tokens' instead." as relayed by Azure,
+    OpenRouter and compatible servers. Both parameter names must appear and
+    ``max_tokens`` must be the rejected one, so the reverse rejection and
+    unrelated 400s do not match.
+    """
+    msg = str(error).lower()
+    return "max_completion_tokens" in msg and bool(_MAX_TOKENS_REJECTED_RE.search(msg))
+
+
 async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -> Any:
     """Route a completion to the local Claude Code CLI or to LiteLLM.
 
@@ -345,10 +364,26 @@ async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -
     machine's installed ``claude`` CLI (no API key configured here; the CLI
     itself still calls Anthropic); otherwise it goes through ``transport`` — the LiteLLM ``Router`` for
     completions, or the ``litellm`` module for the health check.
+
+    Providers other than native OpenAI send ``max_tokens`` (see
+    ``_output_token_kwarg``), but an OpenAI-style one fronting a reasoning model
+    rejects it. When the 400 says exactly that, retry once with
+    ``max_completion_tokens``; every other error propagates unchanged.
     """
     if config.provider == "claude_cli":
         return await claude_acompletion(**kwargs)
-    return await transport.acompletion(**kwargs)
+    try:
+        return await transport.acompletion(**kwargs)
+    except litellm.BadRequestError as e:
+        if "max_tokens" not in kwargs or not _is_max_tokens_unsupported(e):
+            raise
+        logging.warning(
+            "Provider %s rejected max_tokens; retrying once with max_completion_tokens",
+            config.provider,
+        )
+        retry_kwargs = {k: v for k, v in kwargs.items() if k != "max_tokens"}
+        retry_kwargs["max_completion_tokens"] = kwargs["max_tokens"]
+        return await transport.acompletion(**retry_kwargs)
 
 
 def _extract_text_parts(

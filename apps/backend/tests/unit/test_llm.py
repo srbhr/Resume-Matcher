@@ -1425,3 +1425,178 @@ class TestOutputTokenParameter:
             )
             assert params["max_completion_tokens"] == 64, model
             assert "max_tokens" not in params, model
+
+
+class TestMaxTokensRejectionFallback:
+    """Azure, OpenRouter and compatible servers that front a reasoning model
+    reject ``max_tokens`` with a 400 that names ``max_completion_tokens``. The
+    call is retried exactly once with the kwarg swapped (issue #1030)."""
+
+    @staticmethod
+    def _config(provider: str) -> LLMConfig:
+        return LLMConfig(provider=provider, model="some-model", api_key="key")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "provider", ["azure_foundry", "openai_compatible", "openrouter", "openai"]
+    )
+    async def test_retries_once_with_max_completion_tokens(self, provider):
+        from app.llm import _route_acompletion
+
+        response = _text_response()
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), response]
+        )
+
+        result = await _route_acompletion(
+            self._config(provider),
+            transport,
+            model="primary",
+            messages=[],
+            max_tokens=4096,
+            timeout=30,
+        )
+
+        assert result is response
+        assert transport.acompletion.await_count == 2
+        first, second = (c.kwargs for c in transport.acompletion.call_args_list)
+        assert first["max_tokens"] == 4096
+        assert "max_completion_tokens" not in first
+        assert second["max_completion_tokens"] == 4096
+        assert "max_tokens" not in second
+        # Everything else is passed through untouched.
+        assert second["model"] == "primary"
+        assert second["timeout"] == 30
+
+    @pytest.mark.asyncio
+    async def test_other_bad_requests_are_reraised_without_retry(self):
+        from app.llm import _route_acompletion
+
+        error = _bad_request(
+            "OpenAIException - This model's maximum context length is 8192 "
+            "tokens. However, you requested 9000 tokens (max_tokens)."
+        )
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=error)
+
+        with pytest.raises(type(error)) as exc_info:
+            await _route_acompletion(
+                self._config("azure_foundry"), transport, max_tokens=4096
+            )
+
+        assert exc_info.value is error
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_reverse_rejection_is_not_retried(self):
+        """A server that rejects ``max_completion_tokens`` and asks for
+        ``max_tokens`` must not be answered with another swap."""
+        from app.llm import _route_acompletion
+
+        error = _bad_request(
+            "Unsupported parameter: 'max_completion_tokens' is not supported "
+            "with this model. Use 'max_tokens' instead."
+        )
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=error)
+
+        with pytest.raises(type(error)):
+            await _route_acompletion(
+                self._config("openai_compatible"),
+                transport,
+                max_completion_tokens=4096,
+            )
+
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_no_retry_when_max_tokens_was_not_sent(self):
+        from app.llm import _route_acompletion
+
+        error = _bad_request(MAX_TOKENS_REJECTION)
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=error)
+
+        with pytest.raises(type(error)):
+            await _route_acompletion(
+                self._config("openai_compatible"),
+                transport,
+                max_completion_tokens=4096,
+            )
+
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_retries_only_once(self):
+        from app.llm import _route_acompletion
+
+        second = _bad_request(MAX_TOKENS_REJECTION)
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), second]
+        )
+
+        with pytest.raises(type(second)) as exc_info:
+            await _route_acompletion(
+                self._config("azure_foundry"), transport, max_tokens=4096
+            )
+
+        assert exc_info.value is second
+        assert transport.acompletion.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_non_bad_request_errors_are_not_retried(self):
+        from app.llm import _route_acompletion
+
+        transport = MagicMock()
+        transport.acompletion = AsyncMock(side_effect=ValueError(MAX_TOKENS_REJECTION))
+
+        with pytest.raises(ValueError):
+            await _route_acompletion(
+                self._config("azure_foundry"), transport, max_tokens=4096
+            )
+
+        assert transport.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_health_check_recovers_for_openai_compatible(self):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="openai_compatible",
+            model="reasoning-model",
+            api_key="key",
+            api_base="https://compat.example/v1",
+        )
+        acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), _text_response()]
+        )
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        assert acompletion.await_count == 2
+        assert acompletion.call_args.kwargs["max_completion_tokens"] == 64
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_recovers_for_azure(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = self._config("azure_foundry")
+        router = MagicMock()
+        router.acompletion = AsyncMock(
+            side_effect=[_bad_request(MAX_TOKENS_REJECTION), _text_response("Hello")]
+        )
+        mock_get_router.return_value = (router, config)
+
+        result = await complete(prompt="Hi", max_tokens=2048)
+
+        assert result == "Hello"
+        assert router.acompletion.await_count == 2
+        assert router.acompletion.call_args.kwargs["max_completion_tokens"] == 2048
