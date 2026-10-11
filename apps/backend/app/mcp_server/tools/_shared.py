@@ -106,6 +106,22 @@ def require_structured(resume: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+def require_valid_structured(resume: dict[str, Any]) -> dict[str, Any]:
+    """Structured data that passes the schema, else a stable tool error (details are logged)."""
+    data = require_structured(resume)
+    try:
+        ResumeData.model_validate(normalize_resume_data(dict(data)))
+    except (ValueError, TypeError, AttributeError) as e:
+        logger.error(
+            "Stored data of %s does not match the schema: %s", resume["resume_id"], e
+        )
+        raise ToolError(
+            "This resume's stored data is invalid. Rewrite it with update_resume, "
+            "or open it in the builder and save it again."
+        ) from e
+    return data
+
+
 def ensure_within_size_limit(data: dict[str, Any]) -> None:
     if len(json.dumps(data, ensure_ascii=False)) > MAX_SOURCE_CHARACTERS:
         raise ToolError(f"Resume exceeds {MAX_SOURCE_CHARACTERS} characters.")

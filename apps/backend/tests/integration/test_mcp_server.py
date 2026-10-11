@@ -163,6 +163,27 @@ async def test_get_resume_survives_stored_data_that_breaks_the_schema(
     assert "source_markdown" in result
 
 
+@pytest.mark.parametrize("tool", ["verify_resume", "parse_check_resume"])
+async def test_render_checks_map_invalid_stored_data_to_a_stable_error(
+    tool: str,
+    isolated_db: Database,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_resume: dict[str, Any],
+) -> None:
+    rendered = AsyncMock(return_value=render("single-column"))
+    monkeypatch.setattr(shared_module, "render_resume_pdf", rendered)
+    monkeypatch.setattr(ats_parse, "render_resume_pdf", rendered)
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        await isolated_db.update_resume(
+            master["resume_id"], {"processed_data": {"workExperience": "legacy text"}}
+        )
+        message = await call_error(mcp, tool, {"resume_id": master["resume_id"]})
+    assert "stored data is invalid" in message
+    assert "ValidationError" not in message
+    rendered.assert_not_awaited()
+
+
 async def test_create_master_requires_name_and_respects_limit(
     sample_resume: dict[str, Any],
 ) -> None:

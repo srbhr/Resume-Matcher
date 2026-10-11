@@ -6,7 +6,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from app.mcp_server.tools._shared import (
     render_failed_message,
     require_resume,
-    require_structured,
+    require_valid_structured,
 )
 from app.pdf import PDFRenderError
 from app.schemas.models import PageFitSettings
@@ -20,7 +20,7 @@ async def parse_check_resume(
 ) -> dict[str, Any]:
     """ATS parse-check a saved resume as rendered with these settings, plus a round trip against its data. Writes nothing."""
     resume = await require_resume(resume_id)
-    data = require_structured(resume)
+    data = require_valid_structured(resume)
     try:
         report = await ats_parse.parse_check_render(
             resume_id, data, print_settings or PageFitSettings()
