@@ -28,4 +28,7 @@ async def parse_check_resume(
     except PDFRenderError as e:
         logger.error("Parse check render failed for %s: %s", resume_id, e)
         raise ToolError(render_failed_message()) from e
+    except Exception as e:
+        logger.error("Parse check failed for %s: %s", resume_id, e)
+        raise ToolError("Could not parse-check this resume.") from e
     return report.model_dump()
