@@ -5,6 +5,7 @@ import { BrandIcon, hasBrandIcon, type BrandIconName } from '@/components/ui/bra
 const NAMES: BrandIconName[] = [
   'openai',
   'anthropic',
+  'claude_cli',
   'azure_foundry',
   'gemini',
   'openrouter',
@@ -57,6 +58,13 @@ describe('BrandIcon', () => {
 
   it('keeps the LinkedIn "in" a cut-out of the square (even-odd fill, not a white overlay)', () => {
     const svg = renderMark('linkedin');
+    for (const shape of Array.from(svg.children)) {
+      expect(shape).toHaveAttribute('fill-rule', 'evenodd');
+    }
+  });
+
+  it('keeps the Claude Code mascot eyes as cut-outs (even-odd fill)', () => {
+    const svg = renderMark('claude_cli');
     for (const shape of Array.from(svg.children)) {
       expect(shape).toHaveAttribute('fill-rule', 'evenodd');
     }

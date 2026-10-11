@@ -214,6 +214,7 @@ describe('settings page (Swiss sweep)', () => {
       'DeepSeek',
       'Groq',
       'Ollama',
+      'Claude',
     ]) {
       const mark = within(providers).getByRole('radio', { name }).querySelector('svg');
       expect(mark, `${name} mark`).not.toBeNull();
