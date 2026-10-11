@@ -11,7 +11,8 @@ _LETTER_SPACED = re.compile(r"(?<!\S)(?:\w )+\w(?!\S)")
 # The local part is bounded (RFC 5321: 64) so a long "a.a.a..." run without "@"
 # costs linear time instead of a full backtrack from every position.
 _TOKEN = re.compile(r"[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+|\w+", re.UNICODE)
-_CJK = re.compile(r"[぀-ヿ㐀-鿿가-힯]")
+# Kana, Han (including the supplementary planes) and Hangul syllables.
+_CJK = re.compile(r"[぀-ヿ㐀-鿿가-힯\U00020000-\U0003FFFF]")
 
 
 def _join_letters(match: re.Match[str]) -> str:

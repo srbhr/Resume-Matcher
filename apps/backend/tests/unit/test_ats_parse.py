@@ -68,6 +68,10 @@ def test_email_matching_is_linear_on_dotted_runs() -> None:
     ]
 
 
+def test_supplementary_han_is_split_per_character() -> None:
+    assert tokens("\U0002000b\U00020089") == ["\U0002000b", "\U00020089"]
+
+
 def test_normalize_strips_inline_html_and_keeps_real_hyphens() -> None:
     assert (
         normalize("<strong>Led</strong> open-\nsource work") == "led open-source work"
