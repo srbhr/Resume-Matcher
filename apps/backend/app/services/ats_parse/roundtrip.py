@@ -58,7 +58,7 @@ def _section_fields(key: str, data: dict[str, Any]) -> list[Field]:
             f
             for i, e in enumerate(data.get("workExperience") or [])
             for f in _entry_fields(
-                f"workExperience[{i}]", e, ("title", "company", "years")
+                f"workExperience[{i}]", e, ("title", "company", "location", "years")
             )
         ]
     if key == "education":
@@ -99,7 +99,9 @@ def _section_fields(key: str, data: dict[str, Any]) -> list[Field]:
     for i, item in enumerate(custom.get("items") or []):
         fields.extend(
             _entry_fields(
-                f"customSections.{key}.items[{i}]", item, ("title", "subtitle", "years")
+                f"customSections.{key}.items[{i}]",
+                item,
+                ("title", "subtitle", "location", "years"),
             )
         )
     return fields

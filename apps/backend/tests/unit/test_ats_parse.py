@@ -278,6 +278,31 @@ def test_roundtrip_reports_missing_and_hidden() -> None:
     assert not any(name.startswith("education[") for name in statuses)
 
 
+def test_roundtrip_checks_rendered_locations() -> None:
+    data = john_doe()
+    data["workExperience"][0]["location"] = "Dublin, Ireland"
+    data["customSections"]["volunteer"] = {
+        "sectionType": "itemList",
+        "items": [{"title": "Mentor", "subtitle": "Code Club", "location": "Leeds"}],
+    }
+    data["sectionMeta"].append(
+        {
+            "id": "volunteer",
+            "key": "volunteer",
+            "displayName": "Volunteering",
+            "sectionType": "itemList",
+            "isDefault": False,
+            "order": 9,
+        }
+    )
+    text = "\n".join(_ordered_text(data))
+    assert "Dublin, Ireland" in text and "Leeds" in text
+    dropped = text.replace("Dublin, Ireland", "").replace("Leeds", "")
+    by_field = {f.field: f.status for f in compute_roundtrip(data, dropped).fields}
+    assert by_field["workExperience[0].location"] == "missing"
+    assert by_field["customSections.volunteer.items[0].location"] == "missing"
+
+
 def test_roundtrip_validates_stored_data() -> None:
     with pytest.raises(ValidationError):
         compute_roundtrip({"workExperience": ["bogus"]}, "text")
