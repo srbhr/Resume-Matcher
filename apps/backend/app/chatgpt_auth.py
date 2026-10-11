@@ -17,6 +17,7 @@ This is not the Codex CLI's login and never talks to ``chatgpt.com/backend-api``
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import json
@@ -26,10 +27,16 @@ import secrets
 import tempfile
 import time
 import uuid
+import weakref
+from collections.abc import AsyncIterator, Mapping
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlencode
+
+import httpx
+import jwt
 
 from app.config import settings
 from app.crypto import decrypt, encrypt
@@ -62,7 +69,14 @@ CALLBACK_PATH = "/auth/callback"
 LOGIN_TTL_SECONDS = 600
 _MAX_PENDING_LOGINS = 10
 
+#: OpenAI signs ID tokens with RS256; never accept a symmetric or "none" alg.
+ID_TOKEN_ALGORITHMS = ["RS256"]
+HTTP_TIMEOUT_SECONDS = 30.0
+#: How long to wait for another process that is refreshing the same tokens.
+LOCK_TIMEOUT_SECONDS = 60.0
+
 _CREDENTIALS_FILE = "chatgpt_credentials.enc"
+_LOCK_FILE = "chatgpt_credentials.lock"
 #: Fields that make up a token set; cleared on sign-out or a dead refresh token.
 _TOKEN_FIELDS = (
     "id_token",
@@ -77,6 +91,27 @@ _TOKEN_FIELDS = (
 
 class ChatGPTAuthError(Exception):
     """A Sign in with ChatGPT operation failed. Messages are safe to log."""
+
+
+class ChatGPTLoginError(ChatGPTAuthError):
+    """A sign-in attempt did not complete.
+
+    ``outcome`` is the short code the settings page shows: ``cancelled`` when
+    the user declined in the browser, ``error`` for anything else.
+    """
+
+    def __init__(self, outcome: str, message: str) -> None:
+        super().__init__(message)
+        self.outcome = outcome
+
+
+class TokenEndpointError(ChatGPTAuthError):
+    """The token endpoint answered with an OAuth error."""
+
+    def __init__(self, status_code: int, error: str | None) -> None:
+        super().__init__(f"token endpoint returned HTTP {status_code} ({error})")
+        self.status_code = status_code
+        self.error = error
 
 
 # ---------------------------------------------------------------------------
@@ -229,6 +264,267 @@ def start_login(port: int) -> str:
     return f"{AUTHORIZE_URL}?{urlencode(params, quote_via=quote)}"
 
 
+# ---------------------------------------------------------------------------
+# Serializing writers (refresh rotates the refresh token)
+# ---------------------------------------------------------------------------
+
+try:  # POSIX
+    import fcntl
+except ImportError:  # pragma: no cover - Windows
+    fcntl = None  # type: ignore[assignment]
+try:  # Windows
+    import msvcrt
+except ImportError:
+    msvcrt = None  # type: ignore[assignment]
+
+_loop_locks: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock] = (
+    weakref.WeakKeyDictionary()
+)
+
+
+def _try_lock_file(fd: int) -> bool:
+    try:
+        if fcntl is not None:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        elif msvcrt is not None:  # pragma: no cover - Windows
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+    except OSError:
+        return False
+    return True
+
+
+@asynccontextmanager
+async def credentials_lock() -> AsyncIterator[None]:
+    """Hold exclusive access to the credential record.
+
+    Refresh tokens rotate, so two refreshes racing on the same token can get
+    the session revoked (``refresh_token_reused``). The docs require refreshes
+    for one session to be serialized across processes: the backend and the
+    MCP server can both call the model. An asyncio lock orders callers inside
+    this process; a non-blocking advisory file lock, polled without blocking
+    the event loop, orders processes. Closing the descriptor releases it.
+    """
+    loop = asyncio.get_running_loop()
+    lock = _loop_locks.get(loop)
+    if lock is None:
+        lock = _loop_locks[loop] = asyncio.Lock()
+    async with lock:
+        path = settings.data_dir / _LOCK_FILE
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+            while not _try_lock_file(fd):
+                if time.monotonic() >= deadline:
+                    raise ChatGPTAuthError("timed out waiting for the credential lock")
+                await asyncio.sleep(0.05)
+            yield
+        finally:
+            os.close(fd)
+
+
+# ---------------------------------------------------------------------------
+# OpenAI endpoints
+# ---------------------------------------------------------------------------
+
+_discovery_cache: dict[str, Any] = {}
+_jwks_cache: dict[str, Any] = {}
+
+
+async def _discovery() -> dict[str, Any]:
+    """OpenAI's OpenID configuration (cached for the process lifetime)."""
+    if not _discovery_cache:
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as client:
+            response = await client.get(DISCOVERY_URL)
+        response.raise_for_status()
+        document = response.json()
+        if not isinstance(document, dict):
+            raise ChatGPTAuthError("OpenID discovery document is not an object")
+        _discovery_cache.update(document)
+    return _discovery_cache
+
+
+async def _endpoint(name: str) -> str:
+    url = (await _discovery()).get(name)
+    if not isinstance(url, str) or not url.startswith("https://"):
+        raise ChatGPTAuthError(f"OpenID discovery has no https {name}")
+    return url
+
+
+async def _signing_key(kid: str | None) -> Any:
+    """The JWKS key for ``kid``, refetching the key set once on a miss."""
+    for refetch in (False, True):
+        if refetch or not _jwks_cache:
+            async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as client:
+                response = await client.get(await _endpoint("jwks_uri"))
+            response.raise_for_status()
+            _jwks_cache.clear()
+            _jwks_cache.update(response.json())
+        keys = [k for k in _jwks_cache.get("keys", []) if isinstance(k, dict)]
+        for jwk in keys:
+            if jwk.get("kid") == kid or (kid is None and len(keys) == 1):
+                return jwt.PyJWK(jwk).key
+    raise ChatGPTAuthError("no OpenAI signing key matches the ID token")
+
+
+async def _post_token(data: dict[str, str]) -> dict[str, Any]:
+    """POST a form-encoded grant to the token endpoint. No client secret."""
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as client:
+        response = await client.post(
+            TOKEN_URL, data=data, headers={"Accept": "application/json"}
+        )
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    if response.status_code != 200:
+        error = body.get("error") if isinstance(body, dict) else None
+        raise TokenEndpointError(
+            response.status_code, error if isinstance(error, str) else None
+        )
+    if not isinstance(body, dict) or not isinstance(body.get("access_token"), str):
+        raise TokenEndpointError(response.status_code, "invalid_token_response")
+    return body
+
+
+async def validate_id_token(
+    id_token: str, client_id: str, nonce: str
+) -> dict[str, Any]:
+    """Verify the ID token's signature, issuer, audience, expiry and nonce."""
+    try:
+        header = jwt.get_unverified_header(id_token)
+        key = await _signing_key(header.get("kid"))
+        claims = jwt.decode(
+            id_token,
+            key=key,
+            algorithms=ID_TOKEN_ALGORITHMS,
+            audience=client_id,
+            issuer=ISSUER,
+            options={"require": ["exp", "iat", "iss", "aud", "sub"]},
+            leeway=60,
+        )
+    except jwt.PyJWTError as error:
+        raise ChatGPTAuthError(f"ID token rejected: {type(error).__name__}") from error
+    if not secrets.compare_digest(str(claims.get("nonce", "")), nonce):
+        raise ChatGPTAuthError("ID token nonce does not match this sign-in")
+    if not isinstance(claims.get("sub"), str) or not claims["sub"]:
+        raise ChatGPTAuthError("ID token has no subject")
+    return claims
+
+
+def _granted_scopes(token_response: Mapping[str, Any]) -> list[str]:
+    scope = token_response.get("scope")
+    return sorted(set(scope.split())) if isinstance(scope, str) else []
+
+
+def _expires_in(token_response: Mapping[str, Any]) -> int:
+    value = token_response.get("expires_in")
+    return value if isinstance(value, int) and value > 0 else 3600
+
+
+# ---------------------------------------------------------------------------
+# Finishing a sign-in (the loopback callback)
+# ---------------------------------------------------------------------------
+
+
+async def complete_login(query: Mapping[str, str]) -> str:
+    """Finish an attempt from its callback query and store the credentials.
+
+    Returns ``connected``, or ``plan_declined`` when the user signed in but did
+    not allow ChatGPT plan usage. Raises :class:`ChatGPTLoginError` otherwise.
+    """
+    state = query.get("state") or ""
+    _prune_pending_logins()
+    pending = _pending_logins.pop(state, None)
+    if pending is None:
+        raise ChatGPTLoginError("error", "callback state is unknown or expired")
+    # Only after the state matched: an OAuth error ends the attempt and no
+    # code is ever exchanged.
+    if query.get("error"):
+        outcome = "cancelled" if query.get("error") == "access_denied" else "error"
+        raise ChatGPTLoginError(outcome, "authorization returned an OAuth error")
+    code = query.get("code")
+    if not code:
+        raise ChatGPTLoginError("error", "callback has no authorization code")
+
+    callback_client_id = query.get("client_id")
+    if pending.client_id == DYNAMIC_CLIENT_ID:
+        if not callback_client_id or callback_client_id == DYNAMIC_CLIENT_ID:
+            raise ChatGPTLoginError(
+                "error", "registration returned no issued client_id"
+            )
+        client_id = callback_client_id
+    else:
+        if callback_client_id and callback_client_id != pending.client_id:
+            raise ChatGPTLoginError("error", "callback client_id does not match")
+        client_id = pending.client_id
+
+    try:
+        tokens = await _post_token(
+            {
+                "grant_type": "authorization_code",
+                "client_id": client_id,
+                "code": code,
+                "code_verifier": pending.code_verifier,
+                "redirect_uri": pending.redirect_uri,
+                "resource": RESOURCE,
+            }
+        )
+        id_token = tokens.get("id_token")
+        if not isinstance(id_token, str):
+            raise ChatGPTAuthError("token response has no ID token")
+        claims = await validate_id_token(id_token, client_id, pending.nonce)
+    except ChatGPTLoginError:
+        raise
+    except (ChatGPTAuthError, httpx.HTTPError) as error:
+        # invalid_grant lands here too: the code is discarded with the attempt.
+        raise ChatGPTLoginError("error", str(error)) from error
+
+    granted = _granted_scopes(tokens)
+    async with credentials_lock():
+        record = load_record()
+        if (
+            record.get("client_id") == client_id
+            and record.get("subject")
+            and record["subject"] != claims["sub"]
+        ):
+            raise ChatGPTLoginError("error", "signed in as a different ChatGPT account")
+        for field in _TOKEN_FIELDS:
+            record.pop(field, None)
+        record.update(
+            {
+                "issuer": ISSUER,
+                "subject": claims["sub"],
+                "email": claims.get("email")
+                if isinstance(claims.get("email"), str)
+                else None,
+                "client_id": client_id,
+            }
+        )
+        if PLAN_SCOPE not in granted:
+            # A valid ID token alone does not authorize plan usage. Keep the
+            # registration so the next attempt reuses it and asks for consent.
+            record["plan_declined"] = True
+            save_record(record)
+            return "plan_declined"
+        record.pop("plan_declined", None)
+        record.update(
+            {
+                "id_token": id_token,
+                "access_token": tokens["access_token"],
+                "refresh_token": tokens.get("refresh_token"),
+                "token_type": tokens.get("token_type", "Bearer"),
+                "expires_in": _expires_in(tokens),
+                "scopes": granted,
+                "saved_at": time.time(),
+            }
+        )
+        save_record(record)
+    return "connected"
+
+
 def reset_state() -> None:
     """Forget in-memory sign-in attempts and caches (tests)."""
     _pending_logins.clear()
+    _discovery_cache.clear()
+    _jwks_cache.clear()

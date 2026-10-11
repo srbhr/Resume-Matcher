@@ -1,4 +1,4 @@
-"""Sign in with ChatGPT (official open-source flow): PKCE, state and storage.
+"""Sign in with ChatGPT (official open-source flow): PKCE, callback, tokens, storage.
 
 Every OpenAI endpoint is faked with respx; the conftest socket guard fails any
 test that would reach the real network.
@@ -13,10 +13,13 @@ import stat
 from collections.abc import Iterator
 from urllib.parse import parse_qs, urlsplit
 
+import httpx
 import pytest
+import respx
 
 from app import chatgpt_auth
 from app.config import settings
+from tests import chatgpt_fakes as fakes
 
 
 @pytest.fixture(autouse=True)
@@ -151,3 +154,236 @@ class TestStartLogin:
         monkeypatch.setattr(chatgpt_auth.time, "time", lambda: clock)
         chatgpt_auth.start_login(8000)
         assert params["state"] not in chatgpt_auth._pending_logins
+
+
+# ---------------------------------------------------------------------------
+# The loopback callback: state, code exchange, ID token, granted scopes
+# ---------------------------------------------------------------------------
+
+
+def _start(port: int = 8000) -> dict[str, str]:
+    return _query(chatgpt_auth.start_login(port))
+
+
+@pytest.fixture
+def openai_auth() -> Iterator[respx.MockRouter]:
+    with respx.mock(assert_all_called=False) as router:
+        fakes.mount_discovery(router)
+        yield router
+
+
+class TestCompleteLogin:
+    async def test_unknown_state_is_rejected_before_any_exchange(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        token = openai_auth.post(chatgpt_auth.TOKEN_URL)
+        _start()
+
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError) as raised:
+            await chatgpt_auth.complete_login(
+                {"state": "forged", "code": "c", "client_id": fakes.ISSUED_CLIENT_ID}
+            )
+        assert raised.value.outcome == "error"
+        assert not token.called
+        assert "access_token" not in chatgpt_auth.load_record()
+
+    async def test_declined_consent_ends_the_attempt_without_exchanging(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        token = openai_auth.post(chatgpt_auth.TOKEN_URL)
+        params = _start()
+
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError) as raised:
+            await chatgpt_auth.complete_login(
+                {"state": params["state"], "error": "access_denied", "code": "c"}
+            )
+        assert raised.value.outcome == "cancelled"
+        assert not token.called
+
+    async def test_an_error_with_a_forged_state_is_not_reported_as_cancelled(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        _start()
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError) as raised:
+            await chatgpt_auth.complete_login({"state": "x", "error": "access_denied"})
+        assert raised.value.outcome == "error"
+
+    async def test_new_registration_exchanges_the_code_with_pkce_and_saves_tokens(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        params = _start(8123)
+        verifier = chatgpt_auth._pending_logins[params["state"]].code_verifier
+        token = openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=fakes.token_response(nonce=params["nonce"])
+        )
+
+        outcome = await chatgpt_auth.complete_login(
+            {
+                "state": params["state"],
+                "code": "auth-code",
+                "client_id": fakes.ISSUED_CLIENT_ID,
+                "scope": fakes.ALL_SCOPES,
+            }
+        )
+
+        assert outcome == "connected"
+        sent = fakes.form(token.calls.last.request)
+        assert sent == {
+            "grant_type": "authorization_code",
+            "client_id": fakes.ISSUED_CLIENT_ID,
+            "code": "auth-code",
+            "code_verifier": verifier,
+            "redirect_uri": "http://127.0.0.1:8123/auth/callback",
+            "resource": "https://api.openai.com/v1",
+        }
+        assert (
+            chatgpt_auth.code_challenge(sent["code_verifier"])
+            == params["code_challenge"]
+        )
+        record = chatgpt_auth.load_record()
+        assert record["client_id"] == fakes.ISSUED_CLIENT_ID
+        assert record["subject"] == fakes.SUBJECT
+        assert record["email"] == fakes.EMAIL
+        assert record["access_token"] == "access-1"
+        assert record["refresh_token"] == "refresh-1"
+        assert "chatgpt.tokens.use.direct" in record["scopes"]
+        assert record["ext_agent_host_id"] == params["ext_agent_host_id"]
+
+    async def test_state_is_single_use(self, openai_auth: respx.MockRouter) -> None:
+        params = _start()
+        openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=fakes.token_response(nonce=params["nonce"])
+        )
+        query = {
+            "state": params["state"],
+            "code": "auth-code",
+            "client_id": fakes.ISSUED_CLIENT_ID,
+        }
+        assert await chatgpt_auth.complete_login(query) == "connected"
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError):
+            await chatgpt_auth.complete_login(query)
+
+    async def test_new_registration_without_an_issued_client_id_is_incomplete(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        token = openai_auth.post(chatgpt_auth.TOKEN_URL)
+        for client_id in (None, "dynamic_agent_client"):
+            params = _start()
+            query = {"state": params["state"], "code": "auth-code"}
+            if client_id:
+                query["client_id"] = client_id
+            with pytest.raises(chatgpt_auth.ChatGPTLoginError):
+                await chatgpt_auth.complete_login(query)
+        assert not token.called
+        assert "client_id" not in chatgpt_auth.load_record()
+
+    async def test_reauthorization_keeps_the_saved_client_id(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        chatgpt_auth.save_record(
+            {"client_id": fakes.ISSUED_CLIENT_ID, "subject": fakes.SUBJECT}
+        )
+        params = _start()
+        token = openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=fakes.token_response(nonce=params["nonce"])
+        )
+        # The reauthorization callback may omit client_id.
+        outcome = await chatgpt_auth.complete_login(
+            {"state": params["state"], "code": "auth-code"}
+        )
+        assert outcome == "connected"
+        assert (
+            fakes.form(token.calls.last.request)["client_id"] == fakes.ISSUED_CLIENT_ID
+        )
+
+    async def test_reauthorization_rejects_a_different_client_id(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        chatgpt_auth.save_record({"client_id": fakes.ISSUED_CLIENT_ID})
+        params = _start()
+        token = openai_auth.post(chatgpt_auth.TOKEN_URL)
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError):
+            await chatgpt_auth.complete_login(
+                {"state": params["state"], "code": "c", "client_id": "oaiapp_other"}
+            )
+        assert not token.called
+        assert chatgpt_auth.load_record()["client_id"] == fakes.ISSUED_CLIENT_ID
+
+    async def test_reauthorization_as_another_account_does_not_replace_credentials(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        fakes.save_connected_record(access_token="original")
+        params = _start()
+        openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=fakes.token_response(nonce=params["nonce"], sub="someone-else")
+        )
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError):
+            await chatgpt_auth.complete_login({"state": params["state"], "code": "c"})
+        assert chatgpt_auth.load_record()["access_token"] == "original"
+
+    @pytest.mark.parametrize(
+        "bad_token",
+        [
+            {"nonce": "a-different-nonce"},
+            {"aud": "oaiapp_someone_else"},
+            {"iss": "https://evil.example"},
+            {"wrong_key": True},
+            {"expires_in": -3600},
+        ],
+        ids=["nonce", "audience", "issuer", "signature", "expired"],
+    )
+    async def test_an_invalid_id_token_stores_nothing(
+        self, openai_auth: respx.MockRouter, bad_token: dict
+    ) -> None:
+        params = _start()
+        id_kwargs = {"nonce": params["nonce"], **bad_token}
+        nonce = id_kwargs.pop("nonce")
+        openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=fakes.token_response(nonce=nonce, **id_kwargs)
+        )
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError) as raised:
+            await chatgpt_auth.complete_login(
+                {
+                    "state": params["state"],
+                    "code": "c",
+                    "client_id": fakes.ISSUED_CLIENT_ID,
+                }
+            )
+        assert raised.value.outcome == "error"
+        record = chatgpt_auth.load_record()
+        assert "access_token" not in record and "client_id" not in record
+
+    async def test_invalid_grant_discards_the_attempt(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        params = _start()
+        openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=httpx.Response(400, json={"error": "invalid_grant"})
+        )
+        query = {
+            "state": params["state"],
+            "code": "c",
+            "client_id": fakes.ISSUED_CLIENT_ID,
+        }
+        with pytest.raises(chatgpt_auth.ChatGPTLoginError):
+            await chatgpt_auth.complete_login(query)
+        assert params["state"] not in chatgpt_auth._pending_logins
+        assert "access_token" not in chatgpt_auth.load_record()
+
+    async def test_sign_in_without_the_plan_scope_keeps_no_tokens(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        params = _start()
+        openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=fakes.token_response(
+                nonce=params["nonce"], scope="openid profile email offline_access"
+            )
+        )
+        outcome = await chatgpt_auth.complete_login(
+            {"state": params["state"], "code": "c", "client_id": fakes.ISSUED_CLIENT_ID}
+        )
+        assert outcome == "plan_declined"
+        record = chatgpt_auth.load_record()
+        assert record["client_id"] == fakes.ISSUED_CLIENT_ID
+        assert record["plan_declined"] is True
+        assert "access_token" not in record and "refresh_token" not in record
