@@ -257,6 +257,7 @@ describe('settings page (Swiss sweep)', () => {
       .closest('[role="alert"]');
     expect(note).toHaveClass('border-2', 'border-warning', 'bg-warning-tint');
     expect(note).toHaveTextContent('settings.llmConfiguration.chatgptWarningTitle');
+    expect(note).toHaveTextContent('settings.llmConfiguration.communityBuilt');
 
     fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
     expect(screen.queryByText('settings.llmConfiguration.chatgptWarning')).toBeNull();

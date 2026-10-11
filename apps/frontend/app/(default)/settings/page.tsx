@@ -968,7 +968,8 @@ export default function SettingsPage() {
                     onConnectionChange={refreshStatus}
                   />
                   <Alert tone="warning" title={t('settings.llmConfiguration.chatgptWarningTitle')}>
-                    {t('settings.llmConfiguration.chatgptWarning')}
+                    <p>{t('settings.llmConfiguration.chatgptWarning')}</p>
+                    <p className="mt-2">{t('settings.llmConfiguration.communityBuilt')}</p>
                   </Alert>
                 </>
               ) : (
