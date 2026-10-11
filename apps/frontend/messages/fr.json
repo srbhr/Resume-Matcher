@@ -453,6 +453,10 @@
         "vivid": {
           "name": "Vif",
           "description": "Mise en page deux colonnes colorée avec en-têtes accentués et puces fléchées"
+        },
+        "vividSingle": {
+          "name": "Vif une colonne",
+          "description": "Mise en page une colonne colorée avec en-têtes accentués et puces fléchées"
         }
       },
       "accentColor": "Couleur d'accentuation",
