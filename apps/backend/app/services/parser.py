@@ -10,6 +10,7 @@ import tempfile
 import zipfile
 import zlib
 from collections.abc import Callable
+from contextlib import nullcontext
 from itertools import islice
 from pathlib import Path
 from typing import Any, BinaryIO, Sequence, TypeVar
@@ -327,14 +328,17 @@ class _BoundedPDFParser(PDFParser):
                 )
 
 
-def _validate_pdf_container(path: Path) -> None:
+def _validate_pdf_container(source: Path | BinaryIO) -> None:
     """Require a readable PDF whose decoded streams fit a shared budget.
 
+    ``source`` is a path or an open binary stream (left open for the caller).
     Only the first ``MAX_PDF_PREFLIGHT_PAGES`` pages are interpreted; a PDF with
     more pages is rejected before the rest of the document is scanned.
     """
     try:
-        with path.open("rb") as stream:
+        with (
+            source.open("rb") if isinstance(source, Path) else nullcontext(source)
+        ) as stream:
             budget = _PDFDecodeBudget()
             document = PDFDocument(_BoundedPDFParser(stream, budget))
             manager = PDFResourceManager(caching=False)
@@ -373,10 +377,10 @@ def _validate_pdf_container(path: Path) -> None:
         ) from exc
 
 
-def _validate_docx_container(path: Path) -> None:
+def _validate_docx_container(source: Path | BinaryIO) -> None:
     """Require a bounded, readable Office Open XML word-processing package."""
     try:
-        with zipfile.ZipFile(path) as archive:
+        with zipfile.ZipFile(source) as archive:
             members = archive.infolist()
             if len(members) > MAX_DOCX_MEMBERS:
                 raise DocumentResourceLimitError(

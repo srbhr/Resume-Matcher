@@ -2,7 +2,6 @@
 
 import io
 import logging
-import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -186,20 +185,13 @@ def _extract_sync(content: bytes, filename: str) -> ExtractedDocument:
     suffix = Path(filename).suffix.lower()
     if suffix not in SUPPORTED_SUFFIXES:
         raise DocumentValidationError("Parse check supports PDF and DOCX files.")
-    path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-            path = Path(tmp.name)
-            tmp.write(content)
-        if suffix == ".pdf":
-            _validate_pdf_container(path)
-            result = extract_pdf(content)
-        else:
-            _validate_docx_container(path)
-            result = extract_docx(content)
-    finally:
-        if path is not None:
-            path.unlink(missing_ok=True)
+    # Validate in memory: the resume never touches disk, so nothing is left behind.
+    if suffix == ".pdf":
+        _validate_pdf_container(io.BytesIO(content))
+        result = extract_pdf(content)
+    else:
+        _validate_docx_container(io.BytesIO(content))
+        result = extract_docx(content)
     _validate_extracted_text(result.text)
     return result
 
