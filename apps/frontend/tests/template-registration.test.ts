@@ -8,7 +8,7 @@ import {
 } from '@/lib/types/template-settings';
 
 describe('template registration', () => {
-  it('includes all seven templates with non-empty metadata', () => {
+  it('includes all eight templates with non-empty metadata', () => {
     const ids = TEMPLATE_OPTIONS.map((t) => t.id);
     expect(ids).toEqual(
       expect.arrayContaining<TemplateType>([
@@ -19,9 +19,10 @@ describe('template registration', () => {
         'latex',
         'clean',
         'vivid',
+        'vivid-single',
       ])
     );
-    expect(ids).toHaveLength(7);
+    expect(ids).toHaveLength(8);
 
     for (const opt of TEMPLATE_OPTIONS) {
       expect(opt.name.length).toBeGreaterThan(0);
