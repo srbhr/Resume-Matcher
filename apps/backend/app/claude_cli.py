@@ -94,7 +94,11 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         "json",
         "--system-prompt",
         system_prompt,
-        "--exclude-dynamic-system-prompt-sections",
+        # Empty list = no tools at all. This is a text-completion provider: a
+        # resume or job description that tells the model to run Bash or edit
+        # files must not be able to, whatever RAW_SYSTEM says.
+        "--tools",
+        "",
     ]
     try:
         proc = await asyncio.create_subprocess_exec(
