@@ -143,7 +143,7 @@ npm run dev
 
 > **PDF エクスポート:** Resume Matcher はヘッドレス Chromium で PDF を生成します。Playwright のブラウザがインストールされていない場合、バックエンドはインストール済みの Microsoft Edge または Google Chrome にフォールバックします（Edge は Windows 11 に標準搭載です）。`apps\backend` で `uv run playwright install chromium` を実行して、Playwright の Chromium をインストールすることもできます。
 
-> **Docker を使いたい場合:** [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) をインストールし、[Docker デプロイ](#docker-deployment) に従ってください。PowerShell で `PORT` などの変数を設定するには、`$env:PORT="4000"; docker compose up -d` を使います。[オプションの PostgreSQL 構成](#optional-postgresql) では、`$env:POSTGRES_PASSWORD="change-me"; docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d` を実行します。Docker を使わない場合は、`apps\backend\.env` に `DATABASE_URL` を設定します。
+> **Docker を使いたい場合:** [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) をインストールし、[Docker デプロイ](#docker-deployment) に従ってください。PowerShell で `PORT` などの変数を設定するには、`$env:PORT="4000"; docker compose up -d` を使います。[オプションの PostgreSQL 構成](#optional-postgresql) では、`$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d` を実行します。Docker を使わない場合は、`apps\backend\.env` に `DATABASE_URL` を設定します。
 
 ---
 
@@ -337,9 +337,9 @@ OpenAI 公式の [Sign in with ChatGPT for open-source apps](https://developers.
 3. OpenAI でサインインし、Resume Matcher が ChatGPT プランを使うことを許可します。初回は OpenAI がアカウントにアプリを登録し、以降のサインインではその登録が再利用されます。
 4. Settings に戻ります。アカウントで利用できるモデルを選び、**Save** をクリックします。
 
-OpenAI はブラウザを `http://127.0.0.1:<backend port>/auth/callback`（既定ではポート `8000`）に戻し、バックエンドはこのコールバックを `127.0.0.1` からのみ受け付けます。そのため、ブラウザはバックエンドを実行しているマシン上で動作し、そのポートに直接到達できる必要があります。トークンは暗号化してバックエンドのデータディレクトリ（`chatgpt_credentials.enc`）に保存されます。**Disconnect** は OpenAI 側でセッションを取り消してトークンを削除し、**Manage usage** は ChatGPT の使用状況設定を開きます。
+OpenAI はブラウザを `http://127.0.0.1:<port>/auth/callback` に戻します。`<port>` は Resume Matcher を開いたポート（既定は `3000`）です。フロントエンドがこのパスをバックエンドに転送し、バックエンドはこのコールバックを自身が動作しているマシンからのみ受け付けます。そのため、ブラウザは Resume Matcher を実行しているマシン上で動作している必要があり、`http://localhost:<port>` または `http://127.0.0.1:<port>` として開いてください。トークンは暗号化してバックエンドのデータディレクトリ（`chatgpt_credentials.enc`）に保存されます。**Disconnect** は OpenAI 側でセッションを取り消してトークンを削除し、**Manage usage** は ChatGPT の使用状況設定を開きます。
 
-**Docker:** 既定の構成で公開されるのはポート 3000 のみです。Docker の公開ポート経由の接続は `127.0.0.1` ではなく Docker のゲートウェイからコンテナに届くため、サインインを完了できません。Linux ではホストネットワーク（`network_mode: host`）でコンテナを実行してください。それ以外の場合は、このプロバイダを使うために Resume Matcher を（Docker ではなく）ローカルで実行してください。
+**Docker:** サインインは、ポート 3000 のみを公開する既定の構成で動作します。コンテナを実行しているマシン上で、Resume Matcher を `http://localhost:3000`（または公開した `PORT`）で開いてください。OpenAI は同じポートにブラウザを戻し、フロントエンドが `/auth/callback` をコンテナ内のバックエンドに転送します。OpenAI は `http://127.0.0.1` へのリダイレクトしか許可しないため、別のコンピューターやリバースプロキシのドメイン経由では動作しません。
 
 同等の `.env`（サインインは引き続き Settings から行います）：
 
@@ -371,22 +371,26 @@ docker-compose down
 <a id="optional-postgresql"></a>
 ### オプション: PostgreSQL
 
-SQLite が既定で、セットアップは不要です。バックアップやリモート/共有ホスティングが必要な場合は、代わりに PostgreSQL を使えます：
+SQLite が既定で、セットアップは不要です。バックアップが必要な場合や、自分で管理する別のサーバーにデータベースを置きたい場合は、代わりに PostgreSQL を使えます。
+
+> **セキュリティ:** Resume Matcher にはユーザーアカウントも認証もなく、PostgreSQL を使ってもそれらは追加されません。自分だけで使うか、信頼できるプライベートネットワーク内でのみ実行し、インターネットなどに公開しないでください。ローカル以外の用途では、最小権限のデータベースロールで接続してください（Compose ファイルの `resume` ユーザーはスーパーユーザーです）。
+
+Docker Compose で起動するには：
 
 ```bash
-POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-`POSTGRES_PASSWORD` はそのまま `DATABASE_URL` にコピーされるため、URL で安全に使えるパスワード（英字、数字、`-._~`）にしてください。
+`POSTGRES_PASSWORD` はそのまま `DATABASE_URL` にコピーされるため、URL で安全に使えるパスワード（英字、数字、`-._~`）にしてください。`openssl rand -hex 32` で生成できます。推測されやすい値は使わないでください。パスワードは必ず保管してください。PostgreSQL は初回起動時にこれを `postgres-data` ボリュームに保存し、以降の `docker compose` コマンドでも同じ値が必要です（再度 `export` するか、`docker-compose.yml` と同じ場所の `.env` ファイルに `POSTGRES_PASSWORD=...` と記述します）。
 
 Docker を使わない場合は、`apps/backend/.env` に `DATABASE_URL=postgresql://user:password@host:5432/dbname`（必要に応じて `DATABASE_SCHEMA` も）を設定し、パスワード中の特殊文字はパーセントエンコードします。リモートデータベースの場合は URL に `?sslmode=require` を付けます。テーブルは起動時に作成されます。
 
 ローカルインストールの既存データを移行するには、`DATABASE_URL` を設定した状態で `apps/backend` から `uv run python -m app.scripts.copy_sqlite_to_postgres` を実行します。既定の `--source` は `apps/backend/data/resume_matcher.db` で、これはローカルインストールにのみ存在します。別の SQLite ファイルを使う場合は `--source <file>` を指定してください。空でないデータベースには書き込みません。先にアプリを停止してください。コピー開始後に行われた書き込みはコピーされません。
 
-Docker インストールでは SQLite データベースはホストではなく `resume-data` ボリューム内にあります。アプリを停止してから、そのボリュームが既定のソースとなるコンテナ内でスクリプトを実行します：
+Docker インストールでは SQLite データベースはホストではなく `resume-data` ボリューム内にあります。アプリを停止してから、そのボリュームが既定のソースとなるコンテナ内でスクリプトを実行します（上記と同じ `POSTGRES_PASSWORD` を設定しておきます）：
 
 ```bash
-export POSTGRES_PASSWORD=change-me
 docker compose stop
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
@@ -456,7 +460,7 @@ claude mcp add resume-matcher -- uv run --directory /abs/path/to/Resume-Matcher/
 }
 ```
 
-`command` には `uv` の**絶対パス**を指定してください（macOS/Linux では `which uv`、Windows では `where uv` で確認できます）。Claude Desktop はシェルの `PATH` を継承しないため、`uv` だけでは見つかりません。Windows では、JSON 内のパスのバックスラッシュを二重にしてください。
+`command` には `uv` の**絶対パス**を指定してください（macOS/Linux では `which uv`、Windows では `where.exe uv` で確認できます）。Claude Desktop はシェルの `PATH` を継承しないため、`uv` だけでは見つかりません。Windows では、JSON 内のパスのバックスラッシュを二重にしてください。
 
 ### その他の MCP クライアント
 
@@ -628,7 +632,6 @@ Resume-Matcher/
 │     ├─ lib/                  # Utilities and API client
 │     ├─ .env.sample           # Environment template
 │     └─ package.json          # Node.js dependencies
-├─ docs/                        # Additional documentation
 ├─ docker-compose.yml           # Docker configuration
 ├─ Dockerfile                   # Container build instructions
 └─ README.md                    # Project overview

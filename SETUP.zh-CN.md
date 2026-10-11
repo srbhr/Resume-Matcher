@@ -143,7 +143,7 @@ npm run dev
 
 > **PDF 导出：** Resume Matcher 使用无头 Chromium 渲染 PDF。如果未安装 Playwright 的浏览器，后端会回退到已安装的 Microsoft Edge 或 Google Chrome（Windows 11 自带 Edge）。你也可以在 `apps\backend` 中运行 `uv run playwright install chromium` 来安装 Playwright 的 Chromium。
 
-> **更喜欢 Docker？** 请安装 [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)，并按照 [Docker 部署](#docker-deployment) 操作。要在 PowerShell 中设置 `PORT` 之类的变量，请使用 `$env:PORT="4000"; docker compose up -d`。对于 [可选的 PostgreSQL 配置](#optional-postgresql)，运行 `$env:POSTGRES_PASSWORD="change-me"; docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`；在 Docker 之外，请在 `apps\backend\.env` 中设置 `DATABASE_URL`。
+> **更喜欢 Docker？** 请安装 [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)，并按照 [Docker 部署](#docker-deployment) 操作。要在 PowerShell 中设置 `PORT` 之类的变量，请使用 `$env:PORT="4000"; docker compose up -d`。对于 [可选的 PostgreSQL 配置](#optional-postgresql)，运行 `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`；在 Docker 之外，请在 `apps\backend\.env` 中设置 `DATABASE_URL`。
 
 ---
 
@@ -337,9 +337,9 @@ ollama serve
 3. 在 OpenAI 登录，并允许 Resume Matcher 使用你的 ChatGPT 订阅。首次使用时，OpenAI 会为你的账户注册该应用；之后的登录会复用该注册。
 4. 你会回到 Settings。从你账户可用的模型中选择一个，然后点击 **Save**。
 
-OpenAI 会将浏览器重定向到 `http://127.0.0.1:<backend port>/auth/callback`（默认端口为 `8000`），而后端只接受来自 `127.0.0.1` 的该回调。因此，浏览器必须运行在运行后端的那台机器上，并能直接访问该端口。令牌加密存储在后端数据目录中（`chatgpt_credentials.enc`）。**Disconnect** 会在 OpenAI 端撤销会话并删除令牌；**Manage usage** 会打开你的 ChatGPT 用量设置。
+OpenAI 会将浏览器重定向到 `http://127.0.0.1:<port>/auth/callback`，其中 `<port>` 是你打开 Resume Matcher 时使用的端口（默认为 `3000`）。前端会把该路径转发给后端，而后端只接受来自其所在机器的该回调。因此，浏览器必须运行在运行 Resume Matcher 的那台机器上，并且你应以 `http://localhost:<port>` 或 `http://127.0.0.1:<port>` 的形式打开它。令牌加密存储在后端数据目录中（`chatgpt_credentials.enc`）。**Disconnect** 会在 OpenAI 端撤销会话并删除令牌；**Manage usage** 会打开你的 ChatGPT 用量设置。
 
-**Docker：** 默认配置只发布 3000 端口，而通过 Docker 发布端口建立的连接是从 Docker 网关而不是 `127.0.0.1` 到达容器的，因此无法完成登录。在 Linux 上，请使用主机网络（`network_mode: host`）运行容器；否则请在本地（不使用 Docker）运行 Resume Matcher 以使用此提供商。
+**Docker：** 使用只发布 3000 端口的默认配置即可完成登录：请在运行容器的机器上，通过 `http://localhost:3000`（或你发布的 `PORT`）打开 Resume Matcher。OpenAI 会把浏览器带回同一个端口，前端再把 `/auth/callback` 转发给容器内的后端。从另一台电脑或通过反向代理域名访问时无法使用，因为 OpenAI 只允许 `http://127.0.0.1` 的重定向。
 
 等效的 `.env`（仍需在 Settings 中登录）：
 
@@ -371,22 +371,26 @@ docker-compose down
 <a id="optional-postgresql"></a>
 ### 可选：PostgreSQL
 
-SQLite 是默认选项，无需任何设置。如果需要备份或远程/共享托管，可以改用 PostgreSQL：
+SQLite 是默认选项，无需任何设置。如果需要备份，或想把数据库放在你自己掌控的另一台服务器上，可以改用 PostgreSQL。
+
+> **安全提示：** Resume Matcher 没有用户账户，也没有身份验证，PostgreSQL 同样不会增加这些功能。请仅供自己使用，或只在可信的私有网络中运行，切勿暴露到公网。除本地使用之外，请使用最小权限的数据库角色连接（Compose 文件中的 `resume` 用户是超级用户）。
+
+使用 Docker Compose 启动：
 
 ```bash
-POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-`POSTGRES_PASSWORD` 会原样复制到 `DATABASE_URL` 中，因此请使用对 URL 安全的密码（字母、数字、`-._~`）。
+`POSTGRES_PASSWORD` 会原样复制到 `DATABASE_URL` 中，因此请使用对 URL 安全的密码（字母、数字、`-._~`），可用 `openssl rand -hex 32` 生成。不要使用容易被猜到的值。请保存好这个密码：PostgreSQL 会在首次启动时把它存入 `postgres-data` 卷，之后每次执行 `docker compose` 命令都需要相同的值（重新 export，或在 `docker-compose.yml` 同目录的 `.env` 文件中写入 `POSTGRES_PASSWORD=...`）。
 
 在 Docker 之外，请在 `apps/backend/.env` 中设置 `DATABASE_URL=postgresql://user:password@host:5432/dbname`（以及可选的 `DATABASE_SCHEMA`），并对密码中的特殊字符进行百分号编码。对于远程数据库，请在 URL 末尾加上 `?sslmode=require`。数据表会在启动时创建。
 
 要迁移本地安装中的现有数据，请在设置好 `DATABASE_URL` 的情况下，在 `apps/backend` 中运行 `uv run python -m app.scripts.copy_sqlite_to_postgres`。其默认的 `--source` 是 `apps/backend/data/resume_matcher.db`，该文件只存在于本地安装中；如需使用其他 SQLite 文件，请传入 `--source <file>`。如果目标数据库非空，脚本会拒绝写入。请先停止应用：复制开始之后产生的写入不会被复制。
 
-Docker 安装会把 SQLite 数据库保存在 `resume-data` 卷中，而不是主机上。请先停止应用，然后在容器内运行该脚本，此时该卷就是默认的源：
+Docker 安装会把 SQLite 数据库保存在 `resume-data` 卷中，而不是主机上。请先停止应用，然后在容器内运行该脚本，此时该卷就是默认的源（需先设置与上文相同的 `POSTGRES_PASSWORD`）：
 
 ```bash
-export POSTGRES_PASSWORD=change-me
 docker compose stop
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
@@ -456,7 +460,7 @@ claude mcp add resume-matcher -- uv run --directory /abs/path/to/Resume-Matcher/
 }
 ```
 
-`command` 请使用 `uv` 的**绝对路径**（在 macOS/Linux 上用 `which uv` 查找，在 Windows 上用 `where uv`）。Claude Desktop 不会继承你的 shell `PATH`，所以只写 `uv` 会找不到。在 Windows 上，JSON 路径中的反斜杠需要写两遍。
+`command` 请使用 `uv` 的**绝对路径**（在 macOS/Linux 上用 `which uv` 查找，在 Windows 上用 `where.exe uv`）。Claude Desktop 不会继承你的 shell `PATH`，所以只写 `uv` 会找不到。在 Windows 上，JSON 路径中的反斜杠需要写两遍。
 
 ### 其他 MCP 客户端
 
@@ -628,7 +632,6 @@ Resume-Matcher/
 │     ├─ lib/                  # Utilities and API client
 │     ├─ .env.sample           # Environment template
 │     └─ package.json          # Node.js dependencies
-├─ docs/                        # Additional documentation
 ├─ docker-compose.yml           # Docker configuration
 ├─ Dockerfile                   # Container build instructions
 └─ README.md                    # Project overview

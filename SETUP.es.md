@@ -143,7 +143,7 @@ Abre **<http://localhost:3000>** en el navegador.
 
 > **Exportar PDF:** Resume Matcher genera los PDF con Chromium headless. Si el navegador de Playwright no está instalado, el backend recurre a Microsoft Edge o Google Chrome si están instalados (Edge viene con Windows 11). También puedes instalar el Chromium de Playwright desde `apps\backend` con `uv run playwright install chromium`.
 
-> **¿Prefieres Docker?** Instala [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/) y sigue [Despliegue con Docker](#docker-deployment). Para definir variables como `PORT` en PowerShell, usa `$env:PORT="4000"; docker compose up -d`. Para la [configuración opcional de PostgreSQL](#optional-postgresql), ejecuta `$env:POSTGRES_PASSWORD="change-me"; docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; fuera de Docker, define `DATABASE_URL` en `apps\backend\.env`.
+> **¿Prefieres Docker?** Instala [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/) y sigue [Despliegue con Docker](#docker-deployment). Para definir variables como `PORT` en PowerShell, usa `$env:PORT="4000"; docker compose up -d`. Para la [configuración opcional de PostgreSQL](#optional-postgresql), ejecuta `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; fuera de Docker, define `DATABASE_URL` en `apps\backend\.env`.
 
 ---
 
@@ -337,9 +337,9 @@ Un proveedor creado por la comunidad que usa el [Sign in with ChatGPT for open-s
 3. Inicia sesión en OpenAI y permite que Resume Matcher use tu plan de ChatGPT. La primera vez, OpenAI registra la app para tu cuenta; los inicios de sesión posteriores reutilizan ese registro.
 4. Volverás a Settings. Elige uno de los modelos de tu cuenta y haz clic en **Save**.
 
-OpenAI redirige el navegador a `http://127.0.0.1:<backend port>/auth/callback` (puerto `8000` por defecto), y el backend solo acepta esa devolución de llamada desde `127.0.0.1`. Por eso el navegador debe ejecutarse en la máquina que ejecuta el backend y llegar directamente a ese puerto. Los tokens se guardan cifrados en el directorio de datos del backend (`chatgpt_credentials.enc`). **Disconnect** revoca la sesión en OpenAI y elimina los tokens; **Manage usage** abre los ajustes de uso de tu ChatGPT.
+OpenAI redirige el navegador a `http://127.0.0.1:<port>/auth/callback`, donde `<port>` es el puerto en el que abriste Resume Matcher (`3000` por defecto). El frontend reenvía esa ruta al backend, y el backend solo acepta la devolución de llamada desde la máquina en la que se ejecuta. Por eso el navegador debe ejecutarse en la máquina que ejecuta Resume Matcher, y debes abrirlo como `http://localhost:<port>` o `http://127.0.0.1:<port>`. Los tokens se guardan cifrados en el directorio de datos del backend (`chatgpt_credentials.enc`). **Disconnect** revoca la sesión en OpenAI y elimina los tokens; **Manage usage** abre los ajustes de uso de tu ChatGPT.
 
-**Docker:** la configuración por defecto solo publica el puerto 3000, y las conexiones a través de los puertos publicados de Docker llegan al contenedor desde la puerta de enlace de Docker y no desde `127.0.0.1`, por lo que el inicio de sesión no puede completarse. En Linux, ejecuta el contenedor con red de host (`network_mode: host`); en caso contrario, ejecuta Resume Matcher en local (sin Docker) para usar este proveedor.
+**Docker:** el inicio de sesión funciona con la configuración por defecto, que solo publica el puerto 3000: abre Resume Matcher en `http://localhost:3000` (o en el `PORT` que publicaste) en la máquina que ejecuta el contenedor. OpenAI devuelve el navegador a ese mismo puerto, y el frontend reenvía `/auth/callback` al backend dentro del contenedor. No funciona desde otro ordenador ni a través de un dominio con proxy inverso, porque OpenAI solo permite redirecciones a `http://127.0.0.1`.
 
 El `.env` equivalente (sigues iniciando sesión desde Settings):
 
@@ -371,22 +371,26 @@ docker-compose down
 <a id="optional-postgresql"></a>
 ### Opcional: PostgreSQL
 
-SQLite es la opción por defecto y no requiere configuración. Para copias de seguridad o alojamiento remoto/compartido puedes usar PostgreSQL en su lugar:
+SQLite es la opción por defecto y no requiere configuración. Para copias de seguridad, o para mantener la base de datos en otro servidor que controles, puedes usar PostgreSQL en su lugar.
+
+> **Seguridad:** Resume Matcher no tiene cuentas de usuario ni autenticación, y PostgreSQL no añade ninguna. Úsalo solo para ti o en una red privada de confianza, nunca expuesto públicamente. Para cualquier uso más allá del local, conéctate con un rol de base de datos de mínimos privilegios (el usuario `resume` del archivo Compose es superusuario).
+
+Para iniciarlo con Docker Compose:
 
 ```bash
-POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-`POSTGRES_PASSWORD` se copia tal cual en `DATABASE_URL`, así que usa una contraseña apta para URL (letras, dígitos, `-._~`).
+`POSTGRES_PASSWORD` se copia tal cual en `DATABASE_URL`, así que usa una contraseña apta para URL (letras, dígitos, `-._~`); `openssl rand -hex 32` genera una. No uses un valor fácil de adivinar. Conserva la contraseña: PostgreSQL la guarda en el volumen `postgres-data` en el primer arranque, y todos los comandos `docker compose` posteriores necesitan el mismo valor (expórtala de nuevo o ponla como `POSTGRES_PASSWORD=...` en un archivo `.env` junto a `docker-compose.yml`).
 
 Fuera de Docker, define `DATABASE_URL=postgresql://user:password@host:5432/dbname` (y opcionalmente `DATABASE_SCHEMA`) en `apps/backend/.env`, codificando con porcentaje cualquier carácter especial de la contraseña. Para una base de datos remota, añade `?sslmode=require` a la URL. Las tablas se crean al iniciar.
 
 Para mover los datos existentes de una instalación local, ejecuta `uv run python -m app.scripts.copy_sqlite_to_postgres` desde `apps/backend` con `DATABASE_URL` definida. Su `--source` por defecto es `apps/backend/data/resume_matcher.db`, que solo existe en instalaciones locales; pasa `--source <file>` para usar otro archivo SQLite. Se niega a escribir en una base de datos que no esté vacía. Detén primero la app: las escrituras posteriores al inicio de la copia no se copian.
 
-Una instalación con Docker guarda su base de datos SQLite en el volumen `resume-data`, no en el host. Detén la app y ejecuta el script dentro del contenedor, donde ese volumen es el origen por defecto:
+Una instalación con Docker guarda su base de datos SQLite en el volumen `resume-data`, no en el host. Detén la app y ejecuta el script dentro del contenedor, donde ese volumen es el origen por defecto (con el mismo `POSTGRES_PASSWORD` definido que antes):
 
 ```bash
-export POSTGRES_PASSWORD=change-me
 docker compose stop
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
@@ -456,7 +460,7 @@ Añade esto a `claude_desktop_config.json` (macOS: `~/Library/Application Suppor
 }
 ```
 
-Usa la **ruta absoluta** de `uv` en `command` (búscala con `which uv` en macOS/Linux o `where uv` en Windows). Claude Desktop no hereda el `PATH` de tu shell, por lo que un `uv` a secas no se encuentra. En Windows, duplica las barras invertidas en las rutas del JSON.
+Usa la **ruta absoluta** de `uv` en `command` (búscala con `which uv` en macOS/Linux o `where.exe uv` en Windows). Claude Desktop no hereda el `PATH` de tu shell, por lo que un `uv` a secas no se encuentra. En Windows, duplica las barras invertidas en las rutas del JSON.
 
 ### Otros clientes MCP
 
@@ -628,7 +632,6 @@ Resume-Matcher/
 │     ├─ lib/                  # Utilities and API client
 │     ├─ .env.sample           # Environment template
 │     └─ package.json          # Node.js dependencies
-├─ docs/                        # Additional documentation
 ├─ docker-compose.yml           # Docker configuration
 ├─ Dockerfile                   # Container build instructions
 └─ README.md                    # Project overview
