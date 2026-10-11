@@ -12,7 +12,9 @@ from unittest.mock import patch
 import pytest
 from docx import Document
 
+from app.services import parser
 from app.services.parser import DocumentResourceLimitError, parse_document
+from tests.unit.test_page_fit import _pdf
 
 
 def _docx_bytes(text: str) -> bytes:
@@ -539,3 +541,23 @@ async def test_cancelled_queued_conversion_never_starts_later(
     await asyncio.gather(*owners)
     await asyncio.sleep(0.05)
     assert calls == 2
+
+
+def test_pdf_preflight_interprets_only_the_page_budget(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interpreted: list[object] = []
+
+    class CountingInterpreter(parser.PDFPageInterpreter):
+        def process_page(self, page: object) -> None:
+            interpreted.append(page)
+            super().process_page(page)
+
+    monkeypatch.setattr(parser, "PDFPageInterpreter", CountingInterpreter)
+    monkeypatch.setattr(parser, "MAX_PDF_PREFLIGHT_PAGES", 3)
+    path = tmp_path / "many.pdf"
+    path.write_bytes(_pdf(8))
+
+    parser._validate_pdf_container(path)
+
+    assert len(interpreted) == 3

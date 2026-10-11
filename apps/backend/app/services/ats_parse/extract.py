@@ -14,6 +14,7 @@ from pdfminer.layout import LAParams, LTContainer, LTFigure, LTImage, LTTextCont
 from pdfminer.pdfpage import PDFPage
 
 from app.services.parser import (
+    MAX_PDF_PREFLIGHT_PAGES,
     DocumentValidationError,
     _validate_docx_container,
     _validate_extracted_text,
@@ -23,8 +24,9 @@ from app.services.parser import (
 
 MAX_PARSE_CHECK_PAGES = 10
 # Page counting stops here, so a huge page tree costs a bounded walk; larger
-# documents report this many pages and are marked truncated.
-MAX_COUNTED_PAGES = 100
+# documents report this many pages and are marked truncated. The container
+# preflight shares the budget.
+MAX_COUNTED_PAGES = MAX_PDF_PREFLIGHT_PAGES
 SUPPORTED_SUFFIXES = (".pdf", ".docx")
 
 # pdfminer warns per glyph on Chromium fonts ("Could not get FontBBox").

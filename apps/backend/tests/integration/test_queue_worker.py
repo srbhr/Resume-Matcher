@@ -6,7 +6,8 @@ from typing import Any
 
 import pytest
 
-from app.database import Database
+from app.database import Database, DatabaseBusyError
+from app.services import queue_worker
 from app.services.queue_worker import QueueManager
 
 Pipeline = Callable[..., Awaitable[tuple[Any, ...]]]
@@ -113,6 +114,32 @@ async def test_failed_item_is_recorded_and_the_queue_moves_on(
     assert failed["error"] == "failed"
     assert done is not None and done["status"] == "completed"
     assert cooldowns == [5.0, 5.0]
+
+
+async def test_final_status_write_is_retried_while_the_database_is_busy(
+    isolated_db: Database,
+    stub_pipeline: Callable[[Pipeline], None],
+    cooldowns: list[float],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(queue_worker, "_FINAL_WRITE_BACKOFF_SECONDS", 0)
+    real_update = isolated_db.update_queue_item
+    busy_writes: list[str] = []
+
+    async def busy_twice(item_id: str, updates: dict[str, Any]) -> Any:
+        if updates.get("status") == "completed" and len(busy_writes) < 2:
+            busy_writes.append(item_id)
+            raise DatabaseBusyError("Database is busy")
+        return await real_update(item_id, updates)
+
+    monkeypatch.setattr(isolated_db, "update_queue_item", busy_twice)
+    await isolated_db.create_queue_item("q1", "r1", "First JD")
+
+    await QueueManager().drain()
+
+    item = await isolated_db.get_queue_item("q1")
+    assert item is not None and item["status"] == "completed"
+    assert len(busy_writes) == 2
 
 
 async def test_deleted_and_finished_items_are_never_claimed(

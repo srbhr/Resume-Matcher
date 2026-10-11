@@ -10,6 +10,7 @@ import tempfile
 import zipfile
 import zlib
 from collections.abc import Callable
+from itertools import islice
 from pathlib import Path
 from typing import Any, BinaryIO, Sequence, TypeVar
 
@@ -57,6 +58,9 @@ MAX_EXTRACTED_TEXT_BYTES = 2 * 1024 * 1024
 # Decoder row buffers can allocate from dimensions before consuming input.
 MAX_PDF_SCANLINE_COLUMNS = 32_768
 MAX_PDF_SCANLINE_BYTES = 256 * 1024
+# The container preflight interprets at most this many pages, so a huge page tree
+# costs a bounded walk. Every stream is still decoded under the shared budget.
+MAX_PDF_PREFLIGHT_PAGES = 100
 DOCUMENT_CONVERSION_WORKERS = 2
 DOCUMENT_CONVERSION_TIMEOUT_SECONDS = 120.0
 _DOCUMENT_BACKGROUND_WORKERS: set[asyncio.Task[Any]] = set()
@@ -319,7 +323,10 @@ class _BoundedPDFParser(PDFParser):
 
 
 def _validate_pdf_container(path: Path) -> None:
-    """Require a readable PDF whose decoded streams fit a shared budget."""
+    """Require a readable PDF whose decoded streams fit a shared budget.
+
+    Only the first ``MAX_PDF_PREFLIGHT_PAGES`` pages are interpreted.
+    """
     try:
         with path.open("rb") as stream:
             budget = _PDFDecodeBudget()
@@ -327,7 +334,7 @@ def _validate_pdf_container(path: Path) -> None:
             manager = PDFResourceManager(caching=False)
             interpreter = PDFPageInterpreter(manager, PDFDevice(manager))
             has_pages = False
-            for page in PDFPage.create_pages(document):
+            for page in islice(PDFPage.create_pages(document), MAX_PDF_PREFLIGHT_PAGES):
                 has_pages = True
                 # Follow the real text consumer's references under the same
                 # bounded stream decoder. A forged /Image label on a content

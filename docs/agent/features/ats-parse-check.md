@@ -14,14 +14,15 @@ It covers two inputs:
 
 1. **Extraction** (`services/ats_parse/extract.py`).
    - It runs under the same bounded worker, limiter and deadline as `parse_document`, via `parser.run_bounded_document_job`.
-   - PDFs go through the existing bounded preflight first, then pdfminer `extract_pages` with default `LAParams`. That is the reading order MarkItDown and simple ATS readers produce.
+   - PDFs go through the existing bounded preflight first (it interprets at most the first 100 pages, `MAX_PDF_PREFLIGHT_PAGES`; every stream is still decoded under the shared budget), then pdfminer `extract_pages` with default `LAParams`. That is the reading order MarkItDown and simple ATS readers produce.
    - DOCX body text and tables are read in document order. Headers, footers and text boxes are kept apart.
-   - Pages beyond 10 are not analysed.
+   - Pages beyond 10 are not analysed. `page_count` stops at 100 (`MAX_COUNTED_PAGES`): longer documents report 100 and are marked truncated.
 2. **Checks** (`checks.py`). Each check returns an id, category, severity, status and params. The UI localises the text from the id and params.
 3. **Scores.**
    - `overall_score` (parseability) covers the extraction and layout checks; `content_score` covers the content checks.
    - Each score starts at 100. A failure subtracts 30 for high severity, 12 for medium and 4 for low; a warning subtracts half that.
 4. **Round trip** (`roundtrip.py`, render only).
+   - The data is normalized first (`canonical_resume_data`, the same migration the print page applies), then validated. Data without `sectionMeta` is therefore checked against the default sections.
    - Every visible field is scored by adjacent-word-pair recall: interleaved columns break pairs. List fields are scored by word recall instead.
    - Each occurrence in the text satisfies one field only, so a phrase repeated in the header cannot stand in for a body field that failed to extract.
    - `order_fidelity` is the Kendall tau of the observed positions against resume order, mapped to 0..1.
@@ -39,7 +40,7 @@ It covers two inputs:
 | `images` | layout | low | Any image |
 | `page_count` | layout | low | More than 2 pages, or truncated |
 | `contact_info` | content | high | No email (fail); no phone, or email after the first 25% (warn) |
-| `section_headings` | content | medium | Experience/Education/Skills not found (all 7 locales, `headings.py`) |
+| `section_headings` | content | medium | Experience/Education/Skills not found (all 7 locales, `headings.py`). A synonym must stand alone or be followed by punctuation or a joining word ("Skills & Awards"), so "Experiences" does not count |
 | `dates` | content | low | No years at all |
 
 Rendered resumes report `multi_column.params.expected_by_template` for swiss-two-column, modern-two-column and vivid.
@@ -49,7 +50,7 @@ Rendered resumes report `multi_column.params.expected_by_template` for swiss-two
 | Method | Path | Body | Notes |
 |--------|------|------|-------|
 | POST | `/api/v1/ats/parse-check` | multipart `file` (PDF/DOCX, 4MB) | 400 for bad type or empty file, 413 when too large, 422 when unreadable, 504 on timeout |
-| POST | `/api/v1/resumes/{id}/parse-check` | `PageFitSettings` (optional) | 404 if not found, 422 without structured data, 503 when render fails; needs the frontend running |
+| POST | `/api/v1/resumes/{id}/parse-check` | `PageFitSettings` (optional) | 404 if not found, 413 with the too-large detail on resource limits, 422 without structured data or when it isn't valid `ResumeData`, 503 when render fails, 504 on a render timeout; needs the frontend running |
 
 MCP: `parse_check_file` and `parse_check_resume`, both read-only and writing nothing. `verify_resume` and `tailor_and_verify` include the same report (see [mcp-server.md](mcp-server.md)).
 
