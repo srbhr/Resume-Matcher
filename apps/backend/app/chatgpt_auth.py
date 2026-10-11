@@ -499,7 +499,13 @@ async def complete_login(query: Mapping[str, str]) -> str:
         # invalid_grant lands here too: the code is discarded with the attempt.
         raise ChatGPTLoginError("error", str(error)) from error
 
-    granted = _granted_scopes(tokens)
+    # RFC 6749 section 5.1: an omitted ``scope`` means exactly what was
+    # requested was granted. An explicit (possibly reduced) value is honored.
+    granted = (
+        _granted_scopes(tokens)
+        if isinstance(tokens.get("scope"), str)
+        else sorted(SCOPES)
+    )
     async with credentials_lock():
         record = load_record()
         if (

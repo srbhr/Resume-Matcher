@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import os
 import stat
 from collections.abc import Iterator
 from urllib.parse import parse_qs, urlsplit
 
+import httpx
 import pytest
 import respx
 
@@ -164,6 +166,43 @@ class TestCompleteLogin:
         assert record["refresh_token"] == "refresh-1"
         assert "chatgpt.tokens.use.direct" in record["scopes"]
         assert record["ext_agent_host_id"] == params["ext_agent_host_id"]
+
+    async def test_omitted_token_scope_means_the_requested_scopes_were_granted(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        params = _start()
+        response = fakes.token_response(nonce=params["nonce"])
+        body = json.loads(response.content)
+        del body["scope"]
+        openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=httpx.Response(200, json=body)
+        )
+
+        outcome = await chatgpt_auth.complete_login(
+            {"state": params["state"], "code": "c", "client_id": fakes.ISSUED_CLIENT_ID}
+        )
+
+        assert outcome == "connected"
+        record = chatgpt_auth.load_record()
+        assert record["scopes"] == sorted(chatgpt_auth.SCOPES)
+        assert not record.get("plan_declined")
+
+    async def test_an_explicitly_reduced_scope_is_still_honored(
+        self, openai_auth: respx.MockRouter
+    ) -> None:
+        params = _start()
+        openai_auth.post(chatgpt_auth.TOKEN_URL).mock(
+            return_value=fakes.token_response(
+                nonce=params["nonce"], scope="openid profile email"
+            )
+        )
+
+        outcome = await chatgpt_auth.complete_login(
+            {"state": params["state"], "code": "c", "client_id": fakes.ISSUED_CLIENT_ID}
+        )
+
+        assert outcome == "plan_declined"
+        assert "access_token" not in chatgpt_auth.load_record()
 
 
 # ---------------------------------------------------------------------------
