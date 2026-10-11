@@ -21,7 +21,9 @@ from app.services.ats_parse.models import ParseCheckReport
 from app.services.ats_parse.roundtrip import canonical_resume_data
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
+    MAX_PDF_PREFLIGHT_PAGES,
     MAX_UNPACKED_DOCUMENT_BYTES,
+    DocumentPageLimitError,
     DocumentResourceLimitError,
 )
 
@@ -47,6 +49,15 @@ async def parse_check_upload(file: UploadFile = File(...)) -> ParseCheckReport:
         raise HTTPException(status_code=400, detail="Empty file")
     try:
         return await parse_check_bytes(content, file.filename or "resume.pdf")
+    except DocumentPageLimitError as e:
+        logger.warning("Parse check page limit for %r: %s", file.filename, e)
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"PDF has more than {MAX_PDF_PREFLIGHT_PAGES} pages. "
+                "Please upload a shorter document."
+            ),
+        ) from e
     except DocumentResourceLimitError as e:
         logger.warning("Parse check resource limit for %r: %s", file.filename, e)
         raise HTTPException(status_code=413, detail=TOO_LARGE_DETAIL) from e

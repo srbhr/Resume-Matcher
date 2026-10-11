@@ -558,6 +558,18 @@ def test_pdf_preflight_interprets_only_the_page_budget(
     path = tmp_path / "many.pdf"
     path.write_bytes(_pdf(8))
 
-    parser._validate_pdf_container(path)
+    with pytest.raises(DocumentResourceLimitError):
+        parser._validate_pdf_container(path)
 
     assert len(interpreted) == 3
+
+
+async def test_pdf_over_page_budget_is_rejected_before_conversion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(parser, "MAX_PDF_PREFLIGHT_PAGES", 3)
+
+    with patch("app.services.parser.MarkItDown") as converter:
+        with pytest.raises(DocumentResourceLimitError, match="more than 3 pages"):
+            await parse_document(_pdf(4), "many.pdf")
+        converter.assert_not_called()
