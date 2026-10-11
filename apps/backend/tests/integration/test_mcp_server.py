@@ -265,6 +265,34 @@ async def test_add_job_caches_keywords_under_the_pipeline_hash(
         assert stored["company"] == "TechCorp"
 
 
+@pytest.mark.parametrize(
+    "empty",
+    [{}, {"company": "TechCorp", "role": "Engineer"}, {"required_skills": [" "]}],
+)
+async def test_empty_keyword_payloads_are_rejected_before_caching(
+    empty: dict[str, Any],
+    isolated_db: Database,
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    async with connect() as mcp:
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+        before = (await isolated_db.get_job(job_id))["job_keywords"]
+        message = await call_error(
+            mcp, "set_job_keywords", {"job_id": job_id, "keywords": empty}
+        )
+        added = await call_error(
+            mcp,
+            "add_job",
+            {"job_description": sample_job_description, "keywords": empty},
+        )
+    assert "at least one of required_skills" in message
+    assert "at least one of required_skills" in added
+    assert (await isolated_db.get_job(job_id))["job_keywords"] == before
+    async with isolated_db._session() as session:
+        assert len((await session.execute(select(Job))).scalars().all()) == 1
+
+
 async def test_add_job_with_keywords_is_one_transaction(
     isolated_db: Database,
     monkeypatch: pytest.MonkeyPatch,
