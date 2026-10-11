@@ -4,9 +4,11 @@ import functools
 import json
 import logging
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any, ParamSpec, TypeVar, get_args
 from uuid import uuid4
 
+import anyio.to_thread
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -42,6 +44,7 @@ TEMPLATES: list[str] = list(
     get_args(PageFitSettings.model_fields["template"].annotation)
 )
 MAX_TITLE_LENGTH = 80
+MAX_DOCUMENT_BYTES = 4 * 1024 * 1024
 MAX_DIFF_PATHS = 25
 
 AUTHORING_RULES = [
@@ -123,6 +126,27 @@ def require_valid_structured(resume: dict[str, Any]) -> dict[str, Any]:
             "or open it in the builder and save it again."
         ) from e
     return data
+
+
+async def read_document_bytes(path: Path) -> bytes:
+    """Read a local file, refusing anything over MAX_DOCUMENT_BYTES.
+
+    Reads at most one byte past the cap from a single opened handle, so a file
+    that grows or is swapped after any earlier size check is never loaded in full.
+    """
+
+    def read() -> bytes:
+        with path.open("rb") as handle:
+            return handle.read(MAX_DOCUMENT_BYTES + 1)
+
+    try:
+        content = await anyio.to_thread.run_sync(read)
+    except OSError as e:
+        logger.error("Could not read %s: %s", path, e)
+        raise ToolError("Could not read this document.") from e
+    if len(content) > MAX_DOCUMENT_BYTES:
+        raise ToolError("File too large. Maximum size is 4MB.")
+    return content
 
 
 def ensure_within_size_limit(data: dict[str, Any]) -> None:

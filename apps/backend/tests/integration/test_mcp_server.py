@@ -595,20 +595,14 @@ async def test_file_tools_read_off_the_event_loop(
     (tmp_path / "cv.pdf").write_bytes(render("single-column"))
     watched = {"resume.docx", "notes.md", "cv.pdf"}
     reads: dict[str, int] = {}
-    read_bytes, read_text = Path.read_bytes, Path.read_text
+    path_open = Path.open
 
-    def spy_bytes(self: Path) -> bytes:
+    def spy_open(self: Path, *args: Any, **kwargs: Any) -> Any:
         if self.name in watched:
             reads[self.name] = threading.get_ident()
-        return read_bytes(self)
+        return path_open(self, *args, **kwargs)
 
-    def spy_text(self: Path, *args: Any, **kwargs: Any) -> str:
-        if self.name in watched:
-            reads[self.name] = threading.get_ident()
-        return read_text(self, *args, **kwargs)
-
-    monkeypatch.setattr(Path, "read_bytes", spy_bytes)
-    monkeypatch.setattr(Path, "read_text", spy_text)
+    monkeypatch.setattr(Path, "open", spy_open)
     async with connect() as mcp:
         for tool, name in (
             ("extract_document_text", "resume.docx"),
@@ -618,6 +612,52 @@ async def test_file_tools_read_off_the_event_loop(
             await call(mcp, tool, {"file_path": str(tmp_path / name)})
     assert set(reads) == watched
     assert threading.get_ident() not in reads.values()
+
+
+class _ReadSizes:
+    """Wraps an opened file and records the size argument of every read()."""
+
+    def __init__(self, handle: Any, sizes: list[int | None]) -> None:
+        self._handle, self._sizes = handle, sizes
+
+    def __enter__(self) -> "_ReadSizes":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._handle.close()
+
+    def read(self, size: int | None = -1) -> bytes:
+        self._sizes.append(size)
+        return self._handle.read(size)
+
+
+@pytest.mark.parametrize(
+    ("tool", "name"),
+    [
+        ("extract_document_text", "notes.txt"),
+        ("extract_document_text", "resume.docx"),
+        ("parse_check_file", "cv.pdf"),
+    ],
+)
+async def test_file_tools_read_at_most_the_cap_from_one_handle(
+    tool: str, name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Over the cap by one byte: nothing may be read beyond cap + 1, and the
+    # tool must refuse it without a separate size check that a later write defeats.
+    cap = shared_module.MAX_DOCUMENT_BYTES
+    (tmp_path / name).write_bytes(b"x" * (cap + 1))
+    sizes: list[int | None] = []
+    path_open = Path.open
+
+    def spy_open(self: Path, *args: Any, **kwargs: Any) -> Any:
+        handle = path_open(self, *args, **kwargs)
+        return _ReadSizes(handle, sizes) if self.name == name else handle
+
+    monkeypatch.setattr(Path, "open", spy_open)
+    async with connect() as mcp:
+        message = await call_error(mcp, tool, {"file_path": str(tmp_path / name)})
+    assert "File too large" in message
+    assert sizes == [cap + 1]
 
 
 def test_stdio_stdout_carries_only_protocol_messages(tmp_path: Path) -> None:
