@@ -1,5 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC, Space_Grotesk } from 'next/font/google';
+import {
+  Lato,
+  Noto_Sans_JP,
+  Noto_Sans_KR,
+  Noto_Sans_SC,
+  Raleway,
+  Space_Grotesk,
+} from 'next/font/google';
 import { THEME_COLOR } from '@/lib/theme-color';
 import './(default)/css/globals.css';
 
@@ -43,6 +50,26 @@ const notoSansJP = Noto_Sans_JP({
   preload: false,
 });
 
+// Faces of the Deedy resume template (components/resume/resume-deedy.tsx).
+// next/font downloads them at build time and serves them from the app, so PDF
+// renders work offline. `preload: false`: only that template uses them, and the
+// PDF renderer waits on document.fonts.ready before printing.
+const lato = Lato({
+  variable: '--font-lato',
+  weight: ['100', '300', '400', '700'],
+  style: ['normal', 'italic'],
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  preload: false,
+});
+
+const raleway = Raleway({
+  variable: '--font-raleway',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: 'Resume Matcher',
   description: 'Build your resume with Resume Matcher',
@@ -56,7 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-US" className="h-full" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} antialiased bg-canvas text-ink-soft min-h-full`}
+        className={`${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} ${lato.variable} ${raleway.variable} antialiased bg-canvas text-ink-soft min-h-full`}
       >
         {children}
       </body>
