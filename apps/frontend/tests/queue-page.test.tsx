@@ -348,3 +348,29 @@ describe('queue actions', () => {
     expect(screen.getByText('a role')).toBeTruthy();
   });
 });
+
+describe('detected job details', () => {
+  const field = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
+  const describeJob = (text: string) =>
+    fireEvent.change(screen.getByLabelText('queue.form.jobDescriptionLabel'), {
+      target: { value: text },
+    });
+
+  it("replaces the previous job's details but keeps what the user typed", async () => {
+    parseMetadata
+      .mockResolvedValueOnce({ role: 'Staff Engineer', company: 'Acme', job_req_id: 'R1' })
+      .mockResolvedValueOnce({ role: 'Designer', company: '', job_req_id: '' });
+    render(<QueuePage />);
+    await screen.findByText('Backend track');
+
+    describeJob(JOB_DESCRIPTION);
+    await waitFor(() => expect(field('queue.form.companyLabel').value).toBe('Acme'));
+    fireEvent.change(field('queue.form.roleLabel'), { target: { value: 'My title' } });
+
+    describeJob('Product Designer\nWe are a small studio hiring a designer to join us.');
+    await waitFor(() => expect(parseMetadata).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(field('queue.form.companyLabel').value).toBe(''));
+    expect(field('queue.form.jobReqIdLabel').value).toBe('');
+    expect(field('queue.form.roleLabel').value).toBe('My title');
+  });
+});

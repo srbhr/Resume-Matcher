@@ -79,6 +79,8 @@ export default function QueuePage() {
   const [roleInput, setRoleInput] = useState('');
   const [companyInput, setCompanyInput] = useState('');
   const [jobReqIdInput, setJobReqIdInput] = useState('');
+  // Fields the user typed into; detection only fills the others.
+  const userEdited = useRef(new Set<'role' | 'company' | 'jobReqId'>());
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number>(5);
 
   useEffect(() => {
@@ -131,17 +133,26 @@ export default function QueuePage() {
   }, []);
 
   // Detect role, company and job ID on the server's heuristics (no AI call).
+  // Detected values replace earlier detections, including with "nothing found",
+  // so a previous job's company never sticks to the next description.
   useEffect(() => {
+    const applyDetected = (role: string, company: string, jobReqId: string) => {
+      const edited = userEdited.current;
+      if (!edited.has('role')) setRoleInput(role);
+      if (!edited.has('company')) setCompanyInput(company);
+      if (!edited.has('jobReqId')) setJobReqIdInput(jobReqId);
+    };
     const text = jobDescriptionInput.trim();
-    if (!text) return;
+    if (!text) {
+      applyDetected('', '', '');
+      return;
+    }
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         const parsed = await parseJobMetadata(text);
         if (cancelled) return;
-        if (parsed.role) setRoleInput(parsed.role);
-        if (parsed.company) setCompanyInput(parsed.company);
-        if (parsed.job_req_id) setJobReqIdInput(parsed.job_req_id);
+        applyDetected(parsed.role, parsed.company, parsed.job_req_id);
       } catch (err) {
         console.error('Failed to detect job details', err);
       }
@@ -151,6 +162,16 @@ export default function QueuePage() {
       clearTimeout(timer);
     };
   }, [jobDescriptionInput]);
+
+  const editField = (
+    field: 'role' | 'company' | 'jobReqId',
+    value: string,
+    setValue: (value: string) => void
+  ) => {
+    setValue(value);
+    if (value.trim()) userEdited.current.add(field);
+    else userEdited.current.delete(field);
+  };
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') e.stopPropagation();
@@ -228,6 +249,7 @@ export default function QueuePage() {
       queueRequest.current++;
       setQueueItems((prev) => [newItem, ...prev.filter((i) => i.item_id !== newItem.item_id)]);
       setJobDescriptionInput('');
+      userEdited.current.clear();
       setRoleInput('');
       setCompanyInput('');
       setJobReqIdInput('');
@@ -372,7 +394,7 @@ export default function QueuePage() {
                   id="queue-role"
                   placeholder={t('queue.form.rolePlaceholder')}
                   value={roleInput}
-                  onChange={(e) => setRoleInput(e.target.value)}
+                  onChange={(e) => editField('role', e.target.value, setRoleInput)}
                   disabled={isAddingToQueue}
                 />
               </div>
@@ -382,7 +404,7 @@ export default function QueuePage() {
                   id="queue-company"
                   placeholder={t('queue.form.companyPlaceholder')}
                   value={companyInput}
-                  onChange={(e) => setCompanyInput(e.target.value)}
+                  onChange={(e) => editField('company', e.target.value, setCompanyInput)}
                   disabled={isAddingToQueue}
                 />
               </div>
@@ -392,7 +414,7 @@ export default function QueuePage() {
                   id="queue-job-id"
                   placeholder={t('common.optional')}
                   value={jobReqIdInput}
-                  onChange={(e) => setJobReqIdInput(e.target.value)}
+                  onChange={(e) => editField('jobReqId', e.target.value, setJobReqIdInput)}
                   disabled={isAddingToQueue}
                 />
               </div>
