@@ -279,6 +279,50 @@ def test_roundtrip_links_follow_template_display_and_order() -> None:
     assert texts["personalInfo.linkedin"] == "linkedin.com/in/jane"
 
 
+def test_roundtrip_reads_entry_rows_left_column_first() -> None:
+    # The render's "title | dates" over "company | location" rows read title,
+    # company, dates, location.
+    data = john_doe()
+    for entry in data["workExperience"]:
+        entry["location"] = "San Francisco, CA"
+    text = extract_pdf(render("single-column")).text
+    assert compute_roundtrip(data, text, "swiss-single").order_fidelity == 1.0
+
+
+# Entry lines in the order pdfminer reads assets/pdf-templates/<template>.pdf.
+TEMPLATE_ENTRY_TEXT = {
+    "clean": "Acme Corp | Staff Engineer\nDublin | 2020 - 2023\n"
+    "Trinity College | BSc Physics\n2016",
+    "latex": "Acme Corp\nStaff Engineer\n2020 - 2023\nDublin\n"
+    "Trinity College\nBSc Physics\n2016",
+    "vivid": "Acme Corp | Staff Engineer\n2020 - 2023 | Dublin\n"
+    "Trinity College\nBSc Physics\n2016",
+    "swiss-two-column": "Staff Engineer\nAcme Corp • Dublin\n2020 - 2023\n"
+    "Trinity College | 2016\nBSc Physics",
+}
+
+
+@pytest.mark.parametrize("template", TEMPLATE_ENTRY_TEXT)
+def test_roundtrip_uses_the_template_entry_order(template: str) -> None:
+    data = {
+        "personalInfo": {"name": "Jane Roe"},
+        "workExperience": [
+            {
+                "title": "Staff Engineer",
+                "company": "Acme Corp",
+                "location": "Dublin",
+                "years": "2020 - 2023",
+            }
+        ],
+        "education": [
+            {"institution": "Trinity College", "degree": "BSc Physics", "years": "2016"}
+        ],
+    }
+    text = "Jane Roe\n" + TEMPLATE_ENTRY_TEXT[template]
+    assert compute_roundtrip(data, text, template).order_fidelity == 1.0
+    assert compute_roundtrip(data, text).order_fidelity < 1.0
+
+
 async def test_pdf_without_text_is_not_extractable() -> None:
     report = await parse_check_bytes(_pdf(1), "scan.pdf")
     assert report.extractability == "none"
