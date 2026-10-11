@@ -174,6 +174,7 @@ Export your tailored resume and cover letter in PDF.
 | **LaTeX** | ![LaTeX](assets/pdf-templates/latex.webp) | Classic serif academic layout with ruled section headers. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/latex.pdf) |
 | **Clean** | ![Clean](assets/pdf-templates/clean.webp) | Minimal sans layout with large understated section headers. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/clean.pdf) |
 | **Vivid** | ![Vivid](assets/pdf-templates/vivid.webp) | Colorful two-column layout with accent headers and arrow bullets. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/vivid.pdf) |
+| **Vivid Single Column** | ![Vivid Single Column](assets/pdf-templates/vivid-single.webp) | Colorful single-column layout with accent headers and arrow bullets. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/vivid-single.pdf) |
 
 ### Internationalization
 
