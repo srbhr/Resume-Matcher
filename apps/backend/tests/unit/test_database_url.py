@@ -1,6 +1,7 @@
 """PostgreSQL configuration and write locking, checked without a server."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -74,6 +75,22 @@ def test_redact_keeps_harmless_query_parameters() -> None:
     assert redact("postgresql://rm@db/rm?password=s3cret&sslmode=require") == (
         "postgresql://rm@db/rm?password=redacted&sslmode=require"
     )
+
+
+@pytest.mark.parametrize(
+    "call, bad",
+    [
+        (normalize_database_url, "postgresql://rm:s3cret@db:notaport/rm"),
+        (redact, "postgresql://rm:s3cret@db:notaport/rm"),
+        (redact, "s3cret"),
+    ],
+)
+def test_invalid_urls_never_chain_the_raw_parse_error(call: Any, bad: str) -> None:
+    with pytest.raises(ValueError) as error:
+        call(bad)
+    assert "s3cret" not in str(error.value)
+    assert error.value.__cause__ is None
+    assert error.value.__suppress_context__
 
 
 def test_database_url_selects_postgres_unless_a_path_is_given(
