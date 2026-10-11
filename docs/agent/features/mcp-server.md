@@ -15,6 +15,8 @@ cd apps/backend && uv sync
 claude mcp add resume-matcher -- uv run --directory /abs/path/to/apps/backend resume-matcher-mcp
 ```
 
+User-facing setup for Claude Code and Claude Desktop: [SETUP.md](../../../SETUP.md#use-resume-matcher-from-claude-code-or-claude-desktop-mcp). Claude Desktop does not inherit the shell `PATH`, so its config needs the absolute path of `uv` (`which uv` / `where uv`).
+
 Any client works the same way: run the command `uv` with args `run --directory <apps/backend> resume-matcher-mcp`. `python -m app.mcp_server` is equivalent. `--directory` makes `.env` and `data/` resolve exactly as they do for the web app. Set `DATA_DIR` to point at a different data folder (this moves the SQLite file only; PostgreSQL is chosen by `DATABASE_URL`).
 
 `export_resume_pdf`, `verify_resume`, `tailor_and_verify` and `parse_check_resume` need the frontend running (`FRONTEND_BASE_URL`, default `http://localhost:3000`) and able to reach a backend on the same data dir. All other tools work without either server running. `verify_resume` and `tailor_and_verify` still return the keyword score when rendering fails.
