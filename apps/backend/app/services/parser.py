@@ -10,6 +10,7 @@ import tempfile
 import zipfile
 import zlib
 from collections.abc import Callable
+from contextlib import nullcontext
 from itertools import islice
 from pathlib import Path
 from typing import Any, BinaryIO, Sequence, TypeVar
@@ -327,14 +328,17 @@ class _BoundedPDFParser(PDFParser):
                 )
 
 
-def _validate_pdf_container(path: Path) -> None:
+def _validate_pdf_container(source: Path | BinaryIO) -> None:
     """Require a readable PDF whose decoded streams fit a shared budget.
 
+    ``source`` is a path or an open binary stream (left open for the caller).
     Only the first ``MAX_PDF_PREFLIGHT_PAGES`` pages are interpreted; a PDF with
     more pages is rejected before the rest of the document is scanned.
     """
     try:
-        with path.open("rb") as stream:
+        with (
+            source.open("rb") if isinstance(source, Path) else nullcontext(source)
+        ) as stream:
             budget = _PDFDecodeBudget()
             document = PDFDocument(_BoundedPDFParser(stream, budget))
             manager = PDFResourceManager(caching=False)
@@ -373,10 +377,10 @@ def _validate_pdf_container(path: Path) -> None:
         ) from exc
 
 
-def _validate_docx_container(path: Path) -> None:
+def _validate_docx_container(source: Path | BinaryIO) -> None:
     """Require a bounded, readable Office Open XML word-processing package."""
     try:
-        with zipfile.ZipFile(path) as archive:
+        with zipfile.ZipFile(source) as archive:
             members = archive.infolist()
             if len(members) > MAX_DOCX_MEMBERS:
                 raise DocumentResourceLimitError(
@@ -662,12 +666,20 @@ _MIN_SKILL_LINE_ITEMS = 3
 _MIN_LINE_ANCHORS = 2
 _MAX_SKILL_ITEM_WORDS = 5
 _MAX_SKILL_ITEM_CHARS = 40
-_SKILL_SEPARATOR_RE = re.compile(r"\s*(?:,|\||;|•|·)\s*")
+# A real skill line has far fewer items; longer lines are rejected without being
+# fully split, so a hostile line can't be expanded into huge lists.
+_MAX_SKILL_LINE_ITEMS = 200
+# No surrounding \s*: it backtracks quadratically on a long run of whitespace.
+# Chunks are stripped instead.
+_SKILL_SEPARATOR_RE = re.compile(r"[,|;•·]")
 _LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+●▪◦‣]|\d+[.)])\s+")
 _LINE_LABEL_RE = re.compile(r"^[^:,]{1,80}:\s*")
 # PDF text extraction renders a visual gap (e.g. after a bold label) as 2+ spaces.
 _EXTRACTION_GAP_RE = re.compile(r"\s{2,}")
 _FINAL_CONJUNCTION_RE = re.compile(r"^(?:and|or|&)\s+", re.IGNORECASE)
+# "Rust and Go" closing a list without an Oxford comma holds two skills; "&"
+# stays whole: "Drag & Drop", "R & D".
+_INLINE_CONJUNCTION_RE = re.compile(r"\s+(?:and|or)\s+", re.IGNORECASE)
 _SKILL_HEADING_RE = re.compile(
     r"^(?:(?:technical|core|key|other)\s+)?"
     r"(?:skills?|technologies|tools|frameworks?|platforms?|tech(?:nology)?\s+stack|stack)$",
@@ -691,12 +703,20 @@ def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
     text = _LIST_MARKER_RE.sub("", line).strip()
     text = _LINE_LABEL_RE.sub("", text)  # "Tools: Python, Rust" -> "Python, Rust"
 
+    chunks = _SKILL_SEPARATOR_RE.split(text, maxsplit=_MAX_SKILL_LINE_ITEMS)
+    if len(chunks) > _MAX_SKILL_LINE_ITEMS:
+        return []
     items: list[str] = []
-    for index, chunk in enumerate(_SKILL_SEPARATOR_RE.split(text)):
-        segments = [seg for seg in _EXTRACTION_GAP_RE.split(chunk) if seg]
+    for index, chunk in enumerate(chunks):
+        gap_pieces = _EXTRACTION_GAP_RE.split(
+            chunk.strip(), maxsplit=_MAX_SKILL_LINE_ITEMS
+        )
+        segments = [seg for seg in gap_pieces if seg]
         if index == 0 and len(segments) > 1 and segments[0].casefold() not in anchors:
             segments = segments[1:]  # "Stack  TypeScript": drop the label
         items.extend(segments)
+        if len(items) > _MAX_SKILL_LINE_ITEMS:
+            return []
     # Keep a leading dot (".NET"); drop trailing sentence punctuation.
     items = [item.strip().rstrip(".").strip() for item in items]
     items = [item for item in items if item]
@@ -709,7 +729,10 @@ def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
     ):
         return []
     if items:
-        items[-1] = _FINAL_CONJUNCTION_RE.sub("", items[-1])  # "Python, Rust, and Go"
+        # "Python, Rust, and Go" and "Python, Rust and Go". The split is bounded;
+        # an over-long last item is rejected below anyway.
+        last = _FINAL_CONJUNCTION_RE.sub("", items.pop())
+        items.extend(_INLINE_CONJUNCTION_RE.split(last, maxsplit=_MAX_SKILL_ITEM_WORDS))
 
     if len(items) < _MIN_SKILL_LINE_ITEMS:
         return []

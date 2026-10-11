@@ -50,14 +50,19 @@ _TITLE_STOPWORDS = frozenset(
     {"a", "an", "and", "the", "of", "for", "in", "to", "at", "&"}
 )
 
-# Date styles, tried left to right at each position. Month names are matched as
-# any run of 3+ letters so the check works in every content language.
+# Date styles, tried left to right at each position. Only English month names and
+# abbreviations count as month dates: parsers don't recognise "Ene 2020", so that
+# reads as a bare year.
 _YEAR = r"(?:19|20)\d{2}"
+_MONTH = (
+    r"(?i:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?"
+    r"|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
+)
 _DATE_PATTERN = re.compile(
     rf"(?P<iso>\b{_YEAR}[-/]\d{{1,2}}\b)"
     rf"|(?P<numeric>\b\d{{1,2}}[/.-]{_YEAR}\b)"
-    rf"|(?P<name_year>\b[^\W\d_]{{3,}}\.?,?\s+{_YEAR}\b)"
-    rf"|(?P<name_short_year>\b[^\W\d_]{{3,}}\.?\s+'\d{{2}}\b)"
+    rf"|(?P<name_year>\b{_MONTH}\.?,?\s+{_YEAR}\b)"
+    rf"|(?P<name_short_year>\b{_MONTH}\.?\s+'\d{{2}}\b)"
     rf"|(?P<year>\b{_YEAR}\b)"
 )
 _MIN_DATES_FOR_CONSISTENCY = 2
@@ -240,8 +245,20 @@ def compute_section_completeness(resume: dict[str, Any]) -> float:
     # Legacy/unstructured data: scan the text for section headings. Contact info
     # only counts when it is structured; it can't be detected from free text.
     # Section labels in sectionMeta ("Summary", "Experience", ...) are
-    # configuration, not content, so leave them out of the scan.
-    content = {key: value for key, value in resume.items() if key != "sectionMeta"}
+    # configuration, not content, so leave them out of the scan. So are hidden
+    # sections: they are not rendered, so they cannot be parsed.
+    content = {
+        key: value
+        for key, value in resume.items()
+        if key != "sectionMeta" and _is_section_visible(resume, key)
+    }
+    custom = content.get("customSections")
+    if isinstance(custom, dict):
+        content["customSections"] = {
+            key: value
+            for key, value in custom.items()
+            if _is_section_visible(resume, key)
+        }
     text = _extract_all_text(content).lower()
     headings_found = sum(
         1 for patterns in _SECTION_PATTERNS.values() if any(p in text for p in patterns)
