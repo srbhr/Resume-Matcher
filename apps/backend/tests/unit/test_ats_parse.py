@@ -167,6 +167,66 @@ def test_columns_need_a_gutter_over_a_large_span() -> None:
     assert not has_columns(dates_beside_titles)
 
 
+def test_right_aligned_dates_in_a_run_of_entries_are_not_a_column() -> None:
+    # Entries without body text leave no full-width line to cross the gutter, so the
+    # dates form a band of their own. They all end at one edge and are narrow.
+    titles_and_dates = _page(
+        *[(20, 700 - 60 * i, 330, 740 - 60 * i) for i in range(4)],
+        *[(550 - 15 * (i % 3), 705 - 60 * i, 580, 725 - 60 * i) for i in range(4)],
+    )
+    assert not has_columns(titles_and_dates)
+
+
+def test_a_ragged_sidebar_is_still_a_column_even_when_narrow() -> None:
+    sidebar = _page(
+        *[(20, 700 - 60 * i, 330, 740 - 60 * i) for i in range(4)],
+        *[(420, 705 - 60 * i, 420 + 60 + 25 * i, 725 - 60 * i) for i in range(4)],
+    )
+    assert has_columns(sidebar)
+
+
+def test_a_justified_main_column_beside_a_sidebar_is_still_a_column() -> None:
+    # Boxes that end at one edge but are wide are text, not right-aligned metadata.
+    justified = _page(
+        *[(20, 700 - 60 * i, 150, 740 - 60 * i) for i in range(4)],
+        *[(200, 700 - 60 * i, 580, 740 - 60 * i) for i in range(4)],
+    )
+    assert has_columns(justified)
+
+
+@pytest.mark.parametrize(
+    ("name", "template"),
+    [("swiss-single-academic-3p", "swiss-single"), ("clean-academic-3p", "clean")],
+)
+async def test_single_column_academic_cv_over_three_pages_is_not_multi_column(
+    name: str, template: str
+) -> None:
+    # Publications, grants and talks are entries with a title and a right-aligned
+    # year (clean: "Pittsburgh, PA | Jul 2021 - Present") and no body text. Every
+    # page of these single-column templates used to be flagged as columns.
+    report = await parse_check_bytes(
+        fixture(name), f"{name}.pdf", source="render", template=template
+    )
+    assert report.page_count == 3
+    check = next(c for c in report.checks if c.id == "multi_column")
+    assert check.status == "pass"
+    assert check.params["pages"] == []
+    assert check.params["expected_by_template"] is False
+
+
+async def test_two_column_template_over_three_pages_is_still_detected() -> None:
+    report = await parse_check_bytes(
+        fixture("swiss-two-column-academic-3p"),
+        "a.pdf",
+        source="render",
+        template="swiss-two-column",
+    )
+    assert report.page_count == 3
+    check = next(c for c in report.checks if c.id == "multi_column")
+    assert check.status == "fail"
+    assert check.params["pages"] == [1]
+
+
 @pytest.mark.parametrize(
     ("name", "status"),
     [
