@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BAYER, advanceTime, beamBrightness, litCells } from '@/lib/effects/beams';
 
 // Reference copy of the website's DitherField `beams` pattern
@@ -81,6 +81,61 @@ describe('litCells', () => {
   it('honours the cell pitch', () => {
     expect(litCells(10, 10, 5, 12)).not.toEqual(litCells(10, 10, 5, 6));
     expect(litCells(0, 0, 5)).toEqual([]);
+  });
+});
+
+// The per-cell loop `litCells` was before it cached the grid: every cell through `beamBrightness`.
+function perCellLitCells(cols: number, rows: number, t: number, cell: number): number[] {
+  const lit: number[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (
+        beamBrightness((c + 0.5) * cell, (r + 0.5) * cell, t) >
+        (BAYER[(r % 8) * 8 + (c % 8)] + 0.5) / 64
+      ) {
+        lit.push(r * cols + c);
+      }
+    }
+  }
+  return lit;
+}
+
+describe('litCells: the cached grid', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('lights exactly the cells the per-cell maths lights, on any grid, pitch and time', () => {
+    const grids: [number, number][] = [
+      [64, 40],
+      [7, 31],
+      [300, 3],
+      [1, 1],
+      [1, 25],
+    ];
+    const times = [0, 0.37, 12.5, 90, 1234.5];
+    // Grids and pitches interleaved, so a grid is looked up again after others were built.
+    for (const cell of [6, 12, 5.5, 7.3]) {
+      for (const t of times) {
+        for (const [cols, rows] of grids) {
+          expect(litCells(cols, rows, t, cell)).toEqual(perCellLitCells(cols, rows, t, cell));
+        }
+      }
+    }
+  });
+
+  it('is unaffected by the grids it has cached and dropped', () => {
+    const before = litCells(33, 21, 4.2);
+    for (let n = 1; n <= 10; n++) litCells(n, n, 4.2); // more grids than are kept
+    expect(litCells(33, 21, 4.2)).toEqual(before);
+    expect(before).toEqual(perCellLitCells(33, 21, 4.2, 6));
+  });
+
+  it('does only the time-dependent work in a frame: a sine per cell and two per diagonal', () => {
+    const cols = 64;
+    const rows = 40;
+    litCells(cols, rows, 1); // the first frame builds the grid
+    const sin = vi.spyOn(Math, 'sin');
+    litCells(cols, rows, 2);
+    expect(sin.mock.calls.length).toBe(cols * rows + 2 * (cols + rows - 1));
   });
 });
 
