@@ -150,3 +150,72 @@ describe('queue page', () => {
     expect(addJob).not.toHaveBeenCalled();
   });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+describe('queue reads', () => {
+  it('waits for the master resume before the first read', async () => {
+    const masters = deferred<unknown[]>();
+    listResumes.mockReturnValue(masters.promise);
+    render(<QueuePage />);
+    await act(async () => {});
+    expect(fetchQueue).not.toHaveBeenCalled();
+
+    await act(async () =>
+      masters.resolve([
+        {
+          resume_id: 'm1',
+          title: 'Backend track',
+          is_master: true,
+          is_default_master: true,
+          processing_status: 'ready',
+        },
+      ])
+    );
+    await waitFor(() => expect(fetchQueue).toHaveBeenCalled());
+    expect(fetchQueue.mock.calls.every(([resumeId]) => resumeId === 'm1')).toBe(true);
+  });
+
+  it('ignores a read that a newer read superseded', async () => {
+    const slow = deferred<QueueItem[]>();
+    fetchQueue
+      .mockReturnValueOnce(slow.promise)
+      .mockResolvedValueOnce([item('fresh', 'completed')]);
+    render(<QueuePage />);
+    await waitFor(() => expect(fetchQueue).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.refresh' }));
+    expect(await screen.findByText('fresh role')).toBeTruthy();
+    await act(async () => slow.resolve([item('stale', 'completed')]));
+
+    expect(screen.queryByText('stale role')).toBeNull();
+    expect(screen.getByText('fresh role')).toBeTruthy();
+  });
+
+  it('does not restore an item deleted while an older read was in flight', async () => {
+    fetchQueue.mockResolvedValueOnce([item('a', 'completed'), item('b', 'completed')]);
+    render(<QueuePage />);
+    const row = (await screen.findByText('a role')).closest('li')!;
+
+    const inFlight = deferred<QueueItem[]>();
+    fetchQueue.mockReturnValueOnce(inFlight.promise);
+    fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.refresh' }));
+    removeItem.mockResolvedValue(undefined);
+    await act(async () => {
+      fireEvent.click(within(row).getByRole('button', { name: 'queue.monitor.remove' }));
+    });
+    expect(screen.queryByText('a role')).toBeNull();
+
+    await act(async () => inFlight.resolve([item('a', 'completed'), item('b', 'completed')]));
+    expect(screen.queryByText('a role')).toBeNull();
+    expect(screen.getByText('b role')).toBeTruthy();
+  });
+});

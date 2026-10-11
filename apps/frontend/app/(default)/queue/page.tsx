@@ -153,18 +153,24 @@ export default function QueuePage() {
     if (e.key === 'Enter') e.stopPropagation();
   };
 
+  // Only the newest read may update the list; mutations also retire reads in flight.
+  const queueRequest = useRef(0);
+
   const loadQueue = useCallback(async () => {
+    const request = ++queueRequest.current;
     try {
       const items = await fetchJobQueue(selectedResumeId || undefined);
-      setQueueItems(items);
+      if (request === queueRequest.current) setQueueItems(items);
     } catch (err) {
       console.error('Failed to load queue', err);
     }
   }, [selectedResumeId]);
 
+  // Wait for the master selection so an unfiltered read never lands last.
   useEffect(() => {
+    if (resumesLoading) return;
     loadQueue();
-  }, [loadQueue]);
+  }, [loadQueue, resumesLoading]);
 
   // Poll while any item is waiting or being tailored.
   useEffect(() => {
@@ -173,17 +179,10 @@ export default function QueuePage() {
     );
     if (!hasActiveItems) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const items = await fetchJobQueue(selectedResumeId || undefined);
-        setQueueItems(items);
-      } catch (err) {
-        console.error('Failed to poll queue', err);
-      }
-    }, POLL_INTERVAL_MS);
+    const interval = setInterval(loadQueue, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [selectedResumeId, queueItems]);
+  }, [loadQueue, queueItems]);
 
   const handleRefresh = async () => {
     setIsRefreshingQueue(true);
@@ -219,6 +218,7 @@ export default function QueuePage() {
         jobReqIdInput.trim() || undefined,
         selectedPromptId
       );
+      queueRequest.current++;
       setQueueItems((prev) => [newItem, ...prev.filter((i) => i.item_id !== newItem.item_id)]);
       setJobDescriptionInput('');
       setRoleInput('');
@@ -237,6 +237,7 @@ export default function QueuePage() {
   const handleDeleteItem = async (itemId: string) => {
     try {
       await deleteQueueItem(itemId);
+      queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.item_id !== itemId));
     } catch (err) {
       console.error('Failed to delete queue item', err);
@@ -246,6 +247,7 @@ export default function QueuePage() {
   const handleClearCompleted = async () => {
     try {
       await clearQueueItems('completed');
+      queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status !== 'completed'));
     } catch (err) {
       console.error('Failed to clear completed items', err);
@@ -255,6 +257,7 @@ export default function QueuePage() {
   const handleClearAll = async () => {
     try {
       await clearQueueItems();
+      queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status === 'processing'));
     } catch (err) {
       console.error('Failed to clear queue', err);
