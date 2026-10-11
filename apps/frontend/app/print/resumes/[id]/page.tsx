@@ -13,6 +13,7 @@ import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
 import { resolveLocale } from '@/lib/i18n/locale';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { runningHeaderCss } from '@/lib/print/running-header';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -268,6 +269,12 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     // `lang` also drives Chromium's own font fallback during PDF render, which
     // matters for the CJK faces (L-08).
     <div className="resume-print bg-white" lang={locale}>
+      {/* "Name · 2 / 3" on pages 2+; the CSS string is fully escaped. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: runningHeaderCss(localizedResumeData.personalInfo?.name),
+        }}
+      />
       <Resume
         resumeData={localizedResumeData}
         template={settings.template}
