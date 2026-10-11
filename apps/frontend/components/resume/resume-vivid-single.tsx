@@ -7,6 +7,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
+import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/vivid.module.css';
@@ -22,6 +23,7 @@ import {
 } from './resume-vivid';
 
 interface ResumeVividSingleProps {
+  earlierExperienceLabel?: string;
   data: ResumeData;
   showContactIcons?: boolean;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
@@ -47,6 +49,7 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
   showContactIcons = false,
   sectionHeadings,
   fallbackLabels,
+  earlierExperienceLabel,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
@@ -93,9 +96,15 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
               {section.displayName || headings.experience}
             </h3>
             <div className={baseStyles['resume-items']}>
-              {workExperience.map((exp) => (
+              {splitCondensed(workExperience).full.map((exp) => (
                 <VividExperienceItem key={exp.id} exp={exp} roleClassName={roleClass} />
               ))}
+              {splitCondensed(workExperience).condensed.length > 0 && (
+                <EarlierExperience
+                  items={splitCondensed(workExperience).condensed}
+                  label={earlierExperienceLabel}
+                />
+              )}
             </div>
           </div>
         );

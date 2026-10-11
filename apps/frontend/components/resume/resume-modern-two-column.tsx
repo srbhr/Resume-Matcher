@@ -9,11 +9,13 @@ import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
+import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/modern-two-column.module.css';
 
 interface ResumeModernTwoColumnProps {
+  earlierExperienceLabel?: string;
   data: ResumeData;
   showContactIcons?: boolean;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
@@ -36,6 +38,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
   showContactIcons = false,
   sectionHeadings,
   fallbackLabels,
+  earlierExperienceLabel,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
@@ -189,7 +192,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
                 {getSectionDisplayName('workExperience', headingFallbacks.experience)}
               </h3>
               <div className={baseStyles['resume-items']}>
-                {workExperience.map((exp) => (
+                {splitCondensed(workExperience).full.map((exp) => (
                   <div
                     key={exp.id}
                     {...resumeItem(exp.description)}
@@ -220,6 +223,12 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
                     />
                   </div>
                 ))}
+                {splitCondensed(workExperience).condensed.length > 0 && (
+                  <EarlierExperience
+                    items={splitCondensed(workExperience).condensed}
+                    label={earlierExperienceLabel}
+                  />
+                )}
               </div>
             </div>
           )}

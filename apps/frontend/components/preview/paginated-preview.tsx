@@ -66,6 +66,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
       languages: t('resume.sections.languages'),
       awards: t('resume.sections.awards'),
       links: t('resume.sections.links'),
+      earlierExperience: t('resume.sections.earlierExperience'),
     }),
     [t]
   );

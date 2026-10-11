@@ -604,6 +604,7 @@ export default function ResumeViewerPage() {
                 languages: t('resume.sections.languages'),
                 awards: t('resume.sections.awards'),
                 links: t('resume.sections.links'),
+                earlierExperience: t('resume.sections.earlierExperience'),
               }}
               fallbackLabels={{ name: t('resume.defaults.name') }}
             />

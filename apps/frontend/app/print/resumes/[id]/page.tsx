@@ -198,6 +198,7 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     languages: t('resume.sections.languages'),
     awards: t('resume.sections.awards'),
     links: t('resume.sections.links'),
+    earlierExperience: t('resume.sections.earlierExperience'),
   };
   const fallbackLabels = {
     name: t('resume.defaults.name'),

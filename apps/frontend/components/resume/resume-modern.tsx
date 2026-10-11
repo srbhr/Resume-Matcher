@@ -9,11 +9,13 @@ import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
 import { TagList } from './tag-list';
+import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/modern.module.css';
 
 interface ResumeModernProps {
+  earlierExperienceLabel?: string;
   data: ResumeData;
   showContactIcons?: boolean;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
@@ -32,6 +34,7 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
   data,
   showContactIcons = false,
   additionalSectionLabels,
+  earlierExperienceLabel,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
@@ -117,7 +120,7 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
               {section.displayName}
             </h3>
             <div className={baseStyles['resume-items']}>
-              {workExperience.map((exp) => (
+              {splitCondensed(workExperience).full.map((exp) => (
                 <div
                   key={exp.id}
                   {...resumeItem(exp.description)}
@@ -140,6 +143,12 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
                   <DescriptionList items={exp.description} styles={exp.descriptionStyles} />
                 </div>
               ))}
+              {splitCondensed(workExperience).condensed.length > 0 && (
+                <EarlierExperience
+                  items={splitCondensed(workExperience).condensed}
+                  label={earlierExperienceLabel}
+                />
+              )}
             </div>
           </div>
         );

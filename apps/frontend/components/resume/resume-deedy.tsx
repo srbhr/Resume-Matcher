@@ -17,6 +17,7 @@ import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DescriptionList } from './description-list';
 import { SafeHtml } from './safe-html';
+import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/deedy.module.css';
@@ -130,6 +131,7 @@ const clean = (items?: string[]) =>
 const joinPresent = (values: (string | undefined)[]) => values.filter(Boolean).join(' | ');
 
 interface ResumeDeedyProps {
+  earlierExperienceLabel?: string;
   data: ResumeData;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
@@ -153,6 +155,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
   sectionHeadings,
   additionalSectionLabels,
   fallbackLabels,
+  earlierExperienceLabel,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
@@ -365,7 +368,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
       <section {...RESUME_SECTION} key={section.id} className={styles.section}>
         {sectionTitle(section.displayName)}
         <div className={styles.entries}>
-          {workExperience.map((exp) => (
+          {splitCondensed(workExperience).full.map((exp) => (
             <div
               key={exp.id}
               {...resumeItem(exp.description)}
@@ -376,6 +379,12 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
               {bullets(exp.description, exp.descriptionStyles)}
             </div>
           ))}
+          {splitCondensed(workExperience).condensed.length > 0 && (
+            <EarlierExperience
+              items={splitCondensed(workExperience).condensed}
+              label={earlierExperienceLabel}
+            />
+          )}
         </div>
       </section>
     ) : null;
