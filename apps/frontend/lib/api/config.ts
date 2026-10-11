@@ -10,7 +10,8 @@ export type LLMProvider =
   | 'gemini'
   | 'deepseek'
   | 'groq'
-  | 'ollama';
+  | 'ollama'
+  | 'claude_cli';
 
 // Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
 // "do not send the parameter" — the default for max compatibility.
@@ -168,6 +169,11 @@ export const PROVIDER_INFO: Record<
      */
     baseUrlI18nKey?: string;
     baseUrlPlaceholder?: string;
+    /**
+     * Served by a CLI installed on the machine running the backend. There is no
+     * key, endpoint, model choice or reasoning effort to configure.
+     */
+    localCli?: boolean;
   }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
@@ -202,6 +208,14 @@ export const PROVIDER_INFO: Record<
     defaultModel: 'gemma3:4b',
     requiresKey: false,
     defaultBaseUrl: 'http://localhost:11434',
+  },
+  // Runs the `claude` CLI already signed in on this machine. The CLI picks its own
+  // model, so defaultModel is only the sentinel the backend stores.
+  claude_cli: {
+    name: 'Claude Code CLI',
+    defaultModel: 'claude_cli',
+    requiresKey: false,
+    localCli: true,
   },
 };
 

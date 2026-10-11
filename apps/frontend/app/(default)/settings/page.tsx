@@ -86,6 +86,7 @@ const PROVIDERS: LLMProvider[] = [
   'deepseek',
   'groq',
   'ollama',
+  'claude_cli',
 ];
 
 const unwrapCodeBlock = (value?: string | null): string | null => {

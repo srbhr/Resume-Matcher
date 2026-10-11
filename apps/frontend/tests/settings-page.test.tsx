@@ -168,6 +168,39 @@ describe('settings page (Swiss sweep)', () => {
     expect(api.setContentLanguage).toHaveBeenCalledWith('es');
   });
 
+  it('offers the Claude Code CLI provider with the sentinel model the backend stores', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+
+    fireEvent.click(within(providers).getByRole('radio', { name: 'Claude' }));
+
+    expect(within(providers).getByRole('radio', { name: 'Claude' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(screen.getByLabelText('settings.llmConfiguration.modelLabel')).toHaveValue('claude_cli');
+  });
+
+  it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: 'claude_cli',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    render(<SettingsPage />);
+
+    const providers = await screen.findByRole('radiogroup', { name: 'settings.providerLabel' });
+    expect(await within(providers).findByRole('radio', { name: 'Claude' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(within(providers).getByRole('radio', { name: 'OpenAI' })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+  });
+
   it('shows a monochrome brand mark on each provider segment except OpenAI-compatible', async () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
