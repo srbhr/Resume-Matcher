@@ -43,6 +43,18 @@ ENV PYTHONUNBUFFERED=1 \
     NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 
+# Optional Debian mirror for slow networks, e.g.
+#   docker build --build-arg DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian .
+# Expects the mirror's /debian URL (the matching /debian-security is derived from it).
+# Empty by default: the image's stock deb.debian.org sources are used unchanged.
+ARG DEBIAN_MIRROR
+RUN if [ -n "${DEBIAN_MIRROR}" ]; then \
+        sed -i \
+            -e "s|^URIs: http://deb.debian.org/debian-security|URIs: ${DEBIAN_MIRROR%/}-security|" \
+            -e "s|^URIs: http://deb.debian.org/debian\$|URIs: ${DEBIAN_MIRROR%/}|" \
+            /etc/apt/sources.list.d/debian.sources; \
+    fi
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
