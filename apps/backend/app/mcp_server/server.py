@@ -52,7 +52,10 @@ async def lifespan(_server: MCPServer) -> AsyncIterator[None]:
             await close_pdf_renderer()
         except Exception as e:
             logger.error("Error closing PDF renderer: %s", e)
-        await db.close()
+        try:
+            await db.close()
+        except Exception as e:
+            logger.error("Error closing database: %s", e)
 
 
 def build_server() -> MCPServer:
