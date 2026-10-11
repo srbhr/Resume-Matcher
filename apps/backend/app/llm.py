@@ -309,8 +309,8 @@ async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -
     """Route a completion to the local Claude Code CLI or to LiteLLM.
 
     When ``config.provider == "claude_cli"`` the request is served by the
-    machine's installed ``claude`` CLI (no API key, no network provider);
-    otherwise it goes through ``transport`` — the LiteLLM ``Router`` for
+    machine's installed ``claude`` CLI (no API key configured here; the CLI
+    itself still calls Anthropic); otherwise it goes through ``transport`` — the LiteLLM ``Router`` for
     completions, or the ``litellm`` module for the health check.
     """
     if config.provider == "claude_cli":

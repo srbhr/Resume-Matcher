@@ -1,9 +1,14 @@
 """Claude Code CLI backend for Resume-Matcher.
 
 Replaces LiteLLM's HTTP transport with a subprocess call to the local
-``claude`` CLI, so the whole app runs on this machine's Claude Code
-(no API key, no cloud provider, no Ollama). Returns a LiteLLM-shaped
+``claude`` CLI, so the app runs on this machine's signed-in Claude Code
+instead of an API key configured here. Prompts still reach Anthropic through
+that account; this is not an offline provider. Returns a LiteLLM-shaped
 response object so the rest of ``app/llm.py`` keeps working unchanged.
+
+The CLI exposes no sampling or output-length flags, so ``temperature``,
+``max_tokens``, ``reasoning_effort`` and ``response_format`` are not
+forwarded; ``complete_json`` already relies on prompt-only JSON.
 """
 
 from __future__ import annotations
