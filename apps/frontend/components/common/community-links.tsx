@@ -62,11 +62,19 @@ const QUIET_LINK = cn(
   'focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
 );
 
-const STYLES: Record<CommunityLinksVariant, { list: string; link: string }> = {
+/**
+ * `label` set means the label collapses to an icon below 2xl (still read aloud, and shown as
+ * a tooltip), so the builder header keeps its single row at laptop widths.
+ */
+const STYLES: Record<CommunityLinksVariant, { list: string; link: string; label?: string }> = {
   hero: { list: 'gap-x-6 gap-y-2', link: QUIET_LINK },
   strip: { list: 'gap-x-6 gap-y-2', link: QUIET_LINK },
   settings: { list: 'gap-x-4 gap-y-1', link: cn(QUIET_LINK, 'text-primary underline') },
-  builder: { list: 'gap-x-2 gap-y-1', link: buttonClass({ variant: 'ghost', size: 'sm' }) },
+  builder: {
+    list: 'gap-x-1 gap-y-1',
+    link: cn(buttonClass({ variant: 'ghost', size: 'sm' }), 'max-2xl:px-2'),
+    label: 'max-2xl:sr-only',
+  },
   about: { list: 'gap-3', link: buttonClass({ variant: 'outline', size: 'sm' }) },
 };
 
@@ -74,14 +82,22 @@ const STYLES: Record<CommunityLinksVariant, { list: string; link: string }> = {
 export function CommunityLink({
   id,
   className,
+  title,
   children,
 }: {
   id: CommunityLinkId;
   className?: string;
+  title?: string;
   children: ReactNode;
 }) {
   return (
-    <a href={COMMUNITY_LINKS[id]} target="_blank" rel="noopener noreferrer" className={className}>
+    <a
+      href={COMMUNITY_LINKS[id]}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={title}
+      className={className}
+    >
       {ICONS[id]}
       {children}
     </a>
@@ -97,13 +113,14 @@ export function CommunityLinks({
   className?: string;
 }) {
   const { t } = useTranslations();
+  const style = STYLES[variant];
 
   return (
-    <ul className={cn('flex flex-wrap items-center', STYLES[variant].list, className)}>
+    <ul className={cn('flex flex-wrap items-center', style.list, className)}>
       {LAYOUTS[variant].map(([id, labelKey]) => (
         <li key={id}>
-          <CommunityLink id={id} className={STYLES[variant].link}>
-            {t(labelKey)}
+          <CommunityLink id={id} className={style.link} title={style.label && t(labelKey)}>
+            {style.label ? <span className={style.label}>{t(labelKey)}</span> : t(labelKey)}
           </CommunityLink>
         </li>
       ))}

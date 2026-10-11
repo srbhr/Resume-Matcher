@@ -65,6 +65,9 @@ describe('builder community links', () => {
     expect(header).toContainElement(discord);
     expect(header).toContainElement(star);
     expect(discord).toHaveClass('bg-transparent');
+    // Below 2xl the label collapses to an icon (still the accessible name) so the header stays one row.
+    expect(discord).toHaveAttribute('title', 'community.joinDiscord');
+    expect(screen.getByText('community.joinDiscord')).toHaveClass('max-2xl:sr-only');
     expect(container.querySelector('footer')).toBeNull();
   });
 });
