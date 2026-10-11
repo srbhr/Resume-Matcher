@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -17,12 +18,14 @@ import pytest
 from docx import Document
 from httpx import ASGITransport, AsyncClient
 from mcp import Client
+from sqlalchemy import select
 
 from app.config import settings
-from app.database import MAX_MASTER_RESUMES, Database
+from app.database import MAX_MASTER_RESUMES, Database, DatabaseBusyError
 from app.main import app
 from app.mcp_server import tools
 from app.mcp_server.server import build_server
+from app.models import Job
 from app.pdf import PDFRenderError
 from app.routers import resumes as resumes_router
 from app.routers.resumes import _hash_job_content
@@ -34,6 +37,7 @@ pytestmark = pytest.mark.integration
 
 export_module = importlib.import_module("app.mcp_server.tools.export_resume_pdf")
 shared_module = importlib.import_module("app.mcp_server.tools._shared")
+roundtrip_module = importlib.import_module("app.services.ats_parse.roundtrip")
 
 EXPECTED_TOOLS = {
     "get_status",
@@ -140,6 +144,25 @@ async def test_master_round_trip_is_visible_to_the_web_api(
         )
 
 
+async def test_get_resume_survives_stored_data_that_breaks_the_schema(
+    isolated_db: Database, sample_resume: dict[str, Any]
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        await isolated_db.update_resume(
+            master["resume_id"],
+            {
+                "processed_data": {"workExperience": "legacy text"},
+                "cover_letter": "Dear team",
+            },
+        )
+        result = await call(mcp, "get_resume", {"resume_id": master["resume_id"]})
+    assert result["resume_data"] == {"workExperience": "legacy text"}
+    assert "update_resume" in result["resume_data_error"]
+    assert result["cover_letter"] == "Dear team"
+    assert "source_markdown" in result
+
+
 async def test_create_master_requires_name_and_respects_limit(
     sample_resume: dict[str, Any],
 ) -> None:
@@ -171,6 +194,26 @@ async def test_add_job_caches_keywords_under_the_pipeline_hash(
             == sample_job_keywords["required_skills"]
         )
         assert stored["company"] == "TechCorp"
+
+
+async def test_add_job_with_keywords_is_one_transaction(
+    isolated_db: Database,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    # Contention on a separate metadata write must not strand a job: the tool's
+    # "retry the same call" advice would otherwise store a duplicate.
+    monkeypatch.setattr(
+        isolated_db, "update_job", AsyncMock(side_effect=DatabaseBusyError())
+    )
+    async with connect() as mcp:
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+    async with isolated_db._session() as session:
+        stored = (await session.execute(select(Job))).scalars().all()
+    assert [job.job_id for job in stored] == [job_id]
+    assert stored[0].metadata_json["company"] == "TechCorp"
+    assert stored[0].metadata_json["job_keywords"]["required_skills"]
 
 
 async def test_save_tailored_rejects_dropped_entries_and_identity_changes(
@@ -262,6 +305,62 @@ async def test_save_tailored_links_job_and_creates_tracker_card(
             {"application_id": saved["application_id"], "status": "interview"},
         )
         assert moved["status"] == "interview"
+
+
+async def test_update_application_keeps_omitted_and_applies_explicit_null(
+    sample_resume: dict[str, Any],
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+        card_ids = []
+        for title in ("First", "Second"):
+            saved = await call(
+                mcp,
+                "save_tailored_resume",
+                {
+                    "source_resume_id": master["resume_id"],
+                    "job_id": job_id,
+                    "resume_data": master["resume_data"],
+                    "title": title,
+                },
+            )
+            card_ids.append(saved["application_id"])
+        card = card_ids[0]
+
+        async def update(**fields: Any) -> dict[str, Any]:
+            return await call(
+                mcp, "update_application", {"application_id": card, **fields}
+            )
+
+        noted = await update(notes="call Friday", company="Acme")
+        assert noted["notes"] == "call Friday" and noted["role"] == "First"
+        kept = await update(role="Lead")
+        assert kept["notes"] == "call Friday" and kept["company"] == "Acme"
+        cleared = await update(notes=None, role=None)
+        assert cleared["notes"] is None and cleared["role"] is None
+        assert cleared["company"] == "Acme"
+        await update(position=0)
+        assert (await update(position=None))["position"] == 1
+        assert "status" in await call_error(
+            mcp, "update_application", {"application_id": card, "status": None}
+        )
+        assert "Nothing to update" in await call_error(
+            mcp, "update_application", {"application_id": card}
+        )
+
+
+async def test_update_application_schema_hides_the_unset_default() -> None:
+    async with connect() as mcp:
+        listed = (await mcp.list_tools()).tools
+    schema = next(t for t in listed if t.name == "update_application").input_schema
+    assert schema["required"] == ["application_id"]
+    for name in ("status", "position", "notes", "company", "role"):
+        assert "default" not in schema["properties"][name]
+    types = [option.get("type") for option in schema["properties"]["notes"]["anyOf"]]
+    assert types == ["string", "null"]
 
 
 async def test_score_resume_reports_missing_keywords(
@@ -358,6 +457,41 @@ async def test_extract_document_text_reads_docx(tmp_path: Path) -> None:
         )
 
 
+async def test_file_tools_read_off_the_event_loop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    document = Document()
+    document.add_paragraph("Jane Doe - Backend Engineer")
+    document.save(tmp_path / "resume.docx")
+    (tmp_path / "notes.md").write_text("# Notes", encoding="utf-8")
+    (tmp_path / "cv.pdf").write_bytes(render("single-column"))
+    watched = {"resume.docx", "notes.md", "cv.pdf"}
+    reads: dict[str, int] = {}
+    read_bytes, read_text = Path.read_bytes, Path.read_text
+
+    def spy_bytes(self: Path) -> bytes:
+        if self.name in watched:
+            reads[self.name] = threading.get_ident()
+        return read_bytes(self)
+
+    def spy_text(self: Path, *args: Any, **kwargs: Any) -> str:
+        if self.name in watched:
+            reads[self.name] = threading.get_ident()
+        return read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_bytes", spy_bytes)
+    monkeypatch.setattr(Path, "read_text", spy_text)
+    async with connect() as mcp:
+        for tool, name in (
+            ("extract_document_text", "resume.docx"),
+            ("extract_document_text", "notes.md"),
+            ("parse_check_file", "cv.pdf"),
+        ):
+            await call(mcp, tool, {"file_path": str(tmp_path / name)})
+    assert set(reads) == watched
+    assert threading.get_ident() not in reads.values()
+
+
 def test_stdio_stdout_carries_only_protocol_messages(tmp_path: Path) -> None:
     initialize = {
         "jsonrpc": "2.0",
@@ -406,6 +540,23 @@ async def test_parse_check_resume_renders_in_memory(
     assert not (settings.data_dir / "exports").exists()
 
 
+async def test_parse_check_resume_maps_extraction_failures_to_a_stable_error(
+    monkeypatch: pytest.MonkeyPatch, isolated_db: Database
+) -> None:
+    async with connect() as mcp:
+        created = await call(mcp, "create_master_resume", {"resume_data": john_doe()})
+        monkeypatch.setattr(
+            ats_parse,
+            "parse_check_render",
+            AsyncMock(side_effect=TimeoutError("/private/internal/detail")),
+        )
+        message = await call_error(
+            mcp, "parse_check_resume", {"resume_id": created["resume_id"]}
+        )
+    assert "Could not parse-check this resume." in message
+    assert "/private/internal/detail" not in message
+
+
 async def test_parse_check_file(tmp_path: Path) -> None:
     path = tmp_path / "cv.pdf"
     path.write_bytes(render("two-column"))
@@ -452,6 +603,36 @@ async def test_tailor_and_verify_rejects_without_writing(
     assert len(await isolated_db.list_resumes()) == 1
     assert await isolated_db.list_applications() == []
     rendered.assert_not_awaited()
+
+
+async def test_tailor_and_verify_keeps_the_save_when_verification_raises(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        shared_module,
+        "render_resume_pdf",
+        AsyncMock(return_value=render("single-column")),
+    )
+    monkeypatch.setattr(
+        ats_parse, "parse_check_pdf", AsyncMock(side_effect=RuntimeError("secret"))
+    )
+    async with connect() as mcp:
+        master, job_id = await _john_doe_job(mcp)
+        result = await call(
+            mcp,
+            "tailor_and_verify",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": master["resume_data"],
+            },
+        )
+    assert result["saved"] is True and result["validation"]["valid"]
+    assert result["resume"]["application_id"]
+    assert "verify_resume" in result["verify_error"]
+    assert "secret" not in json.dumps(result)
+    assert len(await isolated_db.list_resumes()) == 2
+    assert len(await isolated_db.list_applications()) == 1
 
 
 async def test_tailor_and_verify_saves_renders_once_and_reports_issues(
@@ -560,3 +741,106 @@ async def test_verify_resume_uses_the_pdf_route_print_url(
     assert mcp_url.path == route_url.path
     assert parse_qs(mcp_url.query) == parse_qs(route_url.query)
     assert mcp_render.await_args.kwargs == route_render.await_args.kwargs
+
+
+async def test_shutdown_survives_a_failing_database_close(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            isolated_db, "close", AsyncMock(side_effect=RuntimeError("dispose failed"))
+        )
+        async with connect():
+            pass
+
+
+async def test_get_resume_job_rejects_a_deleted_tailored_resume(
+    isolated_db: Database,
+    sample_resume: dict[str, Any],
+    sample_job_description: str,
+    sample_job_keywords: dict[str, Any],
+) -> None:
+    async with connect() as mcp:
+        master = await _master(mcp, sample_resume)
+        job_id = await _job(mcp, sample_job_description, sample_job_keywords)
+        saved = await call(
+            mcp,
+            "save_tailored_resume",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": master["resume_data"],
+            },
+        )
+        await isolated_db.delete_resume(saved["resume_id"])
+        assert await isolated_db.get_improvement_by_tailored_resume(
+            saved["resume_id"]
+        ), "the improvement row outlives the resume"
+        message = await call_error(
+            mcp, "get_resume_job", {"resume_id": saved["resume_id"]}
+        )
+    assert "Resume not found" in message
+
+
+async def test_verify_resume_flags_a_truncated_round_trip(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        shared_module,
+        "render_resume_pdf",
+        AsyncMock(return_value=render("single-column")),
+    )
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        before = await call(mcp, "verify_resume", {"resume_id": master["resume_id"]})
+        monkeypatch.setattr(roundtrip_module, "MAX_FIELDS", 3)
+        after = await call(mcp, "verify_resume", {"resume_id": master["resume_id"]})
+    assert not before["parse_check"]["roundtrip"]["truncated"]
+    assert "roundtrip_truncated" not in before["issues"]
+    assert after["parse_check"]["roundtrip"]["truncated"]
+    assert "roundtrip_truncated" in after["issues"]
+
+
+async def test_resume_schema_rules_are_described_as_guidance() -> None:
+    async with connect() as mcp:
+        listed = (await mcp.list_tools()).tools
+        description = next(
+            t for t in listed if t.name == "get_resume_schema"
+        ).description
+        schema = await call(mcp, "get_resume_schema")
+    assert "guidance" in description
+    assert schema["rules"] == shared_module.AUTHORING_RULES
+
+
+def test_diff_paths_reports_added_and_removed_nullable_keys() -> None:
+    diff = shared_module.diff_paths
+    assert diff({"a": 1}, {"a": 1, "b": None}) == ["b"]
+    assert diff({"p": {"x": None}}, {"p": {}}) == ["p.x"]
+    assert diff({"a": [{"k": None}]}, {"a": [{}]}) == ["a[0].k"]
+    assert diff({"a": None, "b": [1]}, {"a": None, "b": [1]}) == []
+
+
+async def test_tailored_saves_reject_oversized_resume_data_before_writing(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rendered = AsyncMock(return_value=render("single-column"))
+    monkeypatch.setattr(shared_module, "render_resume_pdf", rendered)
+    limit = shared_module.MAX_SOURCE_CHARACTERS
+    async with connect() as mcp:
+        master, job_id = await _john_doe_job(mcp)
+        oversized = copy.deepcopy(master["resume_data"])
+        oversized["summary"] = "x" * (limit + 1)
+        for name in ("save_tailored_resume", "tailor_and_verify"):
+            message = await call_error(
+                mcp,
+                name,
+                {
+                    "source_resume_id": master["resume_id"],
+                    "job_id": job_id,
+                    "resume_data": oversized,
+                },
+            )
+            assert f"exceeds {limit} characters" in message
+    assert len(await isolated_db.list_resumes()) == 1
+    assert await isolated_db.list_applications() == []
+    rendered.assert_not_awaited()
