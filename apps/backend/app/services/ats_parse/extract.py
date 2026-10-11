@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from docx import Document
+from docx.oxml.ns import qn
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTContainer, LTFigure, LTImage, LTTextContainer
 from pdfminer.pdfpage import PDFPage
@@ -21,6 +22,9 @@ from app.services.parser import (
 )
 
 MAX_PARSE_CHECK_PAGES = 10
+# Page counting stops here, so a huge page tree costs a bounded walk; larger
+# documents report this many pages and are marked truncated.
+MAX_COUNTED_PAGES = 100
 SUPPORTED_SUFFIXES = (".pdf", ".docx")
 
 # pdfminer warns per glyph on Chromium fonts ("Could not get FontBBox").
@@ -72,19 +76,37 @@ def _count_images(item: LTContainer) -> int:
     return count
 
 
+def _text_boxes(item: LTContainer) -> list[TextBox]:
+    """Text containers in layout order, including those inside form XObjects."""
+    boxes: list[TextBox] = []
+    for child in item:
+        if isinstance(child, LTTextContainer):
+            text = child.get_text().strip()
+            if text:
+                boxes.append(TextBox(child.x0, child.y0, child.x1, child.y1, text))
+        elif isinstance(child, LTFigure):
+            boxes.extend(_text_boxes(child))
+    return boxes
+
+
 def extract_pdf(content: bytes) -> ExtractedDocument:
-    """pdfminer default layout order, the same reading MarkItDown and simple ATSs use."""
-    page_count = len(list(PDFPage.get_pages(io.BytesIO(content))))
+    """pdfminer default layout order, the same reading MarkItDown and simple ATSs use.
+
+    ``all_texts`` lays out text drawn inside form XObjects too; without it that
+    text stays as loose characters and never reaches the report.
+    """
+    page_count = sum(
+        1 for _ in PDFPage.get_pages(io.BytesIO(content), maxpages=MAX_COUNTED_PAGES)
+    )
     pages: list[PageLayout] = []
     for page in extract_pages(
-        io.BytesIO(content), laparams=LAParams(), maxpages=MAX_PARSE_CHECK_PAGES
+        io.BytesIO(content),
+        laparams=LAParams(all_texts=True),
+        maxpages=MAX_PARSE_CHECK_PAGES,
     ):
-        boxes = [
-            TextBox(item.x0, item.y0, item.x1, item.y1, item.get_text().strip())
-            for item in page
-            if isinstance(item, LTTextContainer) and item.get_text().strip()
-        ]
-        pages.append(PageLayout(page.width, page.height, boxes, _count_images(page)))
+        pages.append(
+            PageLayout(page.width, page.height, _text_boxes(page), _count_images(page))
+        )
     text = "\n\n".join(page.text for page in pages)
     return ExtractedDocument(
         kind="pdf",
@@ -96,8 +118,30 @@ def extract_pdf(content: bytes) -> ExtractedDocument:
     )
 
 
+# Run content in document order. Only run-level tabs count: w:pPr/w:tabs/w:tab
+# defines tab stops and is not text.
+_RUN_CONTENT = "w:r/*[self::w:t or self::w:tab or self::w:br or self::w:cr]"
+_RUN_BREAKS = {qn("w:tab"): "\t", qn("w:br"): "\n", qn("w:cr"): "\n"}
+
+
+def _run_text(element: Any, path: str) -> str:
+    """Run text with tabs and line breaks kept, so "Name<tab>Title" stays two words."""
+    return "".join(
+        _RUN_BREAKS.get(node.tag, node.text or "") for node in element.xpath(path)
+    )
+
+
 def _xml_text(element: Any) -> str:
-    return "".join(t.text or "" for t in element.xpath(".//w:t")).strip()
+    return _run_text(element, f".//{_RUN_CONTENT}").strip()
+
+
+def _table_lines(table: Any) -> list[str]:
+    """One line per row, its non-empty cells joined by " | "."""
+    lines: list[str] = []
+    for row in table.xpath("./w:tr"):
+        cells = [_xml_text(cell) for cell in row.xpath("./w:tc")]
+        lines.append(" | ".join(c for c in cells if c))
+    return lines
 
 
 def extract_docx(content: bytes) -> ExtractedDocument:
@@ -108,18 +152,19 @@ def extract_docx(content: bytes) -> ExtractedDocument:
     for child in body.iterchildren():
         tag = child.tag.rsplit("}", 1)[-1]
         if tag == "p":
-            runs = child.xpath(".//w:t[not(ancestor::w:txbxContent)]")
-            lines.append("".join(t.text or "" for t in runs))
+            lines.append(
+                _run_text(child, f".//{_RUN_CONTENT}[not(ancestor::w:txbxContent)]")
+            )
         elif tag == "tbl":
-            for row in child.xpath("./w:tr"):
-                cells = [_xml_text(cell) for cell in row.xpath("./w:tc")]
-                lines.append(" | ".join(c for c in cells if c))
+            lines.extend(_table_lines(child))
     header_footer: list[str] = []
     columns = 1
     for section in document.sections:
         for part in (section.header, section.footer):
             if not part.is_linked_to_previous:
                 header_footer.extend(p.text for p in part.paragraphs if p.text.strip())
+                for table in part.tables:
+                    header_footer.extend(t for t in _table_lines(table._tbl) if t)
         for num in section._sectPr.xpath("./w:cols/@w:num"):
             columns = max(columns, int(num))
     textboxes = [_xml_text(box) for box in body.xpath(".//w:txbxContent")]

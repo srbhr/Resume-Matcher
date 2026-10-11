@@ -62,6 +62,7 @@ export function AtsCheckView({
       setReport(await checkResumeParse(resumeId, settings, locale));
     } catch (e) {
       console.error('Parse check failed:', e);
+      setReport(null);
       setError(true);
     } finally {
       setRunning(false);
@@ -177,9 +178,7 @@ export function AtsCheckView({
                   <strong>{percent(report.roundtrip.order_fidelity)}</strong>
                 </p>
               </div>
-              {problemFields.length === 0 ? (
-                <p className="text-sm text-ink-soft">{t('builder.atsCheck.allFieldsFound')}</p>
-              ) : (
+              {problemFields.length > 0 && (
                 <ul className="space-y-1">
                   {problemFields.map((field) => (
                     <li key={field.field} className="flex justify-between gap-4 text-xs">
@@ -190,6 +189,15 @@ export function AtsCheckView({
                     </li>
                   ))}
                 </ul>
+              )}
+              {report.roundtrip.truncated ? (
+                <Alert tone="warning" role="status">
+                  {t('builder.atsCheck.fieldsTruncated')}
+                </Alert>
+              ) : (
+                problemFields.length === 0 && (
+                  <p className="text-sm text-ink-soft">{t('builder.atsCheck.allFieldsFound')}</p>
+                )
               )}
             </Box>
           )}

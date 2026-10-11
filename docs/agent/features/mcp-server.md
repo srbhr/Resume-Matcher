@@ -4,7 +4,7 @@
 
 ## Overview
 
-`app/mcp_server/` exposes Resume Matcher as MCP tools over **stdio**. No LLM key is needed and no tool calls an LLM. The agent writes resume content, and the tools store it, run the same preservation checks as `/improve/confirm`, score it and render PDFs. The server shares `data/resume_matcher.db` with the web app (SQLite WAL), so anything the agent saves shows up in the UI.
+`app/mcp_server/` exposes Resume Matcher as MCP tools over **stdio**. No LLM key is needed and no tool calls an LLM. The agent writes resume content, and the tools store it, run the same preservation checks as `/improve/confirm`, score it and render PDFs. The server uses the same database as the web app, so anything the agent saves shows up in the UI. By default that is `data/resume_matcher.db` (SQLite WAL). When `DATABASE_URL` is set, both use that PostgreSQL database instead (see [postgres-backend.md](postgres-backend.md)); `DATA_DIR` then does not select the database.
 
 No tool deletes data or touches `/config`.
 
@@ -15,7 +15,9 @@ cd apps/backend && uv sync
 claude mcp add resume-matcher -- uv run --directory /abs/path/to/apps/backend resume-matcher-mcp
 ```
 
-Any client works the same way: run the command `uv` with args `run --directory <apps/backend> resume-matcher-mcp`. `python -m app.mcp_server` is equivalent. `--directory` makes `.env` and `data/` resolve exactly as they do for the web app. Set `DATA_DIR` to point at a different data folder.
+User-facing setup for Claude Code and Claude Desktop: [SETUP.md](../../../SETUP.md#use-resume-matcher-from-claude-code-or-claude-desktop-mcp). Claude Desktop does not inherit the shell `PATH`, so its config needs the absolute path of `uv` (`which uv` / `where uv`).
+
+Any client works the same way: run the command `uv` with args `run --directory <apps/backend> resume-matcher-mcp`. `python -m app.mcp_server` is equivalent. `--directory` makes `.env` and `data/` resolve exactly as they do for the web app. Set `DATA_DIR` to point at a different data folder (this moves the SQLite file only; PostgreSQL is chosen by `DATABASE_URL`).
 
 `export_resume_pdf`, `verify_resume`, `tailor_and_verify` and `parse_check_resume` need the frontend running (`FRONTEND_BASE_URL`, default `http://localhost:3000`) and able to reach a backend on the same data dir. All other tools work without either server running. `verify_resume` and `tailor_and_verify` still return the keyword score when rendering fails.
 
@@ -35,7 +37,7 @@ Any client works the same way: run the command `uv` with args `run --directory <
 
 1. **Keywords.** `add_job` / `set_job_keywords` store the keywords the agent extracted under `job_keywords` + `job_keywords_hash`. This is the same cache the web tailoring flow reads, so the web UI skips its own extraction for that job.
 2. **Validation.** `validate_tailored_resume` and `save_tailored_resume` run `finalize_ai_resume` (its result must equal the candidate) and `_validate_confirm_payload` (personalInfo unchanged plus `validate_confirmed_resume`, with `allow_appended_rows=True`). Any violation rejects the save. The report lists the violating paths and includes a `repaired_resume_data` the agent can adopt. `grounding_review_warnings` are advisory.
-3. **Save.** A valid save calls `db.create_tailored_resume` (resume + Improvement link), then creates an `applied` tracker card.
+3. **Save.** A valid save calls `db.create_tailored_resume` (resume + Improvement link), then, unless `track_application=false`, tries to create an `applied` tracker card. The card is best-effort: a tracker error is logged and does not fail the save, and `application_id` is in the result only when a card was created.
 4. **Verify.** `tailor_and_verify` runs the validation from step 2. If it fails, nothing is written and it returns `saved: false` with the full report. Otherwise it saves as in step 3, then runs `verify_resume` on the new resume. `verify_resume` renders the PDF once and takes the page count and the parse-check from the same bytes. It scores against the resume's linked job, or `job_id`, and lists `issues`:
 
    | Code | When |
@@ -45,6 +47,7 @@ Any client works the same way: run the command `uv` with args `run --directory <
    | `garbled_glyphs` | the `garbled_glyphs` check warns or fails |
    | `low_order_fidelity` | round-trip `order_fidelity < 0.9` |
    | `fields_missing` | any round-trip field is `missing` or `garbled` |
+   | `roundtrip_truncated` | the round trip hit its field cap; fields past the cap were not checked |
    | `injectable_keywords` | job keywords the master supports but this resume lacks |
    | `render_failed` | rendering failed; `render_error` names the frontend URL |
 

@@ -15,7 +15,8 @@ SQLite in `data/resume_matcher.db` stays the default. PostgreSQL is for durabili
 
 - **Driver.** `psycopg` 3 serves both engines: async for the documents and sync for `api_keys`.
 - **API keys.** `data/.secret_key` still lives in `DATA_DIR`, and the encrypted API keys can't be read without it. Keep it with the database.
-- **Docker.** `docker-compose.postgres.yml` is an opt-in override: a `postgres:17-alpine` service, `DATABASE_URL` and `depends_on: service_healthy`. It needs `POSTGRES_PASSWORD`.
+- **Docker.** `docker-compose.postgres.yml` is an opt-in override: a `postgres:17-alpine` service, `DATABASE_URL` and `depends_on: service_healthy`. It needs `POSTGRES_PASSWORD`. The password is placed in `DATABASE_URL` as-is, so it must be URL-safe (letters, digits and `-._~`); characters such as `@ : / ? # %` break the URL.
+- **TLS.** The URL goes to the driver unchanged and nothing is enforced. The bundled compose database is only reachable inside the compose network. For a remote database add `?sslmode=require` (or `verify-full`) to `DATABASE_URL`.
 
 ## How It Works
 
@@ -27,7 +28,7 @@ SQLite in `data/resume_matcher.db` stays the default. PostgreSQL is for durabili
 2. **Contention.** SQLSTATE `55P03` (lock timeout), `40001` and `40P01` map to `DatabaseBusyError`, which becomes the existing 503 with `Retry-After: 1` (MCP: "Database is busy").
 3. **Startup** (`db_engine.init_models_sync`).
    - `CREATE SCHEMA IF NOT EXISTS` and `create_all` run in one transaction under an advisory lock, so the web app and the MCP server can start together.
-   - The SQLite-only `ALTER TABLE` migrations are skipped, because Postgres tables are always created current.
+   - The SQLite-only `ALTER TABLE` migrations are skipped. `create_all` only creates missing tables and never alters existing ones, so a later release that adds a column or index needs an explicit migration for a PostgreSQL database created earlier.
    - Columns added after the Postgres backend shipped (`improvements.ats_score`) go through `_add_missing_column`, which both backends run. It inspects the table and renders the column DDL through the dialect.
    - The default-master partial unique index uses `postgresql_where=is_default_master`.
 4. **Status.** `GET /status` `database_stats.backend` and MCP `get_status` report `sqlite` or `postgresql`.
@@ -40,6 +41,7 @@ DATABASE_URL=postgresql://... uv run python -m app.scripts.copy_sqlite_to_postgr
 ```
 
 - The script copies every table, including the `api_keys` ciphertext, in one locked transaction.
+- It reads the SQLite source in one read transaction, so all tables come from the same snapshot. Writes made after that snapshot are not copied: stop the web app and the MCP server before the copy and keep them stopped until you have switched over to `DATABASE_URL`.
 - It refuses if any target table already has rows.
 
 ## Tests
@@ -51,7 +53,7 @@ DATABASE_URL=postgresql://... uv run python -m app.scripts.copy_sqlite_to_postgr
   ```
   - `tests/integration/test_postgres_backend.py` (marker `postgres`) runs only in this mode. It covers writer waiting and lock timeout, schema isolation, the partial index, concurrent startup and an end-to-end copy.
   - Tests marked `sqlite_only` open `sqlite3` directly and are skipped in this mode.
-- The suite always clears `DATABASE_URL`, so a developer's own database is never touched.
+- The suite always clears `DATABASE_URL`, so a developer's own database is never touched. Parity mode uses `TEST_DATABASE_URL` instead and creates and drops throwaway schemas there, so point it only at a disposable database.
 
 ## Key Files
 

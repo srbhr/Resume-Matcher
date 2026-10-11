@@ -17,8 +17,11 @@ COLUMN_MIN_COVERAGE = 0.05
 COLUMN_MIN_BOXES = 3
 MAX_COMFORTABLE_PAGES = 2
 
-EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# Bounded local part keeps search linear on long "a.a.a..." runs (see normalize._TOKEN).
+EMAIL_RE = re.compile(r"[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+")
 PHONE_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
+# Digit groups of a year range ("2019 - 2022") or numeric date ("03.2019").
+_DATE_PART = re.compile(r"(?:19|20)\d{2}|0?[1-9]|1[0-2]")
 YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 GARBLED_RE = re.compile(r"\(cid:\d+\)|�|[-]")
 
@@ -225,9 +228,20 @@ def page_count(doc: ExtractedDocument, ctx: Context) -> Check | None:
     )
 
 
+def has_phone(text: str) -> bool:
+    """A phone-shaped digit run: at least 7 digits that are not all date parts."""
+    for match in PHONE_RE.finditer(text):
+        groups = re.findall(r"\d+", match.group())
+        if sum(len(g) for g in groups) >= 7 and not all(
+            _DATE_PART.fullmatch(g) for g in groups
+        ):
+            return True
+    return False
+
+
 def contact_info(doc: ExtractedDocument, ctx: Context) -> Check:
     email = EMAIL_RE.search(doc.text)
-    phone = PHONE_RE.search(doc.text)
+    phone = has_phone(doc.text)
     position = round(email.start() / max(1, len(doc.text)), 2) if email else None
     if not email:
         status: Status = "fail"
@@ -241,9 +255,14 @@ def contact_info(doc: ExtractedDocument, ctx: Context) -> Check:
         "high",
         status,
         email=bool(email),
-        phone=bool(phone),
+        phone=phone,
         email_position=position,
     )
+
+
+# What may follow a heading synonym: punctuation ("&", "・", ":") or a joining word
+# from a supported locale ("Habilidades y Premios", "기술 및 수상 내역", "技能与荣誉").
+_HEADING_JOINER = re.compile(r"[^\w\s]|(?:and|y|e|et|및)\s|[与和及]")
 
 
 def _heading_lines(text: str) -> list[str]:
@@ -254,12 +273,26 @@ def _heading_lines(text: str) -> list[str]:
     ]
 
 
+def is_heading(line: str, names: list[str]) -> bool:
+    """A synonym alone, or joined to more heading text ("skills & awards", "技能与荣誉").
+
+    Prose that merely starts with a synonym ("experience in product engineering",
+    "技術を活用した開発") is not a heading.
+    """
+    for name in names:
+        if line.startswith(name):
+            rest = line[len(name) :].lstrip()
+            if not rest or rest in names or _HEADING_JOINER.match(rest):
+                return True
+    return False
+
+
 def find_sections(text: str, locale: str | None) -> list[str]:
     lines = _heading_lines(text)
     found = []
     for kind in REQUIRED_SECTIONS:
         names = [normalize(name) for name in synonyms(kind, locale)]
-        if any(line.startswith(name) for line in lines for name in names):
+        if any(is_heading(line, names) for line in lines):
             found.append(kind)
     return found
 

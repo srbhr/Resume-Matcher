@@ -4,10 +4,11 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from pydantic import ValidationError
 
 from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
 from app.database import db
-from app.pdf import PDFRenderError
+from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers.resumes import (
     _get_original_resume_data,
     _read_upload_content,
@@ -17,6 +18,7 @@ from app.schemas.models import PageFitSettings
 from app.services.ats_parse import parse_check_bytes, parse_check_render
 from app.services.ats_parse.extract import SUPPORTED_SUFFIXES
 from app.services.ats_parse.models import ParseCheckReport
+from app.services.ats_parse.roundtrip import canonical_resume_data
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
     MAX_UNPACKED_DOCUMENT_BYTES,
@@ -46,7 +48,7 @@ async def parse_check_upload(file: UploadFile = File(...)) -> ParseCheckReport:
     try:
         return await parse_check_bytes(content, file.filename or "resume.pdf")
     except DocumentResourceLimitError as e:
-        logger.warning("Parse check resource limit for %s: %s", file.filename, e)
+        logger.warning("Parse check resource limit for %r: %s", file.filename, e)
         raise HTTPException(status_code=413, detail=TOO_LARGE_DETAIL) from e
     except AIOperationDeadlineExceeded:
         raise
@@ -57,7 +59,7 @@ async def parse_check_upload(file: UploadFile = File(...)) -> ParseCheckReport:
             detail="Parse check timed out. Please try a simpler document.",
         ) from e
     except Exception as e:
-        logger.error("Parse check failed for %s: %s", file.filename, e)
+        logger.error("Parse check failed for %r: %s", file.filename, e)
         raise HTTPException(
             status_code=422,
             detail="Could not read this document. Please upload a valid PDF or DOCX file.",
@@ -78,12 +80,26 @@ async def parse_check_resume(
             status_code=422, detail="Resume has no structured data to check yet."
         )
     try:
+        data = canonical_resume_data(data)
+    except ValidationError as e:
+        logger.warning("Parse check found invalid resume data for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=422,
+            detail="Resume data is not in a valid format, so it cannot be checked.",
+        ) from e
+    try:
         return await parse_check_render(resume_id, data, fit or PageFitSettings())
+    except PDFRenderTimeoutError as e:
+        logger.warning("Parse check render timed out for %s: %s", resume_id, e)
+        raise HTTPException(status_code=504, detail="Parse check timed out.") from e
     except PDFRenderError as e:
         logger.error("Parse check render failed for %s: %s", resume_id, e)
         raise HTTPException(
             status_code=503, detail="Could not render the resume. Please try again."
         ) from e
+    except DocumentResourceLimitError as e:
+        logger.warning("Parse check resource limit for %s: %s", resume_id, e)
+        raise HTTPException(status_code=413, detail=TOO_LARGE_DETAIL) from e
     except AIOperationDeadlineExceeded:
         raise
     except TimeoutError as e:

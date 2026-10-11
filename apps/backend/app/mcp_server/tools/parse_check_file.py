@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import anyio.to_thread
 from mcp.server.mcpserver.exceptions import ToolError
 
 from app.services.ats_parse import parse_check_bytes
@@ -22,7 +23,8 @@ async def parse_check_file(file_path: str) -> dict[str, Any]:
     if path.stat().st_size > MAX_DOCUMENT_BYTES:
         raise ToolError("File too large. Maximum size is 4MB.")
     try:
-        report = await parse_check_bytes(path.read_bytes(), path.name)
+        content = await anyio.to_thread.run_sync(path.read_bytes)
+        report = await parse_check_bytes(content, path.name)
     except Exception as e:
         logger.error("Parse check failed for %s: %s", path, e)
         raise ToolError("Could not read this document.") from e

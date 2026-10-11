@@ -2,6 +2,8 @@
 
 Refuses to write into a target that already has rows, so it is safe to rerun.
 Encrypted API keys are copied as ciphertext: keep the same ``data/.secret_key``.
+The source is read as one snapshot, but anything written to it after that is not
+copied: stop the web app and MCP server before running, and until you switch over.
 
 Run with ``uv run python -m app.scripts.copy_sqlite_to_postgres [--source path]``.
 """
@@ -26,13 +28,21 @@ class TargetNotEmptyError(RuntimeError):
 
 
 def copy_rows(source: Database, target: Database) -> dict[str, int]:
-    """Copy every table from source to target in one locked target transaction."""
+    """Copy every table from source to target in one locked target transaction.
+
+    All source reads share one SQLite read transaction (a single snapshot), so a
+    concurrent writer cannot make the tables disagree with each other.
+    """
     source._ensure_initialized()
     target._ensure_initialized()
-    assert source._sync_engine is not None and target._sync_engine is not None
+    if source._sync_engine is None or target._sync_engine is None:
+        raise ValueError("copy_rows needs initialized source and target databases.")
     tables = Base.metadata.sorted_tables
     counts: dict[str, int] = {}
     with source._sync_engine.connect() as src, target._sync_engine.begin() as dst:
+        # The driver only opens a transaction for writes, so without this each
+        # table would be read in autocommit and could come from a different commit.
+        src.exec_driver_sql("BEGIN")
         for statement in target._write_lock():
             dst.execute(statement)
         for table in tables:

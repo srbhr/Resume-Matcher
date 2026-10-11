@@ -69,7 +69,8 @@ def make_async_engine(
     """Create the async engine (``aiosqlite`` or ``psycopg``) for the document tables."""
     if url:
         return create_async_engine(url, **_postgres_options(schema))
-    assert path is not None
+    if path is None:
+        raise ValueError("make_async_engine needs either a url or a path.")
     engine = create_async_engine(_url(path, driver="aiosqlite"), future=True)
     event.listen(engine.sync_engine, "connect", _apply_sqlite_pragmas)
     return engine
@@ -86,7 +87,8 @@ def make_sync_engine(
     """
     if url:
         return create_engine(url, **_postgres_options(schema))
-    assert path is not None
+    if path is None:
+        raise ValueError("make_sync_engine needs either a url or a path.")
     engine = create_engine(_url(path, driver=""), future=True)
     event.listen(engine, "connect", _apply_sqlite_pragmas)
     return engine

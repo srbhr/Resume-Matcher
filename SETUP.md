@@ -20,6 +20,7 @@ Welcome! This guide will walk you through setting up Resume Matcher on your loca
   - [Option B: Local AI with Ollama](#option-b-local-ai-with-ollama-free)
 - [Docker Deployment](#docker-deployment)
 - [Accessing the Application](#accessing-the-application)
+- [Use Resume Matcher from Claude Code or Claude Desktop (MCP)](#use-resume-matcher-from-claude-code-or-claude-desktop-mcp)
 - [Common Commands Reference](#common-commands-reference)
 - [Troubleshooting](#troubleshooting)
 - [Project Structure Overview](#project-structure-overview)
@@ -417,7 +418,22 @@ SQLite is the default and needs no setup. For backups or remote/shared hosting y
 POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`. Tables are created on startup. To move existing data, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set; it refuses to write into a non-empty database. Keep `data/.secret_key`: it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
+`POSTGRES_PASSWORD` is copied into `DATABASE_URL` as-is, so use a URL-safe password (letters, digits, `-._~`).
+
+Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`, percent-encoding any special characters in the password. For a remote database add `?sslmode=require` to the URL. Tables are created on startup.
+
+To move existing data from a local install, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set. Its default `--source` is `apps/backend/data/resume_matcher.db`, which only exists for local installs; pass `--source <file>` for another SQLite file. It refuses to write into a non-empty database. Stop the app first: writes made after the copy starts are not copied.
+
+A Docker install keeps its SQLite database in the `resume-data` volume, not on the host. Stop the app, then run the script inside the container, where that volume is the default source:
+
+```bash
+export POSTGRES_PASSWORD=change-me
+docker compose stop
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm -w /app/backend resume-matcher python -m app.scripts.copy_sqlite_to_postgres
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+Alternatively copy the file out of the stopped container (`docker cp resume-matcher:/app/backend/data/resume_matcher.db .`) and pass it with `--source ./resume_matcher.db` from a host that can reach the database. Keep `data/.secret_key` (it stays in the volume): it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
 
 ### Important Notes
 
@@ -447,6 +463,50 @@ Once the container is running, open your browser:
 4. Click "Save Configuration"
 5. Click "Test Connection" to verify it works
 6. Return to Dashboard and upload your first resume!
+
+---
+
+## Use Resume Matcher from Claude Code or Claude Desktop (MCP)
+
+Resume Matcher ships an [MCP](https://modelcontextprotocol.io) server that lets Claude Code, Claude Desktop, Cursor or Codex drive it directly. It runs over stdio and needs **no LLM API key**: Claude writes the content, and Resume Matcher stores, validates, scores and renders it. It shares the web app's database, so whatever Claude saves shows up in the UI.
+
+**Prerequisite:** a local (non-Docker) install. Clone the repo and run `cd apps/backend && uv sync` (see [Backend Setup](#2-backend-setup)).
+
+### Claude Code
+
+```bash
+claude mcp add resume-matcher -- uv run --directory /abs/path/to/Resume-Matcher/apps/backend resume-matcher-mcp
+```
+
+### Claude Desktop
+
+Add this to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`, Windows: `%APPDATA%\Claude\claude_desktop_config.json`), then restart Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "resume-matcher": {
+      "command": "/absolute/path/to/uv",
+      "args": ["run", "--directory", "/abs/path/to/Resume-Matcher/apps/backend", "resume-matcher-mcp"]
+    }
+  }
+}
+```
+
+Use the **absolute path** of `uv` for `command` (find it with `which uv` on macOS/Linux or `where uv` on Windows). Claude Desktop does not inherit your shell `PATH`, so a bare `uv` is not found. On Windows, double the backslashes in JSON paths.
+
+### Other MCP clients
+
+Cursor, Codex and other clients use the same command (`uv`) and args (`run --directory <path>/apps/backend resume-matcher-mcp`).
+
+### Notes
+
+- **Same checkout, same data.** Run the web app from the same checkout so both use the same database. `DATA_DIR` moves the SQLite file; `DATABASE_URL` selects [PostgreSQL](#optional-postgresql) instead.
+- **Frontend for PDF and verify.** PDF export, `verify_resume`, `tailor_and_verify` and `parse_check_resume` need the frontend running (default <http://localhost:3000>, set with `FRONTEND_BASE_URL`). The other tools work without it.
+- **Docker is not supported yet.** The app's database lives inside the Docker volume, so a server started on the host would see an empty database.
+- **ATS score (temporary).** Resumes saved through MCP do not get an ATS score yet. Open the resume in the builder and click **Recalculate**.
+
+Tool list and internals: [docs/agent/features/mcp-server.md](docs/agent/features/mcp-server.md).
 
 ---
 

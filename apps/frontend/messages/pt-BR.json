@@ -569,9 +569,10 @@
       "contentRecall": "Conteúdo recuperado",
       "orderFidelity": "Ordem de leitura",
       "allFieldsFound": "Todos os campos aparecem no texto extraído.",
+      "fieldsTruncated": "Este currículo tem mais campos do que a verificação cobre, então apenas os primeiros foram verificados. Os campos além do limite não aparecem aqui.",
       "fieldStatus": {
         "found": "Encontrado",
-        "garbled": "Embaralhado",
+        "garbled": "Ilegível",
         "missing": "Ausente",
         "hidden": "Oculto"
       },

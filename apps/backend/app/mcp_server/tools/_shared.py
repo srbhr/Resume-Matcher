@@ -12,7 +12,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.ai_limits import MAX_SOURCE_CHARACTERS
 from app.config import settings
-from app.database import DatabaseBusyError, ResumeNotFoundError, db
+from app.database import DatabaseBusyError, ResumeNotFoundError, _now, db
+from app.models import Job
 from app.pdf import render_resume_pdf
 from app.routers.resumes import (
     _get_original_resume_data,
@@ -106,12 +107,16 @@ def require_structured(resume: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+def ensure_within_size_limit(data: dict[str, Any]) -> None:
+    if len(json.dumps(data, ensure_ascii=False)) > MAX_SOURCE_CHARACTERS:
+        raise ToolError(f"Resume exceeds {MAX_SOURCE_CHARACTERS} characters.")
+
+
 def canonical(resume_data: ResumeData) -> dict[str, Any]:
     data = ResumeData.model_validate(
         normalize_resume_data(resume_data.model_dump(mode="json"))
     ).model_dump(mode="json")
-    if len(json.dumps(data, ensure_ascii=False)) > MAX_SOURCE_CHARACTERS:
-        raise ToolError(f"Resume exceeds {MAX_SOURCE_CHARACTERS} characters.")
+    ensure_within_size_limit(data)
     return data
 
 
@@ -143,6 +148,23 @@ def job_view(job: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+async def create_job_with_metadata(
+    content: str, metadata: dict[str, Any]
+) -> dict[str, Any]:
+    """Insert a job and its dynamic fields in one transaction, so a retry cannot duplicate it."""
+    async with db._write_session() as session:
+        row = Job(
+            job_id=str(uuid4()),
+            content=content,
+            resume_id=None,
+            created_at=_now(),
+            metadata_json=metadata,
+        )
+        session.add(row)
+        await session.commit()
+        return db._job_to_dict(row)
+
+
 def keyword_updates(content: str, keywords: JobKeywords) -> dict[str, Any]:
     updates: dict[str, Any] = {
         "job_keywords": keywords.model_dump(),
@@ -159,11 +181,11 @@ def diff_paths(a: Any, b: Any, path: str = "") -> list[str]:
     if isinstance(a, dict) and isinstance(b, dict):
         out: list[str] = []
         for key in sorted(set(a) | set(b), key=str):
-            out.extend(
-                diff_paths(
-                    a.get(key), b.get(key), f"{path}.{key}" if path else str(key)
-                )
-            )
+            child = f"{path}.{key}" if path else str(key)
+            if key in a and key in b:
+                out.extend(diff_paths(a[key], b[key], child))
+            else:
+                out.append(child)
         return out
     if isinstance(a, list) and isinstance(b, list) and len(a) == len(b):
         out = []

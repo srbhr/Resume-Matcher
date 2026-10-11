@@ -40,7 +40,9 @@ def build_report(
         content_score=score(checks, {"content"}),
         page_count=doc.page_count,
         checks=checks,
-        roundtrip=compute_roundtrip(resume_data, doc.text) if resume_data else None,
+        roundtrip=(
+            compute_roundtrip(resume_data, doc.text, template) if resume_data else None
+        ),
         template=template,
         extracted_text_preview=doc.text[:PREVIEW_CHARACTERS],
     )

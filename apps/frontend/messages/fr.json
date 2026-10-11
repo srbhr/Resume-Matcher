@@ -569,6 +569,7 @@
       "contentRecall": "Contenu retrouvé",
       "orderFidelity": "Ordre de lecture",
       "allFieldsFound": "Tous les champs figurent dans le texte extrait.",
+      "fieldsTruncated": "Ce CV contient plus de champs que la vérification n'en couvre ; seuls les premiers ont été vérifiés. Les champs au-delà de la limite ne sont pas pris en compte ici.",
       "fieldStatus": {
         "found": "Trouvé",
         "garbled": "Brouillé",

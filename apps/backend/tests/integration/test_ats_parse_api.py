@@ -1,6 +1,7 @@
 """ATS parse-check endpoints: uploads, rendered resumes and error mapping."""
 
 import io
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 from unittest.mock import AsyncMock
@@ -13,9 +14,12 @@ from httpx import ASGITransport, AsyncClient
 from app import services
 from app.database import Database
 from app.main import app
-from app.pdf import PDFRenderError
+from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers import resumes as resumes_router
+from app.routers.ats import TOO_LARGE_DETAIL
 from app.routers.resumes import MAX_FILE_SIZE
+from app.schemas import normalize_resume_data
+from app.services.parser import DocumentResourceLimitError
 from tests.ats_fixtures import john_doe, render
 
 pytestmark = pytest.mark.integration
@@ -65,6 +69,7 @@ async def test_upload_docx(client: AsyncClient) -> None:
     )
     assert res.status_code == 200
     assert _statuses(res.json())["tables"] == "pass"
+    assert "Jane Doe" in res.json()["extracted_text_preview"]
 
 
 @pytest.mark.parametrize(
@@ -84,6 +89,21 @@ async def test_upload_rejections(
         "/api/v1/ats/parse-check", files={"file": (name, content, mime)}
     )
     assert res.status_code == status
+
+
+async def test_upload_failure_log_escapes_filename(
+    client: AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    name = "cv\x1b[31m.pdf"
+    with caplog.at_level(logging.ERROR, logger="app.routers.ats"):
+        res = await client.post(
+            "/api/v1/ats/parse-check",
+            files={"file": (name, b"%PDF-1.4 broken", PDF)},
+        )
+    assert res.status_code == 422
+    message = next(r.getMessage() for r in caplog.records if "failed for" in r.msg)
+    assert "\x1b" not in message
+    assert repr(name) in message
 
 
 async def test_rendered_resume_matches_pdf_route_and_round_trips(
@@ -130,3 +150,57 @@ async def test_rendered_resume_errors(
     res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
     assert res.status_code == 503
     assert "chromium detail" not in res.text
+
+
+@pytest.mark.parametrize(
+    ("key", "value"), [("personalInfo", "bogus"), ("workExperience", ["bogus"])]
+)
+async def test_rendered_resume_with_malformed_data_is_422(
+    client: AsyncClient,
+    isolated_db: Database,
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+    value: Any,
+) -> None:
+    # Both used to reach the round trip and fail with a 500 on `.get`.
+    resume_id = await _resume(isolated_db, normalize_resume_data({key: value}))
+    check_render = AsyncMock(return_value=render("single-column"))
+    monkeypatch.setattr(services.ats_parse, "render_resume_pdf", check_render)
+    res = await client.post(f"/api/v1/resumes/{resume_id}/parse-check")
+    assert res.status_code == 422
+    assert "bogus" not in res.text
+    check_render.assert_not_awaited()
+
+
+async def test_rendered_resume_render_timeout_is_504(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # PDFRenderTimeoutError subclasses PDFRenderError; it must not become a 503.
+    ready = await _resume(isolated_db, john_doe())
+    monkeypatch.setattr(
+        services.ats_parse,
+        "render_resume_pdf",
+        AsyncMock(side_effect=PDFRenderTimeoutError("deadline detail")),
+    )
+    res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
+    assert res.status_code == 504
+    assert "deadline detail" not in res.text
+
+
+async def test_rendered_resume_over_resource_limit_is_413(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ready = await _resume(isolated_db, john_doe())
+    monkeypatch.setattr(
+        services.ats_parse,
+        "render_resume_pdf",
+        AsyncMock(return_value=render("single-column")),
+    )
+    monkeypatch.setattr(
+        services.ats_parse,
+        "extract_document",
+        AsyncMock(side_effect=DocumentResourceLimitError("budget detail")),
+    )
+    res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
+    assert res.status_code == 413
+    assert res.json()["detail"] == TOO_LARGE_DETAIL

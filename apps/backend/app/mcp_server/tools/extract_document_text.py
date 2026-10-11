@@ -1,7 +1,9 @@
+import functools
 import logging
 from pathlib import Path
 from typing import Any
 
+import anyio.to_thread
 from mcp.server.mcpserver.exceptions import ToolError
 
 from app.ai_limits import MAX_SOURCE_CHARACTERS
@@ -26,9 +28,12 @@ async def extract_document_text(file_path: str) -> dict[str, Any]:
         raise ToolError("File too large. Maximum size is 4MB.")
     try:
         if suffix in TEXT_SUFFIXES:
-            text = path.read_text(encoding="utf-8", errors="replace")
+            text = await anyio.to_thread.run_sync(
+                functools.partial(path.read_text, encoding="utf-8", errors="replace")
+            )
         else:
-            text = await parse_document(path.read_bytes(), path.name)
+            content = await anyio.to_thread.run_sync(path.read_bytes)
+            text = await parse_document(content, path.name)
     except Exception as e:
         logger.error("Document extraction failed for %s: %s", path, e)
         raise ToolError("Could not extract text from this document.") from e

@@ -569,9 +569,10 @@
       "contentRecall": "内容召回率",
       "orderFidelity": "阅读顺序",
       "allFieldsFound": "所有字段都出现在提取的文本中。",
+      "fieldsTruncated": "此简历的字段数超出检查上限，仅检查了前面的字段。超出上限的字段不会在此显示。",
       "fieldStatus": {
         "found": "已找到",
-        "garbled": "错乱",
+        "garbled": "乱码",
         "missing": "缺失",
         "hidden": "已隐藏"
       },

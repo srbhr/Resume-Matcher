@@ -1,9 +1,12 @@
 """PostgreSQL configuration and write locking, checked without a server."""
 
+import sqlite3
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
+from sqlalchemy import event, select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.schema import CreateIndex
@@ -16,8 +19,10 @@ from app.database import (
     _translate_write_errors,
     _write_lock_statements,
 )
+from app.db_engine import make_async_engine, make_sync_engine
 from app.db_url import normalize_database_url, redact, validate_schema_name
-from app.models import Resume
+from app.models import Base, Resume
+from app.preview import job_fingerprint, resume_fingerprint
 from app.scripts.copy_sqlite_to_postgres import TargetNotEmptyError, copy_rows
 
 pytestmark = pytest.mark.unit
@@ -55,6 +60,41 @@ def test_schema_names_are_strict(name: str) -> None:
 
 def test_redact_hides_the_password() -> None:
     assert "s3cret" not in redact(PG) and "rm:***@db" in redact(PG)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "postgresql://rm@db/rm?password=s3cret",
+        "postgresql://rm@db/rm?sslmode=require&PASSWORD=s3cret",
+        "postgresql://rm@db/rm?sslpassword=s3cret&password=s3cret",
+        "postgresql://rm:s3cret@db/rm?password=s3cret",
+    ],
+)
+def test_redact_hides_password_query_parameters(url: str) -> None:
+    assert "s3cret" not in redact(url)
+
+
+def test_redact_keeps_harmless_query_parameters() -> None:
+    assert redact("postgresql://rm@db/rm?password=s3cret&sslmode=require") == (
+        "postgresql://rm@db/rm?password=redacted&sslmode=require"
+    )
+
+
+@pytest.mark.parametrize(
+    "call, bad",
+    [
+        (normalize_database_url, "postgresql://rm:s3cret@db:notaport/rm"),
+        (redact, "postgresql://rm:s3cret@db:notaport/rm"),
+        (redact, "s3cret"),
+    ],
+)
+def test_invalid_urls_never_chain_the_raw_parse_error(call: Any, bad: str) -> None:
+    with pytest.raises(ValueError) as error:
+        call(bad)
+    assert "s3cret" not in str(error.value)
+    assert error.value.__cause__ is None
+    assert error.value.__suppress_context__
 
 
 def test_database_url_selects_postgres_unless_a_path_is_given(
@@ -111,6 +151,39 @@ def test_default_master_index_is_partial_on_postgres() -> None:
     assert "WHERE is_default_master" in ddl
 
 
+def test_sqlite_engine_factories_require_a_path() -> None:
+    with pytest.raises(ValueError):
+        make_async_engine()
+    with pytest.raises(ValueError):
+        make_sync_engine()
+
+
+def test_copy_rows_rejects_uninitialized_databases(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = Database(db_path=tmp_path / "source.db")
+    target = Database(db_path=tmp_path / "target.db")
+    monkeypatch.setattr(source, "_ensure_initialized", lambda: None)
+    monkeypatch.setattr(target, "_ensure_initialized", lambda: None)
+    with pytest.raises(ValueError):
+        copy_rows(source, target)
+
+
+def _dump(database: Database) -> dict[str, list[dict[str, Any]]]:
+    database._ensure_initialized()
+    assert database._sync_engine is not None
+    with database._sync_engine.connect() as conn:
+        return {
+            table.name: [
+                dict(row)
+                for row in conn.execute(
+                    select(table).order_by(*table.primary_key.columns)
+                ).mappings()
+            ]
+            for table in Base.metadata.sorted_tables
+        }
+
+
 async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
     source = Database(db_path=tmp_path / "source.db")
     target = Database(db_path=tmp_path / "target.db")
@@ -120,11 +193,28 @@ async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
         )
         job = await source.create_job("Engineer", resume["resume_id"])
         await source.create_application(job_id=job["job_id"], resume_id="r1")
+        await source.create_improvement(
+            resume["resume_id"], "tailored-1", job["job_id"], [{"suggestion": "s"}]
+        )
+        await source.register_preview(
+            source_id=resume["resume_id"],
+            job_id=job["job_id"],
+            payload_hash="h",
+            source_hash=resume_fingerprint(
+                resume["content"],
+                resume.get("processed_data"),
+                resume.get("original_markdown"),
+            ),
+            job_hash=job_fingerprint(job["content"]),
+            prompt_id="keywords",
+            ttl_seconds=60,
+            improvements=[{"suggestion": "s"}],
+        )
         source.set_api_key_ciphertext("openai", "ciphertext")
 
         counts = copy_rows(source, target)
-        assert counts["resumes"] == counts["jobs"] == counts["applications"] == 1
-        assert counts["api_keys"] == 1
+        assert counts == {table.name: 1 for table in Base.metadata.sorted_tables}
+        assert _dump(target) == _dump(source)
         assert await target.get_resume(resume["resume_id"]) == await source.get_resume(
             resume["resume_id"]
         )
@@ -132,6 +222,38 @@ async def test_copy_rows_copies_every_table_once(tmp_path: Path) -> None:
         with pytest.raises(TargetNotEmptyError):
             copy_rows(source, target)
         assert (await target.get_stats())["total_resumes"] == 1
+    finally:
+        await source.close()
+        await target.close()
+
+
+async def test_copy_rows_reads_one_source_snapshot(tmp_path: Path) -> None:
+    source = Database(db_path=tmp_path / "source.db")
+    target = Database(db_path=tmp_path / "target.db")
+    try:
+        await source.create_job("Engineer")
+        assert source._sync_engine is not None
+        wrote_late = False
+
+        @event.listens_for(source._sync_engine, "after_cursor_execute")
+        def write_after_first_table(
+            _conn: Any, _cursor: Any, statement: str, *_args: Any
+        ) -> None:
+            # Commit to a table that is read later, once the first table was read.
+            nonlocal wrote_late
+            if wrote_late or "FROM api_keys" not in statement:
+                return
+            wrote_late = True
+            with sqlite3.connect(source.db_path) as other:
+                other.execute(
+                    "INSERT INTO jobs (job_id, content, created_at, metadata_json)"
+                    " VALUES ('late', 'late', 'now', '{}')"
+                )
+
+        counts = copy_rows(source, target)
+        assert wrote_late
+        assert counts["jobs"] == 1
+        assert (await source.get_stats())["total_jobs"] == 2
     finally:
         await source.close()
         await target.close()
