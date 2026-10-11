@@ -183,3 +183,33 @@ class TestStatusEndpoint:
         data = resp.json()
         assert data["llm_configured"] is True
         assert data["status"] == "ready"
+
+
+class TestStatusChatGPT:
+    """``chatgpt`` has no API key: it is configured once the user signed in."""
+
+    @patch("app.routers.health.db", new_callable=AsyncMock)
+    @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
+    @patch("app.routers.health.get_llm_config")
+    @pytest.mark.parametrize("signed_in", [True, False])
+    async def test_configured_follows_the_sign_in(
+        self, mock_config, mock_health, mock_db, client, signed_in
+    ):
+        from tests import chatgpt_fakes
+
+        if signed_in:
+            chatgpt_fakes.save_connected_record()
+        mock_config.return_value = type(
+            "C", (), {"api_key": "", "provider": "chatgpt"}
+        )()
+        mock_health.return_value = {"healthy": signed_in}
+        mock_db.get_stats.return_value = {
+            "total_resumes": 0,
+            "total_jobs": 0,
+            "total_improvements": 0,
+            "has_master_resume": False,
+        }
+        async with client:
+            resp = await client.get("/api/v1/status")
+        assert resp.status_code == 200
+        assert resp.json()["llm_configured"] is signed_in

@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter
 
+from app.chatgpt_auth import is_connected as chatgpt_is_connected
 from app.database import db
 from app.llm import check_llm_health, get_llm_config
 from app.schemas import HealthResponse, StatusResponse
@@ -44,11 +45,11 @@ async def get_status() -> StatusResponse:
     try:
         config = get_llm_config()
         # ollama / openai_compatible / claude_cli run without a key, matching
-        # check_llm_health.
-        llm_configured = bool(config.api_key) or config.provider in (
-            "ollama",
-            "openai_compatible",
-            "claude_cli",
+        # check_llm_health. chatgpt is configured once the user has signed in.
+        llm_configured = (
+            bool(config.api_key)
+            or config.provider in ("ollama", "openai_compatible", "claude_cli")
+            or (config.provider == "chatgpt" and chatgpt_is_connected())
         )
         llm_status = await check_llm_health(config)
         llm_healthy = bool(llm_status.get("healthy"))
