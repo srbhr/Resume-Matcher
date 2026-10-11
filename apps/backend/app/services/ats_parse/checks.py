@@ -31,7 +31,7 @@ _DATE_PART = re.compile(r"(?:19|20)\d{2}|0?[1-9]|1[0-2]")
 YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 GARBLED_RE = re.compile(r"\(cid:\d+\)|�|[-]")
 
-Context = dict[str, str | None]
+Context = dict[str, str | bool | None]
 CheckFn = Callable[[ExtractedDocument, Context], Check | None]
 
 
@@ -238,9 +238,9 @@ def images(doc: ExtractedDocument, ctx: Context) -> Check:
 def page_count(doc: ExtractedDocument, ctx: Context) -> Check | None:
     if doc.page_count is None:
         return None
-    status: Status = (
-        "warn" if doc.truncated or doc.page_count > MAX_COMFORTABLE_PAGES else "pass"
-    )
+    # An academic CV has no comfortable length, so only truncation warns.
+    too_long = not ctx.get("cv_mode") and doc.page_count > MAX_COMFORTABLE_PAGES
+    status: Status = "warn" if doc.truncated or too_long else "pass"
     return _check(
         "page_count",
         "layout",

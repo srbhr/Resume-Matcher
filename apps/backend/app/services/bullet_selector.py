@@ -171,10 +171,12 @@ async def fit_to_page_limit(
     data: dict[str, Any],
     scores: dict[BulletKey, float],
     measure: Callable[[dict[str, Any]], Awaitable[int]],
-    max_pages: int = 1,
+    max_pages: int | None = 1,
     max_renders: int = MAX_FIT_RENDERS,
 ) -> FitResult:
     """Drop the fewest ranked bullets so the rendered draft fits ``max_pages``.
+
+    With ``max_pages=None`` (no cap) nothing is dropped; the draft is measured once.
 
     Page count is monotonic in the number of drops, so binary search over k.
     When even the maximum trim (one bullet per entry) spills over the limit,
@@ -190,7 +192,7 @@ async def fit_to_page_limit(
 
     try:
         base_pages = await pages_for(0)
-        if base_pages <= max_pages:
+        if max_pages is None or base_pages <= max_pages:
             return FitResult(copy.deepcopy(data), "fits", 0, base_pages, renders)
         if not order:
             return FitResult(copy.deepcopy(data), "over", 0, base_pages, renders)

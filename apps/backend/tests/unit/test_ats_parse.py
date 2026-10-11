@@ -223,6 +223,20 @@ async def test_academic_appointments_on_a_real_render_count_as_experience(
     assert "experience" in check.params["found"]
 
 
+async def test_cv_mode_lifts_the_page_count_warning_but_not_truncation() -> None:
+    content = fixture("swiss-single-academic-3p")
+    default = await parse_check_bytes(content, "a.pdf", source="render")
+    cv = await parse_check_bytes(content, "a.pdf", source="render", cv_mode=True)
+    assert _status(default.checks, "page_count") == "warn"
+    assert _status(cv.checks, "page_count") == "pass"
+    assert cv.page_count == 3
+    truncated = ExtractedDocument(
+        kind="pdf", text="x", page_count=MAX_PARSE_CHECK_PAGES + 1, truncated=True
+    )
+    checks = run_checks(truncated, {"cv_mode": True})
+    assert _status(checks, "page_count") == "warn"
+
+
 async def test_two_column_template_over_three_pages_is_still_detected() -> None:
     report = await parse_check_bytes(
         fixture("swiss-two-column-academic-3p"),

@@ -20,7 +20,7 @@ from app.routers.ats import TOO_LARGE_DETAIL
 from app.routers.resumes import MAX_FILE_SIZE
 from app.schemas import normalize_resume_data
 from app.services.parser import DocumentResourceLimitError
-from tests.ats_fixtures import john_doe, render
+from tests.ats_fixtures import fixture, john_doe, render
 
 pytestmark = pytest.mark.integration
 
@@ -131,6 +131,23 @@ async def test_rendered_resume_matches_pdf_route_and_round_trips(
     assert check_url.path == route_url.path
     assert parse_qs(check_url.query) == parse_qs(route_url.query)
     assert check_render.await_args.kwargs == route_render.await_args.kwargs
+
+
+async def test_cv_mode_lifts_the_long_resume_warning(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    resume_id = await _resume(isolated_db, john_doe())
+    monkeypatch.setattr(
+        services.ats_parse,
+        "render_resume_pdf",
+        AsyncMock(return_value=fixture("swiss-single-academic-3p")),
+    )
+    url = f"/api/v1/resumes/{resume_id}/parse-check"
+    default = await client.post(url, json={})
+    cv = await client.post(url, json={"cv_mode": True})
+    assert default.json()["page_count"] == cv.json()["page_count"] == 3
+    assert _statuses(default.json())["page_count"] == "warn"
+    assert _statuses(cv.json())["page_count"] == "pass"
 
 
 async def test_rendered_resume_errors(

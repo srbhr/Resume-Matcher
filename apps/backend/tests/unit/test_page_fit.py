@@ -35,6 +35,22 @@ def test_page_fit_settings_query_matches_pdf_endpoint_params() -> None:
     assert "lang" not in PageFitSettings().to_query()
 
 
+def test_cv_mode_is_off_by_default_and_not_a_print_setting() -> None:
+    assert PageFitSettings().cv_mode is False
+    on = PageFitSettings(cv_mode=True)
+    assert on.cv_mode is True
+    # The print route never sees it, so URLs match the PDF endpoint's for the same look.
+    assert "cv_mode" not in on.to_query()
+    assert on.to_query() == PageFitSettings().to_query()
+
+
+def test_page_limit_is_lifted_only_in_cv_mode() -> None:
+    assert page_fit.page_limit(PageFitSettings(), 2) == 2
+    assert page_fit.page_limit(PageFitSettings(), None) is None
+    assert page_fit.page_limit(None, 2) == 2
+    assert page_fit.page_limit(PageFitSettings(cv_mode=True), 2) is None
+
+
 def _pdf(pages: int) -> bytes:
     # Minimal valid multi-page PDF built by hand; pdfminer only needs the page tree.
     objs = ["<< /Type /Catalog /Pages 2 0 R >>"]

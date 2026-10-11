@@ -1015,6 +1015,42 @@ async def test_final_check_compares_against_the_page_limit(
     assert tailor_selection.PAGE_FIT_FINAL_OVER_WARNING in data["warnings"]
 
 
+async def test_preview_in_cv_mode_reports_pages_without_a_page_limit(
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    measured: list[int] = []
+
+    async def measure(data: dict[str, Any], fit: Any) -> int:
+        measured.append(1)
+        return 3 if len(measured) == 1 else 4  # a CV runs long and the rewrite longer
+
+    monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
+    res = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={
+            "resume_id": master["resume_id"],
+            "job_id": job["job_id"],
+            "max_pages": 2,
+            "page_fit": {"cv_mode": True},
+        },
+    )
+    assert res.status_code == 200, res.text
+    data = res.json()["data"]
+    sel = data["bullet_selection"]
+    assert (sel["page_fit"], sel["trimmed_for_fit"], sel["max_pages"]) == (
+        "fits",
+        0,
+        None,
+    )
+    assert sel["bullets_before"] == sel["bullets_after"] == 10
+    assert (sel["final_pages"], sel["final_check"]) == (4, "ok")
+    assert tailor_selection.PAGE_FIT_OVER_WARNING not in data["warnings"]
+    assert tailor_selection.PAGE_FIT_FINAL_OVER_WARNING not in data["warnings"]
+
+
 @pytest.mark.parametrize("max_pages", [0, 6])
 async def test_preview_rejects_out_of_range_page_limit(
     client: AsyncClient, master: dict[str, Any], job: dict[str, Any], max_pages: int

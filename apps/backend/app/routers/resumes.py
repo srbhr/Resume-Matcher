@@ -91,7 +91,7 @@ from app.services.improver import (
     verify_skill_target_plan,
 )
 from app.services.interview_prep import generate_interview_prep
-from app.services.page_fit import render_drafts
+from app.services.page_fit import page_limit, render_drafts
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
     MAX_PDF_PREFLIGHT_PAGES,
@@ -1517,7 +1517,8 @@ async def _improve_preview_flow(
         bullet_selection.final_check = "skipped" if final_pages is None else "ok"
         if final_pages is not None:
             bullet_selection.final_pages = final_pages
-            if final_pages > request.max_pages:
+            limit = page_limit(request.page_fit, request.max_pages)
+            if limit is not None and final_pages > limit:
                 response_warnings.append(PAGE_FIT_FINAL_OVER_WARNING)
 
     progress["stage"] = "register_preview"

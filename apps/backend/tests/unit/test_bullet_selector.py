@@ -222,6 +222,21 @@ async def test_fit_leaves_a_draft_within_a_multi_page_limit_untouched() -> None:
     assert result.data == sel.data
 
 
+async def test_fit_without_a_page_limit_measures_once_and_never_trims() -> None:
+    sel = select_bullets(_resume(), SCORES, None)
+    renders = 0
+
+    async def measure(d: dict) -> int:
+        nonlocal renders
+        renders += 1
+        return 7
+
+    result = await fit_to_page_limit(sel.data, sel.scores, measure, max_pages=None)
+    assert (result.status, result.trimmed, result.pages) == ("fits", 0, 7)
+    assert renders == result.renders == 1
+    assert result.data == sel.data
+
+
 async def test_fit_trims_only_down_to_the_page_limit() -> None:
     sel = select_bullets(_resume(), SCORES, None)  # 12 bullets, 9 droppable
 

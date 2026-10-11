@@ -880,6 +880,27 @@ async def test_verify_resume_flags_page_limit_and_writes_nothing(
     assert not (settings.data_dir / "exports").exists()
 
 
+async def test_verify_resume_in_cv_mode_reports_pages_without_a_limit(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        shared_module, "render_resume_pdf", AsyncMock(return_value=_pdf(3))
+    )
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        result = await call(
+            mcp,
+            "verify_resume",
+            {
+                "resume_id": master["resume_id"],
+                "max_pages": 1,
+                "print_settings": {"cv_mode": True},
+            },
+        )
+    assert result["page_count"] == 3 and result["max_pages"] is None
+    assert "over_page_limit" not in result["issues"]
+
+
 async def test_verify_resume_render_failure_still_scores(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

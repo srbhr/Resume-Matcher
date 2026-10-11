@@ -65,6 +65,42 @@ async def test_selection_with_page_fit_trims_and_warns_on_fallback(
     assert tailor_selection.BULLET_SCORING_FALLBACK_WARNING in out.warnings
 
 
+@pytest.mark.parametrize(
+    ("cv_mode", "status", "max_pages", "over_warned"),
+    [(False, "over", 2, True), (True, "fits", None, False)],
+)
+async def test_cv_mode_lifts_the_page_cap_and_reports_pages(
+    monkeypatch: pytest.MonkeyPatch,
+    cv_mode: bool,
+    status: str,
+    max_pages: int | None,
+    over_warned: bool,
+) -> None:
+    monkeypatch.setattr(
+        tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm"))
+    )
+    measure = AsyncMock(return_value=4)  # four pages whatever is dropped
+    monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
+    out = await tailor_selection.run_bullet_selection(
+        source_data=DATA,
+        job_description="JD",
+        job_keywords={},
+        max_per_entry=None,
+        page_fit=PageFitSettings(cv_mode=cv_mode),
+        max_pages=2,
+    )
+    assert out.summary.page_fit == status and out.summary.max_pages == max_pages
+    assert out.summary.final_pages == 4
+    assert (tailor_selection.PAGE_FIT_OVER_WARNING in out.warnings) is over_warned
+    assert out.summary.trimmed_for_fit == 0
+    assert (
+        out.data["workExperience"][0]["description"]
+        == DATA["workExperience"][0]["description"]
+    )
+    if cv_mode:
+        measure.assert_awaited_once()  # one measurement, no search
+
+
 async def test_final_page_check_swallows_render_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

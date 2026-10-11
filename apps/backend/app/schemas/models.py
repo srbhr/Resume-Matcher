@@ -580,10 +580,16 @@ class PageFitSettings(BaseModel):
     showContactIcons: bool = False
     accentColor: Literal["blue", "green", "orange", "red"] = "blue"
     lang: str | None = Field(None, pattern=r"^[a-z]{2}(-[A-Z]{2})?$")
+    # Academic CV mode: no page cap. Page fit and verification report the page count
+    # but never trim to a limit or raise an over-limit warning. Not a print setting,
+    # so it is not sent to the print route.
+    cv_mode: bool = False
 
     def to_query(self) -> dict[str, str]:
         query: dict[str, str] = {}
-        for name, value in self.model_dump(exclude_none=True).items():
+        for name, value in self.model_dump(
+            exclude_none=True, exclude={"cv_mode"}
+        ).items():
             query[name] = str(value).lower() if isinstance(value, bool) else str(value)
         return query
 
@@ -604,7 +610,8 @@ class BulletSelectionSummary(BaseModel):
     """What the harness kept/dropped when tailoring from a long master."""
 
     max_per_entry: int | None  # None = no per-entry cap
-    max_pages: int | None = None  # page limit used for page fit; None = no fit
+    # Page cap used for page fit; None = no cap (page fit skipped, or cv_mode).
+    max_pages: int | None = None
     bullets_before: int
     bullets_after: int
     trimmed_for_fit: int = 0
