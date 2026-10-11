@@ -478,11 +478,19 @@ docker compose watch
 
 Edits under `apps/backend/app` are synced into the running container, which restarts without an image rebuild. Changes to `apps/frontend`, `apps/backend/pyproject.toml`, the `Dockerfile` or `docker/` rebuild the image. Python dependencies and Chromium are cached in their own layers, so a rebuild after a code change does not download them again.
 
-If Chromium downloads slowly during a build (Playwright's default CDN can be throttled in some regions), point the build at a mirror:
+If a build step downloads slowly, point it at a mirror. Both build args are empty by default (no change):
+
+- `DEBIAN_MIRROR`: if `apt-get` is slow, build with `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (or your local mirror; give its `/debian` URL).
+- `PLAYWRIGHT_DOWNLOAD_HOST`: if the Chromium download is slow (Playwright's default CDN can be throttled in some regions), set it to your mirror's URL.
 
 ```bash
-docker build --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://your-mirror.example.com -t resume-matcher .
+docker build \
+  --build-arg DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian \
+  --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://your-mirror.example.com \
+  -t resume-matcher .
 ```
+
+`docker compose build` and `scripts/docker-smoke.sh` pick both up from environment variables of the same names, e.g. `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian ./scripts/docker-smoke.sh`.
 
 ### Important Notes
 
