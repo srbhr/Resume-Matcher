@@ -639,8 +639,6 @@ def restore_dates_from_markdown(
 
 
 # A source line counts as a skill list when it has at least this many short items
-# and at least one of them is already a parsed skill.
-# A source line counts as a skill list when it has at least this many short items
 # and at least _MIN_LINE_ANCHORS of them were parsed as skills.
 _MIN_SKILL_LINE_ITEMS = 3
 _MIN_LINE_ANCHORS = 2
