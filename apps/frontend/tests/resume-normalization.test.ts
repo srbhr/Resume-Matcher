@@ -326,6 +326,27 @@ describe('normalization robustness — sections and education', () => {
     });
   });
 
+  it('drops a non-string text from a customSections entry so renderers cannot throw on .trim()', () => {
+    const out = normalizeResumeForRender(
+      malformed({
+        customSections: {
+          numeric: { sectionType: 'text', text: 42 },
+          object: { sectionType: 'text', text: { nested: 'x' } },
+          ok: { sectionType: 'text', text: 'Body' },
+        },
+      })
+    );
+
+    // The renderer calls `customSection.text?.trim()`; none of these may be a
+    // non-string any more.
+    for (const key of ['numeric', 'object']) {
+      expect(out.customSections?.[key].sectionType).toBe('text');
+      expect(out.customSections?.[key].text).toBeUndefined();
+      expect(() => out.customSections?.[key].text?.trim()).not.toThrow();
+    }
+    expect(out.customSections?.ok).toEqual({ sectionType: 'text', text: 'Body' });
+  });
+
   it('drops null and primitive education entries', () => {
     const out = normalizeResumeForSave(
       malformed({ education: [null, { id: 1, institution: 'MIT' }, 'nope'] })

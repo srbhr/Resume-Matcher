@@ -117,12 +117,20 @@ const hasCustomItemContent = (item: CustomSectionItem): boolean => {
   );
 };
 
-const normalizeCustomSection = (section: CustomSection): CustomSection => {
+const normalizeCustomSection = (input: CustomSection): CustomSection => {
   // A persisted customSections entry can be null or a primitive; reading
   // .sectionType off it throws. Guard the section value, not only its items.
-  if (!isObjectRecord(section)) {
-    return section;
+  if (!isObjectRecord(input)) {
+    return input;
   }
+
+  // Renderers call `section.text?.trim()`; optional chaining only guards
+  // null/undefined, so a non-string `text` (number/object from hand-edited
+  // storage) would still throw at render time. Drop it here.
+  const section: CustomSection =
+    input.text === undefined || typeof input.text === 'string'
+      ? input
+      : { ...input, text: undefined };
 
   if (section.sectionType === 'itemList') {
     return {
