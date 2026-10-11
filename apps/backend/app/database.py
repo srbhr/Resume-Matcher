@@ -1403,9 +1403,9 @@ class Database:
             shutil.rmtree(uploads_dir)
             uploads_dir.mkdir(parents=True, exist_ok=True)
 
-    # -- Queue operations (SQLite) -------------------------------------------
+    # -- Tailoring queue -----------------------------------------------------
 
-    def create_queue_item(
+    async def create_queue_item(
         self,
         item_id: str,
         resume_id: str,
@@ -1416,8 +1416,9 @@ class Database:
         rate_limit_seconds: float = 5.0,
         prompt_id: str | None = None,
     ) -> dict[str, Any]:
+        """Persist one pending tailoring request."""
         now = _now()
-        item = QueueItem(
+        row = QueueItem(
             item_id=item_id,
             resume_id=resume_id,
             job_description=job_description,
@@ -1425,67 +1426,70 @@ class Database:
             company=company,
             job_req_id=job_req_id,
             status="pending",
-            job_id=None,
-            tailored_resume_id=None,
-            title=None,
-            error=None,
             rate_limit_seconds=rate_limit_seconds,
             prompt_id=prompt_id,
             created_at=now,
             updated_at=now,
         )
-        with self._sync_write_session() as session:
-            session.add(item)
-            session.commit()
-            return self._queue_item_to_dict(item)
+        async with self._write_session() as session:
+            session.add(row)
+            await session.commit()
+        return self._queue_item_to_dict(row)
 
-    def get_queue_item(self, item_id: str) -> dict[str, Any] | None:
-        with self._sync() as session:
-            row = session.get(QueueItem, item_id)
+    async def get_queue_item(self, item_id: str) -> dict[str, Any] | None:
+        """Get one queue item by ID."""
+        async with self._session() as session:
+            row = await session.get(QueueItem, item_id)
             return self._queue_item_to_dict(row) if row else None
 
-    def get_queue(
+    async def get_queue(
         self, resume_id: str | None = None, limit: int = 100
     ) -> list[dict[str, Any]]:
-        with self._sync() as session:
-            stmt = select(QueueItem)
-            if resume_id:
-                stmt = stmt.where(QueueItem.resume_id == resume_id)
-            stmt = stmt.order_by(QueueItem.created_at.desc()).limit(limit)
-            rows = session.execute(stmt).scalars().all()
-            return [self._queue_item_to_dict(r) for r in rows]
+        """List queue items, newest first, optionally for one master resume."""
+        stmt = select(QueueItem)
+        if resume_id:
+            stmt = stmt.where(QueueItem.resume_id == resume_id)
+        stmt = stmt.order_by(
+            QueueItem.created_at.desc(), QueueItem.item_id.desc()
+        ).limit(limit)
+        async with self._session() as session:
+            result = await session.execute(stmt)
+            return [self._queue_item_to_dict(row) for row in result.scalars().all()]
 
-    def update_queue_item(
+    async def update_queue_item(
         self, item_id: str, updates: dict[str, Any]
     ) -> dict[str, Any] | None:
-        with self._sync_write_session() as session:
-            row = session.get(QueueItem, item_id)
+        """Update a queue item's columns; None when it no longer exists."""
+        async with self._write_session() as session:
+            row = await session.get(QueueItem, item_id)
             if row is None:
                 return None
-            for key, val in updates.items():
-                if hasattr(row, key):
-                    setattr(row, key, val)
+            for key, value in updates.items():
+                if key != "item_id" and hasattr(QueueItem, key):
+                    setattr(row, key, value)
             row.updated_at = _now()
-            session.commit()
+            await session.commit()
             return self._queue_item_to_dict(row)
 
-    def delete_queue_item(self, item_id: str) -> bool:
-        with self._sync_write_session() as session:
-            row = session.get(QueueItem, item_id)
-            if row is not None:
-                session.delete(row)
-                session.commit()
-                return True
-            return False
+    async def delete_queue_item(self, item_id: str) -> bool:
+        """Delete one queue item; False when it does not exist."""
+        async with self._write_session() as session:
+            row = await session.get(QueueItem, item_id)
+            if row is None:
+                return False
+            await session.delete(row)
+            await session.commit()
+            return True
 
-    def clear_queue(self, status: str | None = None) -> int:
-        with self._sync_write_session() as session:
-            stmt = delete(QueueItem)
-            if status:
-                stmt = stmt.where(QueueItem.status == status)
-            result = session.execute(stmt)
-            session.commit()
-            return result.rowcount
+    async def clear_queue(self, status: str | None = None) -> int:
+        """Delete queue items, optionally only those in one status. Returns count."""
+        stmt = delete(QueueItem)
+        if status:
+            stmt = stmt.where(QueueItem.status == status)
+        async with self._write_session() as session:
+            result = await session.execute(stmt)
+            await session.commit()
+            return int(result.rowcount or 0)
 
 
 # Global database instance

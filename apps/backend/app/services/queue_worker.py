@@ -136,14 +136,14 @@ class QueueManager:
         try:
             pending_items = [
                 it
-                for it in db.get_queue(limit=100)
+                for it in await db.get_queue(limit=100)
                 if it.get("status") in ("pending", "processing")
             ]
             for item in reversed(pending_items):
                 item_id = item["item_id"]
                 # Reset stuck processing items back to pending
                 if item.get("status") == "processing":
-                    db.update_queue_item(item_id, {"status": "pending"})
+                    await db.update_queue_item(item_id, {"status": "pending"})
                 await self._queue.put(item_id)
                 logger.info("Recovered queued tailoring item: %s", item_id)
         except Exception as e:
@@ -170,7 +170,7 @@ class QueueManager:
 
     async def _process_item(self, item_id: str, execute_tailoring_fn):
         """Process an individual queued job with cooldown rate-limiting."""
-        item = db.get_queue_item(item_id)
+        item = await db.get_queue_item(item_id)
         if not item:
             return
 
@@ -178,7 +178,7 @@ class QueueManager:
         if item.get("status") in ("completed", "cancelled"):
             return
 
-        db.update_queue_item(item_id, {"status": "processing"})
+        await db.update_queue_item(item_id, {"status": "processing"})
         resume_id = item["resume_id"]
         rate_limit_seconds = float(item.get("rate_limit_seconds", 5.0))
         prompt_id = item.get("prompt_id")
@@ -192,7 +192,7 @@ class QueueManager:
                     resume_id=resume_id,
                 )
                 job_id = job["job_id"]
-                db.update_queue_item(item_id, {"job_id": job_id})
+                await db.update_queue_item(item_id, {"job_id": job_id})
 
             # 2. Run tailoring pipeline
             (
@@ -215,7 +215,7 @@ class QueueManager:
                 or "Tailored Resume"
             )
 
-            db.update_queue_item(
+            await db.update_queue_item(
                 item_id,
                 {
                     "status": "completed",
@@ -235,7 +235,7 @@ class QueueManager:
             logger.error(
                 "Queue item %s tailoring failed: %s", item_id, err, exc_info=True
             )
-            db.update_queue_item(
+            await db.update_queue_item(
                 item_id,
                 {
                     "status": "failed",

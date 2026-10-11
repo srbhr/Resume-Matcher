@@ -110,7 +110,7 @@ async def add_to_queue(request: JobQueueAddRequest) -> JobQueueItemResponse:
     item_id = str(uuid4())
     rate_limit = max(0.0, float(request.rate_limit_seconds))
 
-    item = db.create_queue_item(
+    item = await db.create_queue_item(
         item_id=item_id,
         resume_id=request.resume_id,
         job_description=request.job_description.strip(),
@@ -128,14 +128,14 @@ async def add_to_queue(request: JobQueueAddRequest) -> JobQueueItemResponse:
 @router.get("/queue", response_model=list[JobQueueItemResponse])
 async def list_queue(resume_id: str | None = None) -> list[JobQueueItemResponse]:
     """Get recent items in the tailoring queue."""
-    items = db.get_queue(resume_id=resume_id, limit=100)
+    items = await db.get_queue(resume_id=resume_id, limit=100)
     return [_format_queue_item(item) for item in items]
 
 
 @router.delete("/queue/{item_id}")
 async def delete_queue_item(item_id: str) -> dict:
     """Remove a specific item from the queue."""
-    deleted = db.delete_queue_item(item_id)
+    deleted = await db.delete_queue_item(item_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Queue item not found")
     return {"deleted": True, "item_id": item_id}
@@ -144,7 +144,7 @@ async def delete_queue_item(item_id: str) -> dict:
 @router.delete("/queue")
 async def clear_queue(status: str | None = None) -> dict:
     """Clear completed, failed, or all queue items."""
-    count = db.clear_queue(status=status)
+    count = await db.clear_queue(status=status)
     return {"cleared_count": count}
 
 
