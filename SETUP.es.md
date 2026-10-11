@@ -371,7 +371,11 @@ docker-compose down
 <a id="optional-postgresql"></a>
 ### Opcional: PostgreSQL
 
-SQLite es la opción por defecto y no requiere configuración. Para copias de seguridad o alojamiento remoto/compartido puedes usar PostgreSQL en su lugar:
+SQLite es la opción por defecto y no requiere configuración. Para copias de seguridad, o para mantener la base de datos en otro servidor que controles, puedes usar PostgreSQL en su lugar.
+
+> **Seguridad:** Resume Matcher no tiene cuentas de usuario ni autenticación, y PostgreSQL no añade ninguna. Úsalo solo para ti o en una red privada de confianza, nunca expuesto públicamente. Para cualquier uso más allá del local, conéctate con un rol de base de datos de mínimos privilegios (el usuario `resume` del archivo Compose es superusuario).
+
+Para iniciarlo con Docker Compose:
 
 ```bash
 POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d

@@ -433,7 +433,11 @@ LOG_LEVEL=INFO LOG_LLM=DEBUG docker compose up -d
 
 ### Optional: PostgreSQL
 
-SQLite is the default and needs no setup. For backups or remote/shared hosting you can use PostgreSQL instead:
+SQLite is the default and needs no setup. For backups, or to keep the database on a separate server you control, you can use PostgreSQL instead.
+
+> **Security:** Resume Matcher has no user accounts or authentication, and PostgreSQL doesn't add any. Run it only for yourself or on a trusted private network, never exposed publicly. For anything beyond local use, connect with a least-privilege database role (the Compose file's `resume` user is a superuser).
+
+To start it with Docker Compose:
 
 ```bash
 POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d

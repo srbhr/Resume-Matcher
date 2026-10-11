@@ -371,7 +371,11 @@ docker-compose down
 <a id="optional-postgresql"></a>
 ### 可选：PostgreSQL
 
-SQLite 是默认选项，无需任何设置。如果需要备份或远程/共享托管，可以改用 PostgreSQL：
+SQLite 是默认选项，无需任何设置。如果需要备份，或想把数据库放在你自己掌控的另一台服务器上，可以改用 PostgreSQL。
+
+> **安全提示：** Resume Matcher 没有用户账户，也没有身份验证，PostgreSQL 同样不会增加这些功能。请仅供自己使用，或只在可信的私有网络中运行，切勿暴露到公网。除本地使用之外，请使用最小权限的数据库角色连接（Compose 文件中的 `resume` 用户是超级用户）。
+
+使用 Docker Compose 启动：
 
 ```bash
 POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
