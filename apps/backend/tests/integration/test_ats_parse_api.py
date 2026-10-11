@@ -13,7 +13,7 @@ from httpx import ASGITransport, AsyncClient
 from app import services
 from app.database import Database
 from app.main import app
-from app.pdf import PDFRenderError
+from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers import resumes as resumes_router
 from app.routers.resumes import MAX_FILE_SIZE
 from tests.ats_fixtures import john_doe, render
@@ -130,3 +130,18 @@ async def test_rendered_resume_errors(
     res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
     assert res.status_code == 503
     assert "chromium detail" not in res.text
+
+
+async def test_rendered_resume_render_timeout_is_504(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # PDFRenderTimeoutError subclasses PDFRenderError; it must not become a 503.
+    ready = await _resume(isolated_db, john_doe())
+    monkeypatch.setattr(
+        services.ats_parse,
+        "render_resume_pdf",
+        AsyncMock(side_effect=PDFRenderTimeoutError("deadline detail")),
+    )
+    res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
+    assert res.status_code == 504
+    assert "deadline detail" not in res.text

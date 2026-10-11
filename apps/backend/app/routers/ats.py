@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
 from app.database import db
-from app.pdf import PDFRenderError
+from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers.resumes import (
     _get_original_resume_data,
     _read_upload_content,
@@ -79,6 +79,9 @@ async def parse_check_resume(
         )
     try:
         return await parse_check_render(resume_id, data, fit or PageFitSettings())
+    except PDFRenderTimeoutError as e:
+        logger.warning("Parse check render timed out for %s: %s", resume_id, e)
+        raise HTTPException(status_code=504, detail="Parse check timed out.") from e
     except PDFRenderError as e:
         logger.error("Parse check render failed for %s: %s", resume_id, e)
         raise HTTPException(
