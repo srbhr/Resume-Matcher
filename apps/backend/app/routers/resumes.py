@@ -172,6 +172,36 @@ def _hash_job_content(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
+async def _cache_job_keywords(
+    job_id: str, content_hash: str, job_keywords: dict[str, Any]
+) -> None:
+    """Best-effort: cache extracted keywords on the job with its content hash.
+
+    The hash gives basic invalidation, and ATS recalculation reads this cache.
+    Company/role are also surfaced to the job's top level so the tracker's
+    auto-create-on-confirm path can read them without an extra LLM call.
+    """
+    cache_updates: dict[str, Any] = {
+        "job_keywords": job_keywords,
+        "job_keywords_hash": content_hash,
+    }
+    # LLM output isn't guaranteed to be a string — guard before .strip().
+    raw_company = job_keywords.get("company")
+    raw_role = job_keywords.get("role")
+    company = raw_company.strip() if isinstance(raw_company, str) else ""
+    role = raw_role.strip() if isinstance(raw_role, str) else ""
+    if company:
+        cache_updates["company"] = company
+    if role:
+        cache_updates["role"] = role
+    try:
+        updated_job = await db.update_job(job_id, cache_updates)
+        if not updated_job:
+            logger.warning("Failed to persist job keywords for job %s.", job_id)
+    except Exception as e:
+        logger.warning("Failed to persist job keywords for job %s: %s", job_id, e)
+
+
 def _normalize_payload(value: Any) -> Any:
     if isinstance(value, str):
         return unicodedata.normalize("NFC", value)
@@ -1271,38 +1301,7 @@ async def _improve_preview_flow(
     content_hash = _hash_job_content(job["content"])
     if not job_keywords or job_keywords_hash != content_hash:
         job_keywords = await extract_job_keywords(job["content"])
-        # Cache extracted keywords with a content hash for basic invalidation.
-        # Also surface company/role to the job's top level so the tracker's
-        # auto-create-on-confirm path can read them without an extra LLM call.
-        cache_updates: dict[str, Any] = {
-            "job_keywords": job_keywords,
-            "job_keywords_hash": content_hash,
-        }
-        # LLM output isn't guaranteed to be a string — guard before .strip().
-        raw_company = job_keywords.get("company")
-        raw_role = job_keywords.get("role")
-        company = raw_company.strip() if isinstance(raw_company, str) else ""
-        role = raw_role.strip() if isinstance(raw_role, str) else ""
-        if company:
-            cache_updates["company"] = company
-        if role:
-            cache_updates["role"] = role
-        try:
-            updated_job = await db.update_job(
-                request.job_id,
-                cache_updates,
-            )
-            if not updated_job:
-                logger.warning(
-                    "Failed to persist job keywords for job %s.",
-                    request.job_id,
-                )
-        except Exception as e:
-            logger.warning(
-                "Failed to persist job keywords for job %s: %s",
-                request.job_id,
-                e,
-            )
+        await _cache_job_keywords(request.job_id, content_hash, job_keywords)
     progress["stage"] = "load_original_resume"
     original_resume_data = _get_original_resume_data(resume)
     # Collect warnings throughout the process
@@ -1781,8 +1780,10 @@ async def execute_tailoring_pipeline(
     _validate_ai_sources(resume, job)
     language = get_content_language()
 
-    # Extract keywords from job description
+    # Extract keywords from job description; the cache lets the ATS score be
+    # recalculated from the builder later.
     job_keywords = await extract_job_keywords(job["content"])
+    await _cache_job_keywords(job_id, _hash_job_content(job["content"]), job_keywords)
 
     effective_prompt_id = prompt_id or _get_default_prompt_id()
     original_resume_data = _get_original_resume_data(resume)
@@ -1929,6 +1930,17 @@ async def execute_tailoring_pipeline(
     )
     response_warnings.extend(aux_warnings)
 
+    # Stored as the builder's last ATS score, as at preview confirmation.
+    ats_record: dict[str, Any] | None = None
+    try:
+        ats_record = _score_tailored_data(
+            improved_data,
+            job_keywords,
+            await _grounding_master_data(resume) or improved_data,
+        )
+    except Exception:
+        logger.warning("ATS score at tailoring failed", exc_info=True)
+
     request_id = str(uuid4())
     tailored_resume = await db.create_tailored_resume(
         request_id=request_id,
@@ -1948,6 +1960,7 @@ async def execute_tailoring_pipeline(
             "title": title,
         },
         improvements=improvements,
+        ats_score=ats_record,
     )
 
     await _auto_create_tracker_application(

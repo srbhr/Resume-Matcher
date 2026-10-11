@@ -951,6 +951,7 @@ class Database:
         job_id: str,
         resume_fields: dict[str, Any],
         improvements: list[dict[str, Any]],
+        ats_score: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Commit a direct tailoring result and its required relation together."""
         row = self._new_resume(**resume_fields)
@@ -964,6 +965,7 @@ class Database:
                     tailored_resume_id=row.resume_id,
                     job_id=job_id,
                     improvements=copy.deepcopy(improvements),
+                    ats_score=copy.deepcopy(ats_score),
                     created_at=_now(),
                 )
             )
