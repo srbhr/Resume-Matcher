@@ -457,6 +457,10 @@
         "vividSingle": {
           "name": "Vif une colonne",
           "description": "Mise en page une colonne colorée avec en-têtes accentués et puces fléchées"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Mise en page dense d'une page en Lato avec des en-têtes de section en majuscules gris clair"
         }
       },
       "accentColor": "Couleur d'accentuation",

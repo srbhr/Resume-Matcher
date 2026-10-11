@@ -457,6 +457,10 @@
         "vividSingle": {
           "name": "Vivid Single Column",
           "description": "Colorful single-column layout with accent headers and arrow bullets"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Dense one-page layout in Lato with light grey uppercase section headings"
         }
       },
       "accentColor": "Accent Color",

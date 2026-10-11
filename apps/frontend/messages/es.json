@@ -457,6 +457,10 @@
         "vividSingle": {
           "name": "Vívido de una columna",
           "description": "Diseño de una columna colorido con encabezados de acento y viñetas de flecha"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Diseño denso de una página en Lato con encabezados de sección en mayúsculas de gris claro"
         }
       },
       "accentColor": "Color de acento",

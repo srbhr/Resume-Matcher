@@ -435,6 +435,10 @@
         "vividSingle": {
           "name": "비비드 단일 열",
           "description": "강조 헤더와 화살표 불릿이 있는 화려한 단일 열 레이아웃"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Lato 글꼴의 1페이지 고밀도 레이아웃, 연한 회색 대문자 섹션 제목"
         }
       },
       "accentColor": "강조 색상",

@@ -455,6 +455,10 @@
         "vividSingle": {
           "name": "Vívido Coluna Única",
           "description": "Layout de coluna única colorido com cabeçalhos de destaque e marcadores em seta"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Layout denso de uma página em Lato com títulos de seção em maiúsculas cinza-claro"
         }
       },
       "accentColors": {

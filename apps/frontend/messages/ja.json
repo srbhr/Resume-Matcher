@@ -457,6 +457,10 @@
         "vividSingle": {
           "name": "ビビッド1カラム",
           "description": "アクセント見出しと矢印箇条書きのカラフルな1カラムレイアウト"
+        },
+        "modernDeedy": {
+          "name": "Modern Deedy",
+          "description": "Lato書体の1ページ向け高密度レイアウト。見出しは淡いグレーの大文字"
         }
       },
       "accentColor": "アクセントカラー",

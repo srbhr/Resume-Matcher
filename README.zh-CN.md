@@ -167,6 +167,7 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 | **简洁** | ![简洁](assets/pdf-templates/clean.webp) | 极简无衬线版式，栏目标题大而低调。[查看 PDF](assets/pdf-templates/clean.pdf) |
 | **鲜明** | ![鲜明](assets/pdf-templates/vivid.webp) | 彩色双栏布局，强调色标题与箭头项目符号。[查看 PDF](assets/pdf-templates/vivid.pdf) |
 | **鲜明单栏** | ![鲜明单栏](assets/pdf-templates/vivid-single.webp) | 彩色单栏布局，强调色标题与箭头项目符号。[查看 PDF](assets/pdf-templates/vivid-single.pdf) |
+| **Modern Deedy** | ![Modern Deedy](assets/pdf-templates/modern-deedy.webp) | Lato 字体的单页紧凑版式，栏目标题为浅灰色大写。[查看 PDF](assets/pdf-templates/modern-deedy.pdf) |
 
 ### 国际化
 

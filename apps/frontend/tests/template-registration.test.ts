@@ -2,13 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   TEMPLATE_OPTIONS,
   applyTemplatePreset,
+  settingsToCssVars,
+  isTwoColumnTemplate,
   DEFAULT_TEMPLATE_SETTINGS,
   type TemplateType,
   type TemplateSettings,
 } from '@/lib/types/template-settings';
 
 describe('template registration', () => {
-  it('includes all eight templates with non-empty metadata', () => {
+  it('includes all nine templates with non-empty metadata', () => {
     const ids = TEMPLATE_OPTIONS.map((t) => t.id);
     expect(ids).toEqual(
       expect.arrayContaining<TemplateType>([
@@ -20,9 +22,10 @@ describe('template registration', () => {
         'clean',
         'vivid',
         'vivid-single',
+        'modern-deedy',
       ])
     );
-    expect(ids).toHaveLength(8);
+    expect(ids).toHaveLength(9);
 
     for (const opt of TEMPLATE_OPTIONS) {
       expect(opt.name.length).toBeGreaterThan(0);
@@ -47,6 +50,11 @@ describe('applyTemplatePreset', () => {
     expect(latex.template).toBe('latex');
     expect(latex.fontSize.headerFont).toBe('serif');
     expect(latex.fontSize.bodyFont).toBe('serif');
+
+    const deedy = applyTemplatePreset(DEFAULT_TEMPLATE_SETTINGS, 'modern-deedy');
+    expect(deedy.template).toBe('modern-deedy');
+    expect(deedy.fontSize.headerFont).toBe('sans-serif');
+    expect(deedy.fontSize.bodyFont).toBe('sans-serif');
   });
 
   it('leaves fonts untouched for templates without a preset', () => {
@@ -70,5 +78,31 @@ describe('applyTemplatePreset', () => {
     expect(clean.pageSize).toBe('LETTER');
     expect(clean.compactMode).toBe(true);
     expect(clean.margins).toEqual(custom.margins);
+  });
+});
+
+describe('modern-deedy template', () => {
+  const settings = (template: TemplateType, font: 'serif' | 'sans-serif' | 'mono') => ({
+    ...DEFAULT_TEMPLATE_SETTINGS,
+    template,
+    fontSize: { ...DEFAULT_TEMPLATE_SETTINGS.fontSize, headerFont: font, bodyFont: font },
+  });
+  const fonts = (template: TemplateType, font: 'serif' | 'sans-serif' | 'mono') =>
+    settingsToCssVars(settings(template, font), 'en') as Record<string, string>;
+
+  it('is a single-column layout', () => {
+    expect(isTwoColumnTemplate('modern-deedy')).toBe(false);
+  });
+
+  it('resolves its sans-serif choice to self-hosted Lato, ahead of the sans fallbacks', () => {
+    const vars = fonts('modern-deedy', 'sans-serif');
+    expect(vars['--body-font']).toMatch(/^var\(--font-lato\), ui-sans-serif/);
+    expect(vars['--header-font']).toMatch(/^var\(--font-lato\), ui-sans-serif/);
+  });
+
+  it('keeps the Serif and Mono choices live and leaves other templates on the system sans', () => {
+    expect(fonts('modern-deedy', 'serif')['--body-font']).not.toContain('--font-lato');
+    expect(fonts('modern-deedy', 'mono')['--header-font']).not.toContain('--font-lato');
+    expect(fonts('clean', 'sans-serif')['--body-font']).not.toContain('--font-lato');
   });
 });

@@ -6,6 +6,7 @@ import type { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeClean } from '@/components/resume/resume-clean';
 import { ResumeLatex } from '@/components/resume/resume-latex';
 import { ResumeModern } from '@/components/resume/resume-modern';
+import { ResumeModernDeedy } from '@/components/resume/resume-modern-deedy';
 import { ResumeModernTwoColumn } from '@/components/resume/resume-modern-two-column';
 import { ResumeSingleColumn } from '@/components/resume/resume-single-column';
 import { ResumeTwoColumn } from '@/components/resume/resume-two-column';
@@ -45,6 +46,7 @@ const TEMPLATES: [string, React.ComponentType<{ data: ResumeData }>][] = [
   ['ResumeClean', ResumeClean],
   ['ResumeLatex', ResumeLatex],
   ['ResumeModern', ResumeModern],
+  ['ResumeModernDeedy', ResumeModernDeedy],
   ['ResumeModernTwoColumn', ResumeModernTwoColumn],
   ['ResumeSingleColumn', ResumeSingleColumn],
   ['ResumeTwoColumn', ResumeTwoColumn],

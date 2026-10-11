@@ -157,6 +157,10 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
         name: t('builder.formatting.templates.vividSingle.name'),
         description: t('builder.formatting.templates.vividSingle.description'),
       },
+      'modern-deedy': {
+        name: t('builder.formatting.templates.modernDeedy.name'),
+        description: t('builder.formatting.templates.modernDeedy.description'),
+      },
     }),
     [t]
   );
