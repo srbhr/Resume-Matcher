@@ -9,6 +9,7 @@ import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
+import { TagList } from './tag-list';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-single.module.css';
 
@@ -381,43 +382,27 @@ const AdditionalSection: React.FC<{
       <h3 className={baseStyles['resume-section-title']}>{displayName}</h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
-          <div className="flex items-start">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <div className="flex flex-wrap gap-1">
-              {technicalSkills.map((skill, index) => (
-                <span key={index} className={baseStyles['resume-skill-pill']}>{skill}</span>
-              ))}
-            </div>
+            <TagList items={technicalSkills} />
           </div>
         )}
         {languages.length > 0 && (
-          <div className="flex items-start">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
-            <div className="flex flex-wrap gap-1">
-              {languages.map((lang, index) => (
-                <span key={index} className={baseStyles['resume-skill-pill']}>{lang}</span>
-              ))}
-            </div>
+            <TagList items={languages} />
           </div>
         )}
         {certificationsTraining.length > 0 && (
-          <div className="flex items-start">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
-            <div className="flex flex-wrap gap-1">
-              {certificationsTraining.map((cert, index) => (
-                <span key={index} className={baseStyles['resume-skill-pill']}>{cert}</span>
-              ))}
-            </div>
+            <TagList items={certificationsTraining} />
           </div>
         )}
         {awards.length > 0 && (
-          <div className="flex items-start">
+          <div className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
-            <div className="flex flex-wrap gap-1">
-              {awards.map((award, index) => (
-                <span key={index} className={baseStyles['resume-skill-pill']}>{award}</span>
-              ))}
-            </div>
+            <TagList items={awards} />
           </div>
         )}
       </div>
