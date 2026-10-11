@@ -68,6 +68,7 @@ async def test_upload_docx(client: AsyncClient) -> None:
     )
     assert res.status_code == 200
     assert _statuses(res.json())["tables"] == "pass"
+    assert "Jane Doe" in res.json()["extracted_text_preview"]
 
 
 @pytest.mark.parametrize(
