@@ -3,6 +3,8 @@
 import asyncio
 import logging
 import re
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import HTTPException
@@ -175,6 +177,22 @@ class QueueManager:
         except asyncio.CancelledError:
             pass
         logger.info("Tailoring queue worker stopped.")
+
+    @asynccontextmanager
+    async def paused(self) -> AsyncIterator[None]:
+        """Stop the worker for the block, handing its in-flight item back.
+
+        A database reset runs inside it. Without this a tailoring that is
+        mid-LLM would save its job and resume after the tables were cleared.
+        The worker is restarted afterwards if it was running.
+        """
+        was_running = self._task is not None
+        await self.stop()
+        try:
+            yield
+        finally:
+            if was_running:
+                await self.start()
 
     def notify(self) -> None:
         """Wake the worker after a new item was committed."""

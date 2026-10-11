@@ -242,6 +242,44 @@ async def test_shutdown_mid_item_requeues_it_for_the_next_start(
     assert cooldowns == []
 
 
+async def test_reset_stops_the_item_being_tailored_before_clearing(
+    isolated_db: Database,
+    stub_pipeline: Callable[[Pipeline], None],
+    cooldowns: list[float],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entered, cancelled = asyncio.Event(), asyncio.Event()
+
+    async def hang(*, resume_id: str, job_id: str, prompt_id: str | None) -> tuple:
+        del resume_id, job_id, prompt_id
+        entered.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+        raise AssertionError("unreachable")
+
+    stub_pipeline(hang)
+    manager = QueueManager()
+    # reset_database pauses the process-wide worker; stand in the test's own.
+    monkeypatch.setattr(queue_worker, "queue_manager", manager)
+    await isolated_db.create_queue_item("q1", "r1", "First JD")
+    await manager.start()
+    try:
+        await asyncio.wait_for(entered.wait(), timeout=5)
+
+        await isolated_db.reset_database()
+
+        # The in-flight tailoring was stopped first, so it cannot save a job or
+        # resume into the cleared tables; the worker is running again, idle.
+        assert cancelled.is_set()
+        assert await isolated_db.get_queue() == []
+        assert manager._task is not None
+    finally:
+        await manager.stop()
+
+
 async def test_recovered_item_reuses_a_resume_saved_before_the_interruption(
     isolated_db: Database,
     stub_pipeline: Callable[[Pipeline], None],

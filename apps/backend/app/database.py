@@ -1439,20 +1439,27 @@ class Database:
         orphaned cards after a full data reset would be a bug). Encrypted
         ``api_keys`` are preserved — matching the pre-existing behavior where a
         reset never wiped the user's stored credentials.
-        """
-        async with self._write_session() as session:
-            await session.execute(delete(QueueItem))
-            await session.execute(delete(TailoringPreview))
-            await session.execute(delete(Application))
-            await session.execute(delete(Improvement))
-            await session.execute(delete(Job))
-            await session.execute(delete(Resume))
-            await session.commit()
 
-        uploads_dir = settings.data_dir / "uploads"
-        if uploads_dir.exists():
-            shutil.rmtree(uploads_dir)
-            uploads_dir.mkdir(parents=True, exist_ok=True)
+        The tailoring worker is stopped while the tables are cleared, so an item
+        that is mid-LLM cannot save a job or resume into them afterwards.
+        """
+        # Imported here because the worker module imports this one.
+        from app.services.queue_worker import queue_manager
+
+        async with queue_manager.paused():
+            async with self._write_session() as session:
+                await session.execute(delete(QueueItem))
+                await session.execute(delete(TailoringPreview))
+                await session.execute(delete(Application))
+                await session.execute(delete(Improvement))
+                await session.execute(delete(Job))
+                await session.execute(delete(Resume))
+                await session.commit()
+
+            uploads_dir = settings.data_dir / "uploads"
+            if uploads_dir.exists():
+                shutil.rmtree(uploads_dir)
+                uploads_dir.mkdir(parents=True, exist_ok=True)
 
     # -- Tailoring queue -----------------------------------------------------
 
