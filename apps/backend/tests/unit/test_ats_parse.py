@@ -1,5 +1,6 @@
 """ATS parse-check engine: normalization, checks, scoring and round trip."""
 
+import base64
 import copy
 import io
 import json
@@ -305,6 +306,22 @@ async def test_docx_contact_in_first_or_even_page_margin_is_flagged(part: str) -
     check = next(c for c in report.checks if c.id == "header_footer_content")
     assert check.status == "fail"
     assert check.params["contact_only_in_margin"] is True
+
+
+async def test_docx_header_image_is_counted() -> None:
+    png = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    )
+
+    def build(document: Any) -> None:
+        header = document.sections[0].header
+        header.paragraphs[0].add_run().add_picture(io.BytesIO(png))
+        document.add_paragraph("Jane Doe jane@example.com")
+
+    report = await parse_check_bytes(_docx(build), "resume.docx")
+    check = next(c for c in report.checks if c.id == "images")
+    assert check.status == "warn"
+    assert check.params["count"] == 1
 
 
 async def test_docx_table_cell_paragraphs_stay_separate_words() -> None:

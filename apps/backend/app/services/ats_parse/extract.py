@@ -153,6 +153,10 @@ def _table_lines(table: Any) -> list[str]:
     return lines
 
 
+def _count_docx_images(element: Any) -> int:
+    return len(element.xpath(".//w:drawing")) + len(element.xpath(".//w:pict"))
+
+
 def extract_docx(content: bytes) -> ExtractedDocument:
     """Body paragraphs and tables in document order; headers, footers and text boxes kept apart."""
     document = Document(io.BytesIO(content))
@@ -168,6 +172,7 @@ def extract_docx(content: bytes) -> ExtractedDocument:
             lines.extend(_table_lines(child))
     header_footer: list[str] = []
     columns = 1
+    images = _count_docx_images(body)
     for section in document.sections:
         # Word keeps first-page and even-page variants in parts of their own.
         for part in (
@@ -182,10 +187,10 @@ def extract_docx(content: bytes) -> ExtractedDocument:
                 header_footer.extend(p.text for p in part.paragraphs if p.text.strip())
                 for table in part.tables:
                     header_footer.extend(t for t in _table_lines(table._tbl) if t)
+                images += _count_docx_images(part._element)
         for num in section._sectPr.xpath("./w:cols/@w:num"):
             columns = max(columns, int(num))
     textboxes = [_xml_text(box) for box in body.xpath(".//w:txbxContent")]
-    images = len(body.xpath(".//w:drawing")) + len(body.xpath(".//w:pict"))
     return ExtractedDocument(
         kind="docx",
         text="\n".join(line for line in lines if line.strip()),
