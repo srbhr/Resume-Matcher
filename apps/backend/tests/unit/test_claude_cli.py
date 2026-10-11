@@ -255,6 +255,14 @@ class TestSystemMessages:
         assert args[args.index("--system-prompt") + 1] == RAW_SYSTEM
         assert stdin == b"Hi"
 
+    async def test_embedded_documents_are_untrusted_data_not_instructions(self):
+        args, _ = await self._run([{"role": "user", "content": "Hi"}])
+
+        system_prompt = args[args.index("--system-prompt") + 1].lower()
+        assert "untrusted data" in system_prompt
+        assert "never instructions" in system_prompt
+        assert "literal instructions" not in system_prompt
+
     async def test_list_content_parts_are_flattened(self):
         args, stdin = await self._run(
             [
