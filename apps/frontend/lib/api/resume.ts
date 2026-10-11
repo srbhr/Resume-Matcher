@@ -529,3 +529,150 @@ export async function fetchJobDescription(
   }
   return res.json();
 }
+
+export interface BatchItem {
+  item_id: string;
+  index: number;
+  job_description_snippet: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  tailored_resume_id: string | null;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BatchStatus {
+  batch_id: string;
+  resume_id: string;
+  total_jobs: number;
+  completed_jobs: number;
+  failed_jobs: number;
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'partially_failed';
+  rate_limit_seconds: number;
+  created_at: string;
+  updated_at: string;
+  items: BatchItem[];
+}
+
+export interface BatchTailorResponse {
+  batch_id: string;
+  total_jobs: number;
+  message: string;
+  status: string;
+}
+
+/** Queue multiple job descriptions for background tailoring with rate-limited execution */
+export async function startBatchTailor(
+  resumeId: string,
+  jobDescriptions: string[],
+  rateLimitSeconds: number = 5,
+  promptId?: string
+): Promise<BatchTailorResponse> {
+  const res = await apiPost('/jobs/batch-tailor', {
+    resume_id: resumeId,
+    job_descriptions: jobDescriptions,
+    rate_limit_seconds: rateLimitSeconds,
+    prompt_id: promptId ?? null,
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Batch tailor failed with status ${res.status}: ${errorText}`);
+  }
+  return res.json();
+}
+
+/** Fetch current status and progress of a batch tailoring task */
+export async function fetchBatchStatus(batchId: string): Promise<BatchStatus> {
+  const res = await apiFetch(`/jobs/batch/${encodeURIComponent(batchId)}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch batch status (${res.status})`);
+  }
+  return res.json();
+}
+
+export interface QueueItem {
+  item_id: string;
+  resume_id: string;
+  job_description_snippet: string;
+  role: string;
+  company: string;
+  job_req_id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  tailored_resume_id: string | null;
+  title: string | null;
+  job_id: string | null;
+  error: string | null;
+  rate_limit_seconds: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobMetadata {
+  role: string;
+  company: string;
+  job_req_id: string;
+}
+
+/** Queue an individual job description for sequential background tailoring */
+export async function addJobToQueue(
+  resumeId: string,
+  jobDescription: string,
+  rateLimitSeconds: number = 5,
+  role?: string,
+  company?: string,
+  jobReqId?: string,
+  promptId?: string
+): Promise<QueueItem> {
+  const res = await apiPost('/jobs/queue', {
+    resume_id: resumeId,
+    job_description: jobDescription,
+    rate_limit_seconds: rateLimitSeconds,
+    role: role || undefined,
+    company: company || undefined,
+    job_req_id: jobReqId || undefined,
+    prompt_id: promptId || undefined,
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to queue job (${res.status}): ${errorText}`);
+  }
+  return res.json();
+}
+
+/** Fetch all queue items for a resume */
+export async function fetchJobQueue(resumeId?: string): Promise<QueueItem[]> {
+  const path = resumeId ? `/jobs/queue?resume_id=${encodeURIComponent(resumeId)}` : '/jobs/queue';
+  const res = await apiFetch(path);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch job queue (${res.status})`);
+  }
+  return res.json();
+}
+
+/** Delete a specific item from the queue */
+export async function deleteQueueItem(itemId: string): Promise<void> {
+  const res = await apiDelete(`/jobs/queue/${encodeURIComponent(itemId)}`);
+  if (!res.ok) {
+    throw new Error(`Failed to delete queue item (${res.status})`);
+  }
+}
+
+/** Clear items from the queue (optionally filtered by status) */
+export async function clearQueueItems(status?: string): Promise<void> {
+  const path = status ? `/jobs/queue?status=${encodeURIComponent(status)}` : '/jobs/queue';
+  const res = await apiDelete(path);
+  if (!res.ok) {
+    throw new Error(`Failed to clear queue (${res.status})`);
+  }
+}
+
+/** Instantly parse job metadata using heuristics without LLM calls */
+export async function parseJobMetadata(jobDescription: string): Promise<JobMetadata> {
+  const res = await apiPost('/jobs/parse-metadata', {
+    job_description: jobDescription,
+  });
+  if (!res.ok) {
+    return { role: '', company: '', job_req_id: '' };
+  }
+  return res.json();
+}

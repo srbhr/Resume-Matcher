@@ -163,7 +163,7 @@ async def generate_resume_title(
     result = await complete(
         prompt=prompt,
         system_prompt="You extract job titles and company names from job descriptions.",
-        max_tokens=60,
+        max_tokens=500,
         temperature=0.3,
     )
 
