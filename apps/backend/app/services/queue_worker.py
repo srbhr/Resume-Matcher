@@ -5,6 +5,8 @@ import logging
 import re
 from typing import Any
 
+from app.ai_budget import operation_budget
+from app.config import settings
 from app.database import db
 
 logger = logging.getLogger(__name__)
@@ -218,11 +220,13 @@ class QueueManager:
             )
             job_id = job["job_id"]
             await db.update_queue_item(item["item_id"], {"job_id": job_id})
-        tailored_resume, *_ = await resumes.execute_tailoring_pipeline(
-            resume_id=item["resume_id"],
-            job_id=job_id,
-            prompt_id=item.get("prompt_id"),
-        )
+        # The same per-operation deadline AIOperationRoute gives POST /improve.
+        async with operation_budget(settings.request_timeout_seconds):
+            tailored_resume, *_ = await resumes.execute_tailoring_pipeline(
+                resume_id=item["resume_id"],
+                job_id=job_id,
+                prompt_id=item.get("prompt_id"),
+            )
         return tailored_resume
 
     @staticmethod

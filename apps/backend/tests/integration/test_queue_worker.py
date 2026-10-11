@@ -245,3 +245,31 @@ async def test_recovered_item_reuses_a_resume_saved_before_the_interruption(
         saved["resume_id"],
         "Saved @ Co",
     )
+
+
+async def test_each_item_runs_under_the_ai_operation_deadline(
+    isolated_db: Database,
+    stub_pipeline: Callable[[Pipeline], None],
+    cooldowns: list[float],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.ai_budget import remaining_timeout
+    from app.config import settings
+
+    budgets: list[float] = []
+
+    async def stall(*, resume_id: str, job_id: str, prompt_id: str | None) -> tuple:
+        del resume_id, job_id, prompt_id
+        budgets.append(remaining_timeout(preferred=60))
+        await asyncio.sleep(30)
+        raise AssertionError("unreachable")
+
+    stub_pipeline(stall)
+    monkeypatch.setattr(settings, "request_timeout_seconds", 0.2)
+    await isolated_db.create_queue_item("q1", "r1", "First JD")
+
+    await asyncio.wait_for(QueueManager().drain(), timeout=5)
+
+    assert budgets and budgets[0] <= 0.2
+    item = await isolated_db.get_queue_item("q1")
+    assert item is not None and item["status"] == "failed"
