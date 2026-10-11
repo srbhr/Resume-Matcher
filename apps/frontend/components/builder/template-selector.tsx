@@ -333,6 +333,7 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
           <div className="flex items-center justify-between gap-1">
             <div className={`h-0.5 ${lineColor} w-2/5`}></div>
             <div className={`h-0.5 ${lineColor} w-1/4 opacity-40`}></div>
+          </div>
         </div>
       </div>
     );
