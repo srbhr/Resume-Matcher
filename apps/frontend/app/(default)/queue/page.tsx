@@ -10,6 +10,7 @@ import {
   deleteQueueItem,
   clearQueueItems,
   parseJobMetadata,
+  QueueItemInProgressError,
   type QueueItem,
   type QueueItemStatus,
   type ResumeListItem,
@@ -71,6 +72,7 @@ export default function QueuePage() {
   const [isAddingToQueue, setIsAddingToQueue] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
   const [queueSuccessMessage, setQueueSuccessMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Form inputs
   const [jobDescriptionInput, setJobDescriptionInput] = useState('');
@@ -240,32 +242,43 @@ export default function QueuePage() {
   };
 
   const handleDeleteItem = async (itemId: string) => {
+    setActionError(null);
     try {
       await deleteQueueItem(itemId);
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.item_id !== itemId));
     } catch (err) {
       console.error('Failed to delete queue item', err);
+      if (err instanceof QueueItemInProgressError) {
+        setActionError(t('queue.errors.deleteInProgress'));
+        loadQueue();
+      } else {
+        setActionError(t('queue.errors.deleteFailed'));
+      }
     }
   };
 
   const handleClearCompleted = async () => {
+    setActionError(null);
     try {
       await clearQueueItems('completed');
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status !== 'completed'));
     } catch (err) {
       console.error('Failed to clear completed items', err);
+      setActionError(t('queue.errors.clearFailed'));
     }
   };
 
   const handleClearAll = async () => {
+    setActionError(null);
     try {
       await clearQueueItems();
       queueRequest.current++;
       setQueueItems((prev) => prev.filter((i) => i.status === 'processing'));
     } catch (err) {
       console.error('Failed to clear queue', err);
+      setActionError(t('queue.errors.clearFailed'));
     }
   };
 
@@ -463,6 +476,10 @@ export default function QueuePage() {
               </Button>
             )}
           </div>
+
+          <FadePresence show={!!actionError}>
+            <Alert tone="error">{actionError}</Alert>
+          </FadePresence>
 
           {queueLoad === 'error' && (
             <Alert tone="error" title={t('queue.errors.loadFailed')}>

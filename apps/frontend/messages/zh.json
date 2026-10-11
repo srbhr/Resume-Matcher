@@ -1328,7 +1328,10 @@
         "timeout": "定制超时。请重新添加该职位以重试。",
         "failed": "定制失败。请在设置中检查 AI 服务商，然后重新添加该职位。"
       },
-      "loadFailed": "无法加载队列。"
+      "loadFailed": "无法加载队列。",
+      "deleteFailed": "无法移除该职位，请重试。",
+      "deleteInProgress": "该职位正在定制中，请在完成后再移除。",
+      "clearFailed": "无法清空队列，请重试。"
     }
   }
 }

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseJobMetadata } from '@/lib/api/resume';
+import { deleteQueueItem, parseJobMetadata, QueueItemInProgressError } from '@/lib/api/resume';
 
 describe('queue API client', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -30,5 +30,14 @@ describe('queue API client', () => {
   it('throws on a failed detection instead of reporting "nothing found"', async () => {
     fetchMock.mockResolvedValue(new Response('boom', { status: 500 }));
     await expect(parseJobMetadata('Job Title: Dev')).rejects.toThrow('500');
+  });
+
+  it('tells an in-flight item apart from other delete failures', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('busy', { status: 409 }));
+    await expect(deleteQueueItem('q1')).rejects.toBeInstanceOf(QueueItemInProgressError);
+    fetchMock.mockResolvedValueOnce(new Response('boom', { status: 500 }));
+    const failure = deleteQueueItem('q1');
+    await expect(failure).rejects.toThrow('500');
+    await expect(failure).rejects.not.toBeInstanceOf(QueueItemInProgressError);
   });
 });

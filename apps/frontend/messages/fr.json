@@ -1328,7 +1328,10 @@
         "timeout": "L'adaptation a expiré. Ajoutez de nouveau l'offre pour réessayer.",
         "failed": "L'adaptation a échoué. Vérifiez votre fournisseur d'IA dans les Paramètres, puis ajoutez de nouveau l'offre."
       },
-      "loadFailed": "Impossible de charger la file."
+      "loadFailed": "Impossible de charger la file.",
+      "deleteFailed": "Impossible de retirer l'offre. Veuillez réessayer.",
+      "deleteInProgress": "Cette offre est en cours d'adaptation. Retirez-la une fois terminée.",
+      "clearFailed": "Impossible de vider la file. Veuillez réessayer."
     }
   }
 }

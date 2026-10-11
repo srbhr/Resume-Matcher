@@ -592,9 +592,15 @@ export async function fetchJobQueue(resumeId?: string): Promise<QueueItem[]> {
   return res.json();
 }
 
+/** The worker is tailoring this item right now; it can be removed once it finishes. */
+export class QueueItemInProgressError extends Error {}
+
 /** Delete a specific item from the queue */
 export async function deleteQueueItem(itemId: string): Promise<void> {
   const res = await apiDelete(`/jobs/queue/${encodeURIComponent(itemId)}`);
+  if (res.status === 409) {
+    throw new QueueItemInProgressError('Queue item is being tailored');
+  }
   if (!res.ok) {
     throw new Error(`Failed to delete queue item (${res.status})`);
   }

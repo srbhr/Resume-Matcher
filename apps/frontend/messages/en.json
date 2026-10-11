@@ -1328,7 +1328,10 @@
         "timeout": "Tailoring timed out. Add the job again to retry.",
         "failed": "Tailoring failed. Check your AI provider in Settings, then add the job again."
       },
-      "loadFailed": "Couldn't load the queue."
+      "loadFailed": "Couldn't load the queue.",
+      "deleteFailed": "Couldn't remove the job. Please try again.",
+      "deleteInProgress": "This job is being tailored. Remove it once it finishes.",
+      "clearFailed": "Couldn't clear the queue. Please try again."
     }
   }
 }

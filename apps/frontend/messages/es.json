@@ -1328,7 +1328,10 @@
         "timeout": "Se agotó el tiempo de adaptación. Vuelve a añadir la oferta para reintentarlo.",
         "failed": "La adaptación falló. Revisa tu proveedor de IA en Ajustes y vuelve a añadir la oferta."
       },
-      "loadFailed": "No se pudo cargar la cola."
+      "loadFailed": "No se pudo cargar la cola.",
+      "deleteFailed": "No se pudo quitar la oferta. Inténtalo de nuevo.",
+      "deleteInProgress": "Esta oferta se está adaptando. Quítala cuando termine.",
+      "clearFailed": "No se pudo vaciar la cola. Inténtalo de nuevo."
     }
   }
 }

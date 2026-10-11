@@ -2,7 +2,7 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import QueuePage from '@/app/(default)/queue/page';
-import type { QueueItem } from '@/lib/api/resume';
+import { QueueItemInProgressError, type QueueItem } from '@/lib/api/resume';
 
 const listResumes = vi.fn();
 const fetchQueue = vi.fn();
@@ -35,6 +35,7 @@ vi.mock('@/lib/api/resume', () => ({
   deleteQueueItem: (...args: unknown[]) => removeItem(...args),
   clearQueueItems: (...args: unknown[]) => clearItems(...args),
   parseJobMetadata: (...args: unknown[]) => parseMetadata(...args),
+  QueueItemInProgressError: class QueueItemInProgressError extends Error {},
 }));
 
 const JOB_DESCRIPTION =
@@ -305,5 +306,45 @@ describe('queue polling', () => {
 
     await advance(60_000);
     expect(fetchQueue).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('queue actions', () => {
+  it('explains a failed delete and keeps the item', async () => {
+    fetchQueue.mockResolvedValue([item('a', 'failed')]);
+    removeItem.mockRejectedValue(new Error('Failed to delete queue item (500)'));
+    render(<QueuePage />);
+    const row = (await screen.findByText('a role')).closest('li')!;
+    await act(async () => {
+      fireEvent.click(within(row).getByRole('button', { name: 'queue.monitor.remove' }));
+    });
+    expect(screen.getByText('queue.errors.deleteFailed')).toBeTruthy();
+    expect(screen.getByText('a role')).toBeTruthy();
+  });
+
+  it('says when the job started tailoring and refreshes its row', async () => {
+    fetchQueue
+      .mockResolvedValueOnce([item('a', 'pending')])
+      .mockResolvedValue([item('a', 'processing')]);
+    removeItem.mockRejectedValue(new QueueItemInProgressError('busy'));
+    render(<QueuePage />);
+    const row = (await screen.findByText('a role')).closest('li')!;
+    await act(async () => {
+      fireEvent.click(within(row).getByRole('button', { name: 'queue.monitor.remove' }));
+    });
+    expect(screen.getByText('queue.errors.deleteInProgress')).toBeTruthy();
+    expect(await screen.findByText('queue.status.processing')).toBeTruthy();
+  });
+
+  it('explains a failed clear and keeps the list', async () => {
+    fetchQueue.mockResolvedValue([item('a', 'completed')]);
+    clearItems.mockRejectedValue(new Error('Failed to clear queue (500)'));
+    render(<QueuePage />);
+    await screen.findByText('a role');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'queue.monitor.clearCompleted' }));
+    });
+    expect(screen.getByText('queue.errors.clearFailed')).toBeTruthy();
+    expect(screen.getByText('a role')).toBeTruthy();
   });
 });
