@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 CLAUDE_BIN = "claude"
 
+# Used when the caller passes no ``timeout``. Every subprocess call is bounded.
+DEFAULT_TIMEOUT_SECONDS = 120.0
+
 # Strip Claude Code's coding-agent identity so it behaves like a raw completion
 # endpoint instead of second-guessing the app's prompts as "injection".
 RAW_SYSTEM = (
@@ -61,8 +64,10 @@ def _shape_response(content: str) -> SimpleNamespace:
 async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
     """Drop-in replacement for ``litellm.acompletion`` / ``router.acompletion``.
 
-    Ignores provider/model/api_key/response_format kwargs — the only thing
-    that matters is ``messages``. Runs ``claude -p`` and returns its result.
+    Ignores provider/model/api_key/response_format kwargs — the only things
+    that matter are ``messages`` and ``timeout``. Runs ``claude -p`` and returns
+    its result. Raises ``TimeoutError`` (after killing the process) when the CLI
+    does not finish within ``timeout`` seconds.
     """
     messages = kwargs.get("messages") or []
     prompt = _messages_to_prompt(messages)
@@ -82,7 +87,17 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    out, err = await proc.communicate(prompt.encode("utf-8"))
+    try:
+        out, err = await asyncio.wait_for(
+            proc.communicate(prompt.encode("utf-8")),
+            timeout=kwargs.get("timeout") or DEFAULT_TIMEOUT_SECONDS,
+        )
+    except BaseException:
+        # Timeout or task cancellation: do not leave the CLI running.
+        if proc.returncode is None:
+            proc.kill()
+            await proc.wait()
+        raise
     stdout = out.decode("utf-8", "replace").strip()
     stderr = err.decode("utf-8", "replace").strip()
 

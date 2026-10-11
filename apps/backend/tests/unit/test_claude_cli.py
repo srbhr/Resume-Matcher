@@ -5,11 +5,14 @@ Nothing here launches the real ``claude`` binary: routing is checked with
 against a fake ``asyncio.create_subprocess_exec``.
 """
 
+import asyncio
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from app.claude_cli import DEFAULT_TIMEOUT_SECONDS, claude_acompletion
 from app.llm import LLMConfig, complete, complete_json, get_router
 
 
@@ -72,3 +75,113 @@ class TestRouterIsSkipped:
         assert result == {"required_skills": ["Python"]}
         build_router.assert_not_called()
         cli.assert_awaited_once()
+
+
+class _FakeProcess:
+    """Stand-in for ``asyncio.subprocess.Process``."""
+
+    def __init__(
+        self,
+        stdout: bytes = b"",
+        stderr: bytes = b"",
+        returncode: int = 0,
+        hang: bool = False,
+    ) -> None:
+        self._stdout = stdout
+        self._stderr = stderr
+        self._final_returncode = returncode
+        self._hang = hang
+        self.returncode: int | None = None
+        self.stdin_data: bytes | None = None
+        self.killed = False
+
+    async def communicate(self, data: bytes | None = None) -> tuple[bytes, bytes]:
+        self.stdin_data = data
+        if self._hang:
+            await asyncio.sleep(3600)
+        self.returncode = self._final_returncode
+        return self._stdout, self._stderr
+
+    def kill(self) -> None:
+        self.killed = True
+        self.returncode = -9
+
+    async def wait(self) -> int | None:
+        return self.returncode
+
+
+def _envelope(result: str = "pong") -> bytes:
+    return json.dumps({"is_error": False, "result": result}).encode()
+
+
+def _spawn(process: _FakeProcess) -> AsyncMock:
+    """Replacement for ``asyncio.create_subprocess_exec`` returning ``process``."""
+    return AsyncMock(return_value=process)
+
+
+class TestSubprocessTimeout:
+    async def test_hung_cli_is_killed_and_raises_timeout(self):
+        process = _FakeProcess(hang=True)
+
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", _spawn(process)):
+            with pytest.raises(TimeoutError):
+                await claude_acompletion(
+                    messages=[{"role": "user", "content": "Hi"}], timeout=0.05
+                )
+
+        assert process.killed
+
+    async def test_timeout_propagates_through_complete(self):
+        """``complete()`` re-raises TimeoutError, as it does for LiteLLM timeouts."""
+        process = _FakeProcess(hang=True)
+
+        with (
+            patch("app.claude_cli.asyncio.create_subprocess_exec", _spawn(process)),
+            patch("app.llm.remaining_timeout", return_value=0.05),
+        ):
+            with pytest.raises(TimeoutError):
+                await complete("Hi", config=_cli_config())
+
+        assert process.killed
+
+    async def test_cancellation_kills_the_process(self):
+        process = _FakeProcess(hang=True)
+
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", _spawn(process)):
+            task = asyncio.ensure_future(
+                claude_acompletion(messages=[{"role": "user", "content": "Hi"}])
+            )
+            await asyncio.sleep(0.05)
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+
+        assert process.killed
+
+    async def test_call_without_a_timeout_still_gets_a_default(self):
+        process = _FakeProcess(stdout=_envelope("ok"))
+        seen: dict[str, object] = {}
+        real_wait_for = asyncio.wait_for
+
+        async def spy(awaitable, timeout=None):
+            seen["timeout"] = timeout
+            return await real_wait_for(awaitable, timeout)
+
+        with (
+            patch("app.claude_cli.asyncio.create_subprocess_exec", _spawn(process)),
+            patch("app.claude_cli.asyncio.wait_for", spy),
+        ):
+            await claude_acompletion(messages=[{"role": "user", "content": "Hi"}])
+
+        assert seen["timeout"] == DEFAULT_TIMEOUT_SECONDS
+
+    async def test_finished_call_returns_the_cli_result(self):
+        process = _FakeProcess(stdout=_envelope("pong"))
+
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", _spawn(process)):
+            response = await claude_acompletion(
+                messages=[{"role": "user", "content": "Hi"}], timeout=5
+            )
+
+        assert response.choices[0].message.content == "pong"
+        assert not process.killed
