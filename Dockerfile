@@ -17,14 +17,17 @@ WORKDIR /app/frontend
 # Copy package files first for better caching
 COPY apps/frontend/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (npm download cache kept between builds)
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy frontend source
 COPY apps/frontend/ ./
 
-# Build the frontend
-RUN npm run build
+# Build the frontend (Next.js build cache kept between builds; it is not part of the
+# standalone output)
+RUN --mount=type=cache,target=/app/frontend/.next/cache \
+    npm run build
 
 # ============================================
 # Stage 2: Final Image
