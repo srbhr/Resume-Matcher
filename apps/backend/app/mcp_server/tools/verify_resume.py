@@ -48,6 +48,8 @@ def _issues(
                 issues.append("low_order_fidelity")
             if any(f.status in ("missing", "garbled") for f in roundtrip.fields):
                 issues.append("fields_missing")
+            if roundtrip.truncated:
+                issues.append("roundtrip_truncated")
     if score and score.get("injectable_keywords"):
         issues.append("injectable_keywords")
     return issues
@@ -104,7 +106,8 @@ async def verify_resume(
     """Render a saved resume once and report page count, ATS parse-check, keyword score and issues. Writes nothing.
 
     job_id defaults to the job a tailored resume was saved for. Issue codes: over_page_limit,
-    multi_column, garbled_glyphs, low_order_fidelity, fields_missing, injectable_keywords, render_failed.
+    multi_column, garbled_glyphs, low_order_fidelity, fields_missing, roundtrip_truncated,
+    injectable_keywords, render_failed.
     """
     resume = await require_resume(resume_id)
     return await verify(resume, job_id, print_settings or PageFitSettings(), max_pages)
