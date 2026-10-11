@@ -37,6 +37,10 @@ import { FadePresence } from '@/components/common/presence';
 const MIN_JOB_DESCRIPTION_LENGTH = 50;
 const POLL_INTERVAL_MS = 2500;
 const DETECT_DELAY_MS = 300;
+// The backend accepts 0-60 seconds; typing past either end snaps to it.
+const MAX_COOLDOWN_SECONDS = 60;
+const clampCooldown = (value: number) =>
+  Number.isFinite(value) ? Math.min(MAX_COOLDOWN_SECONDS, Math.max(0, value)) : 0;
 
 const STATUS_TONE: Record<QueueItemStatus, StatusTone> = {
   pending: 'neutral',
@@ -426,13 +430,13 @@ export default function QueuePage() {
             <Input
               id="queue-cooldown"
               type="number"
-              min={1}
-              max={60}
+              min={0}
+              max={MAX_COOLDOWN_SECONDS}
               step={0.5}
               aria-describedby="queue-cooldown-hint"
               className="max-w-32 font-mono tabular-nums"
               value={rateLimitSeconds}
-              onChange={(e) => setRateLimitSeconds(Math.max(1, parseFloat(e.target.value) || 1))}
+              onChange={(e) => setRateLimitSeconds(clampCooldown(parseFloat(e.target.value)))}
               disabled={isAddingToQueue}
             />
             <p id="queue-cooldown-hint" className="text-sm text-ink-soft">

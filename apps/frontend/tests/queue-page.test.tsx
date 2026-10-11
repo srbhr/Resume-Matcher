@@ -374,3 +374,29 @@ describe('detected job details', () => {
     expect(field('queue.form.roleLabel').value).toBe('My title');
   });
 });
+
+describe('cooldown', () => {
+  it.each([
+    ['300', 60],
+    ['-5', 0],
+    ['', 0],
+    ['12.5', 12.5],
+  ])('keeps %s within the 0-60 seconds the backend accepts', async (typed, expected) => {
+    addJob.mockResolvedValue(item('new', 'pending'));
+    render(<QueuePage />);
+    await screen.findByText('Backend track');
+    fireEvent.change(screen.getByLabelText('queue.form.cooldownLabel'), {
+      target: { value: typed },
+    });
+    expect((screen.getByLabelText('queue.form.cooldownLabel') as HTMLInputElement).value).toBe(
+      String(expected)
+    );
+    fireEvent.change(screen.getByLabelText('queue.form.jobDescriptionLabel'), {
+      target: { value: JOB_DESCRIPTION },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'queue.form.submit' }));
+    });
+    expect(addJob.mock.calls[0][2]).toBe(expected);
+  });
+});
