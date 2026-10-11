@@ -99,6 +99,12 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         # files must not be able to, whatever RAW_SYSTEM says.
         "--tools",
         "",
+        # Skip the user's CLAUDE.md, hooks, skills, plugins and MCP servers.
+        # Measured on a typical setup: a one-word reply loaded ~380k tokens of
+        # that context ($3.07, 18s) versus ~2k tokens ($0.02, 3s) with it off,
+        # and hooks would otherwise run on every completion. OAuth login still
+        # works, unlike --bare.
+        "--safe-mode",
         # Resumes and job descriptions must not be written to Claude Code's
         # session history on disk.
         "--no-session-persistence",

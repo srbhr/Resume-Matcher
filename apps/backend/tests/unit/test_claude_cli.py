@@ -283,6 +283,11 @@ class TestCommandLine:
         # `--tools ""` is the CLI's "no tools" switch.
         assert args[args.index("--tools") + 1] == ""
 
+    async def test_user_customizations_are_not_loaded(self):
+        args, _ = await self._args()
+
+        assert "--safe-mode" in args
+
     async def test_session_is_not_persisted(self):
         args, _ = await self._args()
 
