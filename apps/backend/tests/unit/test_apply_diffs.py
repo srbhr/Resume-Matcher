@@ -963,3 +963,24 @@ class TestReorderSalvage:
         # Both case-variants of the original survive; the unverified new item is dropped.
         assert sorted(skills) == sorted(["python", "Python", "Docker"])
         assert "Go" not in skills
+
+
+class TestReplaceRequiresOriginal:
+    """A replace that does not quote its original text is never applied blind."""
+
+    @pytest.mark.parametrize(
+        ("path", "value"),
+        [
+            ("summary", "Invented summary."),
+            ("workExperience[0].description[0]", "Invented bullet."),
+            # Whole-list paths: a blind replace would also turn the list into a string.
+            ("workExperience[0].description", "Collapsed bullets"),
+            ("additional.technicalSkills", "Python, Go"),
+        ],
+    )
+    def test_replace_without_original_is_rejected(self, sample_resume, path, value):
+        change = ResumeChange(path=path, action="replace", value=value, reason="test")
+        result, applied, rejected = apply_diffs(sample_resume, [change])
+        assert applied == []
+        assert rejected == [change]
+        assert result == sample_resume
