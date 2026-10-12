@@ -239,3 +239,45 @@ async def test_base_saved_before_bindings_existed_keeps_working(
     assert runtime.api_base == proxy
     assert runtime.api_key == KEY
     assert runtime.endpoint_confirmed is True
+
+
+async def test_a_case_only_path_change_is_a_new_endpoint(client: AsyncClient) -> None:
+    """Paths are case-sensitive: a shared proxy may route /TeamA and /teama apart."""
+    owned = "https://proxy.example/TeamA/v1"
+    moved = await client.put(
+        "/api/v1/config/llm-api-key",
+        json={"provider": "openai", "api_base": owned, "api_key": KEY},
+    )
+    assert moved.status_code == 200
+
+    other_route = "https://proxy.example/teama/v1"
+    resp = await client.put(
+        "/api/v1/config/llm-api-key",
+        json={"provider": "openai", "api_base": other_route},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["detail"]["code"] == "api_key_required_for_endpoint"
+
+    with patch("app.routers.config.check_llm_health", new_callable=AsyncMock) as probe:
+        tested = await client.post(
+            "/api/v1/config/llm-test", json={"api_base": other_route}
+        )
+    assert tested.json()["error_code"] == "api_key_required_for_endpoint"
+    probe.assert_not_awaited()
+
+
+async def test_host_case_and_trailing_slash_are_the_same_endpoint(
+    client: AsyncClient,
+) -> None:
+    owned = "https://proxy.example/TeamA/v1"
+    await client.put(
+        "/api/v1/config/llm-api-key",
+        json={"provider": "openai", "api_base": owned, "api_key": KEY},
+    )
+    with patch("app.routers.config.check_llm_health", new_callable=AsyncMock) as probe:
+        probe.return_value = {"healthy": True}
+        await client.post(
+            "/api/v1/config/llm-test",
+            json={"api_base": "HTTPS://Proxy.Example/TeamA/v1/"},
+        )
+    assert probe.await_args.args[0].api_key == KEY

@@ -7,7 +7,7 @@ import re
 import threading
 from collections.abc import Callable
 from typing import Any, Literal
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 import litellm
 from litellm import Router
@@ -799,13 +799,36 @@ API_BASE_KEY_BINDING = "api_base_key_binding"
 API_KEY_REQUIRED_FOR_ENDPOINT = "api_key_required_for_endpoint"
 
 
-def _endpoint(api_base: str | None) -> str:
-    return (api_base or "").strip().rstrip("/").lower()
+def normalize_endpoint(api_base: str | None) -> str:
+    """Compare-ready form of a Base URL: scheme and host lowercased only.
+
+    Paths and queries are case-sensitive (a shared proxy can route
+    ``/TeamA/v1`` and ``/teama/v1`` to different users), so they are kept as
+    written; otherwise a saved key could follow a case-only path change.
+    """
+    raw = (api_base or "").strip().rstrip("/")
+    try:
+        parts = urlsplit(raw)
+        host = parts.hostname
+        port = parts.port
+    except ValueError:
+        return raw
+    if not parts.scheme or host is None:
+        return raw
+    if ":" in host:
+        host = f"[{host}]"
+    userinfo = parts.netloc.rpartition("@")[0]
+    netloc = f"{userinfo}@{host}" if userinfo else host
+    if port is not None:
+        netloc = f"{netloc}:{port}"
+    return urlunsplit(
+        (parts.scheme.lower(), netloc, parts.path, parts.query, parts.fragment)
+    )
 
 
 def api_base_key_binding(provider: str, api_base: str | None, api_key: str) -> str:
     """Digest tying ``api_key`` to ``provider`` at ``api_base``, for config.json."""
-    return keyed_digest("\0".join((provider, _endpoint(api_base), api_key)))
+    return keyed_digest("\0".join((provider, normalize_endpoint(api_base), api_key)))
 
 
 def saved_endpoint_accepts_key(
@@ -820,8 +843,8 @@ def saved_endpoint_accepts_key(
     provider's own endpoint and the operator's ``LLM_API_BASE`` are not saved
     bases and are not bound; a base saved before bindings existed is trusted.
     """
-    base = _endpoint(api_base)
-    if not api_key or not base or base != _endpoint(stored.get("api_base")):
+    base = normalize_endpoint(api_base)
+    if not api_key or not base or base != normalize_endpoint(stored.get("api_base")):
         return True
     binding = stored.get(API_BASE_KEY_BINDING)
     if not isinstance(binding, str):

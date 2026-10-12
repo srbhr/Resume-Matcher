@@ -25,6 +25,7 @@ from app.llm import (
     LLMConfig,
     api_base_key_binding,
     check_llm_health,
+    normalize_endpoint,
     resolve_api_key,
     saved_endpoint_accepts_key,
 )
@@ -72,10 +73,6 @@ def _effective_api_base(stored: dict) -> str | None:
     return stored.get("api_base") or settings.llm_api_base or None
 
 
-def _normalized_base(api_base: str | None) -> str:
-    return (api_base or "").strip().rstrip("/").lower()
-
-
 def _moves_key_to_new_endpoint(
     stored: dict,
     provider: str,
@@ -87,11 +84,11 @@ def _moves_key_to_new_endpoint(
     when it is already the saved base of the saved provider, so an
     unauthenticated caller cannot point a stored key at a server it controls.
     """
-    if not _normalized_base(api_base):
+    if not normalize_endpoint(api_base):
         return False
     return provider != stored.get(
         "provider", settings.llm_provider
-    ) or _normalized_base(api_base) != _normalized_base(_effective_api_base(stored))
+    ) or normalize_endpoint(api_base) != normalize_endpoint(_effective_api_base(stored))
 
 
 def _proves_key(request_key: str | None, stored_key: str) -> bool:
