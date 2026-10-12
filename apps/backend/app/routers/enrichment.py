@@ -465,8 +465,9 @@ async def apply_enhancements(resume_id: str, request: ApplyEnhancementsRequest) 
     prefixes = {"experience": "exp", "project": "proj"}
     apply_failures: list[str] = []
 
-    # Apply each enhancement by ADDING new bullets (all-or-nothing, like
-    # apply-regenerated, so a stale or malformed item never edits the wrong entry)
+    # Add new bullets only if every item has a valid ID and an existing target
+    # (all-or-nothing, like apply-regenerated). Entries are matched by position;
+    # stale content is not checked.
     for enhancement in request.enhancements:
         item_id = enhancement.item_id
         item_type = enhancement.item_type.strip().lower()
