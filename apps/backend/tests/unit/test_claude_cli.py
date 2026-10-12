@@ -7,6 +7,8 @@ against a fake ``asyncio.create_subprocess_exec``.
 
 import asyncio
 import json
+import os
+import tempfile
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -25,6 +27,12 @@ from app.llm import (
     complete_json,
     get_router,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_installed_cli(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Resolve the bare name, whatever CLI happens to be installed on this machine."""
+    monkeypatch.setattr("app.claude_cli.shutil.which", lambda _name: None)
 
 
 @pytest.fixture(autouse=True)
@@ -337,3 +345,77 @@ class TestSamplingControls:
 
         assert "temperature" not in cli.call_args.kwargs
         assert "response_format" not in cli.call_args.kwargs
+
+
+class TestExecutableResolution:
+    """Windows only spawns .exe files by bare name; npm installs a .cmd shim."""
+
+    async def test_resolved_executable_is_spawned(self, monkeypatch):
+        process = _FakeProcess(stdout=_envelope())
+        spawn = _spawn(process)
+        monkeypatch.setattr(
+            "app.claude_cli.shutil.which", lambda _name: r"C:\bin\cli.exe"
+        )
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", spawn):
+            await claude_acompletion(messages=[{"role": "user", "content": "Hi"}])
+
+        args = list(spawn.call_args.args)
+        assert args[0] == r"C:\bin\cli.exe"
+        assert args[args.index("--system-prompt") + 1] == RAW_SYSTEM
+
+    @pytest.mark.parametrize("returncode", [0, 1])
+    async def test_batch_shim_gets_the_prompt_from_a_file_it_cannot_reparse(
+        self, monkeypatch, returncode
+    ):
+        monkeypatch.setattr(
+            "app.claude_cli.shutil.which", lambda _name: r"C:\npm\cli.CMD"
+        )
+        process = _FakeProcess(stdout=_envelope(), returncode=returncode)
+        captured: dict[str, object] = {}
+
+        async def spawn(*args: str, **_kwargs: object) -> _FakeProcess:
+            captured["args"] = list(args)
+            path = args[args.index("--system-prompt-file") + 1]
+            captured["path"] = path
+            with open(path, encoding="utf-8") as handle:
+                captured["content"] = handle.read()
+            return process
+
+        messages = [
+            {"role": "system", "content": 'Use 100% & "quotes".'},
+            {"role": "user", "content": "Hi"},
+        ]
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", spawn):
+            if returncode:
+                with pytest.raises(RuntimeError):
+                    await claude_acompletion(messages=messages)
+            else:
+                await claude_acompletion(messages=messages)
+
+        args = captured["args"]
+        assert isinstance(args, list) and args[0] == r"C:\npm\cli.CMD"
+        assert "--system-prompt" not in args
+        # Nothing cmd.exe could reinterpret is left on the command line.
+        assert not any(set(arg) & set('%&"|<>^') for arg in args)
+        assert captured["content"] == f'{RAW_SYSTEM}\n\nUse 100% & "quotes".'
+        assert not os.path.exists(str(captured["path"]))
+
+    async def test_prompt_file_is_removed_when_the_cli_is_missing(self, monkeypatch):
+        monkeypatch.setattr(
+            "app.claude_cli.shutil.which", lambda _name: r"C:\npm\cli.cmd"
+        )
+        created: list[str] = []
+        real_mkstemp = tempfile.mkstemp
+
+        def mkstemp(*args: object, **kwargs: object) -> tuple[int, str]:
+            fd, path = real_mkstemp(*args, **kwargs)  # type: ignore[arg-type]
+            created.append(path)
+            return fd, path
+
+        monkeypatch.setattr("app.claude_cli.tempfile.mkstemp", mkstemp)
+        missing = AsyncMock(side_effect=FileNotFoundError(2, "No such file", "x"))
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", missing):
+            with pytest.raises(ClaudeCliNotFoundError):
+                await claude_acompletion(messages=[{"role": "user", "content": "Hi"}])
+
+        assert created and not os.path.exists(created[0])
