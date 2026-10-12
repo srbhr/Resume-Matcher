@@ -65,9 +65,30 @@ describe('print route page-fit drafts', () => {
     expect(container.querySelector('[data-print-error]')).toBeNull();
   });
 
-  it('keeps failing loudly for a saved resume that cannot be loaded', async () => {
+  // A thrown error rendered Next's error page, which has no .resume-print, so the
+  // PDF export waited out its whole deadline (about 60s) before failing.
+  it('renders the error marker for a saved resume that cannot be loaded', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(404, {})));
 
-    await expect(renderPrintPage('missing-id')).rejects.toThrow('Failed to load resume');
+    const { container } = await renderPrintPage('missing-id');
+
+    expect(container.querySelector('.resume-print')).toBeNull();
+    expect(container.querySelector('[data-print-error]')?.textContent?.trim()).not.toBe('');
+  });
+
+  it('renders the error marker for a resume whose content is not structured data', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          jsonResponse(200, { data: { raw_resume: { content: '# Jane Doe (markdown)' } } })
+        )
+    );
+
+    const { container } = await renderPrintPage('unparsed-id');
+
+    expect(container.querySelector('.resume-print')).toBeNull();
+    expect(container.querySelector('[data-print-error]')).not.toBeNull();
   });
 });

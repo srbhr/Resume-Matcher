@@ -170,13 +170,17 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
   try {
     resumeData = await fetchResumeData(resolvedParams.id, draftToken);
   } catch (error) {
-    if (!draftToken) throw error;
-    // Page-fit drafts are short-lived. Render a marker the PDF renderer waits for
-    // so a missing or expired draft fails fast instead of timing out.
-    console.error('Failed to load page-fit draft:', {
+    // Render a marker the PDF renderer waits for, so a resume that cannot load
+    // (an expired page-fit draft, an unreachable backend) fails fast instead
+    // of timing out.
+    console.error(draftToken ? 'Failed to load page-fit draft:' : 'Failed to load resume:', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    return <div data-print-error="draft-unavailable">Draft unavailable</div>;
+    return draftToken ? (
+      <div data-print-error="draft-unavailable">Draft unavailable</div>
+    ) : (
+      <div data-print-error="resume-unavailable">Resume unavailable</div>
+    );
   }
   const locale = resolveLocale(resolvedSearchParams?.lang);
   const t = (key: string, params?: Record<string, string | number>) =>
