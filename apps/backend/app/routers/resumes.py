@@ -54,6 +54,7 @@ from app.schemas import (
     ImproveResumeRequest,
     ImproveResumeResponse,
     InterviewPrepData,
+    PageFitSettings,
     RawResume,
     RefinementStats,
     ResumeData,
@@ -70,6 +71,7 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
+from app.schemas.models import ResumeTemplate
 from app.schemas.refinement import RefinementConfig
 from app.services.ats import compute_ats_score
 from app.services.bullet_selector import SELECTABLE_SECTIONS
@@ -91,7 +93,7 @@ from app.services.improver import (
     verify_skill_target_plan,
 )
 from app.services.interview_prep import generate_interview_prep
-from app.services.page_fit import page_limit, render_drafts
+from app.services.page_fit import page_limit, render_drafts, resume_print_url
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
     MAX_PDF_PREFLIGHT_PAGES,
@@ -792,16 +794,20 @@ async def _generate_auxiliary_messages(
 
 router = APIRouter(route_class=AIOperationRoute, prefix="/resumes", tags=["Resumes"])
 
+# Legacy binary .doc is not listed: the document converter cannot read it, so
+# it is refused here with a clear message instead of failing after upload.
 ALLOWED_TYPES = {
     "application/pdf",
-    "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 DOCUMENT_TYPES_BY_EXTENSION = {
     ".pdf": "application/pdf",
-    ".doc": "application/msword",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+LEGACY_DOC_DETAIL = (
+    "Legacy Word .doc files are not supported. Save the file as DOCX or PDF "
+    "and upload it again."
+)
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
 UPLOAD_READ_CHUNK_SIZE = 64 * 1024
 MASTER_LIMIT_DETAIL = (
@@ -811,17 +817,19 @@ MASTER_LIMIT_DETAIL = (
 
 def _validate_upload_type(file: UploadFile) -> None:
     """Require the declared MIME type to match a supported filename extension."""
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix == ".doc" or file.content_type == "application/msword":
+        raise HTTPException(status_code=400, detail=LEGACY_DOC_DETAIL)
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOC, DOCX",
+            detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOCX",
         )
 
-    suffix = Path(file.filename or "").suffix.lower()
     if DOCUMENT_TYPES_BY_EXTENSION.get(suffix) != file.content_type:
         raise HTTPException(
             status_code=400,
-            detail="Upload a valid PDF, DOC, or DOCX file.",
+            detail="Upload a valid PDF or DOCX file.",
         )
 
 
@@ -1032,7 +1040,7 @@ async def upload_resume(
         logger.exception("Document parsing failed")
         raise HTTPException(
             status_code=422,
-            detail="Failed to parse document. Please upload a valid PDF, DOC, or DOCX file.",
+            detail="Failed to parse document. Please upload a valid PDF or DOCX file.",
         )
 
     # Validate extracted text is not empty (image-based PDFs / scanned documents)
@@ -1041,7 +1049,7 @@ async def upload_resume(
             status_code=422,
             detail=(
                 "Could not extract text from the uploaded file. The document may be "
-                "image-based or scanned. Please upload a text-based PDF, DOC, or DOCX "
+                "image-based or scanned. Please upload a text-based PDF or DOCX "
                 "with selectable text, or run OCR first."
             ),
         )
@@ -2145,7 +2153,7 @@ async def update_resume_endpoint(
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
     resume_id: str,
-    template: str = Query("swiss-single"),
+    template: ResumeTemplate = Query("swiss-single"),
     pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
     marginTop: int = Query(10, ge=5, le=25),
     marginBottom: int = Query(10, ge=5, le=25),
@@ -2185,28 +2193,27 @@ async def download_resume_pdf(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    # Build print URL with all settings
-    params = (
-        f"template={template}"
-        f"&pageSize={pageSize}"
-        f"&marginTop={marginTop}"
-        f"&marginBottom={marginBottom}"
-        f"&marginLeft={marginLeft}"
-        f"&marginRight={marginRight}"
-        f"&sectionSpacing={sectionSpacing}"
-        f"&itemSpacing={itemSpacing}"
-        f"&lineHeight={lineHeight}"
-        f"&fontSize={fontSize}"
-        f"&headerScale={headerScale}"
-        f"&headerFont={headerFont}"
-        f"&bodyFont={bodyFont}"
-        f"&compactMode={str(compactMode).lower()}"
-        f"&showContactIcons={str(showContactIcons).lower()}"
-        f"&accentColor={accentColor}"
+    # Validated and URL-encoded the same way as the page-fit and ATS renders.
+    fit = PageFitSettings(
+        template=template,
+        pageSize=pageSize,
+        marginTop=marginTop,
+        marginBottom=marginBottom,
+        marginLeft=marginLeft,
+        marginRight=marginRight,
+        sectionSpacing=sectionSpacing,
+        itemSpacing=itemSpacing,
+        lineHeight=lineHeight,
+        fontSize=fontSize,
+        headerScale=headerScale,
+        headerFont=headerFont,
+        bodyFont=bodyFont,
+        compactMode=compactMode,
+        showContactIcons=showContactIcons,
+        accentColor=accentColor,
+        lang=lang,
     )
-    if lang:
-        params = f"{params}&lang={lang}"
-    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
+    url = resume_print_url(resume_id, fit)
 
     # Use the exact margins provided; compact mode only affects spacing.
     pdf_margins = {

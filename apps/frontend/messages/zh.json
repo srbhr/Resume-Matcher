@@ -114,7 +114,7 @@
       "parsingFailed": "简历已上传但AI解析失败。您仍可手动定制。",
       "failed": "上传失败。",
       "dropzoneTitle": "点击或拖拽文件",
-      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
+      "dropzoneSubtitle": "PDF、DOCX（最大 4MB）",
       "tryDifferentFile": "尝试其他文件",
       "parsingFailedKeepOpen": "AI 解析失败。请尝试其他文件，或关闭此对话框。"
     },
@@ -981,7 +981,8 @@
         "claude_cli_not_found": "未找到 Claude Code CLI。请安装 Claude Code 并运行 `claude auth login`。",
         "chatgpt_not_connected": "尚未使用 ChatGPT 登录。请在设置中选择 ChatGPT 订阅，然后点击“通过 ChatGPT 继续”。",
         "chatgpt_usage_limit": "此应用已达到你的 ChatGPT 订阅用量上限。请在 ChatGPT 设置的“用量”中查看。",
-        "chatgpt_not_eligible": "此账户无法使用 ChatGPT 订阅用量。需要 ChatGPT Plus 或 Pro；否则请使用 OpenAI API 密钥。"
+        "chatgpt_not_eligible": "此账户无法使用 ChatGPT 订阅用量。需要 ChatGPT Plus 或 Pro；否则请使用 OpenAI API 密钥。",
+        "api_key_required_for_endpoint": "此 API 密钥保存于其他端点。请输入密钥以在此基础 URL 上测试。"
       },
       "healthWarnings": {
         "empty_content": "健康检查返回了空内容。"
@@ -1048,7 +1049,8 @@
       "unknownProvider": "后端返回未知提供商：{provider}",
       "unableToSaveConfiguration": "无法保存配置",
       "failedToClearApiKeys": "清除 API 密钥失败，请重试。",
-      "failedToResetDatabase": "重置数据库失败，请重试。"
+      "failedToResetDatabase": "重置数据库失败，请重试。",
+      "apiKeyRequiredForEndpoint": "请重新输入 API 密钥，以便在此基础 URL 或提供商上使用。"
     },
     "apiKeys": {
       "savedTitle": "已保存的 API 密钥",
@@ -1277,7 +1279,7 @@
       "upload": {
         "kicker": "现有文件",
         "title": "上传简历",
-        "description": "从 PDF、DOC 或 DOCX 文件开始，让 Resume Matcher 将其解析为你的主档案。",
+        "description": "从 PDF 或 DOCX 文件开始，让 Resume Matcher 将其解析为你的主档案。",
         "action": "上传简历"
       },
       "wizard": {

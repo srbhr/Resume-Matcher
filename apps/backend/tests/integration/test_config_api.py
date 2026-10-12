@@ -658,7 +658,10 @@ class TestRequiresBaseUrlValidation:
             )
 
         assert resp.status_code == 200
-        assert json.loads((tmp_path / "data" / "config.json").read_text()) == {
+        saved = json.loads((tmp_path / "data" / "config.json").read_text())
+        # The custom base is bound to the key confirmed for it (none here).
+        assert len(saved.pop("api_base_key_binding")) == 64
+        assert saved == {
             "provider": "azure_foundry",
             "model": "gpt-5-mini",
             "api_base": "https://example.services.ai.azure.com/openai/v1/responses",

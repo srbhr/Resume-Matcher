@@ -114,7 +114,7 @@
       "parsingFailed": "이력서는 업로드되었지만 AI 분석에 실패했습니다. 여전히 수동으로 맞춤화할 수 있습니다.",
       "failed": "업로드에 실패했습니다.",
       "dropzoneTitle": "클릭하거나 파일을 드래그하세요",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (최대 4MB)",
+      "dropzoneSubtitle": "PDF, DOCX (최대 4MB)",
       "tryDifferentFile": "다른 파일 시도",
       "parsingFailedKeepOpen": "AI 분석에 실패했습니다. 다른 파일을 시도하거나 이 대화상자를 닫으세요."
     },
@@ -981,7 +981,8 @@
         "claude_cli_not_found": "Claude Code CLI를 찾을 수 없습니다. Claude Code를 설치하고 `claude auth login`을 실행하세요.",
         "chatgpt_not_connected": "ChatGPT로 로그인하지 않았습니다. 설정에서 ChatGPT 요금제를 선택한 뒤 'ChatGPT로 계속하기'를 누르세요.",
         "chatgpt_usage_limit": "이 앱의 ChatGPT 요금제 사용 한도에 도달했습니다. ChatGPT 설정의 사용량에서 확인하세요.",
-        "chatgpt_not_eligible": "이 계정에서는 ChatGPT 요금제를 사용할 수 없습니다. ChatGPT Plus 또는 Pro가 필요하며, 그렇지 않으면 OpenAI API 키를 사용하세요."
+        "chatgpt_not_eligible": "이 계정에서는 ChatGPT 요금제를 사용할 수 없습니다. ChatGPT Plus 또는 Pro가 필요하며, 그렇지 않으면 OpenAI API 키를 사용하세요.",
+        "api_key_required_for_endpoint": "이 API 키는 다른 엔드포인트용으로 저장되어 있습니다. 이 기본 URL로 테스트하려면 키를 입력하세요."
       },
       "healthWarnings": {
         "empty_content": "상태 확인 시 LLM이 빈 응답을 반환했습니다."
@@ -1048,7 +1049,8 @@
       "unknownProvider": "백엔드에서 알 수 없는 제공업체를 반환했습니다: {provider}",
       "unableToSaveConfiguration": "구성을 저장할 수 없습니다",
       "failedToClearApiKeys": "API 키 삭제에 실패했습니다. 다시 시도해 주세요.",
-      "failedToResetDatabase": "데이터베이스 초기화에 실패했습니다. 다시 시도해 주세요."
+      "failedToResetDatabase": "데이터베이스 초기화에 실패했습니다. 다시 시도해 주세요.",
+      "apiKeyRequiredForEndpoint": "이 기본 URL 또는 제공업체에서 사용하려면 API 키를 다시 입력하세요."
     },
     "apiKeys": {
       "savedTitle": "저장된 API 키",
@@ -1277,7 +1279,7 @@
       "upload": {
         "kicker": "기존 파일",
         "title": "이력서 업로드",
-        "description": "PDF, DOC, DOCX 파일로 시작하면 Resume Matcher가 이를 분석해 마스터 프로필로 만들어 줍니다.",
+        "description": "PDF, DOCX 파일로 시작하면 Resume Matcher가 이를 분석해 마스터 프로필로 만들어 줍니다.",
         "action": "이력서 업로드"
       },
       "wizard": {
