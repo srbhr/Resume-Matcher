@@ -562,21 +562,24 @@ class JobUploadResponse(BaseModel):
 
 
 # Improvement Models
+ResumeTemplate = Literal[
+    "swiss-single",
+    "swiss-two-column",
+    "modern",
+    "modern-two-column",
+    "latex",
+    "clean",
+    "vivid",
+    "vivid-single",
+    "modern-deedy",
+    "deedy",
+]
+
+
 class PageFitSettings(BaseModel):
     """Print settings used to measure page count (mirrors GET /resumes/{id}/pdf)."""
 
-    template: Literal[
-        "swiss-single",
-        "swiss-two-column",
-        "modern",
-        "modern-two-column",
-        "latex",
-        "clean",
-        "vivid",
-        "vivid-single",
-        "modern-deedy",
-        "deedy",
-    ] = "swiss-single"
+    template: ResumeTemplate = "swiss-single"
     pageSize: Literal["A4", "LETTER"] = "A4"
     marginTop: int = Field(10, ge=5, le=25)
     marginBottom: int = Field(10, ge=5, le=25)

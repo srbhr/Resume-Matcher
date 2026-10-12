@@ -54,6 +54,7 @@ from app.schemas import (
     ImproveResumeRequest,
     ImproveResumeResponse,
     InterviewPrepData,
+    PageFitSettings,
     RawResume,
     RefinementStats,
     ResumeData,
@@ -70,6 +71,7 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
+from app.schemas.models import ResumeTemplate
 from app.schemas.refinement import RefinementConfig
 from app.services.ats import compute_ats_score
 from app.services.bullet_selector import SELECTABLE_SECTIONS
@@ -91,7 +93,7 @@ from app.services.improver import (
     verify_skill_target_plan,
 )
 from app.services.interview_prep import generate_interview_prep
-from app.services.page_fit import page_limit, render_drafts
+from app.services.page_fit import page_limit, render_drafts, resume_print_url
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
     MAX_PDF_PREFLIGHT_PAGES,
@@ -2151,7 +2153,7 @@ async def update_resume_endpoint(
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
     resume_id: str,
-    template: str = Query("swiss-single"),
+    template: ResumeTemplate = Query("swiss-single"),
     pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
     marginTop: int = Query(10, ge=5, le=25),
     marginBottom: int = Query(10, ge=5, le=25),
@@ -2191,28 +2193,27 @@ async def download_resume_pdf(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    # Build print URL with all settings
-    params = (
-        f"template={template}"
-        f"&pageSize={pageSize}"
-        f"&marginTop={marginTop}"
-        f"&marginBottom={marginBottom}"
-        f"&marginLeft={marginLeft}"
-        f"&marginRight={marginRight}"
-        f"&sectionSpacing={sectionSpacing}"
-        f"&itemSpacing={itemSpacing}"
-        f"&lineHeight={lineHeight}"
-        f"&fontSize={fontSize}"
-        f"&headerScale={headerScale}"
-        f"&headerFont={headerFont}"
-        f"&bodyFont={bodyFont}"
-        f"&compactMode={str(compactMode).lower()}"
-        f"&showContactIcons={str(showContactIcons).lower()}"
-        f"&accentColor={accentColor}"
+    # Validated and URL-encoded the same way as the page-fit and ATS renders.
+    fit = PageFitSettings(
+        template=template,
+        pageSize=pageSize,
+        marginTop=marginTop,
+        marginBottom=marginBottom,
+        marginLeft=marginLeft,
+        marginRight=marginRight,
+        sectionSpacing=sectionSpacing,
+        itemSpacing=itemSpacing,
+        lineHeight=lineHeight,
+        fontSize=fontSize,
+        headerScale=headerScale,
+        headerFont=headerFont,
+        bodyFont=bodyFont,
+        compactMode=compactMode,
+        showContactIcons=showContactIcons,
+        accentColor=accentColor,
+        lang=lang,
     )
-    if lang:
-        params = f"{params}&lang={lang}"
-    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
+    url = resume_print_url(resume_id, fit)
 
     # Use the exact margins provided; compact mode only affects spacing.
     pdf_margins = {
