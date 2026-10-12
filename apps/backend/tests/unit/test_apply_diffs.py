@@ -978,7 +978,9 @@ class TestReplaceRequiresOriginal:
             ("additional.technicalSkills", "Python, Go"),
         ],
     )
-    def test_replace_without_original_is_rejected(self, sample_resume, path, value):
+    def test_replace_without_original_is_rejected(
+        self, sample_resume: dict[str, Any], path: str, value: str
+    ) -> None:
         change = ResumeChange(path=path, action="replace", value=value, reason="test")
         result, applied, rejected = apply_diffs(sample_resume, [change])
         assert applied == []

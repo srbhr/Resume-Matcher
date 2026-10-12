@@ -350,7 +350,9 @@ class TestSamplingControls:
 class TestExecutableResolution:
     """Windows only spawns .exe files by bare name; npm installs a .cmd shim."""
 
-    async def test_resolved_executable_is_spawned(self, monkeypatch):
+    async def test_resolved_executable_is_spawned(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         process = _FakeProcess(stdout=_envelope())
         spawn = _spawn(process)
         monkeypatch.setattr(
@@ -365,8 +367,8 @@ class TestExecutableResolution:
 
     @pytest.mark.parametrize("returncode", [0, 1])
     async def test_batch_shim_gets_the_prompt_from_a_file_it_cannot_reparse(
-        self, monkeypatch, returncode
-    ):
+        self, monkeypatch: pytest.MonkeyPatch, returncode: int
+    ) -> None:
         monkeypatch.setattr(
             "app.claude_cli.shutil.which", lambda _name: r"C:\npm\cli.CMD"
         )
@@ -400,7 +402,9 @@ class TestExecutableResolution:
         assert captured["content"] == f'{RAW_SYSTEM}\n\nUse 100% & "quotes".'
         assert not os.path.exists(str(captured["path"]))
 
-    async def test_prompt_file_is_removed_when_the_cli_is_missing(self, monkeypatch):
+    async def test_prompt_file_is_removed_when_the_cli_is_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setattr(
             "app.claude_cli.shutil.which", lambda _name: r"C:\npm\cli.cmd"
         )
