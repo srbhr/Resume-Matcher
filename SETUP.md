@@ -611,7 +611,7 @@ npm run start
 # Run linter
 npm run lint
 
-# Format code with Prettier
+# Format code with Oxfmt
 npm run format
 
 # Run on a different port
