@@ -32,7 +32,7 @@ from app.database import (
     ResumeNotFoundError,
     db,
 )
-from app.pdf import PDFRenderError, render_resume_pdf
+from app.pdf import PRINT_ERROR_SELECTOR, PDFRenderError, render_resume_pdf
 from app.preview import (
     PreviewBusyError,
     PreviewClaim,
@@ -99,6 +99,7 @@ from app.services.parser import (
     MAX_PDF_PREFLIGHT_PAGES,
     MAX_UNPACKED_DOCUMENT_BYTES,
     DocumentPageLimitError,
+    DocumentPasswordError,
     DocumentResourceLimitError,
     has_meaningful_resume_content,
     parse_document,
@@ -808,6 +809,17 @@ LEGACY_DOC_DETAIL = (
     "Legacy Word .doc files are not supported. Save the file as DOCX or PDF "
     "and upload it again."
 )
+UNPARSED_RESUME_PDF_DETAIL = (
+    "This resume has not been processed yet, so there is nothing to put in a PDF. "
+    "Retry processing it from the dashboard, then download again."
+)
+PASSWORD_PDF_DETAIL = (
+    "This PDF is password-protected. Remove the password (or print it to a new "
+    "PDF) and upload it again."
+)
+# Browsers report "" or application/octet-stream when the OS has no MIME
+# mapping for the extension (e.g. .docx on Windows without Office).
+UNKNOWN_CONTENT_TYPES = {None, "", "application/octet-stream"}
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
 UPLOAD_READ_CHUNK_SIZE = 64 * 1024
 MASTER_LIMIT_DETAIL = (
@@ -815,18 +827,33 @@ MASTER_LIMIT_DETAIL = (
 )
 
 
+def _has_renderable_resume_data(resume: dict[str, Any]) -> bool:
+    """Whether the print page can render this resume (mirrors its data lookup)."""
+    if resume.get("processed_data"):
+        return True
+    try:
+        # Builder saves store the structured resume as JSON in ``content``.
+        return isinstance(json.loads(resume.get("content") or ""), dict)
+    except ValueError:
+        return False
+
+
 def _validate_upload_type(file: UploadFile) -> None:
     """Require the declared MIME type to match a supported filename extension."""
     suffix = Path(file.filename or "").suffix.lower()
     if suffix == ".doc" or file.content_type == "application/msword":
         raise HTTPException(status_code=400, detail=LEGACY_DOC_DETAIL)
-    if file.content_type not in ALLOWED_TYPES:
+    content_type = file.content_type
+    if content_type in UNKNOWN_CONTENT_TYPES and suffix in DOCUMENT_TYPES_BY_EXTENSION:
+        # The container preflight still validates the bytes by this suffix.
+        content_type = DOCUMENT_TYPES_BY_EXTENSION[suffix]
+    if content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOCX",
+            detail=f"Invalid file type: {content_type}. Allowed: PDF, DOCX",
         )
 
-    if DOCUMENT_TYPES_BY_EXTENSION.get(suffix) != file.content_type:
+    if DOCUMENT_TYPES_BY_EXTENSION.get(suffix) != content_type:
         raise HTTPException(
             status_code=400,
             detail="Upload a valid PDF or DOCX file.",
@@ -1028,6 +1055,9 @@ async def upload_resume(
                 f"and extracted text is {MAX_EXTRACTED_TEXT_BYTES // (1024 * 1024)}MB."
             ),
         )
+    except DocumentPasswordError as e:
+        logger.info("Password-protected PDF refused: %s", file.filename)
+        raise HTTPException(status_code=422, detail=PASSWORD_PDF_DETAIL) from e
     except TimeoutError as e:
         logger.warning("Document conversion exceeded its deadline")
         raise HTTPException(
@@ -2192,6 +2222,10 @@ async def download_resume_pdf(
     resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
+    if not _has_renderable_resume_data(resume):
+        # The print page has nothing to render (the AI parse failed or has not
+        # run). Say so now instead of waiting out the render deadline.
+        raise HTTPException(status_code=409, detail=UNPARSED_RESUME_PDF_DETAIL)
 
     # Validated and URL-encoded the same way as the page-fit and ATS renders.
     fit = PageFitSettings(
@@ -2869,7 +2903,7 @@ async def download_cover_letter_pdf(
     # Render PDF with cover letter selector
     try:
         pdf_bytes = await render_resume_pdf(
-            url, pageSize, selector=".cover-letter-print"
+            url, pageSize, selector=f".cover-letter-print, {PRINT_ERROR_SELECTOR}"
         )
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))

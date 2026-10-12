@@ -21,7 +21,12 @@ from pdfminer.ascii85 import ascii85decode, asciihexdecode
 from pdfminer.ccitt import CCITTFaxDecoder
 from pdfminer.lzw import LZWDecoder
 from pdfminer.pdfdevice import PDFDevice
-from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfdocument import (
+    PDFDocument,
+    PDFEncryptionError,
+    PDFObjectNotFound,
+    PDFPasswordIncorrect,
+)
 from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
@@ -73,6 +78,10 @@ class DocumentValidationError(ValueError):
     """Raised when uploaded bytes are not a structurally valid document."""
 
 
+class DocumentPasswordError(DocumentValidationError):
+    """Raised when a PDF needs a password (or uses unsupported encryption)."""
+
+
 class DocumentResourceLimitError(ValueError):
     """Raised when a valid document exceeds a bounded processing budget."""
 
@@ -114,19 +123,30 @@ def _append_pdf_output(output: bytearray, chunk: bytes, limit: int) -> None:
 
 
 def _decode_flate_bounded(data: bytes, limit: int) -> bytes:
-    """Incrementally inflate a stream while enforcing its remaining budget."""
+    """Incrementally inflate a stream while enforcing its remaining budget.
+
+    Like pdfminer's own (non-strict) decoder, which does the real text
+    extraction, a truncated or corrupt stream yields the bytes decoded so far
+    instead of rejecting the whole document.
+    """
     decoder = zlib.decompressobj()
     output = bytearray()
-    for offset in range(0, len(data), DOCUMENT_IO_CHUNK_SIZE):
-        pending = data[offset : offset + DOCUMENT_IO_CHUNK_SIZE]
-        while pending:
-            max_output = min(DOCUMENT_IO_CHUNK_SIZE, limit - len(output) + 1)
-            chunk = decoder.decompress(pending, max_output)
-            _append_pdf_output(output, chunk, limit)
-            pending = decoder.unconsumed_tail
-    _append_pdf_output(output, decoder.flush(limit - len(output) + 1), limit)
-    if not decoder.eof:
-        raise ValueError("Truncated FlateDecode stream")
+    try:
+        for offset in range(0, len(data), DOCUMENT_IO_CHUNK_SIZE):
+            pending = data[offset : offset + DOCUMENT_IO_CHUNK_SIZE]
+            # Bytes after the end of the zlib data (often a newline counted in
+            # /Length) stay in unconsumed_tail forever once eof is reached, so
+            # stop there or this loop never ends.
+            while pending and not decoder.eof:
+                max_output = min(DOCUMENT_IO_CHUNK_SIZE, limit - len(output) + 1)
+                chunk = decoder.decompress(pending, max_output)
+                _append_pdf_output(output, chunk, limit)
+                pending = decoder.unconsumed_tail
+            if decoder.eof:
+                break
+        _append_pdf_output(output, decoder.flush(limit - len(output) + 1), limit)
+    except zlib.error:
+        logger.info("Corrupt FlateDecode stream; keeping %d decoded bytes", len(output))
     return bytes(output)
 
 
@@ -363,7 +383,13 @@ def _validate_pdf_container(source: Path | BinaryIO) -> None:
                     if object_id in seen:
                         continue
                     seen.add(object_id)
-                    value = document.getobj(object_id)
+                    try:
+                        value = document.getobj(object_id)
+                    except PDFObjectNotFound:
+                        # An xref entry for an object the file does not contain
+                        # (common after incremental saves). Text extraction never
+                        # reaches it, so it must not reject the document.
+                        continue
                     if isinstance(value, PDFStream):
                         # Text extraction never decodes image XObjects. Their
                         # optional codecs must not reject otherwise readable text.
@@ -371,6 +397,8 @@ def _validate_pdf_container(source: Path | BinaryIO) -> None:
                             value.get_data()
     except DocumentResourceLimitError:
         raise
+    except (PDFPasswordIncorrect, PDFEncryptionError) as exc:
+        raise DocumentPasswordError("The PDF is password-protected.") from exc
     except Exception as exc:
         raise DocumentValidationError(
             "The uploaded file is not a valid PDF, DOC, or DOCX document."
