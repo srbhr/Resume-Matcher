@@ -461,68 +461,55 @@ async def apply_enhancements(resume_id: str, request: ApplyEnhancementsRequest) 
 
     # Make a copy to modify
     updated_data = copy.deepcopy(processed_data)
+    sections = {"experience": "workExperience", "project": "personalProjects"}
+    prefixes = {"experience": "exp", "project": "proj"}
+    apply_failures: list[str] = []
 
-    # Apply each enhancement by ADDING new bullets to existing description
+    # Add new bullets only if every item has a valid ID and an existing target
+    # (all-or-nothing, like apply-regenerated). Entries are matched by position;
+    # stale content is not checked.
     for enhancement in request.enhancements:
         item_id = enhancement.item_id
-        item_type = enhancement.item_type
-        additional_bullets = (
-            enhancement.enhanced_description
-        )  # These are NEW bullets to add
+        item_type = enhancement.item_type.strip().lower()
+        section = sections.get(item_type)
+        match = (
+            re.fullmatch(rf"{prefixes[item_type]}_(\d+)", item_id) if section else None
+        )
+        entries = updated_data.get(section) if section else None
+        if match is None or not isinstance(entries, list):
+            apply_failures.append(item_id)
+            continue
+        index = int(match.group(1))
+        if index >= len(entries) or not isinstance(entries[index], dict):
+            apply_failures.append(item_id)
+            continue
+        entry = entries[index]
+        # These are NEW bullets to add to the existing description
+        additional_bullets = enhancement.enhanced_description
+        existing_desc = entry.get("description", [])
+        if isinstance(existing_desc, list):
+            entry["description"] = existing_desc + additional_bullets
+        else:
+            # Handle edge case where description might be a string
+            entry["description"] = (
+                [existing_desc] + additional_bullets
+                if existing_desc
+                else additional_bullets
+            )
 
-        if item_type == "experience":
-            # Parse item_id like "exp_0" to get index
-            try:
-                index = int(item_id.split("_")[1])
-                if "workExperience" in updated_data and index < len(
-                    updated_data["workExperience"]
-                ):
-                    # Get existing description and ADD new bullets
-                    existing_desc = updated_data["workExperience"][index].get(
-                        "description", []
-                    )
-                    if isinstance(existing_desc, list):
-                        updated_data["workExperience"][index]["description"] = (
-                            existing_desc + additional_bullets
-                        )
-                    else:
-                        # Handle edge case where description might be a string
-                        updated_data["workExperience"][index]["description"] = (
-                            [existing_desc] + additional_bullets
-                            if existing_desc
-                            else additional_bullets
-                        )
-            except (ValueError, IndexError) as e:
-                logger.warning(
-                    f"Could not apply experience enhancement for {item_id}: {e}"
-                )
-
-        elif item_type == "project":
-            # Parse item_id like "proj_0" to get index
-            try:
-                index = int(item_id.split("_")[1])
-                if "personalProjects" in updated_data and index < len(
-                    updated_data["personalProjects"]
-                ):
-                    # Get existing description and ADD new bullets
-                    existing_desc = updated_data["personalProjects"][index].get(
-                        "description", []
-                    )
-                    if isinstance(existing_desc, list):
-                        updated_data["personalProjects"][index]["description"] = (
-                            existing_desc + additional_bullets
-                        )
-                    else:
-                        # Handle edge case where description might be a string
-                        updated_data["personalProjects"][index]["description"] = (
-                            [existing_desc] + additional_bullets
-                            if existing_desc
-                            else additional_bullets
-                        )
-            except (ValueError, IndexError) as e:
-                logger.warning(
-                    f"Could not apply project enhancement for {item_id}: {e}"
-                )
+    if apply_failures:
+        logger.warning(
+            "apply: refusing to apply due to missing items. resume_id=%s item_ids=%s",
+            resume_id,
+            apply_failures,
+        )
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Resume content changed or could not be matched. "
+                "Please analyze the resume again."
+            ),
+        )
 
     # Update the resume in database
     updated_content = json.dumps(updated_data, indent=2)

@@ -22,6 +22,8 @@ import {
   deleteApiKey,
   llmProviderToKeyProvider,
   API_KEY_PROVIDER_INFO,
+  API_KEY_REQUIRED_FOR_ENDPOINT,
+  LlmConfigError,
   type LLMConfigUpdate,
   type LLMProvider,
   type LLMHealthCheck,
@@ -501,6 +503,10 @@ export default function SettingsPage() {
         // and the gpt-5 auto-migration won't re-fire.
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
+      // Not persisted: proves the key may follow a changed Base URL.
+      if (trimmedKey) {
+        update.api_key = trimmedKey;
+      }
       await updateLlmConfig(update);
 
       // Refresh the per-provider key status + cached system status after save.
@@ -515,7 +521,11 @@ export default function SettingsPage() {
       setTimeout(() => setStatus('idle'), 2000);
     } catch (err) {
       console.error('Failed to save config', err);
-      setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
+      if (err instanceof LlmConfigError && err.code === API_KEY_REQUIRED_FOR_ENDPOINT) {
+        setError(t('settings.errors.apiKeyRequiredForEndpoint'));
+      } else {
+        setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
+      }
       setStatus('error');
     }
   };

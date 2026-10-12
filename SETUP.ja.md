@@ -520,7 +520,7 @@ npm run start
 # Lint
 npm run lint
 
-# Prettier で整形
+# Oxfmt で整形
 npm run format
 
 # 別ポートで起動

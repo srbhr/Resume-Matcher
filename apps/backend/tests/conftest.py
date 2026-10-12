@@ -109,9 +109,32 @@ def deny_external_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
             "External network access blocked in deterministic backend tests"
         )
 
+    real_connect = socket.socket.connect
+    real_socketpair = socket.socketpair
+    pairing = False
+
+    def guarded_connect(sock: socket.socket, address: Any) -> None:
+        # Only the in-process socketpair() below may connect.
+        if pairing:
+            real_connect(sock, address)
+            return
+        blocked_connection()
+
+    def guarded_socketpair(*args: Any, **kwargs: Any) -> tuple[Any, Any]:
+        # Windows emulates socketpair() with a loopback connect(), and every
+        # asyncio event loop builds its self-pipe from it.
+        nonlocal pairing
+        pairing = True
+        try:
+            return real_socketpair(*args, **kwargs)
+        finally:
+            pairing = False
+
     monkeypatch.setattr(socket, "create_connection", blocked_connection)
-    monkeypatch.setattr(socket.socket, "connect", blocked_connection)
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", blocked_connection)
+    if sys.platform == "win32":
+        monkeypatch.setattr(socket, "socketpair", guarded_socketpair)
     yield
 
 

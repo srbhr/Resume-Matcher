@@ -10,6 +10,8 @@ crashing — the user is prompted to re-enter, and stored ciphertext is never
 recoverable without the original secret.
 """
 
+import hashlib
+import hmac
 import logging
 import os
 import tempfile
@@ -22,6 +24,7 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 _fernet: Fernet | None = None
+_secret: bytes | None = None
 _loaded_from: Path | None = None
 
 
@@ -67,7 +70,7 @@ def _write_secret(path: Path, key: bytes, *, exclusive: bool = False) -> None:
 
 def _load_fernet() -> Fernet:
     """Load (or generate) the Fernet instance, cached per secret path."""
-    global _fernet, _loaded_from
+    global _fernet, _secret, _loaded_from
     path = _secret_path()
     if _fernet is not None and _loaded_from == path:
         return _fernet
@@ -100,14 +103,16 @@ def _load_fernet() -> Fernet:
         key = Fernet.generate_key()
         _write_secret(path, key)
         _fernet = Fernet(key)
+    _secret = key
     _loaded_from = path
     return _fernet
 
 
 def reset_cache() -> None:
     """Drop the cached Fernet (used by tests that point data_dir elsewhere)."""
-    global _fernet, _loaded_from
+    global _fernet, _secret, _loaded_from
     _fernet = None
+    _secret = None
     _loaded_from = None
 
 
@@ -129,3 +134,15 @@ def decrypt(ciphertext: str) -> str:
             "Failed to decrypt a stored API key (secret rotated/lost?): %s", e
         )
         return ""
+
+
+def keyed_digest(value: str) -> str:
+    """HMAC-SHA256 of ``value`` keyed by the at-rest secret, as hex.
+
+    Safe to store next to non-secret config: without the secret it reveals
+    nothing about ``value``, yet equal inputs always give the same digest.
+    """
+    _load_fernet()
+    assert _secret is not None
+    signing_key = hashlib.sha256(b"resume-matcher:keyed-digest:" + _secret).digest()
+    return hmac.new(signing_key, value.encode("utf-8"), hashlib.sha256).hexdigest()

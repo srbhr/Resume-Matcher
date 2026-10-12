@@ -589,6 +589,12 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
             "Command shown for reference; quote the path if it contains spaces: "
             f"{command}"
         ) from error
+    if "Host system is missing dependencies" in error_msg:
+        logger.error("Chromium system dependencies are missing: %s", error_msg)
+        raise PDFRenderError(
+            "Chromium cannot start because system libraries are missing. Run "
+            "`playwright install-deps chromium` (Linux, may need sudo), then retry."
+        ) from error
     if "net::ERR_CONNECTION_REFUSED" in error_msg:
         raise PDFRenderError(
             f"Cannot connect to frontend for PDF generation. "
@@ -857,7 +863,7 @@ async def _render_on_shared_browser(
 async def render_resume_pdf(
     url: str,
     page_size: str = "A4",
-    selector: str = ".resume-print",
+    selector: str = f".resume-print, {PRINT_ERROR_SELECTOR}",
     margins: Optional[dict] = None,
 ) -> bytes:
     """Render a URL to PDF bytes.
@@ -865,7 +871,8 @@ async def render_resume_pdf(
     Args:
         url: The URL to render (print route)
         page_size: Page size format - "A4" or "LETTER"
-        selector: CSS selector to wait for before rendering (default: ".resume-print")
+        selector: CSS selector to wait for before rendering. Include
+            PRINT_ERROR_SELECTOR so a page that cannot load its data fails fast.
         margins: Page margins dict with top/right/bottom/left in mm (applied to every page)
 
     Note:

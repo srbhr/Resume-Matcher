@@ -28,7 +28,7 @@ Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for 
 1. **All frontend UI changes** MUST follow [Swiss International Style](../docs/portable/swiss-design-system/README.md) — see [tokens](../docs/portable/swiss-design-system/tokens.md), [components](../docs/portable/swiss-design-system/components.md), [anti-patterns](../docs/portable/swiss-design-system/anti-patterns.md)
 2. **All Python functions** MUST have type hints
 3. **Run `npm run lint`** before committing frontend changes
-4. **Run `npm run format`** (Prettier) before committing
+4. **Run `npm run format`** (Oxfmt) before committing
 5. **Log detailed errors server-side**, return generic messages to clients
 6. **Do NOT modify** `.github/workflows/` files without explicit request
 
@@ -51,7 +51,7 @@ npm run test                                         # Run frontend tests (vites
 
 # Quality checks (from apps/frontend)
 npm run lint          # Lint frontend
-npm run format        # Format with Prettier
+npm run format        # Format with Oxfmt
 
 # Build (from apps/frontend)
 npm run build

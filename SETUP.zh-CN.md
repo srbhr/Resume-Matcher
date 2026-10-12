@@ -520,7 +520,7 @@ npm run start
 # 运行 linter
 npm run lint
 
-# 使用 Prettier 格式化
+# 使用 Oxfmt 格式化
 npm run format
 
 # 指定其他端口运行

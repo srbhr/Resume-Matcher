@@ -80,7 +80,7 @@ tests/               # vitest (see Testing)
 All backend calls go through **`lib/api/`** — never call `fetch` to the backend directly from a component.
 
 - `lib/api/client.ts` — single source of truth. Exports `apiFetch / apiPost / apiPatch / apiPut / apiDelete`, `API_URL`, `API_BASE`, `getUploadUrl()`.
-  - Base URL: `NEXT_PUBLIC_API_URL` (default `'/'`) → `API_BASE` becomes `/api/v1`. On the **server** a `/`-relative base is rewritten to `http://127.0.0.1:8000/api/v1` (`INTERNAL_API_ORIGIN`); browser uses the relative path (proxied by `next.config.ts` rewrites to `BACKEND_ORIGIN`).
+  - Base URL: `NEXT_PUBLIC_API_URL` (default `'/'`) → `API_BASE` becomes `/api/v1`. On the **server** a `/`-relative base is rewritten to `${BACKEND_ORIGIN}/api/v1` (`INTERNAL_API_ORIGIN`, default `http://127.0.0.1:8000`, the same origin the proxy uses); browser uses the relative path (proxied by `next.config.ts` rewrites to `BACKEND_ORIGIN`).
   - Default request timeout **240_000ms** (matches backend `wait_for` hard limit). `AbortError` → friendly "Request timed out" message.
 - `lib/api/resume.ts` — resumes/jobs: upload, improve / improve.preview / improve.confirm, fetch, list, update (PATCH), PDF URLs + blob download, delete, cover-letter / outreach generate+update, rename, retry-processing, fetch JD.
 - `lib/api/config.ts` — LLM config, `testLlmConnection`, system `/status`, feature flags, prompt config, **feature prompts** (`FeaturePromptsError` for 422 `missing_placeholders`), **per-provider API-key management** (each provider's key persists independently — switching the active provider no longer wipes another's; stored encrypted server-side), language config, `resetDatabase`. `PROVIDER_INFO` lists supported providers + default models.
@@ -176,9 +176,9 @@ npm install
 npm run dev       # next dev --turbopack (:3000)
 npm run build     # next build  (runs tsc — i18n shape drift fails HERE)
 npm run start
-npm run lint      # oxlint + prettier --check (JS/TS files)
+npm run lint      # oxlint + oxfmt --check (JS/TS files)
 npm run typecheck # tsc --noEmit
-npm run format    # prettier --write .
+npm run format    # oxfmt (writes all supported files)
 npm run test      # vitest run (includes the Swiss guard and contrast tests)
 npm run guard     # Swiss drift report; `npm run guard -- <path>` to filter
 npm run guard:update  # lower the guard allowlist (refuses increases)
@@ -213,7 +213,7 @@ Backend must run separately on :8000 (see root CLAUDE.md). Frontend proxies `/ap
 - **`print/*` pages are server components** that read template settings from `searchParams` and call the backend via internal origin — keep them server-side.
 - Two i18n locations exist: `i18n/` (config) and `lib/i18n/` (engine). Don't confuse them.
 - **`motion/react` is aliased to `framer-motion` for Turbopack** (`turbopack.resolveAlias` in `next.config.ts`). Without it `import { m } from 'motion/react'` pulls in most of framer-motion and defeats `LazyMotion`'s lazy chunk (about +43 KB gzip per product route). Keep the alias, and keep `framer-motion` and `motion` pinned together. Details and the budget (250 KB per route, currently exceeded; the bundle pass is a separate sub-project) are in [first-load-js.md](../../docs/agent/architecture/first-load-js.md).
-- **Linting is Oxlint** (`.oxlintrc.json`, migrated from the old `eslint-config-next` setup: Next.js core-web-vitals, React/React Compiler hooks rules, jsx-a11y subset, TypeScript recommended). Only listed rules run (`correctness` category off). `react/set-state-in-effect` stays off (existing effects sync props/DOM measurements). Formatting is enforced by the `prettier --check` half of `npm run lint`. Oxlint honours `eslint-disable` comments; new ones use `oxlint-disable-next-line <rule> -- <reason>` (three intentional `new Date()` render reads carry `react/purity` disables).
+- **Linting is Oxlint** (`.oxlintrc.json`, migrated from the old `eslint-config-next` setup: Next.js core-web-vitals, React/React Compiler hooks rules, jsx-a11y subset, TypeScript recommended). Only listed rules run (`correctness` category off). `react/set-state-in-effect` stays off (existing effects sync props/DOM measurements). Formatting is Oxfmt (`.oxfmtrc.json`, migrated from Prettier with the same options except `endOfLine`, now `lf`; import and Tailwind class sorting off) and is enforced by the `oxfmt --check` half of `npm run lint`. Oxlint honours `eslint-disable` comments; new ones use `oxlint-disable-next-line <rule> -- <reason>` (three intentional `new Date()` render reads carry `react/purity` disables).
 
 ---
 

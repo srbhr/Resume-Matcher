@@ -105,11 +105,29 @@ export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfi
     } else {
       message = `Failed to update LLM config (status ${res.status}).`;
     }
-    throw new Error(message);
+    const code =
+      data.detail && typeof data.detail === 'object' && 'code' in data.detail
+        ? String((data.detail as { code: unknown }).code)
+        : undefined;
+    throw new LlmConfigError(message, code);
   }
 
   return res.json();
 }
+
+/** Raised by updateLlmConfig; `code` is the server's structured error code, if any. */
+export class LlmConfigError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'LlmConfigError';
+    this.code = code;
+  }
+}
+
+/** The server refuses to move a saved key to a new endpoint unless the key is sent too. */
+export const API_KEY_REQUIRED_FOR_ENDPOINT = 'api_key_required_for_endpoint';
 
 // Legacy function for backwards compatibility
 export async function updateLlmApiKey(value: string): Promise<string> {

@@ -1,12 +1,13 @@
 """LiteLLM wrapper for multi-provider AI support."""
 
+import hmac
 import json
 import logging
 import re
 import threading
 from collections.abc import Callable
 from typing import Any, Literal
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 import litellm
 from litellm import Router
@@ -25,6 +26,7 @@ from app.config import (
     save_config_file,
     settings,
 )
+from app.crypto import keyed_digest
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -109,6 +111,9 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
     api_version: str | None = None
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
+    # False when the resolved key was withheld from the saved Base URL (see
+    # saved_endpoint_accepts_key); no request is made with such a config.
+    endpoint_confirmed: bool = True
 
     @field_validator("provider", mode="before")
     @classmethod
@@ -444,6 +449,11 @@ async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -
     rejects it. When the 400 says exactly that, retry once with
     ``max_completion_tokens``; every other error propagates unchanged.
     """
+    if not config.endpoint_confirmed:
+        raise ValueError(
+            "The API key is not confirmed for the saved Base URL. "
+            "Re-enter the key in Settings."
+        )
     if config.provider == "claude_cli":
         return await claude_acompletion(**kwargs)
     if config.provider == "chatgpt":
@@ -782,6 +792,66 @@ def resolve_api_key(stored: dict, provider: str) -> str:
     return api_key
 
 
+#: config.json field that binds the saved custom ``api_base`` to the key
+#: confirmed for it (a keyed digest, never the key itself).
+API_BASE_KEY_BINDING = "api_base_key_binding"
+#: Error code for a key that has not been confirmed for the endpoint it would reach.
+API_KEY_REQUIRED_FOR_ENDPOINT = "api_key_required_for_endpoint"
+
+
+def normalize_endpoint(api_base: str | None) -> str:
+    """Compare-ready form of a Base URL: scheme and host lowercased only.
+
+    Paths and queries are case-sensitive (a shared proxy can route
+    ``/TeamA/v1`` and ``/teama/v1`` to different users), so they are kept as
+    written; otherwise a saved key could follow a case-only path change.
+    """
+    raw = (api_base or "").strip().rstrip("/")
+    try:
+        parts = urlsplit(raw)
+        host = parts.hostname
+        port = parts.port
+    except ValueError:
+        return raw
+    if not parts.scheme or host is None:
+        return raw
+    if ":" in host:
+        host = f"[{host}]"
+    userinfo = parts.netloc.rpartition("@")[0]
+    netloc = f"{userinfo}@{host}" if userinfo else host
+    if port is not None:
+        netloc = f"{netloc}:{port}"
+    return urlunsplit(
+        (parts.scheme.lower(), netloc, parts.path, parts.query, parts.fragment)
+    )
+
+
+def api_base_key_binding(provider: str, api_base: str | None, api_key: str) -> str:
+    """Digest tying ``api_key`` to ``provider`` at ``api_base``, for config.json."""
+    return keyed_digest("\0".join((provider, normalize_endpoint(api_base), api_key)))
+
+
+def saved_endpoint_accepts_key(
+    stored: dict, provider: str, api_base: str | None, api_key: str
+) -> bool:
+    """Whether ``api_key`` may be sent to ``api_base`` when that is the saved custom base.
+
+    The API is unauthenticated, so a custom base saved through it is bound to
+    the key confirmed for it (PUT /config/llm-api-key). A different key
+    resolving later, such as ``LLM_API_KEY`` after the saved key is deleted, is
+    withheld instead of being sent to a server the caller may control. The
+    provider's own endpoint and the operator's ``LLM_API_BASE`` are not saved
+    bases and are not bound; a base saved before bindings existed is trusted.
+    """
+    base = normalize_endpoint(api_base)
+    if not api_key or not base or base != normalize_endpoint(stored.get("api_base")):
+        return True
+    binding = stored.get(API_BASE_KEY_BINDING)
+    if not isinstance(binding, str):
+        return True
+    return hmac.compare_digest(binding, api_base_key_binding(provider, base, api_key))
+
+
 def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
@@ -819,6 +889,15 @@ def get_llm_config() -> LLMConfig:
             logging.warning("Failed to persist gpt-5 migration: %s", e)
 
     api_key = resolve_api_key(stored, provider)
+    api_base = stored.get("api_base") or settings.llm_api_base or None
+    endpoint_confirmed = saved_endpoint_accepts_key(stored, provider, api_base, api_key)
+    if not endpoint_confirmed:
+        logging.warning(
+            "Withholding the %s API key: it is not the key confirmed for the "
+            "saved Base URL",
+            provider,
+        )
+        api_key = ""
 
     raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
     # Normalize empty string to None — user explicitly cleared.
@@ -828,9 +907,10 @@ def get_llm_config() -> LLMConfig:
         provider=provider,
         model=model,
         api_key=api_key,
-        api_base=stored.get("api_base") or settings.llm_api_base or None,
+        api_base=api_base,
         api_version=stored.get("api_version"),
         reasoning_effort=reasoning_effort,
+        endpoint_confirmed=endpoint_confirmed,
     )
 
 
@@ -1043,6 +1123,14 @@ async def check_llm_health(
     """Check if the LLM provider is accessible and working."""
     if config is None:
         config = get_llm_config()
+
+    if not config.endpoint_confirmed:
+        return {
+            "healthy": False,
+            "provider": config.provider,
+            "model": config.model,
+            "error_code": API_KEY_REQUIRED_FOR_ENDPOINT,
+        }
 
     # Check if API key is configured. Ollama and openai_compatible local
     # servers often run without auth, so a blank key is acceptable for those

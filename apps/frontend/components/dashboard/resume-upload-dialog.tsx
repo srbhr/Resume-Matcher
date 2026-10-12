@@ -33,7 +33,11 @@ interface ResumeUploadDialogProps {
 const ACCEPTED_FILE_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  'application/msword', // .doc
+  // By extension too: browsers report no MIME type when the OS has no mapping
+  // (e.g. .docx on Windows without Office).
+  '.pdf',
+  '.docx',
+  // Legacy .doc is not accepted: the server cannot convert it.
 ];
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 

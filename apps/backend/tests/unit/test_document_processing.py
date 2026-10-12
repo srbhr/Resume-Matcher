@@ -437,11 +437,15 @@ def test_pdf_fax_rejects_huge_bitmap_width_before_decoder_allocation() -> None:
         decoder.assert_not_called()
 
 
-def test_truncated_flate_stream_is_rejected() -> None:
+def test_truncated_flate_stream_keeps_its_decoded_prefix() -> None:
+    # Matches pdfminer's text extraction, which reads real resumes whose streams
+    # are cut short. Broken containers are still rejected by the PDF structure
+    # checks (see the malformed-upload tests).
     from app.services.parser import _decode_flate_bounded
 
-    with pytest.raises(ValueError, match="Truncated"):
-        _decode_flate_bounded(zlib.compress(b"resume text")[:-2], 1024)
+    assert _decode_flate_bounded(zlib.compress(b"resume text")[:-2], 1024) == (
+        b"resume text"
+    )
 
 
 def test_lzw_stream_decodes_incrementally_with_limit() -> None:
