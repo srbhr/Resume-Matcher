@@ -15,6 +15,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    // The first test in a builder spec pays the cold import of resume-builder,
+    // which takes about 5s on slower machines (Windows); the 5s default then
+    // times it out and the rest of the file fails after it.
+    testTimeout: 30_000,
     execArgv: process.allowedNodeEnvironmentFlags.has(WEBSTORAGE_FLAG) ? [WEBSTORAGE_FLAG] : [],
   },
   resolve: {
