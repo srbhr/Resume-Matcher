@@ -1,6 +1,8 @@
 """LLM configuration endpoints."""
 
+import copy
 import logging
+import secrets
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -61,6 +63,39 @@ def _effective_api_base(stored: dict) -> str | None:
     """
     return stored.get("api_base") or settings.llm_api_base or None
 
+
+API_KEY_REQUIRED_FOR_ENDPOINT = "api_key_required_for_endpoint"
+
+
+def _normalized_base(api_base: str | None) -> str:
+    return (api_base or "").strip().rstrip("/").lower()
+
+
+def _moves_key_to_new_endpoint(
+    stored: dict,
+    provider: str,
+    api_base: str | None,
+) -> bool:
+    """Whether ``provider``'s key would be sent to a custom endpoint not saved for it.
+
+    A blank base is the provider's own endpoint. A custom base is trusted only
+    when it is already the saved base of the saved provider, so an
+    unauthenticated caller cannot point a stored key at a server it controls.
+    """
+    if not _normalized_base(api_base):
+        return False
+    return provider != stored.get(
+        "provider", settings.llm_provider
+    ) or _normalized_base(api_base) != _normalized_base(_effective_api_base(stored))
+
+
+def _proves_key(request_key: str | None, stored_key: str) -> bool:
+    return bool(request_key) and secrets.compare_digest(
+        request_key.encode("utf-8"), stored_key.encode("utf-8")
+    )
+
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
 
@@ -142,6 +177,7 @@ async def update_llm_config(
     `/config/llm-test` and the System Status panel.
     """
     stored = _load_config()
+    previous = copy.deepcopy(stored)
 
     # Update only provided fields
     if request.provider is not None:
@@ -151,8 +187,9 @@ async def update_llm_config(
     # NOTE: API keys are NOT written here anymore. They live in the encrypted
     # per-provider store (PUT /config/api-keys). Writing the legacy single
     # ``api_key`` slot here is what caused providers to overwrite each other and
-    # shadow the per-provider map in resolve_api_key. request.api_key is ignored
-    # for persistence (kept in the schema only for response masking/back-compat).
+    # shadow the per-provider map in resolve_api_key. request.api_key is never
+    # persisted; it only proves the caller knows a key that would move to a new
+    # endpoint (see below).
     # api_base: distinguish "omitted" (leave unchanged) from "present but
     # blank/null" (explicit clear). The frontend sends api_base: null/"" when
     # the Base URL field is cleared; treating that as "don't change" left a
@@ -187,12 +224,34 @@ async def update_llm_config(
                 "missing": ["api_base"],
             },
         )
+    # The API is unauthenticated: pointing a saved key at a new custom endpoint
+    # requires that key, or anyone who can reach this server could redirect it.
+    resolved_key = resolve_api_key(stored, resolved_provider)
+    if (
+        resolved_key
+        and _moves_key_to_new_endpoint(
+            previous, resolved_provider, _effective_api_base(stored)
+        )
+        and not _proves_key(request.api_key, resolved_key)
+    ):
+        logger.warning(
+            "Refused to move the %s API key to a new endpoint without the key",
+            resolved_provider,
+        )
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": API_KEY_REQUIRED_FOR_ENDPOINT,
+                "field": "api_key",
+                "missing": ["api_key"],
+            },
+        )
     raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
     resolved_reasoning_effort = raw_re if raw_re else None
     test_config = LLMConfig(
         provider=resolved_provider,
         model=stored.get("model", settings.llm_model),
-        api_key=resolve_api_key(stored, resolved_provider),
+        api_key=resolved_key,
         api_base=_effective_api_base(stored),
         reasoning_effort=resolved_reasoning_effort,
     )
@@ -227,23 +286,35 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
         if request and request.provider
         else stored.get("provider", settings.llm_provider)
     )
+    test_model = (
+        request.model
+        if request and request.model
+        else stored.get("model", settings.llm_model)
+    )
+    test_api_base = (
+        request.api_base
+        if request and request.api_base is not None
+        else _effective_api_base(stored)
+    )
+    if request and request.api_key:
+        test_api_key = request.api_key
+    else:
+        test_api_key = resolve_api_key(stored, test_provider)
+        # A saved key is only tested against the endpoint it is saved for.
+        if test_api_key and _moves_key_to_new_endpoint(
+            stored, test_provider, test_api_base
+        ):
+            return {
+                "healthy": False,
+                "provider": test_provider,
+                "model": test_model,
+                "error_code": API_KEY_REQUIRED_FOR_ENDPOINT,
+            }
     config = LLMConfig(
         provider=test_provider,
-        model=(
-            request.model
-            if request and request.model
-            else stored.get("model", settings.llm_model)
-        ),
-        api_key=(
-            request.api_key
-            if request and request.api_key
-            else resolve_api_key(stored, test_provider)
-        ),
-        api_base=(
-            request.api_base
-            if request and request.api_base is not None
-            else _effective_api_base(stored)
-        ),
+        model=test_model,
+        api_key=test_api_key,
+        api_base=test_api_base,
         reasoning_effort=(
             (request.reasoning_effort or None)
             if request and request.reasoning_effort is not None

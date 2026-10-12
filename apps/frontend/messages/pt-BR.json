@@ -981,7 +981,8 @@
         "claude_cli_not_found": "CLI do Claude Code não encontrada. Instale o Claude Code e execute `claude auth login`.",
         "chatgpt_not_connected": "Você não entrou com o ChatGPT. Selecione Plano ChatGPT em Configurações e continue com o ChatGPT.",
         "chatgpt_usage_limit": "O limite de uso do seu plano do ChatGPT para este app foi atingido. Confira em Uso, nas configurações do ChatGPT.",
-        "chatgpt_not_eligible": "O uso do plano do ChatGPT não está disponível para esta conta. É preciso ter ChatGPT Plus ou Pro; caso contrário, use uma chave de API da OpenAI."
+        "chatgpt_not_eligible": "O uso do plano do ChatGPT não está disponível para esta conta. É preciso ter ChatGPT Plus ou Pro; caso contrário, use uma chave de API da OpenAI.",
+        "api_key_required_for_endpoint": "Esta chave de API está salva para outro endpoint. Digite a chave para testá-la com esta URL base."
       },
       "healthWarnings": {
         "empty_content": "O LLM retornou conteúdo vazio na verificação de integridade."
@@ -1048,7 +1049,8 @@
       "unknownProvider": "Provedor desconhecido retornado do backend: {provider}",
       "unableToSaveConfiguration": "Não foi possível salvar a configuração",
       "failedToClearApiKeys": "Falha ao limpar chaves de API. Por favor, tente novamente.",
-      "failedToResetDatabase": "Falha ao redefinir banco de dados. Por favor, tente novamente."
+      "failedToResetDatabase": "Falha ao redefinir banco de dados. Por favor, tente novamente.",
+      "apiKeyRequiredForEndpoint": "Digite a chave de API novamente para usá-la com esta URL base ou provedor."
     },
     "apiKeys": {
       "savedTitle": "Chaves de API salvas",

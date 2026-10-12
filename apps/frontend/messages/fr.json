@@ -981,7 +981,8 @@
         "claude_cli_not_found": "CLI Claude Code introuvable. Installez Claude Code et exécutez `claude auth login`.",
         "chatgpt_not_connected": "Non connecté à ChatGPT. Sélectionnez Forfait ChatGPT dans les paramètres, puis continuez avec ChatGPT.",
         "chatgpt_usage_limit": "La limite d'utilisation de votre forfait ChatGPT pour cette application est atteinte. Consultez-la dans les paramètres de ChatGPT, sous Utilisation.",
-        "chatgpt_not_eligible": "L'utilisation du forfait ChatGPT n'est pas disponible pour ce compte. Elle nécessite ChatGPT Plus ou Pro ; sinon, utilisez une clé API OpenAI."
+        "chatgpt_not_eligible": "L'utilisation du forfait ChatGPT n'est pas disponible pour ce compte. Elle nécessite ChatGPT Plus ou Pro ; sinon, utilisez une clé API OpenAI.",
+        "api_key_required_for_endpoint": "Cette clé API est enregistrée pour un autre point de terminaison. Saisissez la clé pour la tester avec cette URL de base."
       },
       "healthWarnings": {
         "empty_content": "Le LLM a retourné un contenu vide lors de la vérification de l'état."
@@ -1048,7 +1049,8 @@
       "unknownProvider": "Fournisseur inconnu retourné par le backend : {provider}",
       "unableToSaveConfiguration": "Impossible d'enregistrer la configuration",
       "failedToClearApiKeys": "Impossible d'effacer les clés API. Veuillez réessayer.",
-      "failedToResetDatabase": "Impossible de réinitialiser la base de données. Veuillez réessayer."
+      "failedToResetDatabase": "Impossible de réinitialiser la base de données. Veuillez réessayer.",
+      "apiKeyRequiredForEndpoint": "Saisissez à nouveau la clé API pour l'utiliser avec cette URL de base ou ce fournisseur."
     },
     "apiKeys": {
       "savedTitle": "Clés API enregistrées",
