@@ -114,7 +114,7 @@
       "parsingFailed": "简历已上传但AI解析失败。您仍可手动定制。",
       "failed": "上传失败。",
       "dropzoneTitle": "点击或拖拽文件",
-      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
+      "dropzoneSubtitle": "PDF、DOCX（最大 4MB）",
       "tryDifferentFile": "尝试其他文件",
       "parsingFailedKeepOpen": "AI 解析失败。请尝试其他文件，或关闭此对话框。"
     },
@@ -1279,7 +1279,7 @@
       "upload": {
         "kicker": "现有文件",
         "title": "上传简历",
-        "description": "从 PDF、DOC 或 DOCX 文件开始，让 Resume Matcher 将其解析为你的主档案。",
+        "description": "从 PDF 或 DOCX 文件开始，让 Resume Matcher 将其解析为你的主档案。",
         "action": "上传简历"
       },
       "wizard": {

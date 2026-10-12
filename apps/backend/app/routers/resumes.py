@@ -792,16 +792,20 @@ async def _generate_auxiliary_messages(
 
 router = APIRouter(route_class=AIOperationRoute, prefix="/resumes", tags=["Resumes"])
 
+# Legacy binary .doc is not listed: the document converter cannot read it, so
+# it is refused here with a clear message instead of failing after upload.
 ALLOWED_TYPES = {
     "application/pdf",
-    "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 DOCUMENT_TYPES_BY_EXTENSION = {
     ".pdf": "application/pdf",
-    ".doc": "application/msword",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+LEGACY_DOC_DETAIL = (
+    "Legacy Word .doc files are not supported. Save the file as DOCX or PDF "
+    "and upload it again."
+)
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
 UPLOAD_READ_CHUNK_SIZE = 64 * 1024
 MASTER_LIMIT_DETAIL = (
@@ -811,17 +815,19 @@ MASTER_LIMIT_DETAIL = (
 
 def _validate_upload_type(file: UploadFile) -> None:
     """Require the declared MIME type to match a supported filename extension."""
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix == ".doc" or file.content_type == "application/msword":
+        raise HTTPException(status_code=400, detail=LEGACY_DOC_DETAIL)
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOC, DOCX",
+            detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOCX",
         )
 
-    suffix = Path(file.filename or "").suffix.lower()
     if DOCUMENT_TYPES_BY_EXTENSION.get(suffix) != file.content_type:
         raise HTTPException(
             status_code=400,
-            detail="Upload a valid PDF, DOC, or DOCX file.",
+            detail="Upload a valid PDF or DOCX file.",
         )
 
 
@@ -1032,7 +1038,7 @@ async def upload_resume(
         logger.exception("Document parsing failed")
         raise HTTPException(
             status_code=422,
-            detail="Failed to parse document. Please upload a valid PDF, DOC, or DOCX file.",
+            detail="Failed to parse document. Please upload a valid PDF or DOCX file.",
         )
 
     # Validate extracted text is not empty (image-based PDFs / scanned documents)
@@ -1041,7 +1047,7 @@ async def upload_resume(
             status_code=422,
             detail=(
                 "Could not extract text from the uploaded file. The document may be "
-                "image-based or scanned. Please upload a text-based PDF, DOC, or DOCX "
+                "image-based or scanned. Please upload a text-based PDF or DOCX "
                 "with selectable text, or run OCR first."
             ),
         )

@@ -114,7 +114,7 @@
       "parsingFailed": "Resume uploaded but AI parsing failed. You can still tailor it manually.",
       "failed": "Upload failed.",
       "dropzoneTitle": "Click or Drag File",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)",
+      "dropzoneSubtitle": "PDF, DOCX (Max 4MB)",
       "tryDifferentFile": "Try Different File",
       "parsingFailedKeepOpen": "AI parsing failed. Try a different file or close this dialog."
     },
@@ -1279,7 +1279,7 @@
       "upload": {
         "kicker": "Existing File",
         "title": "Upload a resume",
-        "description": "Start from a PDF, DOC, or DOCX file and let Resume Matcher parse it into your master profile.",
+        "description": "Start from a PDF or DOCX file and let Resume Matcher parse it into your master profile.",
         "action": "Upload Resume"
       },
       "wizard": {

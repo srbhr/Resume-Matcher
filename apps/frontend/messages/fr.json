@@ -114,7 +114,7 @@
       "parsingFailed": "CV téléversé mais l'analyse par IA a échoué. Vous pouvez toujours le personnaliser manuellement.",
       "failed": "Échec du téléversement.",
       "dropzoneTitle": "Cliquez ou déposez un fichier",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4 Mo)",
+      "dropzoneSubtitle": "PDF, DOCX (Max 4 Mo)",
       "tryDifferentFile": "Essayer un autre fichier",
       "parsingFailedKeepOpen": "L'analyse par IA a échoué. Essayez un autre fichier ou fermez cette boîte de dialogue."
     },
@@ -1279,7 +1279,7 @@
       "upload": {
         "kicker": "Fichier existant",
         "title": "Téléverser un CV",
-        "description": "Commencez avec un fichier PDF, DOC ou DOCX et laissez Resume Matcher l'analyser dans votre profil principal.",
+        "description": "Commencez avec un fichier PDF ou DOCX et laissez Resume Matcher l'analyser dans votre profil principal.",
         "action": "Téléverser un CV"
       },
       "wizard": {

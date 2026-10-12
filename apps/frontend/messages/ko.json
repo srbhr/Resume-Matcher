@@ -114,7 +114,7 @@
       "parsingFailed": "이력서는 업로드되었지만 AI 분석에 실패했습니다. 여전히 수동으로 맞춤화할 수 있습니다.",
       "failed": "업로드에 실패했습니다.",
       "dropzoneTitle": "클릭하거나 파일을 드래그하세요",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (최대 4MB)",
+      "dropzoneSubtitle": "PDF, DOCX (최대 4MB)",
       "tryDifferentFile": "다른 파일 시도",
       "parsingFailedKeepOpen": "AI 분석에 실패했습니다. 다른 파일을 시도하거나 이 대화상자를 닫으세요."
     },
@@ -1279,7 +1279,7 @@
       "upload": {
         "kicker": "기존 파일",
         "title": "이력서 업로드",
-        "description": "PDF, DOC, DOCX 파일로 시작하면 Resume Matcher가 이를 분석해 마스터 프로필로 만들어 줍니다.",
+        "description": "PDF, DOCX 파일로 시작하면 Resume Matcher가 이를 분석해 마스터 프로필로 만들어 줍니다.",
         "action": "이력서 업로드"
       },
       "wizard": {

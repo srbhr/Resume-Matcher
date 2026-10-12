@@ -114,7 +114,7 @@
       "parsingFailed": "Currículum subido pero el análisis de IA falló. Aún puedes personalizarlo manualmente.",
       "failed": "La subida falló.",
       "dropzoneTitle": "Haz clic o arrastra un archivo",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Máx. 4MB)",
+      "dropzoneSubtitle": "PDF, DOCX (Máx. 4MB)",
       "tryDifferentFile": "Probar otro archivo",
       "parsingFailedKeepOpen": "El análisis de IA falló. Prueba otro archivo o cierra este diálogo."
     },
@@ -1279,7 +1279,7 @@
       "upload": {
         "kicker": "Archivo existente",
         "title": "Subir un currículum",
-        "description": "Empieza con un archivo PDF, DOC o DOCX y deja que Resume Matcher lo convierta en tu perfil maestro.",
+        "description": "Empieza con un archivo PDF o DOCX y deja que Resume Matcher lo convierta en tu perfil maestro.",
         "action": "Subir currículum"
       },
       "wizard": {

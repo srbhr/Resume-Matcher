@@ -114,7 +114,7 @@
       "parsingFailed": "Currículo enviado, mas a análise de IA falhou. Você ainda pode personalizá-lo manualmente.",
       "failed": "Falha no upload.",
       "dropzoneTitle": "Clique ou Arraste o Arquivo",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Máximo 4MB)",
+      "dropzoneSubtitle": "PDF, DOCX (Máximo 4MB)",
       "tryDifferentFile": "Tentar outro arquivo",
       "parsingFailedKeepOpen": "A análise de IA falhou. Tente outro arquivo ou feche este diálogo."
     },
@@ -1279,7 +1279,7 @@
       "upload": {
         "kicker": "Arquivo existente",
         "title": "Enviar um currículo",
-        "description": "Comece com um arquivo PDF, DOC ou DOCX e deixe o Resume Matcher convertê-lo no seu perfil mestre.",
+        "description": "Comece com um arquivo PDF ou DOCX e deixe o Resume Matcher convertê-lo no seu perfil mestre.",
         "action": "Enviar currículo"
       },
       "wizard": {
