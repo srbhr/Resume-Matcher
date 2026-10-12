@@ -19,7 +19,15 @@ from app.config import (
 )
 from app.config_cache import invalidate_config_cache
 from app.database import db
-from app.llm import LLMConfig, check_llm_health, resolve_api_key
+from app.llm import (
+    API_BASE_KEY_BINDING,
+    API_KEY_REQUIRED_FOR_ENDPOINT,
+    LLMConfig,
+    api_base_key_binding,
+    check_llm_health,
+    resolve_api_key,
+    saved_endpoint_accepts_key,
+)
 from app.prompts import (
     DEFAULT_IMPROVE_PROMPT_ID,
     IMPROVE_PROMPT_OPTIONS,
@@ -62,9 +70,6 @@ def _effective_api_base(stored: dict) -> str | None:
     Every site resolves through here so they cannot drift again.
     """
     return stored.get("api_base") or settings.llm_api_base or None
-
-
-API_KEY_REQUIRED_FOR_ENDPOINT = "api_key_required_for_endpoint"
 
 
 def _normalized_base(api_base: str | None) -> str:
@@ -227,13 +232,11 @@ async def update_llm_config(
     # The API is unauthenticated: pointing a saved key at a new custom endpoint
     # requires that key, or anyone who can reach this server could redirect it.
     resolved_key = resolve_api_key(stored, resolved_provider)
-    if (
-        resolved_key
-        and _moves_key_to_new_endpoint(
-            previous, resolved_provider, _effective_api_base(stored)
-        )
-        and not _proves_key(request.api_key, resolved_key)
-    ):
+    moves_key = _moves_key_to_new_endpoint(
+        previous, resolved_provider, _effective_api_base(stored)
+    )
+    proves_key = _proves_key(request.api_key, resolved_key)
+    if resolved_key and moves_key and not proves_key:
         logger.warning(
             "Refused to move the %s API key to a new endpoint without the key",
             resolved_provider,
@@ -246,14 +249,27 @@ async def update_llm_config(
                 "missing": ["api_key"],
             },
         )
+    # Bind a saved custom base to the key confirmed for it, so a key that
+    # resolves later (a replaced or deleted key, LLM_API_KEY) is not sent there.
+    # A save that neither moves nor proves the key keeps the existing binding.
+    if not stored.get("api_base"):
+        stored.pop(API_BASE_KEY_BINDING, None)
+    elif moves_key or proves_key:
+        stored[API_BASE_KEY_BINDING] = api_base_key_binding(
+            resolved_provider, stored["api_base"], resolved_key
+        )
+    endpoint_confirmed = saved_endpoint_accepts_key(
+        stored, resolved_provider, _effective_api_base(stored), resolved_key
+    )
     raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
     resolved_reasoning_effort = raw_re if raw_re else None
     test_config = LLMConfig(
         provider=resolved_provider,
         model=stored.get("model", settings.llm_model),
-        api_key=resolved_key,
+        api_key=resolved_key if endpoint_confirmed else "",
         api_base=_effective_api_base(stored),
         reasoning_effort=resolved_reasoning_effort,
+        endpoint_confirmed=endpoint_confirmed,
     )
 
     # Save config regardless of health check outcome (see docstring).
@@ -265,7 +281,7 @@ async def update_llm_config(
     return LLMConfigResponse(
         provider=test_config.provider,
         model=test_config.model,
-        api_key=_mask_api_key(test_config.api_key),
+        api_key=_mask_api_key(resolved_key),
         api_base=test_config.api_base,
         reasoning_effort=test_config.reasoning_effort,
     )
@@ -300,9 +316,12 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
         test_api_key = request.api_key
     else:
         test_api_key = resolve_api_key(stored, test_provider)
-        # A saved key is only tested against the endpoint it is saved for.
-        if test_api_key and _moves_key_to_new_endpoint(
-            stored, test_provider, test_api_base
+        # A saved key is only tested against the endpoint it was confirmed for.
+        if test_api_key and (
+            _moves_key_to_new_endpoint(stored, test_provider, test_api_base)
+            or not saved_endpoint_accepts_key(
+                stored, test_provider, test_api_base, test_api_key
+            )
         ):
             return {
                 "healthy": False,

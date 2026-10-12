@@ -136,3 +136,106 @@ async def test_keyless_local_server_needs_no_key(client: AsyncClient) -> None:
         json={"provider": "ollama", "api_base": "http://localhost:11434"},
     )
     assert resp.status_code == 200
+
+
+ENV_KEY = "sk-operator-env-key-777777"
+
+
+async def test_deleting_the_confirming_key_does_not_send_llm_api_key_to_the_endpoint(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app import llm
+    from app.config import settings
+    from app.routers import config as config_router
+
+    monkeypatch.setattr(settings, "llm_api_key", ENV_KEY)
+    # Replace the saved key with an invented one, confirm the endpoint with
+    # it, then delete it so LLM_API_KEY becomes the resolved key.
+    await client.post("/api/v1/config/api-keys", json={"openai": "sk-invented"})
+    moved = await client.put(
+        "/api/v1/config/llm-api-key",
+        json={"provider": "openai", "api_base": EVIL, "api_key": "sk-invented"},
+    )
+    assert moved.status_code == 200
+    await client.delete("/api/v1/config/api-keys/openai")
+
+    with patch("app.routers.config.check_llm_health", new_callable=AsyncMock) as probe:
+        probe.return_value = {"healthy": True}
+        resp = await client.post("/api/v1/config/llm-test")
+    assert resp.json().get("error_code") == "api_key_required_for_endpoint"
+    probe.assert_not_awaited()
+
+    runtime = llm.get_llm_config()
+    assert runtime.api_base == EVIL
+    assert runtime.api_key == ""
+    assert runtime.endpoint_confirmed is False
+
+    background = config_router._log_llm_health_check
+    background.reset_mock()
+    resaved = await client.put("/api/v1/config/llm-api-key", json={"model": "gpt-4o"})
+    assert resaved.status_code == 200
+    sent = background.await_args.args[0]
+    assert sent.api_key == ""
+    assert sent.endpoint_confirmed is False
+
+
+async def test_withheld_key_never_leaves_the_process() -> None:
+    from app import llm
+
+    config = llm.LLMConfig(
+        provider="openai",
+        model="gpt-4o-mini",
+        api_key="",
+        api_base=EVIL,
+        endpoint_confirmed=False,
+    )
+    with patch("app.llm.litellm.acompletion", new_callable=AsyncMock) as sent:
+        health = await llm.check_llm_health(config)
+        with pytest.raises(ValueError):
+            await llm.complete("Hi", config=config)
+    assert health["error_code"] == "api_key_required_for_endpoint"
+    sent.assert_not_awaited()
+
+
+async def test_rotating_the_key_in_settings_keeps_the_custom_endpoint_working(
+    client: AsyncClient,
+) -> None:
+    proxy = "http://proxy.example/v1"
+    await client.put(
+        "/api/v1/config/llm-api-key",
+        json={"provider": "openai", "api_base": proxy, "api_key": KEY},
+    )
+    rotated = "sk-rotated-openai-key-888888"
+    # The settings page saves the new key, then the config with that key.
+    await client.post("/api/v1/config/api-keys", json={"openai": rotated})
+    resp = await client.put(
+        "/api/v1/config/llm-api-key",
+        json={"provider": "openai", "api_base": proxy, "api_key": rotated},
+    )
+    assert resp.status_code == 200
+
+    with patch("app.routers.config.check_llm_health", new_callable=AsyncMock) as probe:
+        probe.return_value = {"healthy": True}
+        await client.post("/api/v1/config/llm-test")
+    assert probe.await_args.args[0].api_key == rotated
+
+
+async def test_base_saved_before_bindings_existed_keeps_working(
+    client: AsyncClient,
+) -> None:
+    import json
+
+    from app import llm
+    from app.config import get_config_path
+
+    proxy = "http://proxy.example/v1"
+    config_path = get_config_path()
+    legacy = json.loads(config_path.read_text(encoding="utf-8"))
+    legacy["api_base"] = proxy
+    legacy.pop(llm.API_BASE_KEY_BINDING, None)
+    config_path.write_text(json.dumps(legacy), encoding="utf-8")
+
+    runtime = llm.get_llm_config()
+    assert runtime.api_base == proxy
+    assert runtime.api_key == KEY
+    assert runtime.endpoint_confirmed is True
