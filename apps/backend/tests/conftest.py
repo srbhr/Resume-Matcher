@@ -26,6 +26,10 @@ _ORIGINAL_DATABASE_ENV = {
 }
 os.environ["DATABASE_URL"] = ""
 os.environ["DATABASE_SCHEMA"] = ""
+# The suite's httpx clients address the app as http://test (or http://t); the
+# ChatGPT origin-guard tests model a LAN deployment (192.168.1.5) that opted in.
+_ORIGINAL_ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS")
+os.environ["ALLOWED_HOSTS"] = "test,t,192.168.1.5,other"
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or None
 
 import app.config as _config_module  # noqa: E402 - DATA_DIR must be set first
@@ -44,6 +48,10 @@ def pytest_unconfigure(config: pytest.Config) -> None:
         os.environ.pop("DATA_DIR", None)
     else:
         os.environ["DATA_DIR"] = _ORIGINAL_DATA_DIR
+    if _ORIGINAL_ALLOWED_HOSTS is None:
+        os.environ.pop("ALLOWED_HOSTS", None)
+    else:
+        os.environ["ALLOWED_HOSTS"] = _ORIGINAL_ALLOWED_HOSTS
     for key, value in _ORIGINAL_DATABASE_ENV.items():
         if value is None:
             os.environ.pop(key, None)

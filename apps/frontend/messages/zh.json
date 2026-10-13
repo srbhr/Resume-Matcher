@@ -982,7 +982,8 @@
         "chatgpt_not_connected": "尚未使用 ChatGPT 登录。请在设置中选择 ChatGPT 订阅，然后点击“通过 ChatGPT 继续”。",
         "chatgpt_usage_limit": "此应用已达到你的 ChatGPT 订阅用量上限。请在 ChatGPT 设置的“用量”中查看。",
         "chatgpt_not_eligible": "此账户无法使用 ChatGPT 订阅用量。需要 ChatGPT Plus 或 Pro；否则请使用 OpenAI API 密钥。",
-        "api_key_required_for_endpoint": "此 API 密钥保存于其他端点。请输入密钥以在此基础 URL 上测试。"
+        "api_key_required_for_endpoint": "此 API 密钥保存于其他端点。请输入密钥以在此基础 URL 上测试。",
+        "loopback_in_container": "无法连接模型服务器。在 Docker 中，localhost 指容器本身：请将 Base URL 设置为 http://host.docker.internal:11434（或你的服务器端口）。"
       },
       "healthWarnings": {
         "empty_content": "健康检查返回了空内容。"

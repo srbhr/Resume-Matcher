@@ -982,7 +982,8 @@
         "chatgpt_not_connected": "Non connecté à ChatGPT. Sélectionnez Forfait ChatGPT dans les paramètres, puis continuez avec ChatGPT.",
         "chatgpt_usage_limit": "La limite d'utilisation de votre forfait ChatGPT pour cette application est atteinte. Consultez-la dans les paramètres de ChatGPT, sous Utilisation.",
         "chatgpt_not_eligible": "L'utilisation du forfait ChatGPT n'est pas disponible pour ce compte. Elle nécessite ChatGPT Plus ou Pro ; sinon, utilisez une clé API OpenAI.",
-        "api_key_required_for_endpoint": "Cette clé API est enregistrée pour un autre point de terminaison. Saisissez la clé pour la tester avec cette URL de base."
+        "api_key_required_for_endpoint": "Cette clé API est enregistrée pour un autre point de terminaison. Saisissez la clé pour la tester avec cette URL de base.",
+        "loopback_in_container": "Impossible de joindre le serveur du modèle. Dans Docker, localhost désigne le conteneur lui-même : utilisez http://host.docker.internal:11434 (ou le port de votre serveur) comme URL de base."
       },
       "healthWarnings": {
         "empty_content": "Le LLM a retourné un contenu vide lors de la vérification de l'état."

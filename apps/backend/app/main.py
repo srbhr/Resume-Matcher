@@ -20,6 +20,7 @@ from app import __version__
 from app.ai_budget import operation_error_content
 from app.config import settings
 from app.database import DatabaseBusyError, db
+from app.host_guard import HostGuardMiddleware
 from app.pdf import close_pdf_renderer
 from app.routers import (
     applications_router,
@@ -125,6 +126,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Added last so it runs first: reject requests for hosts this app does not serve.
+app.add_middleware(HostGuardMiddleware, allowed_hosts=settings.effective_allowed_hosts)
 
 # Include routers
 app.include_router(health_router, prefix="/api/v1")

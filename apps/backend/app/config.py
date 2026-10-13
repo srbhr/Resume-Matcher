@@ -8,11 +8,13 @@ import tempfile
 import threading
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.db_url import normalize_database_url, validate_schema_name
+from app.host_guard import LOOPBACK_HOSTS
 
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 logger = logging.getLogger(__name__)
@@ -326,7 +328,7 @@ class Settings(BaseSettings):
         return value
 
     # Server Configuration
-    host: str = "0.0.0.0"
+    host: str = "127.0.0.1"
     port: int = 8000
     reload: bool = False
     log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"] = "INFO"
@@ -406,6 +408,25 @@ class Settings(BaseSettings):
         if url and url not in origins:
             origins.append(url)
         return origins
+
+    # Set by the Docker image (IN_CONTAINER=1). Inside a container "localhost" is the
+    # container itself, so a local model server on the host is not reachable there.
+    in_container: bool = False
+
+    # Extra hostnames (comma-separated) the API answers for, besides loopback and
+    # the FRONTEND_BASE_URL host; "*" allows any. Set it to reach the app by a LAN
+    # address or another name, e.g. ALLOWED_HOSTS=192.168.1.20.
+    allowed_hosts: str = ""
+
+    @property
+    def effective_allowed_hosts(self) -> list[str]:
+        """Hosts the API accepts in ``Host`` / ``X-Forwarded-Host`` (DNS rebinding guard)."""
+        hosts = set(LOOPBACK_HOSTS)
+        frontend_host = urlsplit(self.frontend_base_url.strip()).hostname
+        if frontend_host:
+            hosts.add(frontend_host)
+        hosts.update(h.strip() for h in self.allowed_hosts.split(",") if h.strip())
+        return sorted(hosts)
 
     # Paths
     data_dir: Path = Path(__file__).parent.parent / "data"

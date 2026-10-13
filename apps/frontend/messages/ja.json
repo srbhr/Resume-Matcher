@@ -982,7 +982,8 @@
         "chatgpt_not_connected": "ChatGPT でサインインしていません。設定で ChatGPT プランを選択し、ChatGPT で続行してください。",
         "chatgpt_usage_limit": "このアプリの ChatGPT プランの利用上限に達しました。ChatGPT の設定の「使用状況」で確認してください。",
         "chatgpt_not_eligible": "このアカウントでは ChatGPT プランを利用できません。ChatGPT Plus または Pro が必要です。それ以外の場合は OpenAI の API キーを使用してください。",
-        "api_key_required_for_endpoint": "この API キーは別のエンドポイント用に保存されています。このベース URL でテストするにはキーを入力してください。"
+        "api_key_required_for_endpoint": "この API キーは別のエンドポイント用に保存されています。このベース URL でテストするにはキーを入力してください。",
+        "loopback_in_container": "モデルサーバーに接続できません。Docker 内では localhost はコンテナ自身を指します。Base URL に http://host.docker.internal:11434（またはサーバーのポート）を指定してください。"
       },
       "healthWarnings": {
         "empty_content": "ヘルスチェックで空の内容が返されました。"
