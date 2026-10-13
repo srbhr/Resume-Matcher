@@ -1118,7 +1118,10 @@ def _targets_container_loopback(config: LLMConfig) -> bool:
     if not settings.in_container:
         return False
     if config.api_base and config.api_base.strip():
-        host = urlsplit(config.api_base.strip()).hostname or ""
+        try:
+            host = urlsplit(config.api_base.strip()).hostname or ""
+        except ValueError:
+            return False
     else:
         host = "localhost" if config.provider == "ollama" else ""
     return host in LOOPBACK_HOSTS

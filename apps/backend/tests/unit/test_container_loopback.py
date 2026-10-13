@@ -55,3 +55,12 @@ async def test_host_docker_internal_in_a_container_is_a_plain_failure(
         api_base="http://host.docker.internal:11434",
     )
     assert await _error_code(monkeypatch, True, config) == "health_check_failed"
+
+
+async def test_malformed_base_in_a_container_is_a_plain_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = LLMConfig(
+        provider="ollama", model="llama3", api_key="", api_base="http://[::1"
+    )
+    assert await _error_code(monkeypatch, True, config) == "health_check_failed"
