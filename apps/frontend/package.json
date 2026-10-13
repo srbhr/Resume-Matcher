@@ -3,9 +3,9 @@
   "version": "1.3.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -H 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 127.0.0.1",
     "lint": "oxlint && oxfmt --check \"**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}\"",
     "typecheck": "tsc --noEmit",
     "format": "oxfmt",

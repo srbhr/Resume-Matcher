@@ -982,7 +982,8 @@
         "chatgpt_not_connected": "Not signed in with ChatGPT. Select ChatGPT plan in Settings and continue with ChatGPT.",
         "chatgpt_usage_limit": "Your ChatGPT plan's usage limit for this app has been reached. Review it in ChatGPT settings under Usage.",
         "chatgpt_not_eligible": "ChatGPT plan usage isn't available for this account. It needs ChatGPT Plus or Pro; otherwise use an OpenAI API key.",
-        "api_key_required_for_endpoint": "This API key is saved for a different endpoint. Enter the key to test it against this Base URL."
+        "api_key_required_for_endpoint": "This API key is saved for a different endpoint. Enter the key to test it against this Base URL.",
+        "loopback_in_container": "Can't reach the model server. Inside Docker, localhost is the container itself: set the Base URL to http://host.docker.internal:11434 (or your server's port)."
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."

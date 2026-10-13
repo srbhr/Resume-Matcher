@@ -27,6 +27,7 @@ from app.config import (
     settings,
 )
 from app.crypto import keyed_digest
+from app.host_guard import LOOPBACK_HOSTS
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -1107,6 +1108,22 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router | None, LLMConfi
     return router, config
 
 
+def _targets_container_loopback(config: LLMConfig) -> bool:
+    """Whether a containerised backend is calling its own loopback for the model.
+
+    No model server runs inside the image, so such a call can only fail; the
+    server on the host is at host.docker.internal. A blank Ollama base is
+    LiteLLM's default, http://localhost:11434.
+    """
+    if not settings.in_container:
+        return False
+    if config.api_base and config.api_base.strip():
+        host = urlsplit(config.api_base.strip()).hostname or ""
+    else:
+        host = "localhost" if config.provider == "ollama" else ""
+    return host in LOOPBACK_HOSTS
+
+
 #: ChatGPT plan errors the settings page explains (docs: "Errors and recovery").
 _CHATGPT_ERROR_CODES: dict[str, str] = {
     "subscription_sharing_usage_limit_exceeded": "chatgpt_usage_limit",
@@ -1241,6 +1258,8 @@ async def check_llm_health(
             error_code = "chatgpt_not_connected"
         elif isinstance(e, ChatGPTPlanError):
             error_code = _CHATGPT_ERROR_CODES.get(e.code, error_code)
+        elif _targets_container_loopback(config):
+            error_code = "loopback_in_container"
         elif "404" in message and "/v1/v1/" in message:
             error_code = "duplicate_v1_path"
         elif "404" in message:

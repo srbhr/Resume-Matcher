@@ -271,7 +271,7 @@ Endpoints:
 - API health check: <http://localhost:3000/api/v1/health>
 - API docs: <http://localhost:3000/docs>
 
-> **Using Ollama with Docker?** Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.
+> **Using Ollama with Docker?** Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost` (on Linux, Ollama must also listen beyond `127.0.0.1`; see [SETUP.md](SETUP.md#using-ollama-with-docker)). Docker publishes the app on `127.0.0.1` only; to open it from another device, see [SETUP.md](SETUP.md#opening-it-from-another-device).
 
 ### Tech Stack
 

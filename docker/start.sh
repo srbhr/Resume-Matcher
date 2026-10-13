@@ -204,7 +204,7 @@ echo ""
 info "Starting backend server on internal port ${BACKEND_PORT}..."
 cd /app/backend
 trap '' SIGTERM SIGINT SIGQUIT
-python -m uvicorn app.main:app --host 0.0.0.0 --port "${BACKEND_PORT}" --log-level "${UVICORN_LOG_LEVEL}" &
+python -m uvicorn app.main:app --host 127.0.0.1 --port "${BACKEND_PORT}" --log-level "${UVICORN_LOG_LEVEL}" &
 BACKEND_PID=$!
 trap cleanup SIGTERM SIGINT SIGQUIT
 

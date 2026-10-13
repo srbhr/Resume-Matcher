@@ -982,7 +982,8 @@
         "chatgpt_not_connected": "ChatGPT로 로그인하지 않았습니다. 설정에서 ChatGPT 요금제를 선택한 뒤 'ChatGPT로 계속하기'를 누르세요.",
         "chatgpt_usage_limit": "이 앱의 ChatGPT 요금제 사용 한도에 도달했습니다. ChatGPT 설정의 사용량에서 확인하세요.",
         "chatgpt_not_eligible": "이 계정에서는 ChatGPT 요금제를 사용할 수 없습니다. ChatGPT Plus 또는 Pro가 필요하며, 그렇지 않으면 OpenAI API 키를 사용하세요.",
-        "api_key_required_for_endpoint": "이 API 키는 다른 엔드포인트용으로 저장되어 있습니다. 이 기본 URL로 테스트하려면 키를 입력하세요."
+        "api_key_required_for_endpoint": "이 API 키는 다른 엔드포인트용으로 저장되어 있습니다. 이 기본 URL로 테스트하려면 키를 입력하세요.",
+        "loopback_in_container": "모델 서버에 연결할 수 없습니다. Docker 안에서 localhost는 컨테이너 자신입니다. 기본 URL을 http://host.docker.internal:11434(또는 서버 포트)로 설정하세요."
       },
       "healthWarnings": {
         "empty_content": "상태 확인 시 LLM이 빈 응답을 반환했습니다."
