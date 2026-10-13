@@ -243,6 +243,7 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
+| **Cheaper Inference** | Cloud | OpenAI-compatible gateway |
 | **DeepSeek** | Cloud | DeepSeek Chat |
 | **Groq** | Cloud | Llama 3.3 70B, GPT-OSS |
 

@@ -941,6 +941,7 @@ class ApiKeysUpdateRequest(BaseModel):
     anthropic: str | None = None
     google: str | None = None
     openrouter: str | None = None
+    cheaperinference: str | None = None
     deepseek: str | None = None
     groq: str | None = None
     # Local/self-hosted providers that may sit behind an auth proxy.

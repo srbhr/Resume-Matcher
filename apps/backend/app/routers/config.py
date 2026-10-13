@@ -563,6 +563,7 @@ SUPPORTED_PROVIDERS = [
     "anthropic",
     "google",
     "openrouter",
+    "cheaperinference",
     "deepseek",
     "groq",
     "openai_compatible",
@@ -647,6 +648,13 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
         elif "openrouter" in stored_keys:
             del stored_keys["openrouter"]
         updated.append("openrouter")
+
+    if request.cheaperinference is not None:
+        if request.cheaperinference:
+            stored_keys["cheaperinference"] = request.cheaperinference
+        elif "cheaperinference" in stored_keys:
+            del stored_keys["cheaperinference"]
+        updated.append("cheaperinference")
 
     if request.deepseek is not None:
         if request.deepseek:
