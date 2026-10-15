@@ -409,6 +409,22 @@ describe('settings page (Swiss sweep)', () => {
     );
   });
 
+  it('shows a stored alias in any case or padding, as the backend runs it', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: ' Opus ',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    render(<SettingsPage />);
+
+    const picker = await screen.findByRole('button', {
+      name: /settings\.llmConfiguration\.modelLabel/,
+    });
+    await waitFor(() => expect(picker).toHaveTextContent('Opus'));
+    expect(picker).not.toHaveTextContent('settings.llmConfiguration.claudeCliDefaultModel');
+  });
+
   it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {
     api.fetchLlmConfig.mockResolvedValue({
       provider: 'claude_cli',

@@ -764,17 +764,19 @@ export default function SettingsPage() {
   const requiresApiBase = providerInfo.requiresBaseUrl ?? false;
   const usesLocalCli = providerInfo.localCli ?? false;
   const usesChatGptSignIn = providerInfo.chatgptSignIn ?? false;
+  // Matched as the backend does (cli_model_arg trims and lowercases).
+  const cliModel = model.trim().toLowerCase();
   const claudeCliModelOptions = [
     {
       id: PROVIDER_INFO.claude_cli.defaultModel,
       label: t('settings.llmConfiguration.claudeCliDefaultModel'),
     },
     ...CLAUDE_CLI_ALIASES,
-    ...(CLAUDE_FULL_MODEL_NAME.test(model) ? [{ id: model, label: model }] : []),
+    ...(CLAUDE_FULL_MODEL_NAME.test(cliModel) ? [{ id: cliModel, label: cliModel }] : []),
   ];
   // Anything else (e.g. a stale LLM_MODEL) runs on Claude Code's default, so show that.
-  const claudeCliModel = claudeCliModelOptions.some((option) => option.id === model)
-    ? model
+  const claudeCliModel = claudeCliModelOptions.some((option) => option.id === cliModel)
+    ? cliModel
     : PROVIDER_INFO.claude_cli.defaultModel;
   // Saving would activate a provider whose every call fails until the user signs in.
   const chatGptSaveBlocked = usesChatGptSignIn && chatGptConnected !== true;

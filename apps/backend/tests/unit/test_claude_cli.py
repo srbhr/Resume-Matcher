@@ -339,10 +339,10 @@ class TestModelSelection:
         return list(spawn.call_args.args)
 
     @pytest.mark.parametrize("alias", ["fable", "opus", "sonnet", "haiku"])
-    async def test_alias_is_passed_as_model(self, alias: str):
+    async def test_alias_is_passed_as_model(self, alias: str) -> None:
         assert f"--model={alias}" in await self._args(alias)
 
-    async def test_full_claude_model_name_is_passed(self):
+    async def test_full_claude_model_name_is_passed(self) -> None:
         assert "--model=claude-sonnet-5-5" in await self._args("claude-sonnet-5-5")
 
     @pytest.mark.parametrize(
@@ -357,15 +357,15 @@ class TestModelSelection:
             'claude-x" & calc',
         ],
     )
-    async def test_anything_else_keeps_the_cli_default(self, model: str | None):
+    async def test_anything_else_keeps_the_cli_default(self, model: str | None) -> None:
         args = await self._args(model)
 
         assert not any(arg.startswith("--model") for arg in args)
 
-    def test_alias_case_and_padding_are_ignored(self):
+    def test_alias_case_and_padding_are_ignored(self) -> None:
         assert cli_model_arg("  Opus ") == "opus"
 
-    async def test_complete_forwards_the_configured_model(self):
+    async def test_complete_forwards_the_configured_model(self) -> None:
         cli = AsyncMock(return_value=_shaped("ok"))
         config = LLMConfig(provider="claude_cli", model="sonnet", api_key="")
 

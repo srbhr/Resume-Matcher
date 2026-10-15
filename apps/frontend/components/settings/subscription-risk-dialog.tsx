@@ -69,12 +69,13 @@ export function SubscriptionRiskDialog({
               className="mt-2 inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wider text-primary underline-offset-4 hover:underline"
             >
               {t('settings.subscriptionRisk.mcpLink')}
-              <ArrowSquareOut aria-hidden="true" className="size-3.5" />
+              <ArrowSquareOut aria-hidden="true" className="size-3" />
             </a>
           </Alert>
           <DialogDescription>{t('settings.subscriptionRisk.alternative')}</DialogDescription>
         </DialogBody>
-        <DialogFooter>
+        {/* Stacked on phones: the two long labels do not fit side by side. */}
+        <DialogFooter className="flex-col items-stretch sm:flex-row sm:items-center">
           <Button ref={backRef} variant="outline" onClick={onCancel}>
             {t('settings.subscriptionRisk.back')}
           </Button>
