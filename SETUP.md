@@ -565,7 +565,7 @@ The repository's [`AGENTS.md`](AGENTS.md) (read by Codex, Cursor, Copilot and An
 - **Turns on agent mode** once you agree. You can also choose **Coding agent** under Settings > LLM configuration. In agent mode the app makes no AI calls of its own: buttons such as Generate Cover Letter show a prompt to paste into your agent.
 - **Creates your master resume** from your PDF or DOCX, or by asking you questions.
 - **Tailors one resume per job description**. Paste a job description in the chat, or save several as `.md` or `.txt` files in [`jobs/`](jobs/README.md) and ask it to tailor your resume for every job there.
-- **Hands off to the web app**: each tailored resume appears on the dashboard at <http://localhost:3000>, where you edit it and download the PDF.
+- **Hands off to the web app**: each tailored resume appears on the dashboard at <http://localhost:3000>, where you edit it and download the PDF. Open pages pick up the agent's saves on their own. If you have unsaved edits to the same part, the editor pauses autosave and asks which version to keep.
 
 The agent works through the `resume-matcher` command, which runs the same tools as the [MCP server](#use-resume-matcher-from-claude-code-or-claude-desktop-mcp) and needs no configuration:
 

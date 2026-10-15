@@ -149,6 +149,13 @@
       "savedButton": "Saved",
       "localDraftUnavailable": "Local draft unavailable"
     },
+    "agentUpdate": {
+      "applied": "Updated by your coding agent",
+      "conflictTitle": "Your coding agent changed this resume",
+      "conflictBody": "You have unsaved edits to the same part, so autosave is paused. Use the agent's version to discard your unsaved edits, or keep your edits to save them over the agent's changes.",
+      "useAgent": "Use the agent's version",
+      "keepMine": "Keep my edits"
+    },
     "draftRecovery": {
       "title": "Restore Local Draft?",
       "description": "A local browser draft is different from the saved server copy. Restore it to continue editing, or use the server copy and discard the local draft.",
@@ -1473,7 +1480,7 @@
   },
   "agentPrompt": {
     "instructions": "Paste this prompt into your coding agent (Claude Code, Codex, Cursor or Copilot) running in the Resume Matcher folder. The agent does the AI work and saves the result here.",
-    "refresh": "When your agent is done, refresh this page to see the changes.",
+    "refresh": "This page updates on its own as your agent saves its work.",
     "copy": "Copy prompt",
     "copied": "Copied",
     "modeTitle": "Agent mode is on",

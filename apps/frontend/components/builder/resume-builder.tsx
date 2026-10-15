@@ -64,12 +64,14 @@ import {
   LEGACY_RESUME_DRAFT_STORAGE_KEY,
   parseResumeDraft,
   isResumeDataShape,
+  isSameResumeData,
   safeStorage,
   shouldPromptForDraftRestore,
   type ResumeDraftEnvelope,
 } from '@/lib/utils/resume-draft-storage';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 import { AgentPromptDialog, type AgentTask } from '@/components/agent/agent-prompt-dialog';
+import { useAgentRefresh } from '@/hooks/use-agent-refresh';
 import { clearResumeWizardCompletion } from '@/lib/utils/resume-wizard-storage';
 import {
   clearAttachmentDraft,
@@ -132,6 +134,30 @@ const buildInitialData = (t: Translate): ResumeData => ({
 });
 
 type StoredResumeDraft = ResumeDraftEnvelope & { storageKey: string };
+
+type ServerResume = Awaited<ReturnType<typeof fetchResume>>;
+type OwnWrites = { pending: number; epoch: number };
+
+/** Identifies one saved version of the parts the agent can change. */
+const agentVersionOf = (data: ServerResume): string =>
+  JSON.stringify([
+    data.processed_resume,
+    data.cover_letter ?? '',
+    data.outreach_message ?? '',
+    data.title ?? null,
+  ]);
+
+/**
+ * Count a write this editor makes. While one is pending, or when one finished
+ * during an agent-change check, the server copy may be the editor's own save,
+ * so the check skips that round.
+ */
+const trackOwnWrite = <T,>(writes: { current: OwnWrites }, write: Promise<T>): Promise<T> => {
+  writes.current = { pending: writes.current.pending + 1, epoch: writes.current.epoch + 1 };
+  return write.finally(() => {
+    writes.current = { pending: writes.current.pending - 1, epoch: writes.current.epoch + 1 };
+  });
+};
 
 const withStorageKey = (
   draft: ResumeDraftEnvelope | null,
@@ -318,6 +344,13 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     'cover-letter' | 'outreach' | 'interview-prep' | null
   >(null);
   const [agentTask, setAgentTask] = useState<AgentTask | null>(null);
+  // Agent mode: the agent's saved version, waiting while the user has unsaved
+  // edits to the same part, and when one was last applied here.
+  const [agentUpdate, setAgentUpdate] = useState<ServerResume | null>(null);
+  const [agentAppliedAt, setAgentAppliedAt] = useState<number | null>(null);
+  const ownWritesRef = useRef<OwnWrites>({ pending: 0, epoch: 0 });
+  const agentCheckRunningRef = useRef(false);
+  const dismissedAgentVersionRef = useRef<string | null>(null);
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
@@ -697,16 +730,19 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       }
 
       const canonicalPayload = normalizeResumeForSave(editorData);
-      const runSave = resumeSaveQueueRef.current
-        .catch(() => {
-          // Keep the queue alive after a failed save so the next edit can still persist.
-        })
-        .then(() => {
-          if (!documentIsActiveRef.current) {
-            throw new DOMException('Editor closed', 'AbortError');
-          }
-          return updateResume(resumeId, canonicalPayload);
-        });
+      const runSave = trackOwnWrite(
+        ownWritesRef,
+        resumeSaveQueueRef.current
+          .catch(() => {
+            // Keep the queue alive after a failed save so the next edit can still persist.
+          })
+          .then(() => {
+            if (!documentIsActiveRef.current) {
+              throw new DOMException('Editor closed', 'AbortError');
+            }
+            return updateResume(resumeId, canonicalPayload);
+          })
+      );
 
       resumeSaveQueueRef.current = runSave.then(
         () => undefined,
@@ -729,7 +765,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       isSaving ||
       isAutoSaving ||
       autoSaveError ||
-      regenerateWizard.step !== 'idle'
+      regenerateWizard.step !== 'idle' ||
+      // The user has not chosen between their edits and the agent's version.
+      agentUpdate
     ) {
       return;
     }
@@ -778,6 +816,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
     return () => window.clearTimeout(timerId);
   }, [
+    agentUpdate,
     autoSaveError,
     hasUnsavedChanges,
     isAutoSaving,
@@ -990,6 +1029,129 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     setPendingAttachmentDraftRestore(null);
   };
 
+  // Agent mode: the parts of the server copy that differ from what this editor
+  // last loaded or saved, i.e. what the user's coding agent changed.
+  const agentChanges = (data: ServerResume) => {
+    const serverResume = isResumeDataShape(data.processed_resume) ? data.processed_resume : null;
+    const coverLetter = data.cover_letter ?? '';
+    const outreachMessage = data.outreach_message ?? '';
+    const baselines = attachmentBaselinesRef.current;
+    return {
+      serverResume,
+      coverLetter,
+      outreachMessage,
+      resume: Boolean(serverResume && !isSameResumeData(serverResume, lastSavedData)),
+      coverLetterChanged: coverLetter !== baselines.coverLetter,
+      outreachChanged: outreachMessage !== baselines.outreachMessage,
+      title: (data.title ?? null) !== resumeTitle,
+    };
+  };
+
+  /** Show the agent's version of each changed part; `discardLocal` also replaces unsaved edits. */
+  const applyAgentVersion = (data: ServerResume, discardLocal = false) => {
+    const changes = agentChanges(data);
+    // Invalidates any check that started before this, so it cannot reopen the banner.
+    editVersionRef.current += 1;
+    if (changes.serverResume && (changes.resume || discardLocal)) {
+      setResumeData(changes.serverResume);
+      setLastSavedData(changes.serverResume);
+      setHasUnsavedChanges(false);
+      syncedVersionRef.current = editVersionRef.current;
+      unsyncedSinceRef.current = null;
+      setAutoSaveError(null);
+      clearStoredResumeDraft(resumeId);
+      setHasCurrentLocalDraft(false);
+    }
+    const values = { ...attachmentValuesRef.current };
+    const baselines = { ...attachmentBaselinesRef.current };
+    if (changes.coverLetterChanged || discardLocal) {
+      coverLetterEditVersionRef.current += 1;
+      values.coverLetter = changes.coverLetter;
+      baselines.coverLetter = changes.coverLetter;
+      setCoverLetter(changes.coverLetter);
+      setHasUnsavedCoverLetter(false);
+    }
+    if (changes.outreachChanged || discardLocal) {
+      outreachEditVersionRef.current += 1;
+      values.outreachMessage = changes.outreachMessage;
+      baselines.outreachMessage = changes.outreachMessage;
+      setOutreachMessage(changes.outreachMessage);
+      setHasUnsavedOutreach(false);
+    }
+    attachmentValuesRef.current = values;
+    attachmentBaselinesRef.current = baselines;
+    persistAttachmentDraft(values, baselines);
+    if (changes.title) setResumeTitle(data.title ?? null);
+    setAgentUpdate(null);
+    setAgentAppliedAt(Date.now());
+  };
+
+  const checkForAgentChanges = async () => {
+    if (
+      !resumeId ||
+      loadingState !== 'loaded' ||
+      agentCheckRunningRef.current ||
+      ownWritesRef.current.pending > 0 ||
+      isSaving ||
+      isAutoSaving ||
+      regenerateWizard.step !== 'idle' ||
+      pendingDraftRestore ||
+      pendingAttachmentDraftRestore
+    ) {
+      return;
+    }
+    const before = [
+      ownWritesRef.current.epoch,
+      editVersionRef.current,
+      coverLetterEditVersionRef.current,
+      outreachEditVersionRef.current,
+    ].join();
+    agentCheckRunningRef.current = true;
+    try {
+      const data = await fetchResume(resumeId);
+      const after = [
+        ownWritesRef.current.epoch,
+        editVersionRef.current,
+        coverLetterEditVersionRef.current,
+        outreachEditVersionRef.current,
+      ].join();
+      // An edit or save happened meanwhile: this state no longer matches the server read.
+      if (!documentIsActiveRef.current || ownWritesRef.current.pending > 0 || after !== before) {
+        return;
+      }
+      const changes = agentChanges(data);
+      if (
+        !changes.resume &&
+        !changes.coverLetterChanged &&
+        !changes.outreachChanged &&
+        !changes.title
+      ) {
+        if (agentUpdate) setAgentUpdate(null);
+        return;
+      }
+      if (agentVersionOf(data) === dismissedAgentVersionRef.current) return;
+      const conflict =
+        (changes.resume && hasUnsavedChanges) ||
+        (changes.coverLetterChanged && hasUnsavedCoverLetter) ||
+        (changes.outreachChanged && hasUnsavedOutreach);
+      if (conflict) setAgentUpdate(data);
+      else applyAgentVersion(data);
+    } catch (error) {
+      console.warn('Could not check for agent changes:', error);
+    } finally {
+      agentCheckRunningRef.current = false;
+    }
+  };
+
+  useAgentRefresh(agentMode && loadingState === 'loaded', () => void checkForAgentChanges());
+
+  const handleKeepMyEdits = () => {
+    if (!agentUpdate) return;
+    // Autosave resumes and replaces the agent's version with these edits.
+    dismissedAgentVersionRef.current = agentVersionOf(agentUpdate);
+    setAgentUpdate(null);
+  };
+
   const getCompanyFromTitle = (title: string | null | undefined): string | null => {
     if (!title) return null;
     const atIdx = title.lastIndexOf(' @ ');
@@ -1061,10 +1223,13 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     queue: React.RefObject<Promise<void>>,
     action: () => Promise<T>
   ): Promise<T> => {
-    const operation = queue.current.then(() => {
-      if (!documentIsActiveRef.current) throw new DOMException('Editor closed', 'AbortError');
-      return action();
-    });
+    const operation = trackOwnWrite(
+      ownWritesRef,
+      queue.current.then(() => {
+        if (!documentIsActiveRef.current) throw new DOMException('Editor closed', 'AbortError');
+        return action();
+      })
+    );
     queue.current = operation.then(
       () => undefined,
       () => undefined
@@ -1424,6 +1589,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         ? { label: t('builder.autoSave.localDraft'), tone: 'warning' as const }
         : { label: t('builder.autoSave.localDraftUnavailable'), tone: 'error' as const };
     }
+    if (agentAppliedAt && agentAppliedAt > (lastAutoSavedAt ?? 0)) {
+      return { label: t('builder.agentUpdate.applied'), tone: 'ready' as const };
+    }
     if (resumeId && lastAutoSavedAt) {
       return { label: t('builder.autoSave.saved'), tone: 'ready' as const };
     }
@@ -1565,6 +1733,23 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
           </div>
         </PageHeader>
 
+        {/* Agent mode: the agent saved a part the user is also editing. */}
+        {agentUpdate && (
+          <div className="border-b border-ink px-6 py-3 no-print">
+            <Alert tone="warning" title={t('builder.agentUpdate.conflictTitle')}>
+              <p>{t('builder.agentUpdate.conflictBody')}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => applyAgentVersion(agentUpdate, true)}>
+                  {t('builder.agentUpdate.useAgent')}
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleKeepMyEdits}>
+                  {t('builder.agentUpdate.keepMine')}
+                </Button>
+              </div>
+            </Alert>
+          </div>
+        )}
+
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 bg-ink gap-px flex-1 min-h-0">
           {/* Left Panel: editor and generate controls */}
@@ -1597,7 +1782,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                       settings={templateSettings}
                       onChange={handleSettingsChange}
                     />
-                    <ResumeForm resumeData={resumeData} onUpdate={handleUpdate} />
+                    <ResumeForm
+                      key={agentAppliedAt ?? 0}
+                      resumeData={resumeData}
+                      onUpdate={handleUpdate}
+                    />
                   </>
                 ))}
 

@@ -35,6 +35,8 @@ import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { isSameResumeData } from '@/lib/utils/resume-draft-storage';
+import { useAgentRefresh } from '@/hooks/use-agent-refresh';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
@@ -179,6 +181,26 @@ export default function ResumeViewerPage() {
 
     loadResume();
   }, [resumeId, beginResumeLoad, isCurrentResumeLoad]);
+
+  // Agent mode: show what the user's coding agent saves (e.g. after Enhance)
+  // without a reload. The title is left alone while the user renames it.
+  const viewedIdRef = useRef(resumeId);
+  useEffect(() => {
+    viewedIdRef.current = resumeId;
+  });
+  useAgentRefresh(agentMode && !loading && Boolean(resumeData), async () => {
+    const id = resumeId;
+    if (!id) return;
+    try {
+      const data = await fetchResume(id);
+      if (viewedIdRef.current !== id || !data.processed_resume) return;
+      const latest = data.processed_resume as ResumeData;
+      setResumeData((current) => (current && isSameResumeData(current, latest) ? current : latest));
+      if (!isEditingTitle && !renameBusyRef.current) setResumeTitle(data.title ?? null);
+    } catch (err) {
+      console.warn('Could not check for agent changes:', err);
+    }
+  });
 
   const handleRetryProcessing = async () => {
     if (!resumeId) return;

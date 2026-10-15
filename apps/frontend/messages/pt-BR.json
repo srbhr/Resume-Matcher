@@ -149,6 +149,13 @@
       "savedButton": "Salvo",
       "localDraftUnavailable": "Rascunho local indisponível"
     },
+    "agentUpdate": {
+      "applied": "Atualizado pelo seu agente de código",
+      "conflictTitle": "Seu agente de código alterou este currículo",
+      "conflictBody": "Você tem edições não salvas na mesma parte, então o salvamento automático está pausado. Use a versão do agente para descartar suas edições não salvas, ou mantenha suas edições para salvá-las por cima das alterações do agente.",
+      "useAgent": "Usar a versão do agente",
+      "keepMine": "Manter minhas edições"
+    },
     "draftRecovery": {
       "title": "Restaurar rascunho local?",
       "description": "Um rascunho local do navegador é diferente da cópia salva no servidor. Restaure-o para continuar editando ou use a cópia do servidor e descarte o rascunho local.",
@@ -1473,7 +1480,7 @@
   },
   "agentPrompt": {
     "instructions": "Cole este prompt no seu agente de código (Claude Code, Codex, Cursor ou Copilot) aberto na pasta do Resume Matcher. O agente faz o trabalho de IA e salva o resultado aqui.",
-    "refresh": "Quando o agente terminar, atualize esta página para ver as mudanças.",
+    "refresh": "Esta página se atualiza sozinha conforme o agente salva o trabalho.",
     "copy": "Copiar prompt",
     "copied": "Copiado",
     "modeTitle": "O modo agente está ativado",

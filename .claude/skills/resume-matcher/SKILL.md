@@ -128,10 +128,11 @@ These are the rules the app's own tailoring follows, and the validator enforces 
 
 When done, give the user a short table: role and company, ATS score (`resume.ats_score.score.overall_score`), pages, remaining issues, and the link `http://localhost:3000/builder?id=<resume_id>`. Then tell them:
 
-- The dashboard lists every resume: <http://localhost:3000/dashboard>.
+- The dashboard lists every resume: <http://localhost:3000/dashboard>. Open pages update on their own within a few seconds of each save, so there is no need to reload.
 - In the editor they can change any text, section order, template and formatting. Changes save automatically, and **Download** exports the PDF.
 - The application tracker is at <http://localhost:3000/tracker>.
 - The app's AI buttons show a prompt to paste back to you.
+- If they are editing a resume while you save it, the editor asks them whether to keep their edits or take yours. Prefer to work on resumes they are not editing.
 
 ## Other requests
 

@@ -149,6 +149,13 @@
       "savedButton": "Guardado",
       "localDraftUnavailable": "Borrador local no disponible"
     },
+    "agentUpdate": {
+      "applied": "Actualizado por tu agente de código",
+      "conflictTitle": "Tu agente de código cambió este currículum",
+      "conflictBody": "Tienes cambios sin guardar en la misma parte, así que el guardado automático está en pausa. Usa la versión del agente para descartar tus cambios sin guardar, o conserva tus cambios para guardarlos sobre los del agente.",
+      "useAgent": "Usar la versión del agente",
+      "keepMine": "Conservar mis cambios"
+    },
     "draftRecovery": {
       "title": "¿Restaurar borrador local?",
       "description": "Un borrador local del navegador es diferente de la copia guardada en el servidor. Restáuralo para seguir editando o usa la copia del servidor y descarta el borrador local.",
@@ -1473,7 +1480,7 @@
   },
   "agentPrompt": {
     "instructions": "Pega este prompt en tu agente de código (Claude Code, Codex, Cursor o Copilot) abierto en la carpeta de Resume Matcher. El agente hace el trabajo de IA y guarda el resultado aquí.",
-    "refresh": "Cuando tu agente termine, actualiza esta página para ver los cambios.",
+    "refresh": "Esta página se actualiza sola a medida que tu agente guarda su trabajo.",
     "copy": "Copiar prompt",
     "copied": "Copiado",
     "modeTitle": "El modo agente está activado",

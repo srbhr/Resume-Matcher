@@ -543,6 +543,13 @@
       "savedButton": "저장됨",
       "localDraftUnavailable": "로컬 초안을 저장할 수 없음"
     },
+    "agentUpdate": {
+      "applied": "코딩 에이전트가 업데이트함",
+      "conflictTitle": "코딩 에이전트가 이 이력서를 변경했습니다",
+      "conflictBody": "같은 부분에 저장하지 않은 편집이 있어 자동 저장이 일시 중지되었습니다. 에이전트 버전을 사용하면 저장하지 않은 편집이 삭제되고, 내 편집을 유지하면 에이전트의 변경 위에 저장됩니다.",
+      "useAgent": "에이전트 버전 사용",
+      "keepMine": "내 편집 유지"
+    },
     "draftRecovery": {
       "title": "로컬 초안을 복원할까요?",
       "description": "브라우저에 저장된 로컬 초안이 서버에 저장된 사본과 다릅니다. 초안을 복원해 편집을 계속하거나, 서버 사본을 사용하고 로컬 초안을 삭제할 수 있습니다.",
@@ -1473,7 +1480,7 @@
   },
   "agentPrompt": {
     "instructions": "Resume Matcher 폴더에서 실행 중인 코딩 에이전트(Claude Code, Codex, Cursor 또는 Copilot)에 이 프롬프트를 붙여 넣으세요. 에이전트가 AI 작업을 하고 결과를 여기에 저장합니다.",
-    "refresh": "에이전트 작업이 끝나면 이 페이지를 새로 고쳐 변경 사항을 확인하세요.",
+    "refresh": "에이전트가 작업을 저장하면 이 페이지가 자동으로 업데이트됩니다.",
     "copy": "프롬프트 복사",
     "copied": "복사됨",
     "modeTitle": "에이전트 모드가 켜져 있습니다",

@@ -149,6 +149,13 @@
       "savedButton": "已保存",
       "localDraftUnavailable": "无法保存本地草稿"
     },
+    "agentUpdate": {
+      "applied": "已由你的编程智能体更新",
+      "conflictTitle": "你的编程智能体修改了这份简历",
+      "conflictBody": "你在同一部分有未保存的编辑，因此已暂停自动保存。使用智能体的版本会丢弃你未保存的编辑；保留你的编辑会将其保存并覆盖智能体的更改。",
+      "useAgent": "使用智能体的版本",
+      "keepMine": "保留我的编辑"
+    },
     "draftRecovery": {
       "title": "恢复本地草稿？",
       "description": "浏览器中的本地草稿与服务器已保存版本不同。你可以恢复本地草稿继续编辑，或使用服务器版本并丢弃本地草稿。",
@@ -1473,7 +1480,7 @@
   },
   "agentPrompt": {
     "instructions": "将这段提示词粘贴到在 Resume Matcher 文件夹中运行的编程智能体（Claude Code、Codex、Cursor 或 Copilot）。智能体会完成 AI 工作，并把结果保存到这里。",
-    "refresh": "智能体完成后，刷新此页面即可看到更改。",
+    "refresh": "智能体保存后，此页面会自动更新。",
     "copy": "复制提示词",
     "copied": "已复制",
     "modeTitle": "智能体模式已开启",

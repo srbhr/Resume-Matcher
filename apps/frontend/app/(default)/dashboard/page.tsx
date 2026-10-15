@@ -3,6 +3,7 @@
 import { SwissGrid } from '@/components/home/swiss-grid';
 import { ResumeUploadDialog } from '@/components/dashboard/resume-upload-dialog';
 import { AgentPromptDialog, type AgentTask } from '@/components/agent/agent-prompt-dialog';
+import { useAgentRefresh } from '@/hooks/use-agent-refresh';
 import { MasterResumeChoiceDialog } from '@/components/dashboard/master-resume-choice-dialog';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -332,6 +333,9 @@ export default function DashboardPage() {
   useEffect(() => {
     loadTailoredResumes();
   }, [loadTailoredResumes]);
+
+  // Agent mode: resumes the agent saves appear without a reload.
+  useAgentRefresh(agentMode, () => void loadTailoredResumes(true));
 
   // Refresh list when window gains focus (e.g., returning from viewer after delete)
   useEffect(() => {

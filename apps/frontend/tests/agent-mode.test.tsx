@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import DashboardPage from '@/app/(default)/dashboard/page';
 import type { ResumeListItem } from '@/lib/api/resume';
+import { AGENT_REFRESH_INTERVAL_MS } from '@/hooks/use-agent-refresh';
 
 const state = vi.hoisted(() => ({
   list: vi.fn(),
@@ -63,7 +64,13 @@ beforeEach(() => {
   state.get.mockResolvedValue({
     resume_id: 'm1',
     processed_resume: { personalInfo: { name: 'Ada' } },
-    raw_resume: { id: 1, content: 'Ada', content_type: 'md', created_at: '', processing_status: 'ready' },
+    raw_resume: {
+      id: 1,
+      content: 'Ada',
+      content_type: 'md',
+      created_at: '',
+      processing_status: 'ready',
+    },
   });
 });
 
@@ -95,7 +102,9 @@ describe('AgentPromptDialog', () => {
       />
     );
     expect(
-      screen.getByText('agentPrompt.tailor.promptWithJob {"resumeId":"m1","job":"Rust engineer at Acme"}')
+      screen.getByText(
+        'agentPrompt.tailor.promptWithJob {"resumeId":"m1","job":"Rust engineer at Acme"}'
+      )
     ).toBeInTheDocument();
     expect(screen.getByText('agentPrompt.tailor.note')).toBeInTheDocument();
   });
@@ -140,14 +149,40 @@ describe('dashboard in agent mode', () => {
     expect(screen.queryByText('dashboard.setupRequiredTitle')).toBeNull();
   });
 
+  it('shows resumes the agent saves without a reload', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.list.mockResolvedValue([master]);
+      render(<DashboardPage />);
+      await screen.findByRole('button', { name: 'dashboard.createResume' });
+      expect(screen.queryByText('Platform Engineer @ Acme')).toBeNull();
+
+      state.list.mockResolvedValue([
+        master,
+        {
+          ...master,
+          resume_id: 't1',
+          title: 'Platform Engineer @ Acme',
+          is_master: false,
+          is_default_master: false,
+          parent_id: 'm1',
+        },
+      ]);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(AGENT_REFRESH_INTERVAL_MS);
+      });
+      expect(await screen.findByText('Platform Engineer @ Acme')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('still asks for setup when neither a model nor agent mode is configured', async () => {
     state.agentMode = false;
     state.list.mockResolvedValue([]);
     render(<DashboardPage />);
 
     expect(await screen.findByText('dashboard.setupRequiredTitle')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'dashboard.initializeMasterResume' })
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'dashboard.initializeMasterResume' })).toBeNull();
   });
 });

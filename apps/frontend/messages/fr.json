@@ -149,6 +149,13 @@
       "savedButton": "Enregistré",
       "localDraftUnavailable": "Brouillon local indisponible"
     },
+    "agentUpdate": {
+      "applied": "Mis à jour par votre agent de code",
+      "conflictTitle": "Votre agent de code a modifié ce CV",
+      "conflictBody": "Vous avez des modifications non enregistrées sur la même partie, donc l'enregistrement automatique est en pause. Utilisez la version de l'agent pour abandonner vos modifications non enregistrées, ou gardez vos modifications pour les enregistrer à la place de celles de l'agent.",
+      "useAgent": "Utiliser la version de l'agent",
+      "keepMine": "Garder mes modifications"
+    },
     "draftRecovery": {
       "title": "Restaurer le brouillon local ?",
       "description": "Un brouillon local du navigateur diffère de la copie enregistrée sur le serveur. Restaurez-le pour continuer l'édition, ou utilisez la copie du serveur et supprimez le brouillon local.",
@@ -1473,7 +1480,7 @@
   },
   "agentPrompt": {
     "instructions": "Collez ce prompt dans votre agent de code (Claude Code, Codex, Cursor ou Copilot) ouvert dans le dossier Resume Matcher. L'agent fait le travail d'IA et enregistre le résultat ici.",
-    "refresh": "Quand votre agent a terminé, actualisez cette page pour voir les changements.",
+    "refresh": "Cette page se met à jour toute seule à mesure que votre agent enregistre son travail.",
     "copy": "Copier le prompt",
     "copied": "Copié",
     "modeTitle": "Le mode agent est activé",
