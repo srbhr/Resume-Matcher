@@ -930,11 +930,13 @@
     },
     "llmConfiguration": {
       "selectedProvider": "選択中: {provider}",
-      "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はお使いのアカウント経由でプロンプトを Anthropic に送信し、独自の既定モデルを使用します。",
+      "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はお使いのアカウント経由でプロンプトを Anthropic に送信します。",
+      "claudeCliDefaultModel": "Claude Code の既定",
+      "claudeCliModelHint": "各エイリアスは、そのファミリーの最新モデルを使います。使えるモデルは Claude プランによって決まります。",
       "claudeCliName": "Claude サブスクリプション（Claude Code 経由）",
       "claudeCliShortName": "Claude プラン",
-      "claudeCliWarningTitle": "公式サポート対象外",
-      "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Pro / Max サブスクリプションを利用することを公式にはサポートしておらず、ポリシーが変更されると動作しなくなる可能性があります（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher が Claude の認証情報を見たり保存したりすることはありません。実行するのは、ご自身で `claude auth login` からサインインした Claude Code CLI だけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
+      "claudeCliWarningTitle": "自己責任でご利用ください",
+      "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Free / Pro / Max プラン経由でリクエストを送ることを認めておらず、このオプションもそれに該当する可能性があります。Anthropic は予告なくこれを適用できます（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher が Claude の認証情報を見たり保存したりすることはありません。実行するのは、ご自身で `claude auth login` からサインインした Claude Code CLI だけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
       "communityBuilt": "コミュニティが開発した機能です。",
       "chatgptName": "ChatGPT プラン（Sign in with ChatGPT）",
       "chatgptShortName": "ChatGPT プラン",
@@ -1010,6 +1012,24 @@
       "modelsFailed": "ChatGPT のモデルを読み込めませんでした。モデル名を入力してください。",
       "modelHint": "サインイン後、モデルは ChatGPT アカウントから取得されます。",
       "connectToSave": "このプロバイダーを保存するには、ChatGPT でサインインしてください。"
+    },
+    "subscriptionRisk": {
+      "claudeCli": {
+        "title": "Claude プランをここで使いますか？",
+        "risk": "Anthropic は、サードパーティ製アプリが Claude Free / Pro / Max プラン経由でリクエストを送ることを認めていません。Resume Matcher はご自身の Claude Code CLI を実行し、認証情報を見ることはありませんが、Anthropic がこれをサードパーティによる利用とみなし、予告なくアカウントに措置を取る可能性があります。",
+        "usage": "リクエストは Claude プランの利用上限に計上されます。このオプションはコミュニティが開発したもので、Anthropic が Claude Code やポリシーを変更すると動作しなくなる可能性があります。"
+      },
+      "chatgpt": {
+        "title": "ChatGPT プランをここで使いますか？",
+        "risk": "OpenAI のオープンソースアプリ向け Sign in with ChatGPT を使用します。プレビュー版のため、OpenAI が変更または終了する可能性があります。ChatGPT Plus と Pro で利用できます。",
+        "usage": "リクエストは ChatGPT プランの利用上限に計上され、この上限はプランを使う他のアプリと共有されます。このオプションはコミュニティが開発したものです。"
+      },
+      "mcpTitle": "おすすめ：MCP サーバーを使う",
+      "mcpBody": "すでに Claude Code や Codex をお使いですか？Resume Matcher の MCP サーバーを追加し、エージェントに履歴書の調整を依頼してください。AI の処理はエージェント自身のアプリで行われ、Resume Matcher は結果の保存・チェック・出力を担当します。API キーは不要です。",
+      "mcpLink": "MCP セットアップガイド",
+      "alternative": "確実に利用したい場合は、戻って API キーまたは Ollama などのローカルモデルを使ってください。",
+      "back": "いいえ、戻る",
+      "accept": "はい、リスクを承諾します"
     },
     "contentGeneration": {
       "title": "コンテンツ生成",

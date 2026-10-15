@@ -8,7 +8,8 @@ response object so the rest of ``app/llm.py`` keeps working unchanged.
 
 The CLI exposes no sampling or output-length flags, so ``temperature``,
 ``max_tokens``, ``reasoning_effort`` and ``response_format`` are not
-forwarded; ``complete_json`` already relies on prompt-only JSON.
+forwarded; ``complete_json`` already relies on prompt-only JSON. The configured
+model is forwarded as ``--model`` when it names a Claude model.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import shutil
 import tempfile
 from types import SimpleNamespace
@@ -25,6 +27,26 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 CLAUDE_BIN = "claude"
+
+
+#: Aliases the CLI resolves to the latest model of each family.
+MODEL_ALIASES = frozenset({"fable", "opus", "sonnet", "haiku"})
+_FULL_MODEL_NAME = re.compile(r"claude-[a-z0-9][a-z0-9.-]*")
+
+
+def cli_model_arg(model: str | None) -> str | None:
+    """The ``--model`` value for ``model``, or ``None`` for the CLI's default.
+
+    Only an alias or a full ``claude-…`` name is forwarded. Anything else, such
+    as the ``claude_cli`` sentinel the settings page stores or the
+    ``LLM_MODEL`` default left in ``.env``, keeps Claude Code's own default as
+    before. The pattern also keeps the value a constant-shaped argument: no
+    leading dash for the CLI to read as a flag, nothing cmd.exe re-parses.
+    """
+    name = (model or "").strip().lower()
+    if name in MODEL_ALIASES or _FULL_MODEL_NAME.fullmatch(name):
+        return name
+    return None
 
 
 class ClaudeCliNotFoundError(RuntimeError):
@@ -127,13 +149,17 @@ async def _run(
     return out, err, proc.returncode
 
 
-async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
+async def claude_acompletion(
+    *, cli_model: str | None = None, **kwargs: Any
+) -> SimpleNamespace:
     """Drop-in replacement for ``litellm.acompletion`` / ``router.acompletion``.
 
-    Ignores provider/model/api_key/response_format kwargs — the only things
-    that matter are ``messages`` and ``timeout``. Runs ``claude -p`` and returns
-    its result. Raises ``TimeoutError`` (after killing the process) when the CLI
-    does not finish within ``timeout`` seconds.
+    ``cli_model`` is the configured model (see ``cli_model_arg``);
+    ``kwargs["model"]`` is LiteLLM's Router alias and is ignored, as are the
+    provider/api_key/response_format kwargs. Only ``messages`` and ``timeout``
+    are read. Runs ``claude -p`` and returns its result. Raises
+    ``TimeoutError`` (after killing the process) when the CLI does not finish
+    within ``timeout`` seconds.
     """
     messages = kwargs.get("messages") or []
     system_text, prompt = _split_messages(messages)
@@ -143,7 +169,8 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
     prompt_file: str | None = None
     if batch_shim:
         # cmd.exe re-parses a batch file's arguments (%, &, "), so the prompt
-        # must not travel on its command line. Every other argument is a constant.
+        # must not travel on its command line. Every other argument is a constant
+        # or a model name cli_model_arg has checked.
         fd, prompt_file = tempfile.mkstemp(prefix="rm-system-", suffix=".txt")
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(system_prompt)
@@ -151,12 +178,16 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
     else:
         system_args = ["--system-prompt", system_prompt]
 
+    model = cli_model_arg(cli_model)
+    model_args = [f"--model={model}"] if model else []
+
     args = [
         executable,
         "-p",
         "--output-format",
         "json",
         *system_args,
+        *model_args,
         # Empty list = no tools at all. This is a text-completion provider: a
         # resume or job description that tells the model to run Bash or edit
         # files must not be able to, whatever RAW_SYSTEM says.

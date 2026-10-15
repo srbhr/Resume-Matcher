@@ -930,11 +930,13 @@
     },
     "llmConfiguration": {
       "selectedProvider": "선택됨: {provider}",
-      "claudeCliNote": "이 컴퓨터에 설치되어 로그인된 Claude Code CLI를 실행하므로 여기에서는 API 키가 필요하지 않습니다. Claude Code는 계정을 통해 프롬프트를 Anthropic으로 전송하며 자체 기본 모델을 사용합니다.",
+      "claudeCliNote": "이 컴퓨터에 설치되어 로그인된 Claude Code CLI를 실행하므로 여기에서는 API 키가 필요하지 않습니다. Claude Code는 계정을 통해 프롬프트를 Anthropic으로 전송합니다.",
+      "claudeCliDefaultModel": "Claude Code 기본값",
+      "claudeCliModelHint": "각 별칭은 해당 계열의 최신 모델을 사용합니다. 사용할 수 있는 모델은 Claude 요금제에 따라 다릅니다.",
       "claudeCliName": "Claude 구독(Claude Code 경유)",
       "claudeCliShortName": "Claude 요금제",
-      "claudeCliWarningTitle": "공식 지원 아님",
-      "claudeCliWarning": "Anthropic은 서드파티 앱이 Claude Pro 또는 Max 구독을 사용하는 것을 공식적으로 지원하지 않으며, 정책이 바뀌면 작동하지 않을 수 있습니다(안정적인 이용을 원하면 Anthropic API 키를 사용하세요). Resume Matcher는 Claude 자격 증명을 보거나 저장하지 않으며, 사용자가 `claude auth login`으로 직접 로그인한 본인의 Claude Code CLI를 실행할 뿐입니다. 요청은 Claude 요금제의 사용 한도에 포함되며, Anthropic이 대신 사용 크레딧에서 차감할 수도 있습니다.",
+      "claudeCliWarningTitle": "위험은 본인 책임",
+      "claudeCliWarning": "Anthropic은 서드파티 앱이 Claude Free, Pro 또는 Max 요금제를 통해 요청을 보내는 것을 허용하지 않으며, 이 옵션도 이에 해당할 수 있습니다. Anthropic은 사전 통지 없이 이를 적용할 수 있습니다(안정적인 이용을 원하면 Anthropic API 키를 사용하세요). Resume Matcher는 Claude 자격 증명을 보거나 저장하지 않으며, 사용자가 `claude auth login`으로 직접 로그인한 본인의 Claude Code CLI를 실행할 뿐입니다. 요청은 Claude 요금제의 사용 한도에 포함되며, Anthropic이 대신 사용 크레딧에서 차감할 수도 있습니다.",
       "communityBuilt": "커뮤니티에서 만든 기능입니다.",
       "chatgptName": "ChatGPT 요금제(Sign in with ChatGPT)",
       "chatgptShortName": "ChatGPT 요금제",
@@ -1010,6 +1012,24 @@
       "modelsFailed": "ChatGPT 모델을 불러오지 못했습니다. 대신 모델 이름을 입력하세요.",
       "modelHint": "로그인하면 모델 목록을 ChatGPT 계정에서 불러옵니다.",
       "connectToSave": "이 제공업체를 저장하려면 ChatGPT로 로그인하세요."
+    },
+    "subscriptionRisk": {
+      "claudeCli": {
+        "title": "여기에서 Claude 요금제를 사용할까요?",
+        "risk": "Anthropic은 서드파티 앱이 Claude Free, Pro 또는 Max 요금제를 통해 요청을 보내는 것을 허용하지 않습니다. Resume Matcher는 본인의 Claude Code CLI를 실행하며 자격 증명을 보지 않지만, Anthropic이 이를 서드파티 사용으로 보고 사전 통지 없이 계정에 조치를 취할 수 있습니다.",
+        "usage": "요청은 Claude 요금제의 사용 한도에 포함됩니다. 이 옵션은 커뮤니티에서 만든 기능이며, Anthropic이 Claude Code나 정책을 변경하면 작동하지 않을 수 있습니다."
+      },
+      "chatgpt": {
+        "title": "여기에서 ChatGPT 요금제를 사용할까요?",
+        "risk": "OpenAI의 오픈 소스 앱용 Sign in with ChatGPT를 사용합니다. 프리뷰 기능이므로 OpenAI가 변경하거나 중단할 수 있습니다. ChatGPT Plus와 Pro에서 사용할 수 있습니다.",
+        "usage": "요청은 ChatGPT 요금제의 사용 한도에 포함되며, 이 한도는 요금제를 사용하는 다른 앱과 공유됩니다. 이 옵션은 커뮤니티에서 만든 기능입니다."
+      },
+      "mcpTitle": "권장: MCP 서버 사용",
+      "mcpBody": "이미 Claude Code나 Codex를 사용 중인가요? Resume Matcher의 MCP 서버를 추가하고 에이전트에게 이력서 맞춤 작업을 요청하세요. AI 작업은 에이전트가 자체 앱에서 수행하고, Resume Matcher는 결과를 저장, 검사, 렌더링합니다. API 키가 필요 없습니다.",
+      "mcpLink": "MCP 설정 가이드",
+      "alternative": "안정적인 이용을 원하시나요? 돌아가서 API 키나 Ollama 같은 로컬 모델을 사용하세요.",
+      "back": "아니요, 돌아가기",
+      "accept": "예, 위험을 감수합니다"
     },
     "contentGeneration": {
       "title": "콘텐츠 생성",

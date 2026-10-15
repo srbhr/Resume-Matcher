@@ -456,7 +456,7 @@ async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -
             "Re-enter the key in Settings."
         )
     if config.provider == "claude_cli":
-        return await claude_acompletion(**kwargs)
+        return await claude_acompletion(cli_model=config.model, **kwargs)
     if config.provider == "chatgpt":
         # Signed-in ChatGPT plan: the Responses API with the sign-in token.
         # ``kwargs["model"]`` is the Router alias here, so pass the real slug.

@@ -112,6 +112,12 @@ async function renderLoaded() {
   await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
 }
 
+/** Pick a subscription provider and accept the risk dialog it opens. */
+function chooseSubscription(providers: HTMLElement, label: string) {
+  fireEvent.click(within(providers).getByRole('radio', { name: label }));
+  fireEvent.click(screen.getByRole('button', { name: 'settings.subscriptionRisk.accept' }));
+}
+
 /** A StatusIndicator label: its sibling is the 12px square, never an icon. */
 function expectStatusSquare(label: HTMLElement, square: string) {
   const sibling = label.previousElementSibling;
@@ -189,7 +195,7 @@ describe('settings page (Swiss sweep)', () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
 
-    fireEvent.click(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL }));
+    chooseSubscription(providers, CLAUDE_CLI_LABEL);
 
     expect(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL })).toHaveAttribute(
       'aria-checked',
@@ -197,16 +203,20 @@ describe('settings page (Swiss sweep)', () => {
     );
   });
 
-  it('replaces the key, model, endpoint and effort fields with a note for the Claude subscription', async () => {
+  it('replaces the key, endpoint and effort fields with a note and a model picker for the Claude subscription', async () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
     expect(document.getElementById('apiKey')).not.toBeNull();
 
-    fireEvent.click(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL }));
+    chooseSubscription(providers, CLAUDE_CLI_LABEL);
 
     expect(document.getElementById('apiKey')).toBeNull();
     expect(document.getElementById('apiBase')).toBeNull();
-    expect(screen.queryByLabelText('settings.llmConfiguration.modelLabel')).toBeNull();
+    // The model is a picker of Claude Code aliases, not a free-text field.
+    expect(document.getElementById('model')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /settings\.llmConfiguration\.modelLabel/ })
+    ).toHaveTextContent('settings.llmConfiguration.claudeCliDefaultModel');
     expect(screen.queryByText('settings.llmConfiguration.reasoningEffortLabel')).toBeNull();
     expect(
       screen.getByText('settings.llmConfiguration.claudeCliNote').closest('[role="status"]')
@@ -223,7 +233,7 @@ describe('settings page (Swiss sweep)', () => {
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
     expect(screen.queryByText('settings.llmConfiguration.claudeCliWarning')).toBeNull();
 
-    fireEvent.click(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL }));
+    chooseSubscription(providers, CLAUDE_CLI_LABEL);
 
     // Alert tone="warning" renders role="alert" with the 2px warning border.
     const warning = screen
@@ -243,7 +253,7 @@ describe('settings page (Swiss sweep)', () => {
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
     expect(screen.queryByText('settings.llmConfiguration.chatgptWarning')).toBeNull();
 
-    fireEvent.click(within(providers).getByRole('radio', { name: CHATGPT_LABEL }));
+    chooseSubscription(providers, CHATGPT_LABEL);
 
     // Not signed in: the panel offers Continue with ChatGPT instead of a key field.
     expect(
@@ -270,7 +280,7 @@ describe('settings page (Swiss sweep)', () => {
   it('keeps Save off, with a hint, while ChatGPT is not connected', async () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
-    fireEvent.click(within(providers).getByRole('radio', { name: CHATGPT_LABEL }));
+    chooseSubscription(providers, CHATGPT_LABEL);
 
     const hint = await screen.findByText('settings.chatgpt.connectToSave');
     const save = screen.getByRole('button', { name: 'common.save' });
@@ -292,7 +302,7 @@ describe('settings page (Swiss sweep)', () => {
     });
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
-    fireEvent.click(within(providers).getByRole('radio', { name: CHATGPT_LABEL }));
+    chooseSubscription(providers, CHATGPT_LABEL);
 
     expect(await screen.findByText('settings.chatgpt.connected')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'common.save' })).toBeEnabled());
@@ -304,6 +314,141 @@ describe('settings page (Swiss sweep)', () => {
     const label = screen.getByText('settings.setupRequired.title');
     expect(label.closest('[role="alert"]')).not.toBeNull();
     expect(label.closest('[role="status"]')).toBeNull();
+  });
+
+  it.each([
+    [CLAUDE_CLI_LABEL, 'settings.subscriptionRisk.claudeCli'],
+    [CHATGPT_LABEL, 'settings.subscriptionRisk.chatgpt'],
+  ])('asks before switching to %s and stays put on "take me back"', async (label, copy) => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+
+    fireEvent.click(within(providers).getByRole('radio', { name: label }));
+
+    const dialog = screen.getByRole('dialog', { name: `${copy}.title` });
+    expect(dialog).toHaveTextContent(`${copy}.risk`);
+    expect(dialog).toHaveTextContent('settings.subscriptionRisk.mcpTitle');
+    expect(
+      within(dialog).getByRole('link', { name: 'settings.subscriptionRisk.mcpLink' })
+    ).toHaveAttribute(
+      'href',
+      expect.stringContaining('SETUP.md#use-resume-matcher-from-claude-code')
+    );
+    // Nothing switches until the user accepts.
+    expect(within(providers).getByRole('radio', { name: 'OpenAI' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'settings.subscriptionRisk.back' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(within(providers).getByRole('radio', { name: 'OpenAI' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(document.getElementById('apiKey')).not.toBeNull();
+  });
+
+  it('switches to the subscription provider once the risk is accepted', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+
+    chooseSubscription(providers, CLAUDE_CLI_LABEL);
+
+    expect(within(providers).getByRole('radio', { name: CLAUDE_CLI_LABEL })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('saves the Claude Code model chosen in the picker', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    chooseSubscription(providers, CLAUDE_CLI_LABEL);
+
+    fireEvent.click(screen.getByRole('button', { name: /settings\.llmConfiguration\.modelLabel/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'Sonnet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() =>
+      expect(api.updateLlmConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'claude_cli', model: 'sonnet' })
+      )
+    );
+  });
+
+  it('shows a stored full Claude model name, and Claude Code default for anything else', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: 'claude-sonnet-5-5',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    const { unmount } = render(<SettingsPage />);
+    const picker = await screen.findByRole('button', {
+      name: /settings\.llmConfiguration\.modelLabel/,
+    });
+    await waitFor(() => expect(picker).toHaveTextContent('claude-sonnet-5-5'));
+    unmount();
+
+    // A stale LLM_MODEL from .env is not forwarded to the CLI, so it runs the default.
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: 'gpt-5-nano-2025-08-07',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    render(<SettingsPage />);
+    const fallback = await screen.findByRole('button', {
+      name: /settings\.llmConfiguration\.modelLabel/,
+    });
+    await waitFor(() =>
+      expect(fallback).toHaveTextContent('settings.llmConfiguration.claudeCliDefaultModel')
+    );
+  });
+
+  it('keeps a stored full Claude model name selectable after choosing another model', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: 'claude-sonnet-5-5',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    render(<SettingsPage />);
+    const picker = await screen.findByRole('button', {
+      name: /settings\.llmConfiguration\.modelLabel/,
+    });
+    await waitFor(() => expect(picker).toHaveTextContent('claude-sonnet-5-5'));
+
+    fireEvent.click(picker);
+    fireEvent.click(screen.getByRole('option', { name: 'Sonnet' }));
+    fireEvent.click(picker);
+    fireEvent.click(screen.getByRole('option', { name: 'claude-sonnet-5-5' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() =>
+      expect(api.updateLlmConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'claude_cli', model: 'claude-sonnet-5-5' })
+      )
+    );
+  });
+
+  it('shows a stored alias in any case or padding, as the backend runs it', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: ' Opus ',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    render(<SettingsPage />);
+
+    const picker = await screen.findByRole('button', {
+      name: /settings\.llmConfiguration\.modelLabel/,
+    });
+    await waitFor(() => expect(picker).toHaveTextContent('Opus'));
+    expect(picker).not.toHaveTextContent('settings.llmConfiguration.claudeCliDefaultModel');
   });
 
   it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {
@@ -324,6 +469,8 @@ describe('settings page (Swiss sweep)', () => {
       'aria-checked',
       'false'
     );
+    // Already chosen and accepted earlier: loading it does not ask again.
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('shows a monochrome brand mark on each provider segment except OpenAI-compatible', async () => {

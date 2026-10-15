@@ -930,11 +930,13 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECCIONADO: {provider}",
-      "claudeCliNote": "Ejecuta la CLI de Claude Code instalada y con sesión iniciada en este equipo, por lo que no se necesita clave de API aquí. Claude Code sigue enviando tus prompts a Anthropic a través de tu cuenta y usa su propio modelo predeterminado.",
+      "claudeCliNote": "Ejecuta la CLI de Claude Code instalada y con sesión iniciada en este equipo, por lo que no se necesita clave de API aquí. Claude Code sigue enviando tus prompts a Anthropic a través de tu cuenta.",
+      "claudeCliDefaultModel": "Predeterminado de Claude Code",
+      "claudeCliModelHint": "Cada alias usa el modelo más reciente de su familia. Tu plan de Claude decide cuáles puedes usar.",
       "claudeCliName": "Suscripción a Claude (vía Claude Code)",
       "claudeCliShortName": "Plan Claude",
-      "claudeCliWarningTitle": "Sin soporte oficial",
-      "claudeCliWarning": "Anthropic no admite oficialmente que aplicaciones de terceros usen las suscripciones Claude Pro o Max, por lo que esto puede dejar de funcionar si cambia su política; para un acceso garantizado, usa una clave de API de Anthropic. Resume Matcher nunca ve ni almacena tus credenciales de Claude: ejecuta tu propia CLI de Claude Code, en la que inicias sesión tú mismo con `claude auth login`. Las solicitudes cuentan para los límites de uso de tu plan de Claude, y Anthropic puede cargarlas a créditos de uso en su lugar.",
+      "claudeCliWarningTitle": "Úsalo bajo tu propio riesgo",
+      "claudeCliWarning": "Anthropic no permite que aplicaciones de terceros envíen solicitudes a través de los planes Claude Free, Pro o Max, y esta opción podría considerarse una de ellas. Anthropic puede aplicar esta norma sin previo aviso; para un acceso garantizado, usa una clave de API de Anthropic. Resume Matcher nunca ve ni almacena tus credenciales de Claude: ejecuta tu propia CLI de Claude Code, en la que inicias sesión tú mismo con `claude auth login`. Las solicitudes cuentan para los límites de uso de tu plan de Claude, y Anthropic puede cargarlas a créditos de uso en su lugar.",
       "communityBuilt": "Función creada por la comunidad.",
       "chatgptName": "Plan de ChatGPT (Iniciar sesión con ChatGPT)",
       "chatgptShortName": "Plan ChatGPT",
@@ -1010,6 +1012,24 @@
       "modelsFailed": "No se pudieron cargar tus modelos de ChatGPT. Escribe el nombre de un modelo.",
       "modelHint": "Después de iniciar sesión, los modelos provienen de tu cuenta de ChatGPT.",
       "connectToSave": "Inicia sesión con ChatGPT para guardar este proveedor."
+    },
+    "subscriptionRisk": {
+      "claudeCli": {
+        "title": "¿Usar tu plan de Claude aquí?",
+        "risk": "Anthropic no permite que aplicaciones de terceros envíen solicitudes a través de los planes Claude Free, Pro o Max. Resume Matcher ejecuta tu propia CLI de Claude Code y nunca ve tus credenciales, pero Anthropic podría considerarlo uso de terceros y tomar medidas sobre tu cuenta sin previo aviso.",
+        "usage": "Las solicitudes cuentan para los límites de uso de tu plan de Claude. Esta opción la creó la comunidad y puede dejar de funcionar si Anthropic cambia Claude Code o su política."
+      },
+      "chatgpt": {
+        "title": "¿Usar tu plan de ChatGPT aquí?",
+        "risk": "Usa Sign in with ChatGPT de OpenAI para aplicaciones de código abierto. Es una versión preliminar, así que OpenAI puede cambiarla o retirarla. Funciona con ChatGPT Plus y Pro.",
+        "usage": "Las solicitudes cuentan para los límites de uso de tu plan de ChatGPT, que compartes con otras aplicaciones que usan tu plan. Esta opción la creó la comunidad."
+      },
+      "mcpTitle": "Recomendado: usa el servidor MCP",
+      "mcpBody": "¿Ya usas Claude Code o Codex? Añade el servidor MCP de Resume Matcher y pide a tu agente que adapte tu currículum. El agente hace el trabajo de IA en su propia aplicación, y Resume Matcher guarda, revisa y genera el resultado. No necesitas clave de API.",
+      "mcpLink": "Guía de configuración de MCP",
+      "alternative": "¿Prefieres un acceso garantizado? Vuelve y usa una clave de API o un modelo local como Ollama.",
+      "back": "No, volver",
+      "accept": "Sí, acepto el riesgo"
     },
     "contentGeneration": {
       "title": "Generación de contenido",
