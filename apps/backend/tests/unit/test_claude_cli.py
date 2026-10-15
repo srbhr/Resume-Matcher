@@ -19,6 +19,7 @@ from app.claude_cli import (
     RAW_SYSTEM,
     ClaudeCliNotFoundError,
     claude_acompletion,
+    cli_model_arg,
 )
 from app.llm import (
     LLMConfig,
@@ -322,6 +323,56 @@ class TestCommandLine:
 
         assert stdin == hostile.encode()
         assert all(hostile not in arg for arg in args)
+
+
+class TestModelSelection:
+    """The settings page's model reaches the CLI as ``--model``; other values do not."""
+
+    @staticmethod
+    async def _args(cli_model: str | None) -> list[str]:
+        process = _FakeProcess(stdout=_envelope())
+        spawn = _spawn(process)
+        with patch("app.claude_cli.asyncio.create_subprocess_exec", spawn):
+            await claude_acompletion(
+                cli_model=cli_model, messages=[{"role": "user", "content": "Hi"}]
+            )
+        return list(spawn.call_args.args)
+
+    @pytest.mark.parametrize("alias", ["fable", "opus", "sonnet", "haiku"])
+    async def test_alias_is_passed_as_model(self, alias: str):
+        assert f"--model={alias}" in await self._args(alias)
+
+    async def test_full_claude_model_name_is_passed(self):
+        assert "--model=claude-sonnet-5-5" in await self._args("claude-sonnet-5-5")
+
+    @pytest.mark.parametrize(
+        "model",
+        [
+            None,
+            "",
+            "claude_cli",  # the settings page's "Claude Code default"
+            "gpt-5-nano-2025-08-07",  # LLM_MODEL's default left in .env
+            "--dangerously-skip-permissions",
+            "sonnet --tools Bash",
+            'claude-x" & calc',
+        ],
+    )
+    async def test_anything_else_keeps_the_cli_default(self, model: str | None):
+        args = await self._args(model)
+
+        assert not any(arg.startswith("--model") for arg in args)
+
+    def test_alias_case_and_padding_are_ignored(self):
+        assert cli_model_arg("  Opus ") == "opus"
+
+    async def test_complete_forwards_the_configured_model(self):
+        cli = AsyncMock(return_value=_shaped("ok"))
+        config = LLMConfig(provider="claude_cli", model="sonnet", api_key="")
+
+        with patch("app.llm.claude_acompletion", cli):
+            await complete("Hi", config=config)
+
+        assert cli.call_args.kwargs["cli_model"] == "sonnet"
 
 
 class TestSamplingControls:

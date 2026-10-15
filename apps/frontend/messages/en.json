@@ -930,11 +930,13 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECTED: {provider}",
-      "claudeCliNote": "Runs the Claude Code CLI installed and signed in on this machine, so no API key is needed here. Claude Code still sends your prompts to Anthropic through your account, and it uses its own default model.",
+      "claudeCliNote": "Runs the Claude Code CLI installed and signed in on this machine, so no API key is needed here. Claude Code still sends your prompts to Anthropic through your account.",
+      "claudeCliDefaultModel": "Claude Code default",
+      "claudeCliModelHint": "Each alias runs the newest model in its family. Your Claude plan decides which ones you can use.",
       "claudeCliName": "Claude subscription (via Claude Code)",
       "claudeCliShortName": "Claude plan",
-      "claudeCliWarningTitle": "Not officially supported",
-      "claudeCliWarning": "Anthropic does not officially support third-party apps using Claude Pro or Max subscriptions, so this may stop working if its policy changes; for guaranteed access, use an Anthropic API key. Resume Matcher never sees or stores your Claude credentials: it runs your own Claude Code CLI, which you sign in to yourself with `claude auth login`. Requests count toward your Claude plan's usage limits, and Anthropic may draw them from usage credits instead.",
+      "claudeCliWarningTitle": "Use at your own risk",
+      "claudeCliWarning": "Anthropic doesn't allow third-party apps to route requests through Claude Free, Pro or Max plans, and this option may count as one. Anthropic can enforce that without notice; for guaranteed access, use an Anthropic API key. Resume Matcher never sees or stores your Claude credentials: it runs your own Claude Code CLI, which you sign in to yourself with `claude auth login`. Requests count toward your Claude plan's usage limits, and Anthropic may draw them from usage credits instead.",
       "communityBuilt": "Community-built feature.",
       "chatgptName": "ChatGPT plan (Sign in with ChatGPT)",
       "chatgptShortName": "ChatGPT plan",
@@ -1010,6 +1012,24 @@
       "modelsFailed": "Couldn't load your ChatGPT models. Enter a model name instead.",
       "modelHint": "After you sign in, models come from your ChatGPT account.",
       "connectToSave": "Sign in with ChatGPT to save this provider."
+    },
+    "subscriptionRisk": {
+      "claudeCli": {
+        "title": "Use your Claude plan here?",
+        "risk": "Anthropic doesn't allow third-party apps to route requests through Claude Free, Pro or Max plans. Resume Matcher runs your own Claude Code CLI and never sees your credentials, but Anthropic may still treat this as third-party use and can act on your account without notice.",
+        "usage": "Requests count toward your Claude plan's usage limits. This option is community-built and may stop working if Anthropic changes Claude Code or its policy."
+      },
+      "chatgpt": {
+        "title": "Use your ChatGPT plan here?",
+        "risk": "This uses OpenAI's Sign in with ChatGPT for open-source apps. It's a preview, so OpenAI may change or end it. It works with ChatGPT Plus and Pro.",
+        "usage": "Requests count toward your ChatGPT plan's usage limits, which you share with other apps that use your plan. This option is community-built."
+      },
+      "mcpTitle": "Recommended: use the MCP server",
+      "mcpBody": "Already use Claude Code or Codex? Add Resume Matcher's MCP server and ask your agent to tailor your resume. The agent does the AI work in its own app, and Resume Matcher saves, checks and renders the result. No API key needed.",
+      "mcpLink": "MCP setup guide",
+      "alternative": "Prefer guaranteed access? Go back and use an API key or a local model such as Ollama.",
+      "back": "No, take me back",
+      "accept": "Yes, I accept the risk"
     },
     "contentGeneration": {
       "title": "Content generation",

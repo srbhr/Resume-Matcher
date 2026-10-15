@@ -36,6 +36,10 @@ import {
 import { API_URL } from '@/lib/api/client';
 import { CHATGPT_RETURN_OUTCOMES, type ChatGptReturnOutcome } from '@/lib/api/chatgpt';
 import { ChatGptConnection } from '@/components/settings/chatgpt-connection';
+import {
+  SubscriptionRiskDialog,
+  type SubscriptionProvider,
+} from '@/components/settings/subscription-risk-dialog';
 import { getVersionString } from '@/lib/config/version';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -104,6 +108,15 @@ const FULL_NAME_KEYS: Partial<Record<LLMProvider, string>> = {
   claude_cli: 'settings.llmConfiguration.claudeCliName',
   chatgpt: 'settings.llmConfiguration.chatgptName',
 };
+/** Claude Code's model aliases; `claude_cli` (the stored default) keeps Claude Code's own model. */
+const CLAUDE_CLI_ALIASES = [
+  { id: 'fable', label: 'Fable' },
+  { id: 'opus', label: 'Opus' },
+  { id: 'sonnet', label: 'Sonnet' },
+  { id: 'haiku', label: 'Haiku' },
+];
+/** A full model name the backend forwards to the CLI, e.g. one set as LLM_MODEL in .env. */
+const CLAUDE_FULL_MODEL_NAME = /^claude-[a-z0-9][a-z0-9.-]*$/;
 /** The ChatGPT plan shares OpenAI's mark. */
 const brandMark = (p: LLMProvider): string => (p === 'chatgpt' ? 'openai' : p);
 
@@ -205,6 +218,9 @@ export default function SettingsPage() {
     field: string;
     missing: string[];
   } | null>(null);
+
+  // Subscription provider awaiting the risk confirmation (null = dialog closed).
+  const [riskProvider, setRiskProvider] = useState<SubscriptionProvider | null>(null);
 
   // Per-provider key deletion confirm target (null = dialog closed).
   const [keyToDelete, setKeyToDelete] = useState<ApiKeyProvider | null>(null);
@@ -439,8 +455,17 @@ export default function SettingsPage() {
     }
   };
 
-  // Handle provider change
+  // Handle provider change. Switching to a subscription provider waits for the
+  // user to accept the risk in SubscriptionRiskDialog.
   const handleProviderChange = (newProvider: LLMProvider) => {
+    if ((newProvider === 'claude_cli' || newProvider === 'chatgpt') && newProvider !== provider) {
+      setRiskProvider(newProvider);
+      return;
+    }
+    switchProvider(newProvider);
+  };
+
+  const switchProvider = (newProvider: LLMProvider) => {
     const nextInfo = PROVIDER_INFO[newProvider];
     setProvider(newProvider);
     setModel(nextInfo.defaultModel);
@@ -739,6 +764,18 @@ export default function SettingsPage() {
   const requiresApiBase = providerInfo.requiresBaseUrl ?? false;
   const usesLocalCli = providerInfo.localCli ?? false;
   const usesChatGptSignIn = providerInfo.chatgptSignIn ?? false;
+  const claudeCliModelOptions = [
+    {
+      id: PROVIDER_INFO.claude_cli.defaultModel,
+      label: t('settings.llmConfiguration.claudeCliDefaultModel'),
+    },
+    ...CLAUDE_CLI_ALIASES,
+    ...(CLAUDE_FULL_MODEL_NAME.test(model) ? [{ id: model, label: model }] : []),
+  ];
+  // Anything else (e.g. a stale LLM_MODEL) runs on Claude Code's default, so show that.
+  const claudeCliModel = claudeCliModelOptions.some((option) => option.id === model)
+    ? model
+    : PROVIDER_INFO.claude_cli.defaultModel;
   // Saving would activate a provider whose every call fails until the user signs in.
   const chatGptSaveBlocked = usesChatGptSignIn && chatGptConnected !== true;
   const fullNameKey = FULL_NAME_KEYS[provider];
@@ -970,6 +1007,17 @@ export default function SettingsPage() {
               {usesLocalCli ? (
                 <>
                   <Alert tone="info">{t('settings.llmConfiguration.claudeCliNote')}</Alert>
+                  <div className="space-y-2">
+                    <Dropdown
+                      label={t('settings.llmConfiguration.modelLabel')}
+                      value={claudeCliModel}
+                      onChange={setModel}
+                      options={claudeCliModelOptions}
+                    />
+                    <p className="text-xs text-steel font-mono">
+                      {t('settings.llmConfiguration.claudeCliModelHint')}
+                    </p>
+                  </div>
                   <Alert
                     tone="warning"
                     title={t('settings.llmConfiguration.claudeCliWarningTitle')}
@@ -1625,6 +1673,15 @@ export default function SettingsPage() {
           </div>
         </div>
       </PageFrame>
+
+      <SubscriptionRiskDialog
+        provider={riskProvider}
+        onAccept={() => {
+          if (riskProvider) switchProvider(riskProvider);
+          setRiskProvider(null);
+        }}
+        onCancel={() => setRiskProvider(null)}
+      />
 
       <ConfirmDialog
         open={keyToDelete !== null}

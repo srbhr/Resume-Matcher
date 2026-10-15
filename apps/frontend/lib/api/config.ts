@@ -190,7 +190,7 @@ export const PROVIDER_INFO: Record<
     baseUrlPlaceholder?: string;
     /**
      * Served by a CLI installed on the machine running the backend. There is no
-     * key, endpoint, model choice or reasoning effort to configure.
+     * key, endpoint or reasoning effort to configure; the model is a CLI alias.
      */
     localCli?: boolean;
     /**
@@ -233,8 +233,8 @@ export const PROVIDER_INFO: Record<
     requiresKey: false,
     defaultBaseUrl: 'http://localhost:11434',
   },
-  // Runs the `claude` CLI already signed in on this machine. The CLI picks its own
-  // model, so defaultModel is only the sentinel the backend stores. The settings page
+  // Runs the `claude` CLI already signed in on this machine. defaultModel is the
+  // sentinel for Claude Code's own default model (no --model flag). The settings page
   // shows a translated name (settings.llmConfiguration.claudeCliName); this is the
   // English fallback.
   claude_cli: {
