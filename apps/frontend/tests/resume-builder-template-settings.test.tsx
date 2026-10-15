@@ -131,7 +131,7 @@ describe('builder template settings', () => {
       expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
         'a',
         { ...DEFAULT_TEMPLATE_SETTINGS, template: 'vivid-single' },
-        expect.any(Number)
+        expect.objectContaining({ session: expect.any(String) })
       )
     );
     expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('builder template settings', () => {
       expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
         'a',
         expect.objectContaining({ template: 'vivid-single' }),
-        expect.any(Number)
+        expect.objectContaining({ session: expect.any(String) })
       )
     );
   });
@@ -170,10 +170,8 @@ describe('builder template settings', () => {
     expect(updateResumeTemplateSettings).not.toHaveBeenCalled();
   });
 
-  it('gives every formatting save a newer revision than the stored one', async () => {
-    // Saved from a device whose clock runs ahead of this one.
-    const stored = 9_999_999_999_999;
-    serveResume({ ...SAVED, revision: stored });
+  it("numbers this session's formatting saves in order", async () => {
+    serveResume({ ...SAVED, session: 'another-device', revision: 99 });
     const Builder = await importBuilder();
     render(<Builder />);
     await waitFor(() =>
@@ -187,10 +185,13 @@ describe('builder template settings', () => {
 
     const [first, second] = vi
       .mocked(updateResumeTemplateSettings)
-      .mock.calls.map(([, settings, revision]) => ({ template: settings.template, revision }));
+      .mock.calls.map(([, settings, order]) => ({ template: settings.template, ...order }));
     expect(first.template).toBe('vivid-single');
     expect(second.template).toBe('latex');
-    expect(first.revision).toBeGreaterThan(stored);
+    // One session of its own (not the stored device's), counting up.
+    expect(first.session).toBeTruthy();
+    expect(first.session).not.toBe('another-device');
+    expect(second.session).toBe(first.session);
     expect(second.revision).toBeGreaterThan(first.revision);
   });
 
@@ -207,7 +208,7 @@ describe('builder template settings', () => {
     expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
       'a',
       expect.objectContaining({ template: 'vivid-single' }),
-      expect.any(Number)
+      expect.objectContaining({ session: expect.any(String) })
     );
   });
 });

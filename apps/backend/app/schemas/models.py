@@ -619,9 +619,11 @@ class TemplateSettings(BaseModel):
     compactMode: bool = False
     showContactIcons: bool = False
     accentColor: Literal["blue", "green", "orange", "red"] = "blue"
-    # When the change was made (client ms clock, strictly increasing per tab). A save
-    # older than the stored one is ignored, so requests that arrive out of order
-    # cannot undo a newer choice.
+    # Orders saves from one builder session (a tab): `revision` counts up per session.
+    # A save older than the stored one from the same session is ignored, so that
+    # tab's requests arriving out of order cannot undo its newer choice. Saves from
+    # other sessions always apply (the last to arrive wins); no clocks involved.
+    session: str | None = Field(None, max_length=64)
     revision: int = Field(0, ge=0)
 
 

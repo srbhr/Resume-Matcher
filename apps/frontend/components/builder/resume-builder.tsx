@@ -229,10 +229,11 @@ const ResumeBuilderContent = () => {
   const pendingFormattingRef = useRef<{
     resumeId: string;
     settings: TemplateSettings;
-    revision: number;
+    order: { session: string; revision: number };
   } | null>(null);
   const formattingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // The newest formatting revision seen or made for this resume.
+  // This builder session's id and save counter (see updateResumeTemplateSettings).
+  const formattingSessionRef = useRef<string | null>(null);
   const formattingRevisionRef = useRef(0);
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
@@ -471,7 +472,6 @@ const ResumeBuilderContent = () => {
           // Store resume title for downloads
           setResumeTitle(data.title ?? null);
           setTemplateSettings(data.template_settings ?? DEFAULT_TEMPLATE_SETTINGS);
-          formattingRevisionRef.current = data.template_settings?.revision ?? 0;
           setFormattingSaveFailed(false);
           // These values belong to this resume. Explicitly applying empty values
           // prevents the preceding document's attachment from surviving a switch.
@@ -632,14 +632,15 @@ const ResumeBuilderContent = () => {
   );
 
   // Sends right away, also while the page unloads (the request is keepalive). Each save
-  // carries a newer revision, so one that arrives late cannot undo a newer choice.
+  // carries the next number in this session, so one that arrives late cannot undo a
+  // newer choice from this tab.
   const flushFormattingSave = useCallback(() => {
     if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
     formattingTimerRef.current = null;
     const pending = pendingFormattingRef.current;
     pendingFormattingRef.current = null;
     if (!pending) return;
-    updateResumeTemplateSettings(pending.resumeId, pending.settings, pending.revision).then(
+    updateResumeTemplateSettings(pending.resumeId, pending.settings, pending.order).then(
       () => setFormattingSaveFailed(false),
       (error) => {
         console.error('Failed to save resume formatting:', error);
@@ -656,10 +657,17 @@ const ResumeBuilderContent = () => {
       if (loadingState !== 'loaded') return;
       setTemplateSettings(newSettings);
       if (!resumeId) return;
-      // Above the stored revision even when this device's clock is behind.
-      const revision = Math.max(Date.now(), formattingRevisionRef.current + 1);
-      formattingRevisionRef.current = revision;
-      pendingFormattingRef.current = { resumeId, settings: newSettings, revision };
+      formattingSessionRef.current ??= `${Date.now().toString(36)}-${Math.random()
+        .toString(36)
+        .slice(2, 10)}`;
+      pendingFormattingRef.current = {
+        resumeId,
+        settings: newSettings,
+        order: {
+          session: formattingSessionRef.current,
+          revision: ++formattingRevisionRef.current,
+        },
+      };
       if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
       formattingTimerRef.current = setTimeout(flushFormattingSave, FORMATTING_SAVE_DEBOUNCE_MS);
     },

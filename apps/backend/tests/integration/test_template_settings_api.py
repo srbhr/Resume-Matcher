@@ -23,7 +23,8 @@ VIVID: dict[str, Any] = {
     "compactMode": True,
     "showContactIcons": True,
     "accentColor": "orange",
-    "revision": 1_700_000_000_000,
+    "session": "tab-1",
+    "revision": 3,
 }
 
 
@@ -160,15 +161,15 @@ async def test_resume_list_carries_each_resumes_settings(
     assert by_id[bare["resume_id"]]["template_settings"] is None
 
 
-async def test_an_older_save_cannot_undo_a_newer_one(
+async def test_a_tabs_older_save_cannot_undo_its_newer_one(
     client: AsyncClient, isolated_db: Database
 ) -> None:
     resume = await _ready_resume(isolated_db)
     url = f"/api/v1/resumes/{resume['resume_id']}/template-settings"
-    newer = {**VIVID, "template": "latex", "revision": VIVID["revision"] + 5}
+    newer = {**VIVID, "template": "latex", "revision": VIVID["revision"] + 1}
     await client.patch(url, json=newer)
 
-    # The earlier change's request arrives last.
+    # The same tab's earlier save arrives last.
     res = await client.patch(url, json=VIVID)
 
     assert res.status_code == 200
@@ -176,15 +177,16 @@ async def test_an_older_save_cannot_undo_a_newer_one(
     assert await _fetch_settings(client, resume["resume_id"]) == newer
 
 
-async def test_a_newer_save_replaces_the_stored_one(
+async def test_a_save_from_another_session_always_applies(
     client: AsyncClient, isolated_db: Database
 ) -> None:
     resume = await _ready_resume(isolated_db)
     url = f"/api/v1/resumes/{resume['resume_id']}/template-settings"
-    await client.patch(url, json=VIVID)
-    newer = {**VIVID, "template": "clean", "revision": VIVID["revision"] + 1}
+    await client.patch(url, json={**VIVID, "revision": 50})
 
-    res = await client.patch(url, json=newer)
+    # Another device or tab counts its own saves from 1: its later save still lands.
+    other = {**VIVID, "template": "clean", "session": "tab-2", "revision": 1}
+    res = await client.patch(url, json=other)
 
-    assert res.json() == newer
-    assert await _fetch_settings(client, resume["resume_id"]) == newer
+    assert res.json() == other
+    assert await _fetch_settings(client, resume["resume_id"]) == other

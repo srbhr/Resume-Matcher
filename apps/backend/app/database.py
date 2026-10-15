@@ -511,10 +511,10 @@ class Database:
     async def save_template_settings(
         self, resume_id: str, settings: dict[str, Any]
     ) -> dict[str, Any]:
-        """Store a resume's formatting unless a newer revision is already stored.
+        """Store a resume's formatting unless the same session already stored a newer one.
 
         Returns the stored settings. The read and the write share one write
-        reservation, so two concurrent saves cannot both pass the revision check.
+        reservation, so two concurrent saves cannot both pass the check.
 
         Raises:
             ResumeNotFoundError: If resume not found.
@@ -524,7 +524,12 @@ class Database:
             if row is None:
                 raise ResumeNotFoundError(resume_id)
             stored = row.template_settings
-            if stored and settings.get("revision", 0) < stored.get("revision", 0):
+            if (
+                stored
+                and settings.get("session")
+                and settings.get("session") == stored.get("session")
+                and settings.get("revision", 0) < stored.get("revision", 0)
+            ):
                 return stored
             row.template_settings = settings
             row.updated_at = _now()
