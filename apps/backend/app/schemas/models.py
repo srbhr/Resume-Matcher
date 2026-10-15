@@ -1065,6 +1065,8 @@ class StatusResponse(BaseModel):
     status: str
     llm_configured: bool
     llm_healthy: bool
+    #: The user's coding agent does the AI work; the app makes no model calls.
+    agent_mode: bool = False
     has_master_resume: bool
     database_stats: dict[str, Any]
 

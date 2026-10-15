@@ -12,7 +12,8 @@ export type LLMProvider =
   | 'groq'
   | 'ollama'
   | 'claude_cli'
-  | 'chatgpt';
+  | 'chatgpt'
+  | 'agent';
 
 // Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
 // "do not send the parameter" — the default for max compatibility.
@@ -46,6 +47,8 @@ export interface SystemStatus {
   status: 'ready' | 'setup_required';
   llm_configured: boolean;
   llm_healthy: boolean;
+  /** The user's coding agent does the AI work; the app makes no model calls. */
+  agent_mode?: boolean;
   has_master_resume: boolean;
   database_stats: DatabaseStats;
 }
@@ -198,6 +201,11 @@ export const PROVIDER_INFO: Record<
      * effort; the settings page shows the connection panel for it.
      */
     chatgptSignIn?: boolean;
+    /**
+     * The user's coding agent does the AI work through the resume-matcher command.
+     * There is no key, model, endpoint or reasoning effort to configure.
+     */
+    agentMode?: boolean;
   }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
@@ -252,6 +260,14 @@ export const PROVIDER_INFO: Record<
     defaultModel: 'gpt-6.1-sol',
     requiresKey: false,
     chatgptSignIn: true,
+  },
+  // No model of the app's own: defaultModel is only a placeholder the backend
+  // stores. The settings page shows a translated name (settings.llmConfiguration.agentName).
+  agent: {
+    name: 'Coding agent',
+    defaultModel: 'agent',
+    requiresKey: false,
+    agentMode: true,
   },
 };
 

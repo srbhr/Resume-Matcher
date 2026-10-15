@@ -16,6 +16,7 @@ const api = vi.hoisted(() => ({
   jobs: vi.fn(),
   improvements: vi.fn(),
   resumes: vi.fn(),
+  agentMode: false,
 }));
 const router = { push: api.push, back: api.back };
 const t = (key: string) => key;
@@ -39,7 +40,7 @@ vi.mock('@/components/common/resume_previewer_context', () => ({
 }));
 vi.mock('@/lib/context/status-cache', () => ({
   useStatusCache: () => ({
-    status: { llm_configured: true },
+    status: { llm_configured: !api.agentMode, agent_mode: api.agentMode },
     isLoading: false,
     incrementJobs: api.jobs,
     incrementImprovements: api.improvements,
@@ -317,5 +318,31 @@ describe('tailor page pinned preview source', () => {
     await renderPage();
     await fillJobDescriptionAndGenerate();
     expect(screen.getByTestId('selection')).toHaveTextContent('6');
+  });
+});
+
+describe('tailor page in agent mode', () => {
+  it('turns Generate into a prompt for the agent that carries the job description', async () => {
+    api.agentMode = true;
+    try {
+      api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
+      await renderPage();
+      expect(screen.getByText('agentPrompt.tailorPageMessage')).toBeInTheDocument();
+      expect(screen.queryByText('tailor.noApiKeyMessage')).toBeNull();
+
+      const job = 'A software engineer role building useful tools with Python and SQL.';
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: job } });
+      await act(async () => screen.getByRole('button', { name: 'agentPrompt.getPrompt' }).click());
+
+      expect(
+        screen.getByRole('dialog', { name: 'agentPrompt.tailor.title' })
+      ).toBeInTheDocument();
+      // The test t() returns keys only, so the prompt is the with-job variant's key.
+      expect(screen.getByText('agentPrompt.tailor.promptWithJob')).toBeInTheDocument();
+      expect(api.upload).not.toHaveBeenCalled();
+      expect(api.preview).not.toHaveBeenCalled();
+    } finally {
+      api.agentMode = false;
+    }
   });
 });

@@ -69,6 +69,7 @@ import {
   type ResumeDraftEnvelope,
 } from '@/lib/utils/resume-draft-storage';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
+import { AgentPromptDialog, type AgentTask } from '@/components/agent/agent-prompt-dialog';
 import { clearResumeWizardCompletion } from '@/lib/utils/resume-wizard-storage';
 import {
   clearAttachmentDraft,
@@ -181,7 +182,12 @@ const clearResumeDraftStorageKey = (storageKey: string): void => {
   safeStorage.remove(storageKey);
 };
 
-const ResumeBuilderContent = () => {
+interface ResumeBuilderProps {
+  /** The user's coding agent does the AI work: AI actions show a prompt for it. */
+  agentMode?: boolean;
+}
+
+const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const { t } = useTranslations();
   const { uiLanguage, contentLanguage } = useLanguage();
   const [notificationDialog, setNotificationDialog] = useState<{
@@ -311,6 +317,7 @@ const ResumeBuilderContent = () => {
   const [showRegenerateDialog, setShowRegenerateDialog] = useState<
     'cover-letter' | 'outreach' | 'interview-prep' | null
   >(null);
+  const [agentTask, setAgentTask] = useState<AgentTask | null>(null);
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
@@ -1007,7 +1014,8 @@ const ResumeBuilderContent = () => {
   const handleStartRegenerate = async () => {
     const didSave = await flushResumeChanges(true);
     if (didSave) {
-      regenerateWizard.startRegenerate();
+      if (agentMode) setAgentTask('regenerate');
+      else regenerateWizard.startRegenerate();
     }
   };
 
@@ -1263,6 +1271,10 @@ const ResumeBuilderContent = () => {
 
   const handleGenerateCoverLetter = () => {
     if (!resumeId || loadingState !== 'loaded') return;
+    if (agentMode) {
+      setAgentTask('coverLetter');
+      return;
+    }
     // If content exists, show confirmation dialog
     if (coverLetter) {
       setShowRegenerateDialog('cover-letter');
@@ -1308,6 +1320,10 @@ const ResumeBuilderContent = () => {
 
   const handleGenerateOutreach = () => {
     if (!resumeId || loadingState !== 'loaded') return;
+    if (agentMode) {
+      setAgentTask('outreach');
+      return;
+    }
     // If content exists, show confirmation dialog
     if (outreachMessage) {
       setShowRegenerateDialog('outreach');
@@ -1358,6 +1374,10 @@ const ResumeBuilderContent = () => {
 
   const handleGenerateInterviewPrep = () => {
     if (!canGenerateInterviewPrep) return;
+    if (agentMode) {
+      setAgentTask('interviewPrep');
+      return;
+    }
     if (interviewPrep) {
       setShowRegenerateDialog('interview-prep');
       return;
@@ -1846,6 +1866,14 @@ const ResumeBuilderContent = () => {
         </div>
       </div>
 
+      {agentMode && (
+        <AgentPromptDialog
+          task={agentTask}
+          resumeId={resumeId ?? ''}
+          onClose={() => setAgentTask(null)}
+        />
+      )}
+
       {/* Regenerate Confirmation Dialog */}
       <ConfirmDialog
         open={showRegenerateDialog !== null}
@@ -1945,18 +1973,18 @@ const ResumeBuilderContent = () => {
   );
 };
 
-const ResumeBuilderDocument = () => {
+const ResumeBuilderDocument = ({ agentMode }: ResumeBuilderProps) => {
   const searchParams = useSearchParams();
   // Query-only navigation can retain this page. Remount the editor at the
   // document boundary so every baseline, queue and draft belongs to one ID.
-  return <ResumeBuilderContent key={searchParams.get('id') ?? 'new'} />;
+  return <ResumeBuilderContent key={searchParams.get('id') ?? 'new'} agentMode={agentMode} />;
 };
 
-export const ResumeBuilder = () => {
+export const ResumeBuilder = ({ agentMode }: ResumeBuilderProps) => {
   const { t } = useTranslations();
   return (
     <Suspense fallback={<div>{t('common.loading')}</div>}>
-      <ResumeBuilderDocument />
+      <ResumeBuilderDocument agentMode={agentMode} />
     </Suspense>
   );
 };

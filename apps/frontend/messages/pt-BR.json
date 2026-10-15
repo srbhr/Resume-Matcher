@@ -939,6 +939,11 @@
       "claudeCliWarning": "A Anthropic não permite que aplicativos de terceiros enviem solicitações pelos planos Claude Free, Pro ou Max, e esta opção pode se enquadrar nisso. A Anthropic pode aplicar essa regra sem aviso prévio; para acesso garantido, use uma chave de API da Anthropic. O Resume Matcher nunca vê nem armazena suas credenciais do Claude: ele executa a sua própria CLI do Claude Code, na qual você mesmo faz login com `claude auth login`. As solicitações contam para os limites de uso do seu plano Claude, e a Anthropic pode descontá-las de créditos de uso em vez disso.",
       "communityBuilt": "Recurso criado pela comunidade.",
       "chatgptName": "Plano do ChatGPT (Sign in with ChatGPT)",
+      "agentShortName": "Agente de código",
+      "agentName": "Seu agente de código (Claude Code, Codex, Cursor ou Copilot)",
+      "agentNoteTitle": "Não precisa de chave de API",
+      "agentNote": "Seu agente de código faz o trabalho de IA: ele lê seu currículo e as descrições de vagas, escreve as versões adaptadas e as salva aqui com o comando resume-matcher. O app não faz chamadas de IA próprias, então os botões de IA mostram um prompt para colar no seu agente.",
+      "agentGuideLink": "Guia de configuração do agente",
       "chatgptShortName": "Plano ChatGPT",
       "chatgptWarningTitle": "Prévia",
       "chatgptWarning": "Usa o Sign in with ChatGPT oficial da OpenAI para apps de código aberto, que está em prévia e pode mudar. Funciona com ChatGPT Plus e Pro. As solicitações vão do seu computador diretamente para a API da OpenAI, e os tokens de login ficam criptografados neste computador. O uso conta para os limites do seu plano do ChatGPT: no Plus, o limite de cinco horas é compartilhado com seus outros apps que usam seu plano; o Pro não tem limite de cinco horas. Para acesso garantido, use uma chave de API da OpenAI.",
@@ -1024,9 +1029,9 @@
         "risk": "Esta opção usa o Sign in with ChatGPT da OpenAI para aplicativos de código aberto. É uma prévia, então a OpenAI pode alterá-la ou encerrá-la. Funciona com ChatGPT Plus e Pro.",
         "usage": "As solicitações contam para os limites de uso do seu plano ChatGPT, compartilhados com outros aplicativos que usam o seu plano. Esta opção foi criada pela comunidade."
       },
-      "mcpTitle": "Recomendado: use o servidor MCP",
-      "mcpBody": "Já usa o Claude Code ou o Codex? Adicione o servidor MCP do Resume Matcher e peça ao seu agente para adaptar seu currículo. O agente faz o trabalho de IA no próprio aplicativo, e o Resume Matcher salva, verifica e gera o resultado. Nenhuma chave de API é necessária.",
-      "mcpLink": "Guia de configuração do MCP",
+      "mcpTitle": "Recomendado: deixe seu agente de código fazer o trabalho",
+      "mcpBody": "Já usa Claude Code, Codex, Cursor ou Copilot? Escolha Agente de código. Seu agente faz o trabalho de IA no próprio app, e o Resume Matcher salva, verifica e gera o resultado. Não precisa de chave de API.",
+      "mcpLink": "Guia de configuração do agente",
       "alternative": "Prefere acesso garantido? Volte e use uma chave de API ou um modelo local como o Ollama.",
       "back": "Não, voltar",
       "accept": "Sim, aceito o risco"
@@ -1464,6 +1469,47 @@
       "deleteFailed": "Não foi possível remover a vaga. Tente novamente.",
       "deleteInProgress": "Esta vaga está sendo personalizada. Remova-a quando terminar.",
       "clearFailed": "Não foi possível limpar a fila. Tente novamente."
+    }
+  },
+  "agentPrompt": {
+    "instructions": "Cole este prompt no seu agente de código (Claude Code, Codex, Cursor ou Copilot) aberto na pasta do Resume Matcher. O agente faz o trabalho de IA e salva o resultado aqui.",
+    "refresh": "Quando o agente terminar, atualize esta página para ver as mudanças.",
+    "copy": "Copiar prompt",
+    "copied": "Copiado",
+    "modeTitle": "O modo agente está ativado",
+    "tailorPageMessage": "No modo agente, seu agente de código adapta os currículos. Cole a descrição da vaga abaixo e copie o prompt para o seu agente.",
+    "queuePageMessage": "No modo agente, seu agente de código cuida dos lotes. Salve cada descrição de vaga como arquivo .md ou .txt na pasta jobs/ e peça ao agente para adaptar seu currículo a todas as vagas dessa pasta.",
+    "getPrompt": "Ver prompt para o seu agente",
+    "createMaster": {
+      "title": "Crie seu currículo principal",
+      "prompt": "Use o Resume Matcher para criar meu currículo principal a partir deste arquivo: <caminho do seu currículo em PDF ou DOCX>. Se eu não tiver um arquivo de currículo, faça perguntas e crie um comigo."
+    },
+    "tailor": {
+      "title": "Adapte seu currículo",
+      "prompt": "Use o Resume Matcher para adaptar meu currículo principal a esta vaga:\n\n<cole aqui a descrição da vaga>",
+      "promptWithJob": "Use o Resume Matcher para adaptar o currículo {resumeId} a esta vaga:\n\n{job}",
+      "note": "Várias vagas? Salve cada descrição como arquivo .md ou .txt na pasta jobs/ e peça ao agente para adaptar seu currículo a todas as vagas dessa pasta. Cada uma aparece no painel."
+    },
+    "enhance": {
+      "title": "Melhore seu currículo",
+      "prompt": "Use o Resume Matcher para melhorar os tópicos do currículo {resumeId}. Pergunte sobre resultados, números e ferramentas que deixei de fora e depois atualize o currículo com minhas respostas. Não acrescente nada que eu não tenha dito."
+    },
+    "regenerate": {
+      "title": "Reescrever com seu agente",
+      "prompt": "Use o Resume Matcher para reescrever <qual experiência, projetos ou habilidades> no currículo {resumeId}: <o que melhorar>. Mantenha todos os fatos verdadeiros e me mostre as mudanças antes de salvar."
+    },
+    "coverLetter": {
+      "title": "Escrever uma carta de apresentação",
+      "prompt": "Use o Resume Matcher para escrever uma carta de apresentação para o currículo {resumeId}, para a vaga à qual ele foi adaptado, e salve-a nesse currículo."
+    },
+    "outreach": {
+      "title": "Escrever uma mensagem de contato",
+      "prompt": "Use o Resume Matcher para escrever uma mensagem curta ao recrutador da vaga à qual o currículo {resumeId} foi adaptado, e salve-a nesse currículo."
+    },
+    "interviewPrep": {
+      "title": "Preparar para a entrevista",
+      "prompt": "Use o Resume Matcher para ler o currículo {resumeId} e a vaga à qual ele foi adaptado, e me ajude a preparar a entrevista: perguntas prováveis, histórias para contar e perguntas para fazer a eles.",
+      "note": "Seu agente responde no próprio chat. No modo agente, a preparação para a entrevista não é salva no currículo."
     }
   }
 }

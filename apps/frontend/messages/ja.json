@@ -939,6 +939,11 @@
       "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Free / Pro / Max プラン経由でリクエストを送ることを認めておらず、このオプションもそれに該当する可能性があります。Anthropic は予告なくこれを適用できます（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher が Claude の認証情報を見たり保存したりすることはありません。実行するのは、ご自身で `claude auth login` からサインインした Claude Code CLI だけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
       "communityBuilt": "コミュニティが開発した機能です。",
       "chatgptName": "ChatGPT プラン（Sign in with ChatGPT）",
+      "agentShortName": "コーディングエージェント",
+      "agentName": "お使いのコーディングエージェント（Claude Code、Codex、Cursor、Copilot）",
+      "agentNoteTitle": "API キーは不要です",
+      "agentNote": "AI の作業はコーディングエージェントが行います。履歴書と求人内容を読み、最適化した版を書き、resume-matcher コマンドでここに保存します。アプリ自体は AI を呼び出さないため、AI ボタンを押すとエージェントに貼り付けるプロンプトが表示されます。",
+      "agentGuideLink": "エージェント設定ガイド",
       "chatgptShortName": "ChatGPT プラン",
       "chatgptWarningTitle": "プレビュー版",
       "chatgptWarning": "OpenAI 公式のオープンソースアプリ向け Sign in with ChatGPT を使用します。これはプレビュー版のため、変更される可能性があります。ChatGPT Plus と Pro で利用できます。リクエストはお使いのマシンから OpenAI の API に直接送信され、サインイン用のトークンはこのマシンに暗号化して保存されます。利用量は ChatGPT プランの上限に含まれます。Plus では 5 時間の上限を、プランを使う他のアプリと共有します。Pro には 5 時間の上限はありません。確実に利用するには、OpenAI の API キーを使用してください。",
@@ -1024,9 +1029,9 @@
         "risk": "OpenAI のオープンソースアプリ向け Sign in with ChatGPT を使用します。プレビュー版のため、OpenAI が変更または終了する可能性があります。ChatGPT Plus と Pro で利用できます。",
         "usage": "リクエストは ChatGPT プランの利用上限に計上され、この上限はプランを使う他のアプリと共有されます。このオプションはコミュニティが開発したものです。"
       },
-      "mcpTitle": "おすすめ：MCP サーバーを使う",
-      "mcpBody": "すでに Claude Code や Codex をお使いですか？Resume Matcher の MCP サーバーを追加し、エージェントに履歴書の調整を依頼してください。AI の処理はエージェント自身のアプリで行われ、Resume Matcher は結果の保存・チェック・出力を担当します。API キーは不要です。",
-      "mcpLink": "MCP セットアップガイド",
+      "mcpTitle": "おすすめ：コーディングエージェントに任せる",
+      "mcpBody": "Claude Code、Codex、Cursor、Copilot をすでにお使いですか？ 代わりに「コーディングエージェント」を選んでください。AI の作業はエージェントが自身のアプリ内で行い、Resume Matcher が結果を保存・確認・レンダリングします。API キーは不要です。",
+      "mcpLink": "エージェント設定ガイド",
       "alternative": "確実に利用したい場合は、戻って API キーまたは Ollama などのローカルモデルを使ってください。",
       "back": "いいえ、戻る",
       "accept": "はい、リスクを承諾します"
@@ -1464,6 +1469,47 @@
       "deleteFailed": "求人を削除できませんでした。もう一度お試しください。",
       "deleteInProgress": "この求人はカスタマイズ中です。完了してから削除してください。",
       "clearFailed": "キューを削除できませんでした。もう一度お試しください。"
+    }
+  },
+  "agentPrompt": {
+    "instructions": "Resume Matcher のフォルダで動いているコーディングエージェント（Claude Code、Codex、Cursor、Copilot）にこのプロンプトを貼り付けてください。エージェントが AI の作業を行い、結果をここに保存します。",
+    "refresh": "エージェントの作業が終わったら、このページを再読み込みして変更を確認してください。",
+    "copy": "プロンプトをコピー",
+    "copied": "コピーしました",
+    "modeTitle": "エージェントモードがオンです",
+    "tailorPageMessage": "エージェントモードでは、コーディングエージェントが履歴書を最適化します。下に求人内容を貼り付けてから、エージェント用のプロンプトをコピーしてください。",
+    "queuePageMessage": "エージェントモードでは、まとめての処理もコーディングエージェントが行います。各求人内容を jobs/ フォルダに .md または .txt ファイルとして保存し、そのすべての求人に合わせて履歴書を最適化するようエージェントに依頼してください。",
+    "getPrompt": "エージェント用のプロンプトを表示",
+    "createMaster": {
+      "title": "マスター履歴書を作成",
+      "prompt": "Resume Matcher を使って、このファイルから私のマスター履歴書を作成してください：<履歴書の PDF または DOCX のパス>。履歴書のファイルがない場合は、質問しながら一緒に作成してください。"
+    },
+    "tailor": {
+      "title": "履歴書を最適化",
+      "prompt": "Resume Matcher を使って、私のマスター履歴書をこの求人に合わせて最適化してください：\n\n<ここに求人内容を貼り付け>",
+      "promptWithJob": "Resume Matcher を使って、履歴書 {resumeId} をこの求人に合わせて最適化してください：\n\n{job}",
+      "note": "複数の求人がありますか？ 各求人内容を jobs/ フォルダに .md または .txt ファイルとして保存し、そのすべての求人に合わせて履歴書を最適化するようエージェントに依頼してください。それぞれダッシュボードに表示されます。"
+    },
+    "enhance": {
+      "title": "履歴書を強化",
+      "prompt": "Resume Matcher を使って、履歴書 {resumeId} の箇条書きを改善してください。私が書き漏らした成果・数値・ツールについて質問し、回答をもとに履歴書を更新してください。私が伝えていないことは追加しないでください。"
+    },
+    "regenerate": {
+      "title": "エージェントで書き直す",
+      "prompt": "Resume Matcher を使って、履歴書 {resumeId} の <書き直す職歴・プロジェクト・スキル> を書き直してください：<改善したい点>。事実はすべて正確に保ち、保存する前に変更内容を見せてください。"
+    },
+    "coverLetter": {
+      "title": "カバーレターを書く",
+      "prompt": "Resume Matcher を使って、履歴書 {resumeId} が最適化された求人向けのカバーレターを書き、その履歴書に保存してください。"
+    },
+    "outreach": {
+      "title": "アプローチメッセージを書く",
+      "prompt": "Resume Matcher を使って、履歴書 {resumeId} が最適化された求人の採用担当者に送る短いメッセージを書き、その履歴書に保存してください。"
+    },
+    "interviewPrep": {
+      "title": "面接の準備",
+      "prompt": "Resume Matcher を使って、履歴書 {resumeId} と、それが最適化された求人を読み、面接の準備を手伝ってください：想定される質問、話すべきエピソード、こちらから聞く質問。",
+      "note": "エージェントは自身のチャットで回答します。エージェントモードでは、面接準備の内容は履歴書に保存されません。"
     }
   }
 }

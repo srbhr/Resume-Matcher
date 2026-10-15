@@ -24,6 +24,7 @@ const t = (key: string) => key;
 // The picker label comes from i18n (the mocked t returns the key).
 const CLAUDE_CLI_LABEL = 'settings.llmConfiguration.claudeCliShortName';
 const CHATGPT_LABEL = 'settings.llmConfiguration.chatgptShortName';
+const AGENT_LABEL = 'settings.llmConfiguration.agentShortName';
 let currentStatus: typeof systemStatus | null = null;
 const systemStatus = {
   status: 'setup_required' as const,
@@ -228,6 +229,38 @@ describe('settings page (Swiss sweep)', () => {
     expect(screen.queryByText('settings.llmConfiguration.claudeCliNote')).toBeNull();
   });
 
+  it('switches to the coding agent without a risk prompt, key, model or connection test', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+
+    fireEvent.click(within(providers).getByRole('radio', { name: AGENT_LABEL }));
+
+    // Agent mode is the route the risk dialog recommends, so it does not ask.
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(within(providers).getByRole('radio', { name: AGENT_LABEL })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(document.getElementById('apiKey')).toBeNull();
+    expect(document.getElementById('apiBase')).toBeNull();
+    expect(document.getElementById('model')).toBeNull();
+    expect(screen.queryByText('settings.llmConfiguration.reasoningEffortLabel')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'settings.llmConfiguration.testConnection' })
+    ).toBeNull();
+    expect(screen.getByText('settings.llmConfiguration.agentNote')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'settings.llmConfiguration.agentGuideLink' })
+    ).toHaveAttribute('href', expect.stringContaining('SETUP.md#use-resume-matcher-with-a-coding-agent'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+    await waitFor(() =>
+      expect(api.updateLlmConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'agent' })
+      )
+    );
+  });
+
   it('warns that the Claude subscription route is unofficial only while it is selected', async () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
@@ -332,7 +365,7 @@ describe('settings page (Swiss sweep)', () => {
       within(dialog).getByRole('link', { name: 'settings.subscriptionRisk.mcpLink' })
     ).toHaveAttribute(
       'href',
-      expect.stringContaining('SETUP.md#use-resume-matcher-from-claude-code')
+      expect.stringContaining('SETUP.md#use-resume-matcher-with-a-coding-agent')
     );
     // Nothing switches until the user accepts.
     expect(within(providers).getByRole('radio', { name: 'OpenAI' })).toHaveAttribute(

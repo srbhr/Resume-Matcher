@@ -32,6 +32,7 @@ import {
   Copy,
 } from '@phosphor-icons/react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
+import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
@@ -50,7 +51,14 @@ export default function ResumeViewerPage() {
   const { uiLanguage } = useLanguage();
   const params = useParams();
   const router = useRouter();
-  const { incrementResumes, decrementResumes, setHasMasterResume } = useStatusCache();
+  const {
+    status: systemStatus,
+    incrementResumes,
+    decrementResumes,
+    setHasMasterResume,
+  } = useStatusCache();
+  // Agent mode: Enhance shows a prompt for the user's coding agent instead.
+  const agentMode = Boolean(systemStatus?.agent_mode);
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -709,7 +717,14 @@ export default function ResumeViewerPage() {
       />
 
       {/* Enrichment Modal - Only for master resume */}
-      {isMasterResume && (
+      {isMasterResume && agentMode && (
+        <AgentPromptDialog
+          task={showEnrichmentModal ? 'enhance' : null}
+          resumeId={resumeId}
+          onClose={() => setShowEnrichmentModal(false)}
+        />
+      )}
+      {isMasterResume && !agentMode && (
         <EnrichmentModal
           resumeId={resumeId}
           isOpen={showEnrichmentModal}

@@ -2,6 +2,7 @@
 
 import { SwissGrid } from '@/components/home/swiss-grid';
 import { ResumeUploadDialog } from '@/components/dashboard/resume-upload-dialog';
+import { AgentPromptDialog, type AgentTask } from '@/components/agent/agent-prompt-dialog';
 import { MasterResumeChoiceDialog } from '@/components/dashboard/master-resume-choice-dialog';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -88,6 +89,7 @@ export default function DashboardPage() {
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isMasterChoiceDialogOpen, setIsMasterChoiceDialogOpen] = useState(false);
+  const [agentTask, setAgentTask] = useState<AgentTask | null>(null);
   // Set by "Delete and re-upload": the next completed upload replaces the deleted default.
   const [reuploadReplacesDefault, setReuploadReplacesDefault] = useState(false);
   const router = useRouter();
@@ -123,6 +125,9 @@ export default function DashboardPage() {
 
   // Check if LLM is configured (API key is set)
   const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
+  // Agent mode: the user's coding agent creates and tailors resumes, so the
+  // create tiles show a prompt for it instead of calling the app's AI.
+  const agentMode = !statusLoading && Boolean(systemStatus?.agent_mode);
 
   // Any ready master can be tailored (the tailor page picks the default, else the
   // stored id, else the first ready one), so a failed default must not block the rest.
@@ -535,7 +540,10 @@ export default function DashboardPage() {
   };
 
   const atMasterLimit = 1 + otherMasters.length >= MAX_MASTER_RESUMES;
-  const showAddTrackTile = Boolean(masterResumeId) && !atMasterLimit && isLlmConfigured;
+  const showAddTrackTile =
+    Boolean(masterResumeId) && !atMasterLimit && (isLlmConfigured || agentMode);
+  const openMasterChoice = () =>
+    agentMode ? setAgentTask('createMaster') : setIsMasterChoiceDialogOpen(true);
   const totalCards =
     1 + otherMasters.length + tailoredResumes.length + 1 + (showAddTrackTile ? 1 : 0);
   const fillerCount = Math.max(0, (5 - (totalCards % 5)) % 5);
@@ -544,7 +552,7 @@ export default function DashboardPage() {
   // A failed load with nothing to show: the alert alone, no tiles (an empty account looks different).
   const emptyWithError =
     listError && !masterResumeId && otherMasters.length === 0 && tailoredResumes.length === 0;
-  const showLlmAlert = Boolean(masterResumeId) && !isLlmConfigured && !statusLoading;
+  const showLlmAlert = Boolean(masterResumeId) && !isLlmConfigured && !agentMode && !statusLoading;
 
   return (
     <SwissGrid
@@ -581,7 +589,7 @@ export default function DashboardPage() {
           {/* 1. Master Resume Logic */}
           {!masterResumeId ? (
             // LLM Not Configured or Upload State
-            !isLlmConfigured && !statusLoading ? (
+            !isLlmConfigured && !agentMode && !statusLoading ? (
               <Link
                 href="/settings"
                 className="group/setup block h-full focus-visible:outline-none"
@@ -622,7 +630,7 @@ export default function DashboardPage() {
                   type="button"
                   className={TILE_BUTTON}
                   aria-label={t('dashboard.initializeMasterResume')}
-                  onClick={() => setIsMasterChoiceDialogOpen(true)}
+                  onClick={openMasterChoice}
                 >
                   <span
                     className={cn(
@@ -810,7 +818,7 @@ export default function DashboardPage() {
                 type="button"
                 className={TILE_BUTTON}
                 aria-label={t('dashboard.addMasterTrack')}
-                onClick={() => setIsMasterChoiceDialogOpen(true)}
+                onClick={openMasterChoice}
               >
                 <span className="flex items-center gap-2 font-serif text-lg font-bold uppercase leading-none tracking-tight">
                   <Plus aria-hidden="true" className="size-4 shrink-0" />
@@ -882,8 +890,8 @@ export default function DashboardPage() {
               <Button
                 type="button"
                 className="size-20"
-                onClick={() => router.push('/tailor')}
-                disabled={!isTailorEnabled}
+                onClick={() => (agentMode ? setAgentTask('tailor') : router.push('/tailor'))}
+                disabled={agentMode ? !masterResumeId || !hasReadyMaster : !isTailorEnabled}
                 aria-label={t('dashboard.createResume')}
                 title={t('dashboard.createResume')}
               >
@@ -916,6 +924,7 @@ export default function DashboardPage() {
         </>
       )}
 
+      <AgentPromptDialog task={agentTask} onClose={() => setAgentTask(null)} />
       <MasterResumeChoiceDialog
         open={isMasterChoiceDialogOpen}
         onOpenChange={setIsMasterChoiceDialogOpen}

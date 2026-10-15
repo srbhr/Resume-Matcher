@@ -939,6 +939,11 @@
       "claudeCliWarning": "Anthropic doesn't allow third-party apps to route requests through Claude Free, Pro or Max plans, and this option may count as one. Anthropic can enforce that without notice; for guaranteed access, use an Anthropic API key. Resume Matcher never sees or stores your Claude credentials: it runs your own Claude Code CLI, which you sign in to yourself with `claude auth login`. Requests count toward your Claude plan's usage limits, and Anthropic may draw them from usage credits instead.",
       "communityBuilt": "Community-built feature.",
       "chatgptName": "ChatGPT plan (Sign in with ChatGPT)",
+      "agentShortName": "Coding agent",
+      "agentName": "Your coding agent (Claude Code, Codex, Cursor or Copilot)",
+      "agentNoteTitle": "No API key needed",
+      "agentNote": "Your coding agent does the AI work: it reads your resume and job descriptions, writes tailored versions and saves them here with the resume-matcher command. The app makes no AI calls of its own, so its AI buttons give you a prompt to paste into your agent.",
+      "agentGuideLink": "Agent setup guide",
       "chatgptShortName": "ChatGPT plan",
       "chatgptWarningTitle": "Preview",
       "chatgptWarning": "This uses OpenAI's official Sign in with ChatGPT for open-source apps, which is a preview and may change. It works with ChatGPT Plus and Pro. Requests go from your machine directly to OpenAI's API, and the sign-in tokens stay encrypted on this machine. Usage counts toward your ChatGPT plan's limits: on Plus, the five-hour limit is shared with your other apps that use your plan; Pro has no five-hour limit. For guaranteed access, use an OpenAI API key.",
@@ -1024,9 +1029,9 @@
         "risk": "This uses OpenAI's Sign in with ChatGPT for open-source apps. It's a preview, so OpenAI may change or end it. It works with ChatGPT Plus and Pro.",
         "usage": "Requests count toward your ChatGPT plan's usage limits, which you share with other apps that use your plan. This option is community-built."
       },
-      "mcpTitle": "Recommended: use the MCP server",
-      "mcpBody": "Already use Claude Code or Codex? Add Resume Matcher's MCP server and ask your agent to tailor your resume. The agent does the AI work in its own app, and Resume Matcher saves, checks and renders the result. No API key needed.",
-      "mcpLink": "MCP setup guide",
+      "mcpTitle": "Recommended: let your coding agent do the work",
+      "mcpBody": "Already use Claude Code, Codex, Cursor or Copilot? Choose Coding agent instead. Your agent does the AI work in its own app, and Resume Matcher saves, checks and renders the result. No API key needed.",
+      "mcpLink": "Agent setup guide",
       "alternative": "Prefer guaranteed access? Go back and use an API key or a local model such as Ollama.",
       "back": "No, take me back",
       "accept": "Yes, I accept the risk"
@@ -1464,6 +1469,47 @@
       "deleteFailed": "Couldn't remove the job. Please try again.",
       "deleteInProgress": "This job is being tailored. Remove it once it finishes.",
       "clearFailed": "Couldn't clear the queue. Please try again."
+    }
+  },
+  "agentPrompt": {
+    "instructions": "Paste this prompt into your coding agent (Claude Code, Codex, Cursor or Copilot) running in the Resume Matcher folder. The agent does the AI work and saves the result here.",
+    "refresh": "When your agent is done, refresh this page to see the changes.",
+    "copy": "Copy prompt",
+    "copied": "Copied",
+    "modeTitle": "Agent mode is on",
+    "tailorPageMessage": "Your coding agent tailors resumes in agent mode. Paste the job description below, then copy the prompt for your agent.",
+    "queuePageMessage": "In agent mode, your coding agent handles batches. Save each job description as a .md or .txt file in the jobs/ folder, then ask your agent to tailor your resume for every job there.",
+    "getPrompt": "Get prompt for your agent",
+    "createMaster": {
+      "title": "Create your master resume",
+      "prompt": "Use Resume Matcher to create my master resume from this file: <path to your resume PDF or DOCX>. If I don't have a resume file, ask me questions and build one with me."
+    },
+    "tailor": {
+      "title": "Tailor your resume",
+      "prompt": "Use Resume Matcher to tailor my master resume to this job:\n\n<paste the job description here>",
+      "promptWithJob": "Use Resume Matcher to tailor resume {resumeId} to this job:\n\n{job}",
+      "note": "Several jobs? Save each description as a .md or .txt file in the jobs/ folder and ask your agent to tailor your resume for every job there. Each one appears on the dashboard."
+    },
+    "enhance": {
+      "title": "Enhance your resume",
+      "prompt": "Use Resume Matcher to improve the bullet points in resume {resumeId}. Ask me about results, numbers and tools I left out, then update the resume with my answers. Don't add anything I didn't tell you."
+    },
+    "regenerate": {
+      "title": "Rewrite with your agent",
+      "prompt": "Use Resume Matcher to rewrite <which experience, projects or skills> in resume {resumeId}: <what to improve>. Keep every fact true and show me the changes before you save them."
+    },
+    "coverLetter": {
+      "title": "Write a cover letter",
+      "prompt": "Use Resume Matcher to write a cover letter for resume {resumeId}, for the job it was tailored to, and save it to that resume."
+    },
+    "outreach": {
+      "title": "Write an outreach message",
+      "prompt": "Use Resume Matcher to write a short outreach message to the hiring manager for the job resume {resumeId} was tailored to, and save it to that resume."
+    },
+    "interviewPrep": {
+      "title": "Prepare for the interview",
+      "prompt": "Use Resume Matcher to read resume {resumeId} and the job it was tailored to, then help me prepare for the interview: likely questions, the stories to tell and questions to ask them.",
+      "note": "Your agent answers in its own chat. In agent mode, interview prep is not saved to the resume."
     }
   }
 }
