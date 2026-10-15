@@ -96,6 +96,12 @@ class TestGetModelName:
             == "groq/openai/gpt-oss-120b"
         )
 
+    def test_cheaperinference_uses_openai_prefix(self):
+        assert (
+            get_model_name(_cfg("cheaperinference", "gpt-5.4-mini"))
+            == "openai/gpt-5.4-mini"
+        )
+
     def test_existing_known_prefix_is_preserved(self):
         # Model already carries a known prefix → don't add the provider's.
         assert (
@@ -147,6 +153,22 @@ class TestNormalizeApiBase:
         assert (
             _normalize_api_base("openrouter", "https://openrouter.ai/api/v1")
             == "https://openrouter.ai/api"
+        )
+
+    def test_cheaperinference_blank_uses_default_endpoint(self):
+        assert (
+            _normalize_api_base("cheaperinference", None)
+            == "https://api.cheaperinference.com/v1"
+        )
+        assert (
+            _normalize_api_base("cheaperinference", "  ")
+            == "https://api.cheaperinference.com/v1"
+        )
+
+    def test_cheaperinference_preserves_custom_base(self):
+        assert (
+            _normalize_api_base("cheaperinference", "https://example.com/v1/")
+            == "https://example.com/v1"
         )
 
     @pytest.mark.parametrize(

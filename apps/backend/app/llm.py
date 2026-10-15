@@ -102,6 +102,10 @@ OPENCODE_ZEN_HY3_MODELS: frozenset[str] = frozenset({"hy3", "hy3-free"})
 #: endpoint. See the comment block above before adding to this set.
 JSON_MODE_VERIFIED_HOSTS: frozenset[str] = frozenset({"api.stepfun.com"})
 
+#: Cheaper Inference endpoint. LiteLLM has no built-in base URL for it, so a
+#: blank Base URL resolves here (see ``_normalize_api_base``).
+CHEAPER_INFERENCE_API_BASE: str = "https://api.cheaperinference.com/v1"
+
 
 class LLMConfig(BaseModel):
     """LLM configuration model."""
@@ -190,6 +194,9 @@ def _normalize_api_base(
     that OpenAI-compatible endpoints like llama.cpp (http://localhost:8080/v1)
     round-trip intact. See issue #751.
     """
+    if provider == "cheaperinference" and not (api_base or "").strip():
+        return CHEAPER_INFERENCE_API_BASE
+
     if not api_base:
         return None
 
@@ -236,7 +243,7 @@ def _normalize_api_base(
 
     # OpenAI / OpenAI-compatible: preserve the URL as-is. The OpenAI client
     # resolves paths correctly whether the base includes /v1 or not.
-    if provider in ("openai", "openai_compatible"):
+    if provider in ("openai", "openai_compatible", "cheaperinference"):
         return base or None
 
     # Anthropic handler appends '/v1/messages'. If base already ends with '/v1',
@@ -749,6 +756,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
     "anthropic": "anthropic",
     "gemini": "google",
     "openrouter": "openrouter",
+    "cheaperinference": "cheaperinference",
     "deepseek": "deepseek",
     "groq": "groq",
     "ollama": "ollama",
@@ -931,6 +939,8 @@ def get_model_name(config: LLMConfig) -> str:
         "azure_foundry": "azure_ai/",
         "anthropic": "anthropic/",
         "openrouter": "openrouter/",
+        # Cheaper Inference is OpenAI-compatible: route via the OpenAI client.
+        "cheaperinference": "openai/",
         "gemini": "gemini/",
         "deepseek": "deepseek/",
         "groq": "groq/",
@@ -1670,6 +1680,7 @@ def _calculate_timeout(
         "anthropic": 1.2,
         "azure_foundry": 1.2,
         "openrouter": 1.5,  # More variable latency
+        "cheaperinference": 1.5,
         "groq": 1.0,
         "ollama": 2.0,  # Local models can be slower
     }

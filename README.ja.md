@@ -231,6 +231,7 @@ npm run dev
 | **Anthropic** | クラウド | Claude 3.5 Sonnet |
 | **Google Gemini** | クラウド | Gemini 1.5 Flash/Pro |
 | **OpenRouter** | クラウド | 複数モデルへアクセス |
+| **Cheaper Inference** | クラウド | OpenAI互換ゲートウェイ |
 | **DeepSeek** | クラウド | DeepSeek Chat |
 
 ### Docker デプロイ

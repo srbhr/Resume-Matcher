@@ -7,6 +7,7 @@ export type LLMProvider =
   | 'azure_foundry'
   | 'anthropic'
   | 'openrouter'
+  | 'cheaperinference'
   | 'gemini'
   | 'deepseek'
   | 'groq'
@@ -222,6 +223,11 @@ export const PROVIDER_INFO: Record<
   openrouter: {
     name: 'OpenRouter',
     defaultModel: 'deepseek/deepseek-chat',
+    requiresKey: true,
+  },
+  cheaperinference: {
+    name: 'Cheaper Inference',
+    defaultModel: 'gpt-5.4-mini',
     requiresKey: true,
   },
   gemini: { name: 'Google Gemini', defaultModel: 'gemini-3-flash-preview', requiresKey: true },
@@ -471,6 +477,7 @@ export type ApiKeyProvider =
   | 'anthropic'
   | 'google'
   | 'openrouter'
+  | 'cheaperinference'
   | 'deepseek'
   | 'groq'
   | 'openai_compatible'
@@ -500,6 +507,7 @@ export interface ApiKeysUpdateRequest {
   anthropic?: string;
   google?: string;
   openrouter?: string;
+  cheaperinference?: string;
   deepseek?: string;
   groq?: string;
   openai_compatible?: string;
@@ -519,6 +527,7 @@ export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; descr
     anthropic: { name: 'Anthropic', description: 'Claude 3.5, Claude 4, etc.' },
     google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
     openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
+    cheaperinference: { name: 'Cheaper Inference', description: 'OpenAI-compatible gateway' },
     deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
     groq: { name: 'Groq', description: 'Llama, Mixtral, Gemma on Groq' },
     openai_compatible: { name: 'OpenAI-Compatible', description: 'Self-hosted / proxy endpoints' },
