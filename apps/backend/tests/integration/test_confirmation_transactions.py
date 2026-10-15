@@ -892,4 +892,5 @@ async def test_confirmed_tailored_resume_inherits_the_source_formatting(
     assert response.status_code == 200, response.text
     tailored = await isolated_db.get_resume(response.json()["data"]["resume_id"])
     assert tailored is not None
-    assert tailored["template_settings"] == formatting
+    assert tailored["template_settings"] == saved.json()
+    assert tailored["template_settings"]["template"] == "vivid-single"

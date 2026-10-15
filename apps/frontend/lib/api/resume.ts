@@ -399,16 +399,20 @@ export async function renameResume(resumeId: string, title: string): Promise<voi
   }
 }
 
-/** Saves the resume's formatting (template, margins, fonts...) chosen in the builder. */
+/**
+ * Saves the resume's formatting (template, margins, fonts...) chosen in the builder.
+ * `revision` orders saves: the backend ignores one older than what it has stored.
+ */
 export async function updateResumeTemplateSettings(
   resumeId: string,
-  settings: TemplateSettings
+  settings: TemplateSettings,
+  revision: number
 ): Promise<void> {
   // keepalive: the builder sends a pending save as the page unloads.
   const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/template-settings`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(settings),
+    body: JSON.stringify({ ...settings, revision }),
     keepalive: true,
   });
   if (!res.ok) {

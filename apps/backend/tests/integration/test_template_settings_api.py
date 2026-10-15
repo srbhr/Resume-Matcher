@@ -23,6 +23,7 @@ VIVID: dict[str, Any] = {
     "compactMode": True,
     "showContactIcons": True,
     "accentColor": "orange",
+    "revision": 1_700_000_000_000,
 }
 
 
@@ -157,3 +158,33 @@ async def test_resume_list_carries_each_resumes_settings(
     by_id = {row["resume_id"]: row for row in res.json()["data"]}
     assert by_id[formatted["resume_id"]]["template_settings"] == VIVID
     assert by_id[bare["resume_id"]]["template_settings"] is None
+
+
+async def test_an_older_save_cannot_undo_a_newer_one(
+    client: AsyncClient, isolated_db: Database
+) -> None:
+    resume = await _ready_resume(isolated_db)
+    url = f"/api/v1/resumes/{resume['resume_id']}/template-settings"
+    newer = {**VIVID, "template": "latex", "revision": VIVID["revision"] + 5}
+    await client.patch(url, json=newer)
+
+    # The earlier change's request arrives last.
+    res = await client.patch(url, json=VIVID)
+
+    assert res.status_code == 200
+    assert res.json() == newer
+    assert await _fetch_settings(client, resume["resume_id"]) == newer
+
+
+async def test_a_newer_save_replaces_the_stored_one(
+    client: AsyncClient, isolated_db: Database
+) -> None:
+    resume = await _ready_resume(isolated_db)
+    url = f"/api/v1/resumes/{resume['resume_id']}/template-settings"
+    await client.patch(url, json=VIVID)
+    newer = {**VIVID, "template": "clean", "revision": VIVID["revision"] + 1}
+
+    res = await client.patch(url, json=newer)
+
+    assert res.json() == newer
+    assert await _fetch_settings(client, resume["resume_id"]) == newer

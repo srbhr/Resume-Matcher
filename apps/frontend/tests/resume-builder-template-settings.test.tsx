@@ -128,10 +128,11 @@ describe('builder template settings', () => {
 
     expect(screen.getByTestId('template')).toHaveTextContent('vivid-single');
     await waitFor(() =>
-      expect(updateResumeTemplateSettings).toHaveBeenCalledWith('a', {
-        ...DEFAULT_TEMPLATE_SETTINGS,
-        template: 'vivid-single',
-      })
+      expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
+        'a',
+        { ...DEFAULT_TEMPLATE_SETTINGS, template: 'vivid-single' },
+        expect.any(Number)
+      )
     );
     expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(1);
   });
@@ -149,7 +150,8 @@ describe('builder template settings', () => {
     await waitFor(() =>
       expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
         'a',
-        expect.objectContaining({ template: 'vivid-single' })
+        expect.objectContaining({ template: 'vivid-single' }),
+        expect.any(Number)
       )
     );
   });
@@ -168,30 +170,28 @@ describe('builder template settings', () => {
     expect(updateResumeTemplateSettings).not.toHaveBeenCalled();
   });
 
-  it('sends formatting saves one at a time, in order', async () => {
-    let finishFirst!: () => void;
-    vi.mocked(updateResumeTemplateSettings)
-      .mockImplementationOnce(() => new Promise<void>((resolve) => (finishFirst = resolve)))
-      .mockResolvedValue(undefined);
-    serveResume(null);
+  it('gives every formatting save a newer revision than the stored one', async () => {
+    // Saved from a device whose clock runs ahead of this one.
+    const stored = 9_999_999_999_999;
+    serveResume({ ...SAVED, revision: stored });
     const Builder = await importBuilder();
     render(<Builder />);
-    await waitFor(() => expect(fetchResume).toHaveBeenCalledWith('a'));
-    await act(async () => {});
+    await waitFor(() =>
+      expect(screen.getByTestId('template')).toHaveTextContent('swiss-two-column')
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'pick vivid' }));
     await waitFor(() => expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(1));
     fireEvent.click(screen.getByRole('button', { name: 'pick latex' }));
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    // The newer save waits for the older one to finish.
-    expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(1);
-
-    await act(async () => finishFirst());
     await waitFor(() => expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(2));
-    expect(vi.mocked(updateResumeTemplateSettings).mock.calls.map(([, s]) => s.template)).toEqual([
-      'vivid-single',
-      'latex',
-    ]);
+
+    const [first, second] = vi
+      .mocked(updateResumeTemplateSettings)
+      .mock.calls.map(([, settings, revision]) => ({ template: settings.template, revision }));
+    expect(first.template).toBe('vivid-single');
+    expect(second.template).toBe('latex');
+    expect(first.revision).toBeGreaterThan(stored);
+    expect(second.revision).toBeGreaterThan(first.revision);
   });
 
   it('sends a pending formatting change right away when the page unloads', async () => {
@@ -206,7 +206,8 @@ describe('builder template settings', () => {
 
     expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
       'a',
-      expect.objectContaining({ template: 'vivid-single' })
+      expect.objectContaining({ template: 'vivid-single' }),
+      expect.any(Number)
     );
   });
 });

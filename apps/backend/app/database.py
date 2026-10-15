@@ -508,6 +508,29 @@ class Database:
             await session.commit()
             return self._resume_to_dict(row)
 
+    async def save_template_settings(
+        self, resume_id: str, settings: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Store a resume's formatting unless a newer revision is already stored.
+
+        Returns the stored settings. The read and the write share one write
+        reservation, so two concurrent saves cannot both pass the revision check.
+
+        Raises:
+            ResumeNotFoundError: If resume not found.
+        """
+        async with self._write_session() as session:
+            row = await session.get(Resume, resume_id)
+            if row is None:
+                raise ResumeNotFoundError(resume_id)
+            stored = row.template_settings
+            if stored and settings.get("revision", 0) < stored.get("revision", 0):
+                return stored
+            row.template_settings = settings
+            row.updated_at = _now()
+            await session.commit()
+            return settings
+
     async def claim_resume_processing(
         self,
         resume_id: str,

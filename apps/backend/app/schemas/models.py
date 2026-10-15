@@ -619,6 +619,10 @@ class TemplateSettings(BaseModel):
     compactMode: bool = False
     showContactIcons: bool = False
     accentColor: Literal["blue", "green", "orange", "red"] = "blue"
+    # When the change was made (client ms clock, strictly increasing per tab). A save
+    # older than the stored one is ignored, so requests that arrive out of order
+    # cannot undo a newer choice.
+    revision: int = Field(0, ge=0)
 
 
 # ResumeFetchData is declared above TemplateSettings.

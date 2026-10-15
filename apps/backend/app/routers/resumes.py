@@ -2424,13 +2424,15 @@ async def update_title(resume_id: str, request: UpdateTitleRequest) -> dict:
 async def update_template_settings(
     resume_id: str, settings: TemplateSettings
 ) -> TemplateSettings:
-    """Save the resume's formatting (template, margins, fonts...) chosen in the builder."""
-    resume = await db.get_resume(resume_id)
-    if not resume:
-        raise HTTPException(status_code=404, detail="Resume not found")
+    """Save the resume's formatting (template, margins, fonts...) chosen in the builder.
 
-    await db.update_resume(resume_id, {"template_settings": settings.model_dump()})
-    return settings
+    Returns the stored settings: unchanged when this save is older than them.
+    """
+    try:
+        stored = await db.save_template_settings(resume_id, settings.model_dump())
+    except ResumeNotFoundError:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return TemplateSettings.model_validate(stored)
 
 
 @router.post("/{resume_id}/default", response_model=SetDefaultMasterResponse)

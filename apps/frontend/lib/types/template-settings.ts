@@ -67,6 +67,7 @@ export interface TemplateSettings {
   compactMode: boolean; // Apply tighter spacing across the board
   showContactIcons: boolean; // Show icons next to contact info
   accentColor: AccentColor; // Accent color for Modern template
+  revision?: number; // Set by the backend on saved settings: when they were chosen (ms)
 }
 
 /**

@@ -226,11 +226,14 @@ const ResumeBuilderContent = () => {
   const [templateSettings, setTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
   const [formattingSaveFailed, setFormattingSaveFailed] = useState(false);
-  const pendingFormattingRef = useRef<{ resumeId: string; settings: TemplateSettings } | null>(
-    null
-  );
+  const pendingFormattingRef = useRef<{
+    resumeId: string;
+    settings: TemplateSettings;
+    revision: number;
+  } | null>(null);
   const formattingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const formattingSaveChainRef = useRef<Promise<void>>(Promise.resolve());
+  // The newest formatting revision seen or made for this resume.
+  const formattingRevisionRef = useRef(0);
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
   const improvedCoverLetter = improvedData?.data?.cover_letter;
@@ -468,6 +471,7 @@ const ResumeBuilderContent = () => {
           // Store resume title for downloads
           setResumeTitle(data.title ?? null);
           setTemplateSettings(data.template_settings ?? DEFAULT_TEMPLATE_SETTINGS);
+          formattingRevisionRef.current = data.template_settings?.revision ?? 0;
           setFormattingSaveFailed(false);
           // These values belong to this resume. Explicitly applying empty values
           // prevents the preceding document's attachment from surviving a switch.
@@ -627,23 +631,21 @@ const ResumeBuilderContent = () => {
     [resumeId]
   );
 
-  const flushFormattingSave = useCallback((unloading = false) => {
+  // Sends right away, also while the page unloads (the request is keepalive). Each save
+  // carries a newer revision, so one that arrives late cannot undo a newer choice.
+  const flushFormattingSave = useCallback(() => {
     if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
     formattingTimerRef.current = null;
     const pending = pendingFormattingRef.current;
     pendingFormattingRef.current = null;
     if (!pending) return;
-    const save = () =>
-      updateResumeTemplateSettings(pending.resumeId, pending.settings).then(
-        () => setFormattingSaveFailed(false),
-        (error) => {
-          console.error('Failed to save resume formatting:', error);
-          setFormattingSaveFailed(true);
-        }
-      );
-    // Saves go out one at a time, so an older one cannot land last and undo a newer
-    // one. An unloading page cannot wait: it sends now (the request is keepalive).
-    formattingSaveChainRef.current = unloading ? save() : formattingSaveChainRef.current.then(save);
+    updateResumeTemplateSettings(pending.resumeId, pending.settings, pending.revision).then(
+      () => setFormattingSaveFailed(false),
+      (error) => {
+        console.error('Failed to save resume formatting:', error);
+        setFormattingSaveFailed(true);
+      }
+    );
   }, []);
 
   // Formatting is saved with the resume, so its view page and PDF match the builder.
@@ -654,7 +656,10 @@ const ResumeBuilderContent = () => {
       if (loadingState !== 'loaded') return;
       setTemplateSettings(newSettings);
       if (!resumeId) return;
-      pendingFormattingRef.current = { resumeId, settings: newSettings };
+      // Above the stored revision even when this device's clock is behind.
+      const revision = Math.max(Date.now(), formattingRevisionRef.current + 1);
+      formattingRevisionRef.current = revision;
+      pendingFormattingRef.current = { resumeId, settings: newSettings, revision };
       if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
       formattingTimerRef.current = setTimeout(flushFormattingSave, FORMATTING_SAVE_DEBOUNCE_MS);
     },
@@ -665,7 +670,7 @@ const ResumeBuilderContent = () => {
   // refresh or tab close (which skip React cleanup).
   useEffect(() => () => flushFormattingSave(), [resumeId, flushFormattingSave]);
   useEffect(() => {
-    const onPageHide = () => flushFormattingSave(true);
+    const onPageHide = () => flushFormattingSave();
     window.addEventListener('pagehide', onPageHide);
     return () => window.removeEventListener('pagehide', onPageHide);
   }, [flushFormattingSave]);
