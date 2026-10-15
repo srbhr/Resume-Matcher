@@ -75,7 +75,17 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
   const locale = resolveLocale(resolvedSearchParams?.lang);
 
   // Fetch cover letter data from API (same pattern as resume)
-  const { coverLetter, personalInfo } = await fetchCoverLetterData(resolvedParams.id);
+  let coverLetterData: CoverLetterData;
+  try {
+    coverLetterData = await fetchCoverLetterData(resolvedParams.id);
+  } catch (error) {
+    // Marker the PDF renderer waits for, so a load failure fails fast.
+    console.error('Failed to load cover letter:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return <div data-print-error="cover-letter-unavailable">Cover letter unavailable</div>;
+  }
+  const { coverLetter, personalInfo } = coverLetterData;
 
   // Standard cover letter margins
   const margins = { top: 25, right: 25, bottom: 25, left: 25 };

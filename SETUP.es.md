@@ -520,7 +520,7 @@ npm run start
 # Ejecutar linter
 npm run lint
 
-# Formatear código con Prettier
+# Formatear código con Oxfmt
 npm run format
 
 # Ejecutar en un puerto diferente

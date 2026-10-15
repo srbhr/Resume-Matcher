@@ -123,7 +123,7 @@ uv sync                       # Install Python dependencies
 uv run app
 ```
 
-In `.env`, change `HOST=0.0.0.0` to `HOST=127.0.0.1` so the backend is only reachable from your own machine. The default listens on every network interface, and the API has no authentication, so other devices on your network could use your configured AI provider. Optionally set your AI provider here, and set `RELOAD=true` to auto-reload on code changes.
+Keep `HOST=127.0.0.1` in `.env` so the backend is only reachable from your own machine: the API has no authentication. Optionally set your AI provider here, and set `RELOAD=true` to auto-reload on code changes.
 
 ### 4. Start the frontend (PowerShell window 2)
 
@@ -189,7 +189,7 @@ LLM_MODEL=gpt-5-nano-2025-08-07
 LLM_API_KEY=sk-your-api-key-here
 
 # Keep these as default for local development
-HOST=0.0.0.0
+HOST=127.0.0.1
 PORT=8000
 FRONTEND_BASE_URL=http://localhost:3000
 CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -212,7 +212,7 @@ RELOAD=true uv run app
 You should see output like:
 
 ```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process
 ```
 
@@ -369,6 +369,9 @@ PORT=4000 docker compose up -d
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3000` | Host port mapped to container port `3000` |
+| `BIND_ADDRESS` | `127.0.0.1` | Host address the port is published on. `127.0.0.1` = this machine only; `0.0.0.0` = every network interface (see below) |
+| `ALLOWED_HOSTS` | — | Extra hostnames the app answers for, comma-separated (e.g. `192.168.1.20`); `*` allows any |
+| `FRONTEND_BASE_URL` | `http://localhost:3000` | The URL you open the app at; its hostname is allowed automatically |
 | `LOG_LEVEL` | `INFO` | Application-wide Python/Uvicorn log level (`ERROR`, `WARNING`, `INFO`, `DEBUG`) |
 | `LOG_LLM` | `WARNING` | LiteLLM log level (`ERROR`, `WARNING`, `INFO`, `DEBUG`) |
 | `LLM_PROVIDER` | `openai` | AI provider (openai, anthropic, gemini, etc.) |
@@ -378,15 +381,38 @@ PORT=4000 docker compose up -d
 
 > **Note:** Changes to `LOG_LEVEL` and `LOG_LLM` require a container restart to take effect.
 
-### Using Ollama with Docker
+### Opening it from another device
 
-To use Ollama running on your host machine:
+The container is published on `127.0.0.1` only, so it opens on the machine running Docker and nowhere else. Resume Matcher has no login: anyone who can reach it can read your resumes and change your AI settings. To use it from a phone or another computer on a network you trust, publish it on all interfaces and allow the address you will type:
 
 ```bash
-LLM_API_BASE=http://host.docker.internal:11434 docker compose up -d
+BIND_ADDRESS=0.0.0.0 ALLOWED_HOSTS=192.168.1.20 docker compose up -d
 ```
 
-Then configure Ollama as your provider in the Settings UI.
+Requests for any other hostname get `400 Invalid host header`. Behind a reverse proxy with its own domain, set `FRONTEND_BASE_URL` to that URL instead; its hostname is allowed automatically.
+
+### Using Ollama with Docker
+
+Inside the container, `localhost` is the container itself, not your computer, so the default Ollama URL `http://localhost:11434` cannot work there. Use `host.docker.internal`, which the Compose file points at your computer (on Linux too, through `extra_hosts`):
+
+1. In **Settings**, choose **Ollama** and set **Base URL** to `http://host.docker.internal:11434`, then click **Test Connection**. Or set it at startup:
+
+   ```bash
+   LLM_PROVIDER=ollama LLM_MODEL=gemma3:4b LLM_API_BASE=http://host.docker.internal:11434 docker compose up -d
+   ```
+
+2. **Linux only:** Ollama listens on `127.0.0.1` by default, and traffic from a container does not arrive there. Make it listen on the Docker bridge as well, then restart it:
+
+   ```bash
+   sudo systemctl edit ollama   # add the two lines below
+   # [Service]
+   # Environment="OLLAMA_HOST=0.0.0.0"
+   sudo systemctl restart ollama
+   ```
+
+   `0.0.0.0` also exposes Ollama to your network; block port `11434` in your firewall if that matters to you. Docker Desktop on macOS and Windows needs no change.
+
+If **Test Connection** says *localhost is the container itself*, the Base URL still points at `localhost` or `127.0.0.1`. The same applies to LM Studio, llama.cpp and other servers on your computer: use `host.docker.internal` with their port.
 
 ### Using Docker Secrets
 
@@ -579,7 +605,7 @@ cd apps/backend
 RELOAD=true uv run app
 
 # Start production server
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 # Install dependencies
 uv sync
@@ -611,7 +637,7 @@ npm run start
 # Run linter
 npm run lint
 
-# Format code with Prettier
+# Format code with Oxfmt
 npm run format
 
 # Run on a different port
@@ -720,6 +746,7 @@ Restart the backend afterwards so Chromium picks up the new font cache.
 1. Check Ollama is running: `ollama list`
 2. Start Ollama if needed: `ollama serve`
 3. Make sure the model is downloaded: `ollama pull gemma3:4b`
+4. Running Resume Matcher in Docker? See [Using Ollama with Docker](#using-ollama-with-docker): the Base URL must be `http://host.docker.internal:11434`, and on Linux Ollama must listen beyond `127.0.0.1`.
 
 ---
 

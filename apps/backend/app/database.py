@@ -74,6 +74,9 @@ QueueDeleteOutcome = Literal["deleted", "missing", "in_progress"]
 # A user keeps at most this many master resumes (career tracks).
 MAX_MASTER_RESUMES = 5
 
+# A resume's formatting remembers the save order of this many recent builder sessions.
+TEMPLATE_SETTINGS_SESSIONS_KEPT = 20
+
 
 class DatabaseBusyError(RuntimeError):
     """A write reservation could not be obtained; retry the unchanged request."""
@@ -257,6 +260,7 @@ class Database:
             "outreach_message": row.outreach_message,
             "interview_prep": row.interview_prep,
             "title": row.title,
+            "template_settings": row.template_settings,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
         }
@@ -344,6 +348,7 @@ class Database:
         original_markdown: str | None = None,
         interview_prep: str | None = None,
         is_default_master: bool = False,
+        template_settings: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -363,6 +368,7 @@ class Database:
             interview_prep=interview_prep,
             title=title,
             original_markdown=original_markdown,
+            template_settings=template_settings,
         )
         async with self._write_session() as session:
             session.add(row)
@@ -387,6 +393,7 @@ class Database:
         original_markdown: str | None = None,
         title: str | None = None,
         interview_prep: str | None = None,
+        template_settings: dict[str, Any] | None = None,
         *,
         take_over_stuck_default: bool = True,
         replay_if: Callable[[dict[str, Any]], bool] | None = None,
@@ -448,6 +455,7 @@ class Database:
                 interview_prep=interview_prep,
                 title=title,
                 original_markdown=original_markdown,
+                template_settings=template_settings,
             )
             session.add(row)
             await session.commit()
@@ -502,6 +510,39 @@ class Database:
             row.updated_at = _now()
             await session.commit()
             return self._resume_to_dict(row)
+
+    async def save_template_settings(
+        self, resume_id: str, settings: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Store a resume's formatting unless its session already stored a newer save.
+
+        The stored JSON keeps the highest revision accepted from each recent
+        session under ``seen`` (API responses drop it), so saves from other
+        sessions in between cannot make a session's older request valid again.
+        Returns the stored settings. The read and the write share one write
+        reservation, so two concurrent saves cannot both pass the check.
+
+        Raises:
+            ResumeNotFoundError: If resume not found.
+        """
+        async with self._write_session() as session:
+            row = await session.get(Resume, resume_id)
+            if row is None:
+                raise ResumeNotFoundError(resume_id)
+            stored = row.template_settings or {}
+            seen: dict[str, int] = dict(stored.get("seen") or {})
+            saver = settings.get("session")
+            revision = settings.get("revision", 0)
+            if saver:
+                if revision < seen.get(saver, -1):
+                    return stored
+                seen.pop(saver, None)
+                seen[saver] = revision
+                seen = dict(list(seen.items())[-TEMPLATE_SETTINGS_SESSIONS_KEPT:])
+            row.template_settings = {**settings, "seen": seen}
+            row.updated_at = _now()
+            await session.commit()
+            return row.template_settings
 
     async def claim_resume_processing(
         self,

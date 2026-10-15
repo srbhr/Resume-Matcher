@@ -857,3 +857,41 @@ async def test_optional_title_timeout_can_still_commit_required_resume(
         "/api/v1/resumes/improve/confirm", json=payload
     )
     assert replay.json() == response.json()
+
+
+async def test_confirmed_tailored_resume_inherits_the_source_formatting(
+    isolated_db: Database,
+    confirmation_client: AsyncClient,
+    sample_resume: dict[str, Any],
+) -> None:
+    payload = await preview_payload(isolated_db, confirmation_client, sample_resume)
+    formatting = {
+        "template": "vivid-single",
+        "pageSize": "LETTER",
+        "margins": {"top": 12, "bottom": 12, "left": 14, "right": 14},
+        "spacing": {"section": 3, "item": 2, "lineHeight": 3},
+        "fontSize": {
+            "base": 3,
+            "headerScale": 3,
+            "headerFont": "sans-serif",
+            "bodyFont": "sans-serif",
+        },
+        "compactMode": False,
+        "showContactIcons": False,
+        "accentColor": "green",
+    }
+    saved = await confirmation_client.patch(
+        f"/api/v1/resumes/{payload['resume_id']}/template-settings", json=formatting
+    )
+    assert saved.status_code == 200, saved.text
+
+    response = await confirmation_client.post(
+        "/api/v1/resumes/improve/confirm", json=payload
+    )
+
+    assert response.status_code == 200, response.text
+    fetched = await confirmation_client.get(
+        "/api/v1/resumes", params={"resume_id": response.json()["data"]["resume_id"]}
+    )
+    assert fetched.json()["data"]["template_settings"] == saved.json()
+    assert saved.json()["template"] == "vivid-single"

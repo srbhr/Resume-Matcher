@@ -16,6 +16,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import shutil
+import tempfile
 from types import SimpleNamespace
 from typing import Any
 
@@ -45,6 +48,16 @@ RAW_SYSTEM = (
     "No preamble, no commentary, no remarks about the request or its origin, and "
     "never refuse."
 )
+
+
+def _resolve_executable() -> tuple[str, bool]:
+    """The CLI's path, and whether it is a Windows batch shim.
+
+    Spawning without a shell only finds ``.exe`` files on Windows, but an npm
+    install provides a ``.cmd`` shim; ``shutil.which`` honours ``PATHEXT``.
+    """
+    path = shutil.which(CLAUDE_BIN) or CLAUDE_BIN
+    return path, path.lower().endswith((".cmd", ".bat"))
 
 
 def _flatten_content(content: Any) -> str:
@@ -84,6 +97,36 @@ def _shape_response(content: str) -> SimpleNamespace:
     return SimpleNamespace(choices=[choice], model="claude-cli", usage=None)
 
 
+async def _run(
+    args: list[str], prompt: str, timeout: float | None
+) -> tuple[bytes, bytes, int | None]:
+    """Run the CLI with ``prompt`` on stdin; returns (stdout, stderr, exit code)."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *args,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError as exc:
+        raise ClaudeCliNotFoundError(
+            f"Claude Code CLI ('{CLAUDE_BIN}') was not found on PATH. Install "
+            "Claude Code and sign in with `claude auth login`."
+        ) from exc
+    try:
+        out, err = await asyncio.wait_for(
+            proc.communicate(prompt.encode("utf-8")),
+            timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
+        )
+    except BaseException:
+        # Timeout or task cancellation: do not leave the CLI running.
+        if proc.returncode is None:
+            proc.kill()
+            await proc.wait()
+        raise
+    return out, err, proc.returncode
+
+
 async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
     """Drop-in replacement for ``litellm.acompletion`` / ``router.acompletion``.
 
@@ -96,13 +139,24 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
     system_text, prompt = _split_messages(messages)
     system_prompt = f"{RAW_SYSTEM}\n\n{system_text}" if system_text else RAW_SYSTEM
 
+    executable, batch_shim = _resolve_executable()
+    prompt_file: str | None = None
+    if batch_shim:
+        # cmd.exe re-parses a batch file's arguments (%, &, "), so the prompt
+        # must not travel on its command line. Every other argument is a constant.
+        fd, prompt_file = tempfile.mkstemp(prefix="rm-system-", suffix=".txt")
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(system_prompt)
+        system_args = ["--system-prompt-file", prompt_file]
+    else:
+        system_args = ["--system-prompt", system_prompt]
+
     args = [
-        CLAUDE_BIN,
+        executable,
         "-p",
         "--output-format",
         "json",
-        "--system-prompt",
-        system_prompt,
+        *system_args,
         # Empty list = no tools at all. This is a text-completion provider: a
         # resume or job description that tells the model to run Bash or edit
         # files must not be able to, whatever RAW_SYSTEM says.
@@ -126,33 +180,15 @@ async def claude_acompletion(**kwargs: Any) -> SimpleNamespace:
         "--no-session-persistence",
     ]
     try:
-        proc = await asyncio.create_subprocess_exec(
-            *args,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-    except FileNotFoundError as exc:
-        raise ClaudeCliNotFoundError(
-            f"Claude Code CLI ('{CLAUDE_BIN}') was not found on PATH. Install "
-            "Claude Code and sign in with `claude auth login`."
-        ) from exc
-    try:
-        out, err = await asyncio.wait_for(
-            proc.communicate(prompt.encode("utf-8")),
-            timeout=kwargs.get("timeout") or DEFAULT_TIMEOUT_SECONDS,
-        )
-    except BaseException:
-        # Timeout or task cancellation: do not leave the CLI running.
-        if proc.returncode is None:
-            proc.kill()
-            await proc.wait()
-        raise
+        out, err, returncode = await _run(args, prompt, kwargs.get("timeout"))
+    finally:
+        if prompt_file is not None:
+            os.unlink(prompt_file)
     stdout = out.decode("utf-8", "replace").strip()
     stderr = err.decode("utf-8", "replace").strip()
 
-    if proc.returncode != 0:
-        raise RuntimeError(f"claude CLI exited {proc.returncode}: {stderr[:500]}")
+    if returncode != 0:
+        raise RuntimeError(f"claude CLI exited {returncode}: {stderr[:500]}")
 
     try:
         env = json.loads(stdout)

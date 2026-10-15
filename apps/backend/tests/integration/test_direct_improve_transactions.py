@@ -216,3 +216,24 @@ async def test_direct_tailoring_puts_the_extracted_company_on_the_tracker_card(
     assert response.status_code == 200, response.text
     cards = await isolated_db.list_applications()
     assert [card["company"] for card in cards] == ["Synthetic Co"]
+
+
+async def test_direct_tailored_resume_inherits_the_source_formatting(
+    isolated_db: Database,
+    direct_case: tuple[AsyncClient, dict[str, str]],
+) -> None:
+    client, payload = direct_case
+    formatting = {"template": "latex", "accentColor": "red"}
+    saved = await client.patch(
+        f"/api/v1/resumes/{payload['resume_id']}/template-settings", json=formatting
+    )
+    assert saved.status_code == 200, saved.text
+
+    response = await client.post("/api/v1/resumes/improve", json=payload)
+
+    assert response.status_code == 200, response.text
+    fetched = await client.get(
+        "/api/v1/resumes", params={"resume_id": response.json()["data"]["resume_id"]}
+    )
+    assert fetched.json()["data"]["template_settings"] == saved.json()
+    assert saved.json()["template"] == "latex"

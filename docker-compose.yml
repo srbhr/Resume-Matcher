@@ -14,7 +14,13 @@ services:
         - PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST:-}
     container_name: resume-matcher
     ports:
-      - "${PORT:-3000}:3000"
+      # Reachable from this machine only. To open it from a phone or another computer,
+      # set BIND_ADDRESS=0.0.0.0 and add the address you will use to ALLOWED_HOSTS.
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-3000}:3000"
+    # Makes host.docker.internal (your machine, e.g. for Ollama) resolve on Linux too.
+    # Docker Desktop (macOS/Windows) already provides it.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - resume-data:/app/backend/data
     #secrets:
@@ -22,6 +28,9 @@ services:
     environment:
       # domain in reverse proxy
       - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
+      # Extra hostnames the app answers for (comma-separated), besides localhost and the
+      # FRONTEND_BASE_URL host, e.g. 192.168.1.20 for LAN access. "*" allows any.
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-}
       # Logging configuration: DEBUG, INFO, WARNING, ERROR
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       #- LOG_LEVEL_FILE=${LOG_LEVEL_FILE:-}
@@ -36,8 +45,11 @@ services:
       # Optional Docker Secret file path (same behavior as Postgres-style *_FILE)
       #- LLM_API_KEY_FILE=${LLM_API_KEY_FILE:-/run/secrets/llm_api_key}
       - LLM_API_KEY=${LLM_API_KEY:-}
-      # For Ollama running on host machine, use host.docker.internal:
+      # Ollama (or LM Studio, llama.cpp) running on this machine, outside Docker: inside
+      # the container "localhost" is the container itself, so use host.docker.internal:
       # - LLM_API_BASE=http://host.docker.internal:11434
+      # On Linux, Ollama must also listen beyond 127.0.0.1 (see SETUP.md, "Using Ollama
+      # with Docker").
       - LLM_API_BASE=${LLM_API_BASE:-}
       # CORS origins (JSON array format). FRONTEND_BASE_URL is auto-included.
       #- CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]

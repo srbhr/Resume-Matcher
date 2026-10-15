@@ -498,6 +498,8 @@ class ResumeFetchData(BaseModel):
     title: str | None = None
     is_master: bool = False
     is_default_master: bool = False
+    # None until the resume is formatted in the builder (= the default template).
+    template_settings: "TemplateSettings | None" = None
 
 
 class ResumeFetchResponse(BaseModel):
@@ -519,6 +521,7 @@ class ResumeSummary(BaseModel):
     created_at: str
     updated_at: str
     title: str | None = None
+    template_settings: "TemplateSettings | None" = None
 
 
 class ResumeListResponse(BaseModel):
@@ -562,21 +565,79 @@ class JobUploadResponse(BaseModel):
 
 
 # Improvement Models
+ResumeTemplate = Literal[
+    "swiss-single",
+    "swiss-two-column",
+    "modern",
+    "modern-two-column",
+    "latex",
+    "clean",
+    "vivid",
+    "vivid-single",
+    "modern-deedy",
+    "deedy",
+]
+
+
+class TemplateMargins(BaseModel):
+    """Page margins in mm."""
+
+    top: int = Field(10, ge=5, le=25)
+    bottom: int = Field(10, ge=5, le=25)
+    left: int = Field(10, ge=5, le=25)
+    right: int = Field(10, ge=5, le=25)
+
+
+class TemplateSpacing(BaseModel):
+    """Spacing levels (1-5)."""
+
+    section: int = Field(3, ge=1, le=5)
+    item: int = Field(2, ge=1, le=5)
+    lineHeight: int = Field(3, ge=1, le=5)
+
+
+class TemplateFontSize(BaseModel):
+    """Type scale levels (1-5) and font families."""
+
+    base: int = Field(3, ge=1, le=5)
+    headerScale: int = Field(3, ge=1, le=5)
+    headerFont: Literal["serif", "sans-serif", "mono"] = "serif"
+    bodyFont: Literal["serif", "sans-serif", "mono"] = "sans-serif"
+
+
+class TemplateSettings(BaseModel):
+    """A resume's saved formatting.
+
+    Mirrors TemplateSettings in apps/frontend/lib/types/template-settings.ts.
+    """
+
+    template: ResumeTemplate = "swiss-single"
+    pageSize: Literal["A4", "LETTER"] = "A4"
+    margins: TemplateMargins = Field(default_factory=TemplateMargins)
+    spacing: TemplateSpacing = Field(default_factory=TemplateSpacing)
+    fontSize: TemplateFontSize = Field(default_factory=TemplateFontSize)
+    compactMode: bool = False
+    showContactIcons: bool = False
+    accentColor: Literal["blue", "green", "orange", "red"] = "blue"
+    # Orders saves from one builder session (a tab): `revision` counts up per session.
+    # A save older than the stored one from the same session is ignored, so that
+    # tab's requests arriving out of order cannot undo its newer choice. Saves from
+    # other sessions always apply (the last to arrive wins); no clocks involved.
+    session: str | None = Field(None, max_length=64)
+    revision: int = Field(0, ge=0)
+
+
+# ResumeFetchData is declared above TemplateSettings.
+ResumeFetchData.model_rebuild()
+ResumeFetchResponse.model_rebuild()
+ResumeSummary.model_rebuild()
+ResumeListResponse.model_rebuild()
+
+
 class PageFitSettings(BaseModel):
     """Print settings used to measure page count (mirrors GET /resumes/{id}/pdf)."""
 
-    template: Literal[
-        "swiss-single",
-        "swiss-two-column",
-        "modern",
-        "modern-two-column",
-        "latex",
-        "clean",
-        "vivid",
-        "vivid-single",
-        "modern-deedy",
-        "deedy",
-    ] = "swiss-single"
+    template: ResumeTemplate = "swiss-single"
     pageSize: Literal["A4", "LETTER"] = "A4"
     marginTop: int = Field(10, ge=5, le=25)
     marginBottom: int = Field(10, ge=5, le=25)

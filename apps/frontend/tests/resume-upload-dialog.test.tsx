@@ -513,3 +513,32 @@ describe('drop zone keyboard access', () => {
     expect(pickerClick).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('ResumeUploadDialog file types', () => {
+  it.each(['resume.docx', 'resume.pdf'])(
+    'uploads %s when the browser reports no MIME type',
+    async (name) => {
+      vi.mocked(fetch).mockResolvedValueOnce(uploadResponse('resume-1'));
+      render(<ResumeUploadDialog open onOpenChange={vi.fn()} onUploadComplete={vi.fn()} />);
+
+      const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+      fireEvent.change(input!, {
+        target: { files: [new File(['synthetic resume'], name, { type: '' })] },
+      });
+
+      await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    }
+  );
+
+  it('still refuses an unsupported file without a MIME type', async () => {
+    render(<ResumeUploadDialog open onOpenChange={vi.fn()} onUploadComplete={vi.fn()} />);
+
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+    fireEvent.change(input!, {
+      target: { files: [new File(['synthetic resume'], 'resume.txt', { type: '' })] },
+    });
+
+    await waitFor(() => expect(screen.getByText(/type not accepted/)).toBeInTheDocument());
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});

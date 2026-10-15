@@ -100,7 +100,7 @@ async def test_upload_rejects_filename_and_mime_mismatch(
             )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Upload a valid PDF, DOC, or DOCX file."
+    assert response.json()["detail"] == "Upload a valid PDF or DOCX file."
     parse_json.assert_not_awaited()
     assert await isolated_db.list_resumes() == []
 
@@ -147,7 +147,6 @@ async def test_upload_stops_reading_after_the_raw_size_boundary(
             b"PK corrupt",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ),
-        ("broken.doc", b"plain text", "application/msword"),
     ],
 )
 async def test_upload_rejects_malformed_document_containers(
@@ -172,8 +171,54 @@ async def test_upload_rejects_malformed_document_containers(
 
     assert response.status_code == 422
     assert response.json()["detail"] == (
-        "Failed to parse document. Please upload a valid PDF, DOC, or DOCX file."
+        "Failed to parse document. Please upload a valid PDF or DOCX file."
     )
+    parse_json.assert_not_awaited()
+    assert await isolated_db.list_resumes() == []
+
+
+# A real compound-file header: the type validator, not the converter, must refuse it.
+_OLE_DOC_HEADER = (
+    b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\x00" * 20 + b"\xfe\xff\x09\x00\x06\x00"
+).ljust(512, b"\x00")
+
+
+@pytest.mark.parametrize(
+    ("filename", "content_type"),
+    [
+        ("resume.doc", "application/msword"),
+        ("resume.doc", "application/octet-stream"),
+        ("resume.docx", "application/msword"),
+    ],
+)
+async def test_upload_refuses_legacy_doc_with_a_clear_message(
+    client: AsyncClient,
+    isolated_db: Database,
+    sample_resume: dict[str, object],
+    filename: str,
+    content_type: str,
+) -> None:
+    """Legacy .doc cannot be converted, so it is refused before any parsing."""
+    with (
+        patch("app.routers.resumes.parse_document", new_callable=AsyncMock) as convert,
+        patch(
+            "app.routers.resumes.parse_resume_to_json",
+            new_callable=AsyncMock,
+            return_value=sample_resume,
+        ) as parse_json,
+    ):
+        async with client:
+            response = await client.post(
+                "/api/v1/resumes/upload",
+                files={"file": (filename, _OLE_DOC_HEADER, content_type)},
+            )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Legacy Word .doc files are not supported. Save the file as DOCX or PDF "
+        "and upload it again."
+    )
+    convert.assert_not_awaited()
     parse_json.assert_not_awaited()
     assert await isolated_db.list_resumes() == []
 
@@ -250,7 +295,7 @@ async def test_upload_rejects_valid_pdf_without_extractable_text(
     assert response.status_code == 422
     assert response.json()["detail"] == (
         "Could not extract text from the uploaded file. The document may be "
-        "image-based or scanned. Please upload a text-based PDF, DOC, or DOCX "
+        "image-based or scanned. Please upload a text-based PDF or DOCX "
         "with selectable text, or run OCR first."
     )
     parse_json.assert_not_awaited()

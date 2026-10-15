@@ -20,8 +20,9 @@ vi.mock('@/lib/context/status-cache', () => ({
 vi.mock('@/lib/context/language-context', () => ({
   useLanguage: () => ({ uiLanguage: 'en' }),
 }));
-vi.mock('@/components/dashboard/resume-component', () => ({
-  default: ({ resumeData }: { resumeData: { personalInfo?: { name?: string } } }) => (
+vi.mock('@/components/dashboard/resume-component', () => ({ default: () => null }));
+vi.mock('@/components/preview', () => ({
+  PaginatedPreview: ({ resumeData }: { resumeData: { personalInfo?: { name?: string } } }) => (
     <div data-testid="resume-name">{resumeData.personalInfo?.name}</div>
   ),
 }));

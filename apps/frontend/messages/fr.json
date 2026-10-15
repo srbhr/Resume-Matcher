@@ -114,7 +114,7 @@
       "parsingFailed": "CV téléversé mais l'analyse par IA a échoué. Vous pouvez toujours le personnaliser manuellement.",
       "failed": "Échec du téléversement.",
       "dropzoneTitle": "Cliquez ou déposez un fichier",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4 Mo)",
+      "dropzoneSubtitle": "PDF, DOCX (Max 4 Mo)",
       "tryDifferentFile": "Essayer un autre fichier",
       "parsingFailedKeepOpen": "L'analyse par IA a échoué. Essayez un autre fichier ou fermez cette boîte de dialogue."
     },
@@ -539,6 +539,7 @@
       "saveNotAvailable": "L'enregistrement n'est disponible que lors de la modification d'un CV existant.",
       "saveFailed": "Impossible d'enregistrer le CV. Veuillez réessayer.",
       "autoSaveFailed": "Impossible de synchroniser. Le brouillon est en sécurité localement.",
+      "formattingSaveFailed": "Impossible d'enregistrer la mise en forme. Modifiez-la à nouveau pour réessayer.",
       "loadFailed": "Impossible de charger ce CV depuis le serveur. Actualisez pour réessayer ; l'édition est désactivée afin de ne pas écraser votre copie enregistrée.",
       "coverLetterSaveSuccess": "Lettre de motivation enregistrée",
       "outreachSaveSuccess": "Message de contact enregistré",
@@ -981,7 +982,9 @@
         "claude_cli_not_found": "CLI Claude Code introuvable. Installez Claude Code et exécutez `claude auth login`.",
         "chatgpt_not_connected": "Non connecté à ChatGPT. Sélectionnez Forfait ChatGPT dans les paramètres, puis continuez avec ChatGPT.",
         "chatgpt_usage_limit": "La limite d'utilisation de votre forfait ChatGPT pour cette application est atteinte. Consultez-la dans les paramètres de ChatGPT, sous Utilisation.",
-        "chatgpt_not_eligible": "L'utilisation du forfait ChatGPT n'est pas disponible pour ce compte. Elle nécessite ChatGPT Plus ou Pro ; sinon, utilisez une clé API OpenAI."
+        "chatgpt_not_eligible": "L'utilisation du forfait ChatGPT n'est pas disponible pour ce compte. Elle nécessite ChatGPT Plus ou Pro ; sinon, utilisez une clé API OpenAI.",
+        "api_key_required_for_endpoint": "Cette clé API est enregistrée pour un autre point de terminaison. Saisissez la clé pour la tester avec cette URL de base.",
+        "loopback_in_container": "Impossible de joindre le serveur du modèle. Dans Docker, localhost désigne le conteneur lui-même : utilisez http://host.docker.internal:11434 (ou le port de votre serveur) comme URL de base."
       },
       "healthWarnings": {
         "empty_content": "Le LLM a retourné un contenu vide lors de la vérification de l'état."
@@ -1048,7 +1051,8 @@
       "unknownProvider": "Fournisseur inconnu retourné par le backend : {provider}",
       "unableToSaveConfiguration": "Impossible d'enregistrer la configuration",
       "failedToClearApiKeys": "Impossible d'effacer les clés API. Veuillez réessayer.",
-      "failedToResetDatabase": "Impossible de réinitialiser la base de données. Veuillez réessayer."
+      "failedToResetDatabase": "Impossible de réinitialiser la base de données. Veuillez réessayer.",
+      "apiKeyRequiredForEndpoint": "Saisissez à nouveau la clé API pour l'utiliser avec cette URL de base ou ce fournisseur."
     },
     "apiKeys": {
       "savedTitle": "Clés API enregistrées",
@@ -1277,7 +1281,7 @@
       "upload": {
         "kicker": "Fichier existant",
         "title": "Téléverser un CV",
-        "description": "Commencez avec un fichier PDF, DOC ou DOCX et laissez Resume Matcher l'analyser dans votre profil principal.",
+        "description": "Commencez avec un fichier PDF ou DOCX et laissez Resume Matcher l'analyser dans votre profil principal.",
         "action": "Téléverser un CV"
       },
       "wizard": {

@@ -114,7 +114,7 @@
       "parsingFailed": "履歴書はアップロードされましたが、AI解析に失敗しました。手動でカスタマイズすることは可能です。",
       "failed": "アップロードに失敗しました。",
       "dropzoneTitle": "クリックまたはファイルをドラッグ",
-      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
+      "dropzoneSubtitle": "PDF、DOCX（最大 4MB）",
       "tryDifferentFile": "別のファイルを試す",
       "parsingFailedKeepOpen": "AI 解析に失敗しました。別のファイルを試すか、このダイアログを閉じてください。"
     },
@@ -539,6 +539,7 @@
       "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
       "saveFailed": "履歴書の保存に失敗しました。もう一度お試しください。",
       "autoSaveFailed": "同期できませんでした。下書きはローカルに安全に保存されています。",
+      "formattingSaveFailed": "書式を保存できませんでした。もう一度変更すると再試行します。",
       "loadFailed": "サーバーからこの履歴書を読み込めませんでした。ページを更新して再試行してください。保存済みのコピーを上書きしないよう、編集は無効になっています。",
       "coverLetterSaveSuccess": "カバーレターを保存しました",
       "outreachSaveSuccess": "連絡メールを保存しました",
@@ -981,7 +982,9 @@
         "claude_cli_not_found": "Claude Code CLI が見つかりません。Claude Code をインストールし、`claude auth login` を実行してください。",
         "chatgpt_not_connected": "ChatGPT でサインインしていません。設定で ChatGPT プランを選択し、ChatGPT で続行してください。",
         "chatgpt_usage_limit": "このアプリの ChatGPT プランの利用上限に達しました。ChatGPT の設定の「使用状況」で確認してください。",
-        "chatgpt_not_eligible": "このアカウントでは ChatGPT プランを利用できません。ChatGPT Plus または Pro が必要です。それ以外の場合は OpenAI の API キーを使用してください。"
+        "chatgpt_not_eligible": "このアカウントでは ChatGPT プランを利用できません。ChatGPT Plus または Pro が必要です。それ以外の場合は OpenAI の API キーを使用してください。",
+        "api_key_required_for_endpoint": "この API キーは別のエンドポイント用に保存されています。このベース URL でテストするにはキーを入力してください。",
+        "loopback_in_container": "モデルサーバーに接続できません。Docker 内では localhost はコンテナ自身を指します。Base URL に http://host.docker.internal:11434（またはサーバーのポート）を指定してください。"
       },
       "healthWarnings": {
         "empty_content": "ヘルスチェックで空の内容が返されました。"
@@ -1048,7 +1051,8 @@
       "unknownProvider": "バックエンドから未知のプロバイダーが返されました: {provider}",
       "unableToSaveConfiguration": "設定を保存できません",
       "failedToClearApiKeys": "API キーの消去に失敗しました。もう一度お試しください。",
-      "failedToResetDatabase": "データベースのリセットに失敗しました。もう一度お試しください。"
+      "failedToResetDatabase": "データベースのリセットに失敗しました。もう一度お試しください。",
+      "apiKeyRequiredForEndpoint": "このベース URL またはプロバイダーで使用するには、API キーを再入力してください。"
     },
     "apiKeys": {
       "savedTitle": "保存済み API キー",
@@ -1277,7 +1281,7 @@
       "upload": {
         "kicker": "既存ファイル",
         "title": "履歴書をアップロード",
-        "description": "PDF、DOC、DOCX ファイルから始め、Resume Matcher にマスタープロフィールへ解析させます。",
+        "description": "PDF、DOCX ファイルから始め、Resume Matcher にマスタープロフィールへ解析させます。",
         "action": "履歴書をアップロード"
       },
       "wizard": {

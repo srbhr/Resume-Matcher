@@ -32,7 +32,7 @@ from app.database import (
     ResumeNotFoundError,
     db,
 )
-from app.pdf import PDFRenderError, render_resume_pdf
+from app.pdf import PRINT_ERROR_SELECTOR, PDFRenderError, render_resume_pdf
 from app.preview import (
     PreviewBusyError,
     PreviewClaim,
@@ -54,6 +54,7 @@ from app.schemas import (
     ImproveResumeRequest,
     ImproveResumeResponse,
     InterviewPrepData,
+    PageFitSettings,
     RawResume,
     RefinementStats,
     ResumeData,
@@ -65,11 +66,13 @@ from app.schemas import (
     ResumeSummary,
     ResumeUploadResponse,
     SetDefaultMasterResponse,
+    TemplateSettings,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
     normalize_resume_data,
 )
+from app.schemas.models import ResumeTemplate
 from app.schemas.refinement import RefinementConfig
 from app.services.ats import compute_ats_score
 from app.services.bullet_selector import SELECTABLE_SECTIONS
@@ -91,12 +94,13 @@ from app.services.improver import (
     verify_skill_target_plan,
 )
 from app.services.interview_prep import generate_interview_prep
-from app.services.page_fit import page_limit, render_drafts
+from app.services.page_fit import page_limit, render_drafts, resume_print_url
 from app.services.parser import (
     MAX_EXTRACTED_TEXT_BYTES,
     MAX_PDF_PREFLIGHT_PAGES,
     MAX_UNPACKED_DOCUMENT_BYTES,
     DocumentPageLimitError,
+    DocumentPasswordError,
     DocumentResourceLimitError,
     has_meaningful_resume_content,
     parse_document,
@@ -792,16 +796,31 @@ async def _generate_auxiliary_messages(
 
 router = APIRouter(route_class=AIOperationRoute, prefix="/resumes", tags=["Resumes"])
 
+# Legacy binary .doc is not listed: the document converter cannot read it, so
+# it is refused here with a clear message instead of failing after upload.
 ALLOWED_TYPES = {
     "application/pdf",
-    "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 DOCUMENT_TYPES_BY_EXTENSION = {
     ".pdf": "application/pdf",
-    ".doc": "application/msword",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+LEGACY_DOC_DETAIL = (
+    "Legacy Word .doc files are not supported. Save the file as DOCX or PDF "
+    "and upload it again."
+)
+UNPARSED_RESUME_PDF_DETAIL = (
+    "This resume has not been processed yet, so there is nothing to put in a PDF. "
+    "Retry processing it from the dashboard, then download again."
+)
+PASSWORD_PDF_DETAIL = (
+    "This PDF is password-protected. Remove the password (or print it to a new "
+    "PDF) and upload it again."
+)
+# Browsers report "" or application/octet-stream when the OS has no MIME
+# mapping for the extension (e.g. .docx on Windows without Office).
+UNKNOWN_CONTENT_TYPES = {None, "", "application/octet-stream"}
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
 UPLOAD_READ_CHUNK_SIZE = 64 * 1024
 MASTER_LIMIT_DETAIL = (
@@ -809,19 +828,36 @@ MASTER_LIMIT_DETAIL = (
 )
 
 
+def _has_renderable_resume_data(resume: dict[str, Any]) -> bool:
+    """Whether the print page can render this resume (mirrors its data lookup)."""
+    if resume.get("processed_data"):
+        return True
+    try:
+        # Builder saves store the structured resume as JSON in ``content``.
+        return isinstance(json.loads(resume.get("content") or ""), dict)
+    except ValueError:
+        return False
+
+
 def _validate_upload_type(file: UploadFile) -> None:
     """Require the declared MIME type to match a supported filename extension."""
-    if file.content_type not in ALLOWED_TYPES:
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix == ".doc" or file.content_type == "application/msword":
+        raise HTTPException(status_code=400, detail=LEGACY_DOC_DETAIL)
+    content_type = file.content_type
+    if content_type in UNKNOWN_CONTENT_TYPES and suffix in DOCUMENT_TYPES_BY_EXTENSION:
+        # The container preflight still validates the bytes by this suffix.
+        content_type = DOCUMENT_TYPES_BY_EXTENSION[suffix]
+    if content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOC, DOCX",
+            detail=f"Invalid file type: {content_type}. Allowed: PDF, DOCX",
         )
 
-    suffix = Path(file.filename or "").suffix.lower()
-    if DOCUMENT_TYPES_BY_EXTENSION.get(suffix) != file.content_type:
+    if DOCUMENT_TYPES_BY_EXTENSION.get(suffix) != content_type:
         raise HTTPException(
             status_code=400,
-            detail="Upload a valid PDF, DOC, or DOCX file.",
+            detail="Upload a valid PDF or DOCX file.",
         )
 
 
@@ -1020,6 +1056,9 @@ async def upload_resume(
                 f"and extracted text is {MAX_EXTRACTED_TEXT_BYTES // (1024 * 1024)}MB."
             ),
         )
+    except DocumentPasswordError as e:
+        logger.info("Password-protected PDF refused: %s", file.filename)
+        raise HTTPException(status_code=422, detail=PASSWORD_PDF_DETAIL) from e
     except TimeoutError as e:
         logger.warning("Document conversion exceeded its deadline")
         raise HTTPException(
@@ -1032,7 +1071,7 @@ async def upload_resume(
         logger.exception("Document parsing failed")
         raise HTTPException(
             status_code=422,
-            detail="Failed to parse document. Please upload a valid PDF, DOC, or DOCX file.",
+            detail="Failed to parse document. Please upload a valid PDF or DOCX file.",
         )
 
     # Validate extracted text is not empty (image-based PDFs / scanned documents)
@@ -1041,7 +1080,7 @@ async def upload_resume(
             status_code=422,
             detail=(
                 "Could not extract text from the uploaded file. The document may be "
-                "image-based or scanned. Please upload a text-based PDF, DOC, or DOCX "
+                "image-based or scanned. Please upload a text-based PDF or DOCX "
                 "with selectable text, or run OCR first."
             ),
         )
@@ -1195,6 +1234,7 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             title=resume.get("title"),
             is_master=resume.get("is_master", False),
             is_default_master=resume.get("is_default_master", False),
+            template_settings=resume.get("template_settings"),
         ),
     )
 
@@ -1219,6 +1259,7 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
             created_at=resume.get("created_at", ""),
             updated_at=resume.get("updated_at", ""),
             title=resume.get("title"),
+            template_settings=resume.get("template_settings"),
         )
         for resume in resumes
     ]
@@ -1723,6 +1764,7 @@ async def improve_resume_confirm_endpoint(
                 "outreach_message": outreach_message,
                 "interview_prep": _serialize_interview_prep(interview_prep),
                 "title": title,
+                "template_settings": copy.deepcopy(resume.get("template_settings")),
             },
             response_data=response.model_dump(mode="json"),
             improvements=claim.improvements or [],
@@ -1979,6 +2021,7 @@ async def execute_tailoring_pipeline(
             "outreach_message": outreach_message,
             "interview_prep": _serialize_interview_prep(interview_prep),
             "title": title,
+            "template_settings": copy.deepcopy(resume.get("template_settings")),
         },
         improvements=improvements,
         ats_score=ats_record,
@@ -2138,6 +2181,7 @@ async def update_resume_endpoint(
             title=updated.get("title"),
             is_master=updated.get("is_master", False),
             is_default_master=updated.get("is_default_master", False),
+            template_settings=updated.get("template_settings"),
         ),
     )
 
@@ -2145,7 +2189,7 @@ async def update_resume_endpoint(
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
     resume_id: str,
-    template: str = Query("swiss-single"),
+    template: ResumeTemplate = Query("swiss-single"),
     pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
     marginTop: int = Query(10, ge=5, le=25),
     marginBottom: int = Query(10, ge=5, le=25),
@@ -2184,29 +2228,32 @@ async def download_resume_pdf(
     resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
+    if not _has_renderable_resume_data(resume):
+        # The print page has nothing to render (the AI parse failed or has not
+        # run). Say so now instead of waiting out the render deadline.
+        raise HTTPException(status_code=409, detail=UNPARSED_RESUME_PDF_DETAIL)
 
-    # Build print URL with all settings
-    params = (
-        f"template={template}"
-        f"&pageSize={pageSize}"
-        f"&marginTop={marginTop}"
-        f"&marginBottom={marginBottom}"
-        f"&marginLeft={marginLeft}"
-        f"&marginRight={marginRight}"
-        f"&sectionSpacing={sectionSpacing}"
-        f"&itemSpacing={itemSpacing}"
-        f"&lineHeight={lineHeight}"
-        f"&fontSize={fontSize}"
-        f"&headerScale={headerScale}"
-        f"&headerFont={headerFont}"
-        f"&bodyFont={bodyFont}"
-        f"&compactMode={str(compactMode).lower()}"
-        f"&showContactIcons={str(showContactIcons).lower()}"
-        f"&accentColor={accentColor}"
+    # Validated and URL-encoded the same way as the page-fit and ATS renders.
+    fit = PageFitSettings(
+        template=template,
+        pageSize=pageSize,
+        marginTop=marginTop,
+        marginBottom=marginBottom,
+        marginLeft=marginLeft,
+        marginRight=marginRight,
+        sectionSpacing=sectionSpacing,
+        itemSpacing=itemSpacing,
+        lineHeight=lineHeight,
+        fontSize=fontSize,
+        headerScale=headerScale,
+        headerFont=headerFont,
+        bodyFont=bodyFont,
+        compactMode=compactMode,
+        showContactIcons=showContactIcons,
+        accentColor=accentColor,
+        lang=lang,
     )
-    if lang:
-        params = f"{params}&lang={lang}"
-    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
+    url = resume_print_url(resume_id, fit)
 
     # Use the exact margins provided; compact mode only affects spacing.
     pdf_margins = {
@@ -2373,6 +2420,21 @@ async def update_title(resume_id: str, request: UpdateTitleRequest) -> dict:
     return {"message": "Title updated successfully"}
 
 
+@router.patch("/{resume_id}/template-settings", response_model=TemplateSettings)
+async def update_template_settings(
+    resume_id: str, settings: TemplateSettings
+) -> TemplateSettings:
+    """Save the resume's formatting (template, margins, fonts...) chosen in the builder.
+
+    Returns the stored settings: unchanged when this save is older than them.
+    """
+    try:
+        stored = await db.save_template_settings(resume_id, settings.model_dump())
+    except ResumeNotFoundError:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return TemplateSettings.model_validate(stored)
+
+
 @router.post("/{resume_id}/default", response_model=SetDefaultMasterResponse)
 async def set_default_master_resume(resume_id: str) -> SetDefaultMasterResponse:
     """Make a master resume the default tailoring source."""
@@ -2425,6 +2487,7 @@ async def duplicate_resume(resume_id: str) -> DuplicateResumeResponse:
         "interview_prep": source.get("interview_prep"),
         "processing_status": "ready",
         "title": _copy_title(source),
+        "template_settings": copy.deepcopy(source.get("template_settings")),
     }
     try:
         if source.get("is_master", False):
@@ -2862,7 +2925,7 @@ async def download_cover_letter_pdf(
     # Render PDF with cover letter selector
     try:
         pdf_bytes = await render_resume_pdf(
-            url, pageSize, selector=".cover-letter-print"
+            url, pageSize, selector=f".cover-letter-print, {PRINT_ERROR_SELECTOR}"
         )
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))

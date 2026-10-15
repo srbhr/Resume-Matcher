@@ -10,6 +10,7 @@ from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
 from app.database import db
 from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers.resumes import (
+    PASSWORD_PDF_DETAIL,
     _get_original_resume_data,
     _read_upload_content,
     _validate_upload_type,
@@ -24,6 +25,7 @@ from app.services.parser import (
     MAX_PDF_PREFLIGHT_PAGES,
     MAX_UNPACKED_DOCUMENT_BYTES,
     DocumentPageLimitError,
+    DocumentPasswordError,
     DocumentResourceLimitError,
 )
 
@@ -61,6 +63,8 @@ async def parse_check_upload(file: UploadFile = File(...)) -> ParseCheckReport:
     except DocumentResourceLimitError as e:
         logger.warning("Parse check resource limit for %r: %s", file.filename, e)
         raise HTTPException(status_code=413, detail=TOO_LARGE_DETAIL) from e
+    except DocumentPasswordError as e:
+        raise HTTPException(status_code=422, detail=PASSWORD_PDF_DETAIL) from e
     except AIOperationDeadlineExceeded:
         raise
     except TimeoutError as e:

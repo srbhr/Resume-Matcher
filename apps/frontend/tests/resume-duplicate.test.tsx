@@ -33,6 +33,7 @@ vi.mock('@/lib/context/language-context', () => ({
 }));
 vi.mock('@/components/enrichment/enrichment-modal', () => ({ EnrichmentModal: () => null }));
 vi.mock('@/components/dashboard/resume-component', () => ({ default: () => null }));
+vi.mock('@/components/preview', () => ({ PaginatedPreview: () => null }));
 vi.mock('@/components/dashboard/resume-upload-dialog', () => ({ ResumeUploadDialog: () => null }));
 vi.mock('@/components/dashboard/master-resume-choice-dialog', () => ({
   MasterResumeChoiceDialog: () => null,

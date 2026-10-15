@@ -41,7 +41,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     NODE_ENV=production \
-    NEXT_TELEMETRY_DISABLED=1
+    NEXT_TELEMETRY_DISABLED=1 \
+    IN_CONTAINER=1
 
 # Optional Debian mirrors for slow networks, e.g.
 #   docker build --build-arg DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian .

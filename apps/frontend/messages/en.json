@@ -114,7 +114,7 @@
       "parsingFailed": "Resume uploaded but AI parsing failed. You can still tailor it manually.",
       "failed": "Upload failed.",
       "dropzoneTitle": "Click or Drag File",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)",
+      "dropzoneSubtitle": "PDF, DOCX (Max 4MB)",
       "tryDifferentFile": "Try Different File",
       "parsingFailedKeepOpen": "AI parsing failed. Try a different file or close this dialog."
     },
@@ -539,6 +539,7 @@
       "saveNotAvailable": "Save is only available when editing an existing resume.",
       "saveFailed": "Failed to save resume. Please try again.",
       "autoSaveFailed": "Couldn't sync. Draft is safe locally.",
+      "formattingSaveFailed": "Couldn't save the formatting. Change it again to retry.",
       "loadFailed": "Couldn't load this resume from the server. Refresh to try again — editing is disabled so your saved copy isn't overwritten.",
       "coverLetterSaveSuccess": "Cover letter saved",
       "outreachSaveSuccess": "Outreach message saved",
@@ -981,7 +982,9 @@
         "claude_cli_not_found": "Claude Code CLI not found. Install Claude Code and run `claude auth login`.",
         "chatgpt_not_connected": "Not signed in with ChatGPT. Select ChatGPT plan in Settings and continue with ChatGPT.",
         "chatgpt_usage_limit": "Your ChatGPT plan's usage limit for this app has been reached. Review it in ChatGPT settings under Usage.",
-        "chatgpt_not_eligible": "ChatGPT plan usage isn't available for this account. It needs ChatGPT Plus or Pro; otherwise use an OpenAI API key."
+        "chatgpt_not_eligible": "ChatGPT plan usage isn't available for this account. It needs ChatGPT Plus or Pro; otherwise use an OpenAI API key.",
+        "api_key_required_for_endpoint": "This API key is saved for a different endpoint. Enter the key to test it against this Base URL.",
+        "loopback_in_container": "Can't reach the model server. Inside Docker, localhost is the container itself: set the Base URL to http://host.docker.internal:11434 (or your server's port)."
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."
@@ -1048,7 +1051,8 @@
       "unknownProvider": "Unknown provider returned from backend: {provider}",
       "unableToSaveConfiguration": "Unable to save configuration",
       "failedToClearApiKeys": "Failed to clear API keys. Please try again.",
-      "failedToResetDatabase": "Failed to reset database. Please try again."
+      "failedToResetDatabase": "Failed to reset database. Please try again.",
+      "apiKeyRequiredForEndpoint": "Enter the API key again to use it with this Base URL or provider."
     },
     "apiKeys": {
       "savedTitle": "Saved API Keys",
@@ -1277,7 +1281,7 @@
       "upload": {
         "kicker": "Existing File",
         "title": "Upload a resume",
-        "description": "Start from a PDF, DOC, or DOCX file and let Resume Matcher parse it into your master profile.",
+        "description": "Start from a PDF or DOCX file and let Resume Matcher parse it into your master profile.",
         "action": "Upload Resume"
       },
       "wizard": {
