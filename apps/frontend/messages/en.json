@@ -539,6 +539,7 @@
       "saveNotAvailable": "Save is only available when editing an existing resume.",
       "saveFailed": "Failed to save resume. Please try again.",
       "autoSaveFailed": "Couldn't sync. Draft is safe locally.",
+      "formattingSaveFailed": "Couldn't save the formatting. Change it again to retry.",
       "loadFailed": "Couldn't load this resume from the server. Refresh to try again — editing is disabled so your saved copy isn't overwritten.",
       "coverLetterSaveSuccess": "Cover letter saved",
       "outreachSaveSuccess": "Outreach message saved",

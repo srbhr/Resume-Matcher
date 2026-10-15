@@ -498,6 +498,8 @@ class ResumeFetchData(BaseModel):
     title: str | None = None
     is_master: bool = False
     is_default_master: bool = False
+    # None until the resume is formatted in the builder (= the default template).
+    template_settings: "TemplateSettings | None" = None
 
 
 class ResumeFetchResponse(BaseModel):
@@ -519,6 +521,7 @@ class ResumeSummary(BaseModel):
     created_at: str
     updated_at: str
     title: str | None = None
+    template_settings: "TemplateSettings | None" = None
 
 
 class ResumeListResponse(BaseModel):
@@ -574,6 +577,55 @@ ResumeTemplate = Literal[
     "modern-deedy",
     "deedy",
 ]
+
+
+class TemplateMargins(BaseModel):
+    """Page margins in mm."""
+
+    top: int = Field(10, ge=5, le=25)
+    bottom: int = Field(10, ge=5, le=25)
+    left: int = Field(10, ge=5, le=25)
+    right: int = Field(10, ge=5, le=25)
+
+
+class TemplateSpacing(BaseModel):
+    """Spacing levels (1-5)."""
+
+    section: int = Field(3, ge=1, le=5)
+    item: int = Field(2, ge=1, le=5)
+    lineHeight: int = Field(3, ge=1, le=5)
+
+
+class TemplateFontSize(BaseModel):
+    """Type scale levels (1-5) and font families."""
+
+    base: int = Field(3, ge=1, le=5)
+    headerScale: int = Field(3, ge=1, le=5)
+    headerFont: Literal["serif", "sans-serif", "mono"] = "serif"
+    bodyFont: Literal["serif", "sans-serif", "mono"] = "sans-serif"
+
+
+class TemplateSettings(BaseModel):
+    """A resume's saved formatting.
+
+    Mirrors TemplateSettings in apps/frontend/lib/types/template-settings.ts.
+    """
+
+    template: ResumeTemplate = "swiss-single"
+    pageSize: Literal["A4", "LETTER"] = "A4"
+    margins: TemplateMargins = Field(default_factory=TemplateMargins)
+    spacing: TemplateSpacing = Field(default_factory=TemplateSpacing)
+    fontSize: TemplateFontSize = Field(default_factory=TemplateFontSize)
+    compactMode: bool = False
+    showContactIcons: bool = False
+    accentColor: Literal["blue", "green", "orange", "red"] = "blue"
+
+
+# ResumeFetchData is declared above TemplateSettings.
+ResumeFetchData.model_rebuild()
+ResumeFetchResponse.model_rebuild()
+ResumeSummary.model_rebuild()
+ResumeListResponse.model_rebuild()
 
 
 class PageFitSettings(BaseModel):

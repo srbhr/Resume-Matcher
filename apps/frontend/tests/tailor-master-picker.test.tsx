@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TailorPage from '@/app/(default)/tailor/page';
 import type { ResumeListItem } from '@/lib/api/resume';
+import { DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 
 const api = vi.hoisted(() => ({
   upload: vi.fn(),
@@ -147,14 +148,29 @@ describe('tailor page master picker', () => {
     );
   });
 
-  it('sends page-fit settings built from the stored builder settings and UI locale', async () => {
-    localStorage.setItem('resume_builder_settings', JSON.stringify({ template: 'modern' }));
-    api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
+  it("sends page-fit settings built from the source resume's formatting and UI locale", async () => {
+    const formatted = {
+      ...master('m1', true, 'DevRel'),
+      template_settings: { ...DEFAULT_TEMPLATE_SETTINGS, template: 'modern' as const },
+    };
+    api.list.mockResolvedValue([formatted, master('m2', false, 'Solutions Eng')]);
     await renderPage();
     await fillJobDescriptionAndGenerate();
     // Default length settings: two-page limit, no per-role bullet cap.
     expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, {
       pageFit: { template: 'modern', lang: 'es' },
+      maxPages: 2,
+    });
+  });
+
+  it('fits a never-formatted source resume to the default template', async () => {
+    // A browser-wide setting from older versions is ignored.
+    localStorage.setItem('resume_builder_settings', JSON.stringify({ template: 'modern' }));
+    api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
+    await renderPage();
+    await fillJobDescriptionAndGenerate();
+    expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, {
+      pageFit: { template: 'swiss-single', lang: 'es' },
       maxPages: 2,
     });
   });

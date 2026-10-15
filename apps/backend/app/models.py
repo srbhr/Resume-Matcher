@@ -64,6 +64,9 @@ class Resume(Base):
     # omitted entirely when None. The facade reproduces that by only emitting
     # the key when this column is non-null.
     original_markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # The resume's formatting (template, margins, fonts...); None until the user
+    # formats it in the builder, which means the default template.
+    template_settings: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
     updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
 

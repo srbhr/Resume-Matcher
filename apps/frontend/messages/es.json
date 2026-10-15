@@ -539,6 +539,7 @@
       "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
       "saveFailed": "No se pudo guardar el currículum. Por favor, inténtalo de nuevo.",
       "autoSaveFailed": "No se pudo sincronizar. El borrador está seguro localmente.",
+      "formattingSaveFailed": "No se pudo guardar el formato. Cámbialo de nuevo para reintentar.",
       "loadFailed": "No se pudo cargar este currículum desde el servidor. Actualiza para volver a intentarlo; la edición está desactivada para no sobrescribir tu copia guardada.",
       "coverLetterSaveSuccess": "Carta de presentación guardada",
       "outreachSaveSuccess": "Mensaje de contacto guardado",

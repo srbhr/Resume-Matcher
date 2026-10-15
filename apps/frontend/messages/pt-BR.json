@@ -539,6 +539,7 @@
       "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
       "saveFailed": "Falha ao salvar currículo. Por favor, tente novamente.",
       "autoSaveFailed": "Não foi possível sincronizar. O rascunho está seguro localmente.",
+      "formattingSaveFailed": "Não foi possível salvar a formatação. Altere-a novamente para tentar de novo.",
       "loadFailed": "Não foi possível carregar este currículo do servidor. Atualize para tentar novamente; a edição está desativada para não sobrescrever sua cópia salva.",
       "coverLetterSaveSuccess": "Carta de apresentação salva",
       "outreachSaveSuccess": "Mensagem de contato salva",

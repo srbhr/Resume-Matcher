@@ -45,6 +45,7 @@ import {
   generateOutreachMessage,
   generateInterviewPrep,
   fetchJobDescription,
+  updateResumeTemplateSettings,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
 import { AtsCheckView } from './ats-check-view';
@@ -53,10 +54,6 @@ import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
 import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
-import {
-  TEMPLATE_SETTINGS_STORAGE_KEY,
-  readStoredTemplateSettings,
-} from '@/lib/utils/stored-template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { buildResumeFilename, downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
@@ -92,6 +89,7 @@ const TAB_IDS: TabId[] = [
   'ats-check',
 ];
 const RESUME_AUTOSAVE_DEBOUNCE_MS = 2500;
+const FORMATTING_SAVE_DEBOUNCE_MS = 600;
 const RESUME_AUTOSAVE_MAX_WAIT_MS = 12000;
 // Floor for the computed delay. Without it, once an unsynced streak exceeds the
 // max wait the delay pins to 0 and every keystroke schedules an immediate
@@ -223,15 +221,15 @@ const ResumeBuilderContent = () => {
   const [hasCurrentLocalDraft, setHasCurrentLocalDraft] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
-  // Start from defaults so server and client render the same markup; stored
-  // settings load after hydration.
+  // The resume's own formatting, applied when it loads. A resume never formatted
+  // keeps the defaults.
   const [templateSettings, setTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
-  const [templateSettingsLoaded, setTemplateSettingsLoaded] = useState(false);
-  useEffect(() => {
-    setTemplateSettings(readStoredTemplateSettings());
-    setTemplateSettingsLoaded(true);
-  }, []);
+  const [formattingSaveFailed, setFormattingSaveFailed] = useState(false);
+  const pendingFormattingRef = useRef<{ resumeId: string; settings: TemplateSettings } | null>(
+    null
+  );
+  const formattingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
   const improvedCoverLetter = improvedData?.data?.cover_letter;
@@ -407,12 +405,6 @@ const ResumeBuilderContent = () => {
     [canonicalResumeDataForPreview, t]
   );
 
-  // Save template settings to localStorage when they change
-  useEffect(() => {
-    if (!templateSettingsLoaded) return;
-    safeStorage.set(TEMPLATE_SETTINGS_STORAGE_KEY, JSON.stringify(templateSettings));
-  }, [templateSettings, templateSettingsLoaded]);
-
   // Warn user before leaving with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -474,6 +466,8 @@ const ResumeBuilderContent = () => {
           setIsTailoredResume(Boolean(data.parent_id));
           // Store resume title for downloads
           setResumeTitle(data.title ?? null);
+          setTemplateSettings(data.template_settings ?? DEFAULT_TEMPLATE_SETTINGS);
+          setFormattingSaveFailed(false);
           // These values belong to this resume. Explicitly applying empty values
           // prevents the preceding document's attachment from surviving a switch.
           const serverCoverLetter = data.cover_letter ?? '';
@@ -632,9 +626,35 @@ const ResumeBuilderContent = () => {
     [resumeId]
   );
 
-  const handleSettingsChange = useCallback((newSettings: TemplateSettings) => {
-    setTemplateSettings(newSettings);
+  const flushFormattingSave = useCallback(() => {
+    if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
+    formattingTimerRef.current = null;
+    const pending = pendingFormattingRef.current;
+    pendingFormattingRef.current = null;
+    if (!pending) return;
+    updateResumeTemplateSettings(pending.resumeId, pending.settings).then(
+      () => setFormattingSaveFailed(false),
+      (error) => {
+        console.error('Failed to save resume formatting:', error);
+        setFormattingSaveFailed(true);
+      }
+    );
   }, []);
+
+  // Formatting is saved with the resume, so its view page and PDF match the builder.
+  const handleSettingsChange = useCallback(
+    (newSettings: TemplateSettings) => {
+      setTemplateSettings(newSettings);
+      if (!resumeId) return;
+      pendingFormattingRef.current = { resumeId, settings: newSettings };
+      if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
+      formattingTimerRef.current = setTimeout(flushFormattingSave, FORMATTING_SAVE_DEBOUNCE_MS);
+    },
+    [resumeId, flushFormattingSave]
+  );
+
+  // Save pending formatting before switching resumes or leaving the builder.
+  useEffect(() => flushFormattingSave, [resumeId, flushFormattingSave]);
 
   const queueResumeSave = useCallback(
     (editorData: ResumeData) => {
@@ -1348,6 +1368,9 @@ const ResumeBuilderContent = () => {
     }
     if (autoSaveError) {
       return { label: autoSaveError, tone: 'error' as const };
+    }
+    if (formattingSaveFailed) {
+      return { label: t('builder.alerts.formattingSaveFailed'), tone: 'error' as const };
     }
     if (hasUnsavedChanges) {
       return hasCurrentLocalDraft

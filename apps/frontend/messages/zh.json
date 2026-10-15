@@ -539,6 +539,7 @@
       "saveNotAvailable": "仅在编辑现有简历时可保存。",
       "saveFailed": "保存简历失败，请重试。",
       "autoSaveFailed": "暂时无法同步，草稿已安全保存在本地。",
+      "formattingSaveFailed": "无法保存格式。再次更改即可重试。",
       "loadFailed": "无法从服务器加载此简历。请刷新重试；编辑已禁用，以免覆盖已保存的副本。",
       "coverLetterSaveSuccess": "求职信已保存",
       "outreachSaveSuccess": "联系邮件已保存",

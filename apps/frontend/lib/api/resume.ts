@@ -146,6 +146,8 @@ interface ResumeResponse {
     title?: string | null;
     is_master?: boolean;
     is_default_master?: boolean;
+    // The resume's saved formatting; null until it is formatted in the builder.
+    template_settings?: TemplateSettings | null;
   };
 }
 
@@ -188,6 +190,7 @@ export interface ResumeListItem {
   created_at: string;
   updated_at: string;
   title?: string | null;
+  template_settings?: TemplateSettings | null;
   // Optional lightweight snippet of associated job description (populated client-side)
   jobSnippet?: string;
 }
@@ -393,6 +396,21 @@ export async function renameResume(resumeId: string, title: string): Promise<voi
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to rename resume (status ${res.status}): ${text}`);
+  }
+}
+
+/** Saves the resume's formatting (template, margins, fonts...) chosen in the builder. */
+export async function updateResumeTemplateSettings(
+  resumeId: string,
+  settings: TemplateSettings
+): Promise<void> {
+  const res = await apiPatch(
+    `/resumes/${encodeURIComponent(resumeId)}/template-settings`,
+    settings
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to save resume formatting (status ${res.status}): ${text}`);
   }
 }
 
