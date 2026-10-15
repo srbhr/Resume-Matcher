@@ -10,7 +10,7 @@ import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { DefaultBadge } from '@/components/common/default-badge';
-import { type ResumeData } from '@/components/dashboard/resume-component';
+import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
 import { PaginatedPreview } from '@/components/preview';
 import {
   fetchResume,
@@ -592,10 +592,38 @@ export default function ResumeViewerPage() {
       <div className="px-8 py-6 md:px-12 md:py-8">
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
-          <div className="w-full max-w-[250mm] border border-ink">
+          <div className="no-print w-full max-w-[250mm] border border-ink">
             <PaginatedPreview
               resumeData={localizedResumeData || resumeData}
               settings={templateSettings}
+            />
+          </div>
+          {/* Browser printing shows only .resume-print (globals.css), so print this copy
+              instead of the paginated preview and its controls. */}
+          <div className="resume-print hidden print:block">
+            <Resume
+              resumeData={localizedResumeData || resumeData}
+              template={templateSettings.template}
+              settings={templateSettings}
+              additionalSectionLabels={{
+                technicalSkills: t('resume.additionalLabels.technicalSkills'),
+                languages: t('resume.additionalLabels.languages'),
+                certifications: t('resume.additionalLabels.certifications'),
+                awards: t('resume.additionalLabels.awards'),
+              }}
+              sectionHeadings={{
+                summary: t('resume.sections.summary'),
+                experience: t('resume.sections.experience'),
+                education: t('resume.sections.education'),
+                projects: t('resume.sections.projects'),
+                certifications: t('resume.sections.certifications'),
+                skills: t('resume.sections.skillsOnly'),
+                languages: t('resume.sections.languages'),
+                awards: t('resume.sections.awards'),
+                links: t('resume.sections.links'),
+                earlierExperience: t('resume.sections.earlierExperience'),
+              }}
+              fallbackLabels={{ name: t('resume.defaults.name') }}
             />
           </div>
         </div>

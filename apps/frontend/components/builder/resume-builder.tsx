@@ -230,6 +230,7 @@ const ResumeBuilderContent = () => {
     null
   );
   const formattingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formattingSaveChainRef = useRef<Promise<void>>(Promise.resolve());
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
   const improvedCoverLetter = improvedData?.data?.cover_letter;
@@ -626,35 +627,48 @@ const ResumeBuilderContent = () => {
     [resumeId]
   );
 
-  const flushFormattingSave = useCallback(() => {
+  const flushFormattingSave = useCallback((unloading = false) => {
     if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
     formattingTimerRef.current = null;
     const pending = pendingFormattingRef.current;
     pendingFormattingRef.current = null;
     if (!pending) return;
-    updateResumeTemplateSettings(pending.resumeId, pending.settings).then(
-      () => setFormattingSaveFailed(false),
-      (error) => {
-        console.error('Failed to save resume formatting:', error);
-        setFormattingSaveFailed(true);
-      }
-    );
+    const save = () =>
+      updateResumeTemplateSettings(pending.resumeId, pending.settings).then(
+        () => setFormattingSaveFailed(false),
+        (error) => {
+          console.error('Failed to save resume formatting:', error);
+          setFormattingSaveFailed(true);
+        }
+      );
+    // Saves go out one at a time, so an older one cannot land last and undo a newer
+    // one. An unloading page cannot wait: it sends now (the request is keepalive).
+    formattingSaveChainRef.current = unloading ? save() : formattingSaveChainRef.current.then(save);
   }, []);
 
   // Formatting is saved with the resume, so its view page and PDF match the builder.
   const handleSettingsChange = useCallback(
     (newSettings: TemplateSettings) => {
+      // Until the resume (and its saved formatting) has loaded, a change would save
+      // the defaults over it.
+      if (loadingState !== 'loaded') return;
       setTemplateSettings(newSettings);
       if (!resumeId) return;
       pendingFormattingRef.current = { resumeId, settings: newSettings };
       if (formattingTimerRef.current) clearTimeout(formattingTimerRef.current);
       formattingTimerRef.current = setTimeout(flushFormattingSave, FORMATTING_SAVE_DEBOUNCE_MS);
     },
-    [resumeId, flushFormattingSave]
+    [resumeId, loadingState, flushFormattingSave]
   );
 
-  // Save pending formatting before switching resumes or leaving the builder.
-  useEffect(() => flushFormattingSave, [resumeId, flushFormattingSave]);
+  // Save pending formatting before switching resumes, leaving the builder, or a
+  // refresh or tab close (which skip React cleanup).
+  useEffect(() => () => flushFormattingSave(), [resumeId, flushFormattingSave]);
+  useEffect(() => {
+    const onPageHide = () => flushFormattingSave(true);
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
+  }, [flushFormattingSave]);
 
   const queueResumeSave = useCallback(
     (editorData: ResumeData) => {

@@ -5,6 +5,7 @@ import { downloadResumePdf, fetchResume, getResumePdfUrl } from '@/lib/api/resum
 import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
 
 const previewProps = vi.hoisted(() => ({ last: null as Record<string, unknown> | null }));
+const printProps = vi.hoisted(() => ({ last: null as Record<string, unknown> | null }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -18,6 +19,13 @@ vi.mock('@/lib/context/language-context', () => ({
   useLanguage: () => ({ uiLanguage: 'es' }),
 }));
 vi.mock('@/components/enrichment/enrichment-modal', () => ({ EnrichmentModal: () => null }));
+// The print-only copy (browser printing).
+vi.mock('@/components/dashboard/resume-component', () => ({
+  default: (props: Record<string, unknown>) => {
+    printProps.last = props;
+    return null;
+  },
+}));
 vi.mock('@/components/preview', () => ({
   PaginatedPreview: (props: Record<string, unknown>) => {
     previewProps.last = props;
@@ -55,6 +63,7 @@ function mockResume(templateSettings: TemplateSettings | null): void {
 beforeEach(() => {
   vi.clearAllMocks();
   previewProps.last = null;
+  printProps.last = null;
   localStorage.clear();
 });
 
@@ -67,6 +76,7 @@ describe('resume viewer template settings', () => {
     const download = await screen.findByRole('button', { name: 'resumeViewer.downloadResume' });
     expect(previewProps.last?.settings).toEqual(saved);
     expect(previewProps.last?.resumeData).toMatchObject({ personalInfo: { name: 'Ada' } });
+    expect(printProps.last).toMatchObject({ template: 'vivid-single', settings: saved });
 
     await act(async () => download.click());
     expect(downloadResumePdf).toHaveBeenCalledWith('resume-123', saved, 'es');

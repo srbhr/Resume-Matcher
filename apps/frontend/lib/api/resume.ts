@@ -404,10 +404,13 @@ export async function updateResumeTemplateSettings(
   resumeId: string,
   settings: TemplateSettings
 ): Promise<void> {
-  const res = await apiPatch(
-    `/resumes/${encodeURIComponent(resumeId)}/template-settings`,
-    settings
-  );
+  // keepalive: the builder sends a pending save as the page unloads.
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/template-settings`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+    keepalive: true,
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to save resume formatting (status ${res.status}): ${text}`);

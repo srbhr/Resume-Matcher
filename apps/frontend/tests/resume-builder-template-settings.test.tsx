@@ -48,6 +48,7 @@ vi.mock('@/components/builder/formatting-controls', () => ({
       <button onClick={() => onChange({ ...settings, template: 'vivid-single' })}>
         pick vivid
       </button>
+      <button onClick={() => onChange({ ...settings, template: 'latex' })}>pick latex</button>
     </>
   ),
 }));
@@ -144,6 +145,64 @@ describe('builder template settings', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'pick vivid' }));
     unmount();
+
+    await waitFor(() =>
+      expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
+        'a',
+        expect.objectContaining({ template: 'vivid-single' })
+      )
+    );
+  });
+
+  it('ignores formatting changes until the resume has loaded', async () => {
+    // The resume never arrives: its saved formatting is still unknown.
+    vi.mocked(fetchResume).mockReturnValue(new Promise(() => {}));
+    const Builder = await importBuilder();
+    render(<Builder />);
+    await waitFor(() => expect(fetchResume).toHaveBeenCalledWith('a'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'pick vivid' }));
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    expect(screen.getByTestId('template')).toHaveTextContent('swiss-single');
+    expect(updateResumeTemplateSettings).not.toHaveBeenCalled();
+  });
+
+  it('sends formatting saves one at a time, in order', async () => {
+    let finishFirst!: () => void;
+    vi.mocked(updateResumeTemplateSettings)
+      .mockImplementationOnce(() => new Promise<void>((resolve) => (finishFirst = resolve)))
+      .mockResolvedValue(undefined);
+    serveResume(null);
+    const Builder = await importBuilder();
+    render(<Builder />);
+    await waitFor(() => expect(fetchResume).toHaveBeenCalledWith('a'));
+    await act(async () => {});
+
+    fireEvent.click(screen.getByRole('button', { name: 'pick vivid' }));
+    await waitFor(() => expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: 'pick latex' }));
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    // The newer save waits for the older one to finish.
+    expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(1);
+
+    await act(async () => finishFirst());
+    await waitFor(() => expect(updateResumeTemplateSettings).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(updateResumeTemplateSettings).mock.calls.map(([, s]) => s.template)).toEqual([
+      'vivid-single',
+      'latex',
+    ]);
+  });
+
+  it('sends a pending formatting change right away when the page unloads', async () => {
+    serveResume(null);
+    const Builder = await importBuilder();
+    render(<Builder />);
+    await waitFor(() => expect(fetchResume).toHaveBeenCalledWith('a'));
+    await act(async () => {});
+
+    fireEvent.click(screen.getByRole('button', { name: 'pick vivid' }));
+    window.dispatchEvent(new Event('pagehide'));
 
     expect(updateResumeTemplateSettings).toHaveBeenCalledWith(
       'a',
