@@ -930,11 +930,13 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECIONADO: {provider}",
-      "claudeCliNote": "Executa a CLI do Claude Code instalada e conectada nesta máquina, então nenhuma chave de API é necessária aqui. O Claude Code ainda envia seus prompts à Anthropic pela sua conta e usa o próprio modelo padrão.",
+      "claudeCliNote": "Executa a CLI do Claude Code instalada e conectada nesta máquina, então nenhuma chave de API é necessária aqui. O Claude Code ainda envia seus prompts à Anthropic pela sua conta.",
+      "claudeCliDefaultModel": "Padrão do Claude Code",
+      "claudeCliModelHint": "Cada alias usa o modelo mais recente da sua família. Seu plano Claude define quais você pode usar.",
       "claudeCliName": "Assinatura do Claude (via Claude Code)",
       "claudeCliShortName": "Plano Claude",
-      "claudeCliWarningTitle": "Sem suporte oficial",
-      "claudeCliWarning": "A Anthropic não oferece suporte oficial a aplicativos de terceiros que usam as assinaturas Claude Pro ou Max, então isso pode deixar de funcionar se a política mudar; para acesso garantido, use uma chave de API da Anthropic. O Resume Matcher nunca vê nem armazena suas credenciais do Claude: ele executa a sua própria CLI do Claude Code, na qual você mesmo faz login com `claude auth login`. As solicitações contam para os limites de uso do seu plano Claude, e a Anthropic pode descontá-las de créditos de uso em vez disso.",
+      "claudeCliWarningTitle": "Use por sua conta e risco",
+      "claudeCliWarning": "A Anthropic não permite que aplicativos de terceiros enviem solicitações pelos planos Claude Free, Pro ou Max, e esta opção pode se enquadrar nisso. A Anthropic pode aplicar essa regra sem aviso prévio; para acesso garantido, use uma chave de API da Anthropic. O Resume Matcher nunca vê nem armazena suas credenciais do Claude: ele executa a sua própria CLI do Claude Code, na qual você mesmo faz login com `claude auth login`. As solicitações contam para os limites de uso do seu plano Claude, e a Anthropic pode descontá-las de créditos de uso em vez disso.",
       "communityBuilt": "Recurso criado pela comunidade.",
       "chatgptName": "Plano do ChatGPT (Sign in with ChatGPT)",
       "chatgptShortName": "Plano ChatGPT",
@@ -1010,6 +1012,24 @@
       "modelsFailed": "Não foi possível carregar seus modelos do ChatGPT. Digite o nome de um modelo.",
       "modelHint": "Depois que você entrar, os modelos vêm da sua conta do ChatGPT.",
       "connectToSave": "Entre com o ChatGPT para salvar este provedor."
+    },
+    "subscriptionRisk": {
+      "claudeCli": {
+        "title": "Usar seu plano Claude aqui?",
+        "risk": "A Anthropic não permite que aplicativos de terceiros enviem solicitações pelos planos Claude Free, Pro ou Max. O Resume Matcher executa a sua própria CLI do Claude Code e nunca vê suas credenciais, mas a Anthropic ainda pode considerar isso uso de terceiros e tomar medidas na sua conta sem aviso prévio.",
+        "usage": "As solicitações contam para os limites de uso do seu plano Claude. Esta opção foi criada pela comunidade e pode deixar de funcionar se a Anthropic mudar o Claude Code ou a política."
+      },
+      "chatgpt": {
+        "title": "Usar seu plano ChatGPT aqui?",
+        "risk": "Esta opção usa o Sign in with ChatGPT da OpenAI para aplicativos de código aberto. É uma prévia, então a OpenAI pode alterá-la ou encerrá-la. Funciona com ChatGPT Plus e Pro.",
+        "usage": "As solicitações contam para os limites de uso do seu plano ChatGPT, compartilhados com outros aplicativos que usam o seu plano. Esta opção foi criada pela comunidade."
+      },
+      "mcpTitle": "Recomendado: use o servidor MCP",
+      "mcpBody": "Já usa o Claude Code ou o Codex? Adicione o servidor MCP do Resume Matcher e peça ao seu agente para adaptar seu currículo. O agente faz o trabalho de IA no próprio aplicativo, e o Resume Matcher salva, verifica e gera o resultado. Nenhuma chave de API é necessária.",
+      "mcpLink": "Guia de configuração do MCP",
+      "alternative": "Prefere acesso garantido? Volte e use uma chave de API ou um modelo local como o Ollama.",
+      "back": "Não, voltar",
+      "accept": "Sim, aceito o risco"
     },
     "contentGeneration": {
       "title": "Geração de conteúdo",
