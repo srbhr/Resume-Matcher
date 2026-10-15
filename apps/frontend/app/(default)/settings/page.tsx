@@ -165,6 +165,9 @@ export default function SettingsPage() {
   // LLM Config state
   const [provider, setProvider] = useState<LLMProvider>('openai');
   const [model, setModel] = useState('');
+  // The model as last loaded from the backend; keeps a saved full Claude model
+  // name in the picker after another option is chosen.
+  const [savedModel, setSavedModel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
@@ -376,6 +379,7 @@ export default function SettingsPage() {
               ? PROVIDER_INFO.chatgpt.defaultModel
               : llmConfig.model || PROVIDER_INFO[safeProvider].defaultModel
           );
+          setSavedModel(llmConfig.model || '');
           // Whether THIS provider already has an encrypted key (per-provider,
           // not the legacy shared slot) drives the "leave blank to keep" hint.
           const keyProvider = llmProviderToKeyProvider(activeProvider);
@@ -678,6 +682,7 @@ export default function SettingsPage() {
       if (llmConfig) {
         setProvider(llmConfig.provider || 'openai');
         setModel(llmConfig.model || PROVIDER_INFO['openai'].defaultModel);
+        setSavedModel(llmConfig.model || '');
         setApiBase(llmConfig.api_base || '');
         setReasoningEffort(llmConfig.reasoning_effort ?? 'auto');
       }
@@ -766,13 +771,16 @@ export default function SettingsPage() {
   const usesChatGptSignIn = providerInfo.chatgptSignIn ?? false;
   // Matched as the backend does (cli_model_arg trims and lowercases).
   const cliModel = model.trim().toLowerCase();
+  const savedCliModel = savedModel.trim().toLowerCase();
   const claudeCliModelOptions = [
     {
       id: PROVIDER_INFO.claude_cli.defaultModel,
       label: t('settings.llmConfiguration.claudeCliDefaultModel'),
     },
     ...CLAUDE_CLI_ALIASES,
-    ...(CLAUDE_FULL_MODEL_NAME.test(cliModel) ? [{ id: cliModel, label: cliModel }] : []),
+    ...(CLAUDE_FULL_MODEL_NAME.test(savedCliModel)
+      ? [{ id: savedCliModel, label: savedCliModel }]
+      : []),
   ];
   // Anything else (e.g. a stale LLM_MODEL) runs on Claude Code's default, so show that.
   const claudeCliModel = claudeCliModelOptions.some((option) => option.id === cliModel)

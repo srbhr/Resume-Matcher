@@ -409,6 +409,32 @@ describe('settings page (Swiss sweep)', () => {
     );
   });
 
+  it('keeps a stored full Claude model name selectable after choosing another model', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: 'claude-sonnet-5-5',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    render(<SettingsPage />);
+    const picker = await screen.findByRole('button', {
+      name: /settings\.llmConfiguration\.modelLabel/,
+    });
+    await waitFor(() => expect(picker).toHaveTextContent('claude-sonnet-5-5'));
+
+    fireEvent.click(picker);
+    fireEvent.click(screen.getByRole('option', { name: 'Sonnet' }));
+    fireEvent.click(picker);
+    fireEvent.click(screen.getByRole('option', { name: 'claude-sonnet-5-5' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() =>
+      expect(api.updateLlmConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'claude_cli', model: 'claude-sonnet-5-5' })
+      )
+    );
+  });
+
   it('shows a stored alias in any case or padding, as the backend runs it', async () => {
     api.fetchLlmConfig.mockResolvedValue({
       provider: 'claude_cli',
