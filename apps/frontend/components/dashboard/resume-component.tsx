@@ -18,6 +18,32 @@ import {
   settingsToCssVars,
 } from '@/lib/types/template-settings';
 import baseStyles from '@/components/resume/styles/_base.module.css';
+// The Serif, Sans and Mono faces (lib/types/template-settings.ts), one file per weight
+// the templates use. The preview renders in the reader's browser and the PDF in the
+// server's Chromium, which have different local fonts, so both load these files to
+// wrap lines and break pages the same way. Static on purpose: Chromium writes variable
+// fonts into PDFs as Type 3 fonts, which space letters unevenly ("RESUM EN") in the
+// page and in the extracted text an ATS reads. next/font/google only serves these
+// families as variable fonts.
+import '@fontsource/noto-sans/300.css';
+import '@fontsource/noto-sans/400.css';
+import '@fontsource/noto-sans/600.css';
+import '@fontsource/noto-sans/700.css';
+import '@fontsource/noto-sans/800.css';
+import '@fontsource/noto-sans/400-italic.css';
+import '@fontsource/noto-sans/700-italic.css';
+import '@fontsource/noto-serif/300.css';
+import '@fontsource/noto-serif/400.css';
+import '@fontsource/noto-serif/600.css';
+import '@fontsource/noto-serif/700.css';
+import '@fontsource/noto-serif/800.css';
+import '@fontsource/noto-serif/400-italic.css';
+import '@fontsource/noto-serif/700-italic.css';
+import '@fontsource/noto-sans-mono/300.css';
+import '@fontsource/noto-sans-mono/400.css';
+import '@fontsource/noto-sans-mono/600.css';
+import '@fontsource/noto-sans-mono/700.css';
+import '@fontsource/noto-sans-mono/800.css';
 
 export interface PersonalInfo {
   name?: string;

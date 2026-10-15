@@ -10,7 +10,8 @@ import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { DefaultBadge } from '@/components/common/default-badge';
-import Resume, { ResumeData } from '@/components/dashboard/resume-component';
+import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
+import { PaginatedPreview } from '@/components/preview';
 import {
   fetchResume,
   downloadResumePdf,
@@ -36,6 +37,7 @@ import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -74,6 +76,10 @@ export default function ResumeViewerPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
   const [isTailoredResume, setIsTailoredResume] = useState(false);
+  // The resume's own formatting (saved in the builder), so this page and its PDF
+  // match the builder. A resume never formatted shows the defaults.
+  const [templateSettings, setTemplateSettings] =
+    useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
 
   const resumeId = params?.id as string;
   const {
@@ -133,6 +139,7 @@ export default function ResumeViewerPage() {
         setIsTailoredResume(Boolean(data.parent_id));
         setIsMasterResume(Boolean(data.is_master));
         setIsDefaultMaster(Boolean(data.is_default_master));
+        setTemplateSettings(data.template_settings ?? DEFAULT_TEMPLATE_SETTINGS);
 
         // Prioritize processed_resume if available (structured JSON)
         if (data.processed_resume) {
@@ -332,7 +339,7 @@ export default function ResumeViewerPage() {
     setIsDownloading(true);
     try {
       setDownloadError(null);
-      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
+      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
       const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
       downloadBlobAsFile(blob, filename);
       if (!isCurrentDownload(token)) return;
@@ -341,7 +348,7 @@ export default function ResumeViewerPage() {
       if (!isCurrentDownload(token)) return;
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
+        const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
         const didOpen = openUrlInNewTab(fallbackUrl);
         if (!didOpen) {
           setDownloadError(t('common.popupBlocked', { url: fallbackUrl }));
@@ -585,9 +592,19 @@ export default function ResumeViewerPage() {
       <div className="px-8 py-6 md:px-12 md:py-8">
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
-          <div className="resume-print w-full max-w-[250mm] shadow-sw-card border-2 border-ink bg-white">
+          <div className="no-print w-full max-w-[250mm] border border-ink">
+            <PaginatedPreview
+              resumeData={localizedResumeData || resumeData}
+              settings={templateSettings}
+            />
+          </div>
+          {/* Browser printing shows only .resume-print (globals.css), so print this copy
+              instead of the paginated preview and its controls. */}
+          <div className="resume-print hidden print:block">
             <Resume
               resumeData={localizedResumeData || resumeData}
+              template={templateSettings.template}
+              settings={templateSettings}
               additionalSectionLabels={{
                 technicalSkills: t('resume.additionalLabels.technicalSkills'),
                 languages: t('resume.additionalLabels.languages'),

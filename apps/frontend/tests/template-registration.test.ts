@@ -97,8 +97,8 @@ describe('modern-deedy template', () => {
 
   it('resolves its sans-serif choice to self-hosted Lato, ahead of the sans fallbacks', () => {
     const vars = fonts('modern-deedy', 'sans-serif');
-    expect(vars['--body-font']).toMatch(/^var\(--font-lato\), ui-sans-serif/);
-    expect(vars['--header-font']).toMatch(/^var\(--font-lato\), ui-sans-serif/);
+    expect(vars['--body-font']).toMatch(/^var\(--font-lato\), "Noto Sans", ui-sans-serif/);
+    expect(vars['--header-font']).toMatch(/^var\(--font-lato\), "Noto Sans", ui-sans-serif/);
   });
 
   it('keeps the Serif and Mono choices live and leaves other templates on the system sans', () => {

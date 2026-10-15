@@ -539,6 +539,7 @@
       "saveNotAvailable": "L'enregistrement n'est disponible que lors de la modification d'un CV existant.",
       "saveFailed": "Impossible d'enregistrer le CV. Veuillez réessayer.",
       "autoSaveFailed": "Impossible de synchroniser. Le brouillon est en sécurité localement.",
+      "formattingSaveFailed": "Impossible d'enregistrer la mise en forme. Modifiez-la à nouveau pour réessayer.",
       "loadFailed": "Impossible de charger ce CV depuis le serveur. Actualisez pour réessayer ; l'édition est désactivée afin de ne pas écraser votre copie enregistrée.",
       "coverLetterSaveSuccess": "Lettre de motivation enregistrée",
       "outreachSaveSuccess": "Message de contact enregistré",

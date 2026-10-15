@@ -22,7 +22,6 @@ import {
   toPageFitSettings,
   type ResumeListItem,
 } from '@/lib/api/resume';
-import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
 import {
   DEFAULT_TAILOR_LENGTH,
   TAILOR_BULLET_CAPS,
@@ -34,7 +33,7 @@ import {
   type TailorLengthSettings,
   type TailorPageLimit,
 } from '@/lib/utils/tailor-length-settings';
-import type { TemplateType } from '@/lib/types/template-settings';
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateType } from '@/lib/types/template-settings';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -286,7 +285,10 @@ export default function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
-      const templateSettings = readStoredTemplateSettings();
+      // Fit pages the way the source resume is formatted.
+      const templateSettings =
+        masters.find((m) => m.resume_id === resumeId)?.template_settings ??
+        DEFAULT_TEMPLATE_SETTINGS;
       const result = await previewImproveResume(
         resumeId,
         jobId,

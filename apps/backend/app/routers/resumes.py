@@ -66,6 +66,7 @@ from app.schemas import (
     ResumeSummary,
     ResumeUploadResponse,
     SetDefaultMasterResponse,
+    TemplateSettings,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
@@ -1233,6 +1234,7 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             title=resume.get("title"),
             is_master=resume.get("is_master", False),
             is_default_master=resume.get("is_default_master", False),
+            template_settings=resume.get("template_settings"),
         ),
     )
 
@@ -1257,6 +1259,7 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
             created_at=resume.get("created_at", ""),
             updated_at=resume.get("updated_at", ""),
             title=resume.get("title"),
+            template_settings=resume.get("template_settings"),
         )
         for resume in resumes
     ]
@@ -1761,6 +1764,7 @@ async def improve_resume_confirm_endpoint(
                 "outreach_message": outreach_message,
                 "interview_prep": _serialize_interview_prep(interview_prep),
                 "title": title,
+                "template_settings": copy.deepcopy(resume.get("template_settings")),
             },
             response_data=response.model_dump(mode="json"),
             improvements=claim.improvements or [],
@@ -2017,6 +2021,7 @@ async def execute_tailoring_pipeline(
             "outreach_message": outreach_message,
             "interview_prep": _serialize_interview_prep(interview_prep),
             "title": title,
+            "template_settings": copy.deepcopy(resume.get("template_settings")),
         },
         improvements=improvements,
         ats_score=ats_record,
@@ -2176,6 +2181,7 @@ async def update_resume_endpoint(
             title=updated.get("title"),
             is_master=updated.get("is_master", False),
             is_default_master=updated.get("is_default_master", False),
+            template_settings=updated.get("template_settings"),
         ),
     )
 
@@ -2414,6 +2420,21 @@ async def update_title(resume_id: str, request: UpdateTitleRequest) -> dict:
     return {"message": "Title updated successfully"}
 
 
+@router.patch("/{resume_id}/template-settings", response_model=TemplateSettings)
+async def update_template_settings(
+    resume_id: str, settings: TemplateSettings
+) -> TemplateSettings:
+    """Save the resume's formatting (template, margins, fonts...) chosen in the builder.
+
+    Returns the stored settings: unchanged when this save is older than them.
+    """
+    try:
+        stored = await db.save_template_settings(resume_id, settings.model_dump())
+    except ResumeNotFoundError:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return TemplateSettings.model_validate(stored)
+
+
 @router.post("/{resume_id}/default", response_model=SetDefaultMasterResponse)
 async def set_default_master_resume(resume_id: str) -> SetDefaultMasterResponse:
     """Make a master resume the default tailoring source."""
@@ -2466,6 +2487,7 @@ async def duplicate_resume(resume_id: str) -> DuplicateResumeResponse:
         "interview_prep": source.get("interview_prep"),
         "processing_status": "ready",
         "title": _copy_title(source),
+        "template_settings": copy.deepcopy(source.get("template_settings")),
     }
     try:
         if source.get("is_master", False):

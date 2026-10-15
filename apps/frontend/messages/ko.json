@@ -531,6 +531,7 @@
       "outreachGenerateFailed": "아웃리치 메시지 생성에 실패했습니다: {error}",
       "interviewPrepGenerateFailed": "면접 준비 자료 생성에 실패했습니다: {error}",
       "autoSaveFailed": "동기화하지 못했습니다. 초안은 로컬에 안전하게 저장되어 있습니다.",
+      "formattingSaveFailed": "서식을 저장하지 못했습니다. 다시 변경하면 재시도합니다.",
       "loadFailed": "서버에서 이 이력서를 불러오지 못했습니다. 새로고침하여 다시 시도해 주세요. 저장된 사본을 덮어쓰지 않도록 편집이 비활성화되었습니다."
     },
     "autoSave": {

@@ -67,6 +67,9 @@ export interface TemplateSettings {
   compactMode: boolean; // Apply tighter spacing across the board
   showContactIcons: boolean; // Show icons next to contact info
   accentColor: AccentColor; // Accent color for Modern template
+  // On saved settings: which builder session saved them, and its save number.
+  session?: string | null;
+  revision?: number;
 }
 
 /**
@@ -172,10 +175,13 @@ const cjkVars = (locale?: string): string => {
 
 // Header font family mapping. Exported as functions of the locale; the eager
 // maps below preserve the previous default-ordering API for existing callers.
+// Each stack starts with a face the app ships (loaded by components/dashboard/
+// resume-component.tsx), so the preview and the PDF renderer use the same font file
+// whatever fonts their machines have.
 export const buildHeaderFontMap = (locale?: string): Record<HeaderFontFamily, string> => ({
-  serif: `ui-serif, Georgia, Cambria, "Times New Roman", ${cjkVars(locale)}, Times, serif`,
-  'sans-serif': `ui-sans-serif, system-ui, ${cjkVars(locale)}, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
-  mono: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, ${cjkVars(locale)}, monospace`,
+  serif: `"Noto Serif", ui-serif, Georgia, Cambria, "Times New Roman", ${cjkVars(locale)}, Times, serif`,
+  'sans-serif': `"Noto Sans", ui-sans-serif, system-ui, ${cjkVars(locale)}, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
+  mono: `"Noto Sans Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, ${cjkVars(locale)}, monospace`,
 });
 
 export const buildBodyFontMap = (locale?: string): Record<BodyFontFamily, string> =>
