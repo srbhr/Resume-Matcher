@@ -232,7 +232,8 @@ async def test_direct_tailored_resume_inherits_the_source_formatting(
     response = await client.post("/api/v1/resumes/improve", json=payload)
 
     assert response.status_code == 200, response.text
-    tailored = await isolated_db.get_resume(response.json()["data"]["resume_id"])
-    assert tailored is not None
-    assert tailored["template_settings"] == saved.json()
-    assert tailored["template_settings"]["template"] == "latex"
+    fetched = await client.get(
+        "/api/v1/resumes", params={"resume_id": response.json()["data"]["resume_id"]}
+    )
+    assert fetched.json()["data"]["template_settings"] == saved.json()
+    assert saved.json()["template"] == "latex"

@@ -190,3 +190,20 @@ async def test_a_save_from_another_session_always_applies(
 
     assert res.json() == other
     assert await _fetch_settings(client, resume["resume_id"]) == other
+
+
+async def test_another_tabs_save_cannot_make_a_tabs_older_save_valid_again(
+    client: AsyncClient, isolated_db: Database
+) -> None:
+    resume = await _ready_resume(isolated_db)
+    url = f"/api/v1/resumes/{resume['resume_id']}/template-settings"
+    tab_a_newer = {**VIVID, "template": "latex", "revision": 2}
+    tab_b = {**VIVID, "template": "clean", "session": "tab-2", "revision": 1}
+    tab_a_older = {**VIVID, "revision": 1}
+
+    await client.patch(url, json=tab_a_newer)
+    await client.patch(url, json=tab_b)
+    res = await client.patch(url, json=tab_a_older)  # tab A's earlier save, late
+
+    assert res.json() == tab_b
+    assert await _fetch_settings(client, resume["resume_id"]) == tab_b
