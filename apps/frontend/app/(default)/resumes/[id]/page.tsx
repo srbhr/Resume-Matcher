@@ -36,6 +36,8 @@ import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
+import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -74,6 +76,14 @@ export default function ResumeViewerPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
   const [isTailoredResume, setIsTailoredResume] = useState(false);
+  // The builder's saved formatting, so this page and its PDF match the builder.
+  // Start from defaults so server and client render the same markup; stored
+  // settings load after hydration.
+  const [templateSettings, setTemplateSettings] =
+    useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
+  useEffect(() => {
+    setTemplateSettings(readStoredTemplateSettings());
+  }, []);
 
   const resumeId = params?.id as string;
   const {
@@ -332,7 +342,7 @@ export default function ResumeViewerPage() {
     setIsDownloading(true);
     try {
       setDownloadError(null);
-      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
+      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
       const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
       downloadBlobAsFile(blob, filename);
       if (!isCurrentDownload(token)) return;
@@ -341,7 +351,7 @@ export default function ResumeViewerPage() {
       if (!isCurrentDownload(token)) return;
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
+        const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
         const didOpen = openUrlInNewTab(fallbackUrl);
         if (!didOpen) {
           setDownloadError(t('common.popupBlocked', { url: fallbackUrl }));
@@ -588,6 +598,8 @@ export default function ResumeViewerPage() {
           <div className="resume-print w-full max-w-[250mm] shadow-sw-card border-2 border-ink bg-white">
             <Resume
               resumeData={localizedResumeData || resumeData}
+              template={templateSettings.template}
+              settings={templateSettings}
               additionalSectionLabels={{
                 technicalSkills: t('resume.additionalLabels.technicalSkills'),
                 languages: t('resume.additionalLabels.languages'),
