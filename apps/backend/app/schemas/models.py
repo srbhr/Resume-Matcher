@@ -1060,13 +1060,24 @@ class HealthResponse(BaseModel):
 
 
 class StatusResponse(BaseModel):
-    """Application status response."""
+    """Application status response.
+
+    In agent mode the user's coding agent does the AI work, so ``llm_configured``
+    and ``llm_healthy`` stay false and ``status`` is ``ready`` as soon as a master
+    resume exists.
+    """
 
     status: str
     llm_configured: bool
     llm_healthy: bool
-    #: The user's coding agent does the AI work; the app makes no model calls.
-    agent_mode: bool = False
+    agent_mode: bool = Field(
+        default=False,
+        description=(
+            "True when the 'agent' provider is selected: the user's coding agent "
+            "does the AI work through the resume-matcher command or MCP, and the "
+            "app makes no model calls of its own."
+        ),
+    )
     has_master_resume: bool
     database_stats: dict[str, Any]
 

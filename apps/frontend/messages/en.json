@@ -154,7 +154,8 @@
       "conflictTitle": "Your coding agent changed this resume",
       "conflictBody": "You have unsaved edits to the same part, so autosave is paused. Use the agent's version to discard your unsaved edits, or keep your edits to save them over the agent's changes.",
       "useAgent": "Use the agent's version",
-      "keepMine": "Keep my edits"
+      "keepMine": "Keep my edits",
+      "chooseFirst": "Your coding agent changed this resume. Choose its version or keep your edits in the banner at the top, then try again."
     },
     "draftRecovery": {
       "title": "Restore Local Draft?",

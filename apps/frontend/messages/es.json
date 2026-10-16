@@ -154,7 +154,8 @@
       "conflictTitle": "Tu agente de código cambió este currículum",
       "conflictBody": "Tienes cambios sin guardar en la misma parte, así que el guardado automático está en pausa. Usa la versión del agente para descartar tus cambios sin guardar, o conserva tus cambios para guardarlos sobre los del agente.",
       "useAgent": "Usar la versión del agente",
-      "keepMine": "Conservar mis cambios"
+      "keepMine": "Conservar mis cambios",
+      "chooseFirst": "Tu agente de código cambió este currículum. Elige su versión o conserva tus cambios en el aviso de arriba y vuelve a intentarlo."
     },
     "draftRecovery": {
       "title": "¿Restaurar borrador local?",

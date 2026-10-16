@@ -154,7 +154,8 @@
       "conflictTitle": "Votre agent de code a modifié ce CV",
       "conflictBody": "Vous avez des modifications non enregistrées sur la même partie, donc l'enregistrement automatique est en pause. Utilisez la version de l'agent pour abandonner vos modifications non enregistrées, ou gardez vos modifications pour les enregistrer à la place de celles de l'agent.",
       "useAgent": "Utiliser la version de l'agent",
-      "keepMine": "Garder mes modifications"
+      "keepMine": "Garder mes modifications",
+      "chooseFirst": "Votre agent de code a modifié ce CV. Choisissez sa version ou gardez vos modifications dans le bandeau en haut, puis réessayez."
     },
     "draftRecovery": {
       "title": "Restaurer le brouillon local ?",

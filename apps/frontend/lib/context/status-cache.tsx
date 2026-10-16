@@ -1,11 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { fetchSystemStatus, type SystemStatus } from '@/lib/api/config';
+import { fetchLlmConfig, fetchSystemStatus, type SystemStatus } from '@/lib/api/config';
 
 // Cache duration constants
 const LLM_HEALTH_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes
 const STATUS_STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes for DB stats
+// The coding agent can switch agent mode on or off through the config API while
+// a page is open. This check reads the saved provider only (no model call).
+const PROVIDER_CHECK_INTERVAL = 10 * 1000;
 
 interface CachedStatus {
   status: SystemStatus | null;
@@ -182,6 +185,39 @@ export function StatusCacheProvider({ children }: { children: React.ReactNode })
 
     return () => {
       mountedRef.current = false;
+    };
+  }, [refreshStatus]);
+
+  // Agent mode switched from outside the app: reload the status (and with it
+  // every page's agent-mode behaviour) as soon as the saved provider says so.
+  const statusRef = useRef<SystemStatus | null>(null);
+  useEffect(() => {
+    statusRef.current = cache.status;
+  }, [cache.status]);
+  useEffect(() => {
+    let checking = false;
+    const checkProvider = async () => {
+      if (checking || document.hidden || !statusRef.current) return;
+      checking = true;
+      try {
+        const config = await fetchLlmConfig();
+        const agentMode = config.provider === 'agent';
+        if (mountedRef.current && agentMode !== Boolean(statusRef.current?.agent_mode)) {
+          await refreshStatus();
+        }
+      } catch {
+        // Keep the cached status; the next check tries again.
+      } finally {
+        checking = false;
+      }
+    };
+    const timer = setInterval(checkProvider, PROVIDER_CHECK_INTERVAL);
+    window.addEventListener('focus', checkProvider);
+    document.addEventListener('visibilitychange', checkProvider);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', checkProvider);
+      document.removeEventListener('visibilitychange', checkProvider);
     };
   }, [refreshStatus]);
 

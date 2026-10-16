@@ -18,6 +18,7 @@ const server = vi.hoisted(() => ({
 const fetchResume = vi.fn();
 const updateResume = vi.fn();
 const updateCoverLetter = vi.fn();
+const downloadResumePdf = vi.fn();
 let currentSearch = 'id=res-1';
 
 vi.mock('next/navigation', () => ({
@@ -28,7 +29,7 @@ vi.mock('@/lib/api/resume', () => ({
   fetchResume: (...args: unknown[]) => fetchResume(...args),
   updateResume: (...args: unknown[]) => updateResume(...args),
   updateCoverLetter: (...args: unknown[]) => updateCoverLetter(...args),
-  downloadResumePdf: vi.fn(),
+  downloadResumePdf: (...args: unknown[]) => downloadResumePdf(...args),
   downloadCoverLetterPdf: vi.fn(),
   getResumePdfUrl: vi.fn(() => ''),
   getCoverLetterPdfUrl: vi.fn(() => ''),
@@ -113,6 +114,7 @@ beforeEach(() => {
   fetchResume.mockReset();
   updateResume.mockReset();
   updateCoverLetter.mockReset();
+  downloadResumePdf.mockReset();
   fetchResume.mockImplementation(async () => ({
     processed_resume: server.resume,
     cover_letter: server.coverLetter,
@@ -242,6 +244,41 @@ describe('builder in agent mode, when the agent saves', () => {
     expect(screen.getByDisplayValue('Dear Acme, from the agent.')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'builder.previewTabs.coverLetter' })).toBeEnabled();
     expect(updateCoverLetter).not.toHaveBeenCalled();
+  });
+
+  it('does not autosave over a version the agent saved after the editor last synced', async () => {
+    await renderBuilder();
+    // The agent saves, then the user edits before the next agent check runs.
+    agentSaves('Agent summary');
+    fireEvent.click(screen.getByText('edit'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000); // autosave fires before the 4s check
+    });
+
+    expect(updateResume).not.toHaveBeenCalled();
+    expect(server.resume.summary).toBe('Agent summary');
+    expect(screen.getByText('builder.agentUpdate.conflictTitle')).toBeInTheDocument();
+  });
+
+  it('does not save over the agent on Download while the user has not chosen', async () => {
+    await renderBuilder();
+    fireEvent.click(screen.getByText('edit'));
+    agentSaves('Agent summary');
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByText('builder.agentUpdate.conflictTitle')).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /common\.download/ }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(updateResume).not.toHaveBeenCalled();
+    expect(downloadResumePdf).not.toHaveBeenCalled();
+    expect(server.resume.summary).toBe('Agent summary');
+    expect(screen.getByText('builder.agentUpdate.chooseFirst')).toBeInTheDocument();
   });
 
   it('does not look for agent changes outside agent mode', async () => {

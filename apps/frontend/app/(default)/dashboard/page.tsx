@@ -335,7 +335,7 @@ export default function DashboardPage() {
   }, [loadTailoredResumes]);
 
   // Agent mode: resumes the agent saves appear without a reload.
-  useAgentRefresh(agentMode, () => void loadTailoredResumes(true));
+  useAgentRefresh(agentMode, () => loadTailoredResumes(true));
 
   // Refresh list when window gains focus (e.g., returning from viewer after delete)
   useEffect(() => {

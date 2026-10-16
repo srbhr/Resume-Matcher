@@ -154,7 +154,8 @@
       "conflictTitle": "Seu agente de código alterou este currículo",
       "conflictBody": "Você tem edições não salvas na mesma parte, então o salvamento automático está pausado. Use a versão do agente para descartar suas edições não salvas, ou mantenha suas edições para salvá-las por cima das alterações do agente.",
       "useAgent": "Usar a versão do agente",
-      "keepMine": "Manter minhas edições"
+      "keepMine": "Manter minhas edições",
+      "chooseFirst": "Seu agente de código alterou este currículo. Escolha a versão dele ou mantenha suas edições no aviso no topo e tente de novo."
     },
     "draftRecovery": {
       "title": "Restaurar rascunho local?",

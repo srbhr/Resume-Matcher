@@ -349,6 +349,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const [agentUpdate, setAgentUpdate] = useState<ServerResume | null>(null);
   const [agentAppliedAt, setAgentAppliedAt] = useState<number | null>(null);
   const ownWritesRef = useRef<OwnWrites>({ pending: 0, epoch: 0 });
+  const lastSavedDataRef = useRef<ResumeData>(initialData);
   const agentCheckRunningRef = useRef(false);
   const dismissedAgentVersionRef = useRef<string | null>(null);
 
@@ -723,6 +724,32 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     return () => window.removeEventListener('pagehide', onPageHide);
   }, [flushFormattingSave]);
 
+  useEffect(() => {
+    lastSavedDataRef.current = lastSavedData;
+  }, [lastSavedData]);
+
+  /**
+   * Agent mode, before a resume save: the agent's version if it saved the resume
+   * since this editor last loaded or saved it. The periodic check can miss that
+   * window (autosave runs sooner), and saving then would silently replace the
+   * agent's work. Returns null when the server copy is the editor's own, when a
+   * save of ours is in flight (the difference is then most likely ours), or when
+   * the server cannot be read (saving proceeds as before).
+   */
+  const findAgentConflict = useCallback(async (): Promise<ServerResume | null> => {
+    if (!agentMode || !resumeId || ownWritesRef.current.pending > 0) return null;
+    try {
+      const data = await fetchResume(resumeId);
+      if (!isResumeDataShape(data.processed_resume)) return null;
+      if (isSameResumeData(data.processed_resume, lastSavedDataRef.current)) return null;
+      if (agentVersionOf(data) === dismissedAgentVersionRef.current) return null;
+      return data;
+    } catch (error) {
+      console.warn('Could not check for agent changes before saving:', error);
+      return null;
+    }
+  }, [agentMode, resumeId]);
+
   const queueResumeSave = useCallback(
     (editorData: ResumeData) => {
       if (!resumeId) {
@@ -789,6 +816,12 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       // its floor, and every subsequent keystroke schedules another PATCH.
       unsyncedSinceRef.current = Date.now();
       try {
+        const agentVersion = await findAgentConflict();
+        if (agentVersion) {
+          // Ask the user instead; autosave stays paused until they choose.
+          setAgentUpdate(agentVersion);
+          return;
+        }
         const { response, canonicalPayload } = await queueResumeSave(editorSnapshot);
         if (!documentIsActiveRef.current) return;
         // Prefer the server's copy: it may rewrite the payload (e.g. aligning
@@ -818,6 +851,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   }, [
     agentUpdate,
     autoSaveError,
+    findAgentConflict,
     hasUnsavedChanges,
     isAutoSaving,
     isSaving,
@@ -845,6 +879,16 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
       try {
         setIsSaving(true);
+        // Agent mode: never save over the agent's version before the user has
+        // chosen between it and their edits (Download, Back and Save all land here).
+        const agentVersion = agentUpdate ?? (await findAgentConflict());
+        if (agentVersion) {
+          setAgentUpdate(agentVersion);
+          if (showErrorDialog) {
+            showNotification(t('builder.agentUpdate.chooseFirst'), 'warning');
+          }
+          return false;
+        }
         const versionAtFlush = editVersionRef.current;
         const editorSnapshot = resumeData;
         const { response, canonicalPayload } = await queueResumeSave(editorSnapshot);
@@ -879,7 +923,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       }
     },
     [
+      agentUpdate,
       autoSaveError,
+      findAgentConflict,
       hasUnsavedChanges,
       loadingState,
       queueResumeSave,
@@ -1143,7 +1189,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     }
   };
 
-  useAgentRefresh(agentMode && loadingState === 'loaded', () => void checkForAgentChanges());
+  useAgentRefresh(agentMode && loadingState === 'loaded', () => checkForAgentChanges());
 
   const handleKeepMyEdits = () => {
     if (!agentUpdate) return;
