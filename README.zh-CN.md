@@ -8,7 +8,7 @@
 
 [𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
-为每一次求职投递生成量身定制的简历：AI 给出可执行的优化建议。支持本地使用 Ollama 运行，也可通过 API 连接你常用的 LLM 提供商。
+开源简历生成器：根据每一份职位描述（JD）定制你的简历。自托管的 AI 工具，支持 Claude、ChatGPT、DeepSeek、Kimi、GLM、Gemma 等本地或云端 LLM。
 
 ![Resume Matcher Demo](assets/Resume_Matcher_Demo_2.gif)
 
@@ -53,6 +53,17 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 4. **生成**该岗位的求职信与邮件模板
 5. **自定义**版式与章节，匹配你的风格
 6. **导出**为你选定模板的专业 PDF
+
+### 为软件工程师打造
+
+安装 Resume Matcher 需要用到终端，所以大多数使用者本身就是写代码的人。它贴合你已有的工作方式：
+
+- **在你自己的电脑上运行。** FastAPI 后端、Next.js 前端和一个 SQLite 文件。克隆仓库，或启动一个 Docker 容器即可。无需注册账号，简历只保存在你自己的数据库里。
+- **模型由你选择。** 使用 OpenAI、Anthropic、Gemini、DeepSeek、OpenRouter 或 Groq 的 API Key，或通过 Ollama 运行本地模型，让简历始终不离开你的电脑。
+- **可以由 Claude Code 驱动。** 通过 [MCP 服务器](SETUP.zh-CN.md#在-claude-code-或-claude-desktop-中使用-resume-matchermcp)，Claude Code、Cursor 或 Codex 负责撰写定制简历，Resume Matcher 负责保存、检查和渲染，无需 LLM API Key。
+- **只基于你的真实经历。** 定制提示词禁止添加主简历中没有的技能、工具、公司或量化数据。
+- **评分逻辑是可读的代码。** ATS 评分（[`services/ats.py`](apps/backend/app/services/ats.py)）和 ATS 检查（[`services/ats_parse/`](apps/backend/app/services/ats_parse/)）都不调用 LLM。ATS 检查用 pdfminer 读取你的 PDF，展示招聘系统（ATS）能提取到的内容。
+- **模板就是工程师常用的样式。** 除了单栏和双栏模板，还有 Deedy、Modern Deedy 和 LaTeX 风格版式。其中七套设计另有可编辑的 pdfLaTeX 项目，可直接导入 Overleaf：[resume-matcher-templates](https://github.com/resume-matcher/resume-matcher-templates)。
 
 ### 保持联系
 
@@ -124,11 +135,11 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 **主简历（Master Resume）**：基于你现有简历创建一份完整的主简历，后续每次投递都从这份主简历中抽取与定制。
 
-![Job Description Input](assets/step_2_zh-CN.webp)
+![Dashboard with a master resume and seven tailored resumes](assets/step_2.webp)
 
 ### 简历生成器
 
-![Resume Builder](assets/step_5_zh-CN.webp)
+![Resume Builder with the template picker and a live preview of a software engineer resume](assets/step_5.webp)
 
 粘贴职位描述后，获得针对该岗位定制的 AI 简历建议。
 
@@ -143,19 +154,21 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 基于职位描述与你的简历，生成定制化的求职信与邮件模板。
 
-![Cover Letter](assets/cover_letter_zh-CN.webp)
+![Cover letter editor next to its PDF preview](assets/cover_letter.webp)
 
 ### 简历评分（开发中功能）
 
 我们正在开发“简历评分”功能：对比你的简历与职位描述，输出匹配分数，并给出改进建议。
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter_zh-CN.webp)
+![JD Match tab with the ATS score breakdown and matching keywords highlighted](assets/keyword_highlighter.webp)
 
 ### PDF 导出
 
 将定制后的简历与求职信导出为 PDF。
 
 ### 模板
+
+所有模板导出的都是带文本层的 PDF（A4 或 US Letter），招聘系统（ATS）可以正常解析。
 
 | 模板名称 | 预览 | 说明 |
 |---------|------|------|
@@ -182,6 +195,19 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 - 可视化关键词高亮
 - 用于打造量化、可落地简历内容的 AI 画布（AI Canvas）
 - 多职位描述联合优化
+
+## 软件工程师简历指南
+
+[Resume Matcher 博客](https://resumematcher.fyi/zh/blog/)为开发者准备了简历写作指南，从第一份实习简历到 FAANG 投递：
+
+- [软件工程师简历](https://resumematcher.fyi/zh/blog/software-engineer-resume/)：一页简历模板、两份带注解的范例和各部分写法
+- [计算机专业简历](https://resumematcher.fyi/zh/blog/computer-science-resume/)：写给在校生和应届生，用项目和实习经历撑起简历
+- [FAANG 简历](https://resumematcher.fyi/zh/blog/faang-resume/)：Google、Meta 和 Amazon 在自家招聘页面上说明的筛选标准
+- [LaTeX 简历](https://resumematcher.fyi/zh/blog/latex-resume/)：Jake's、sb2nov 和 Awesome-CV 模板、Overleaf，以及解析器如何读取 PDF
+- [开源简历生成器](https://resumematcher.fyi/zh/blog/open-source-resume-builders/)：Reactive Resume、RenderCV、YAMLResume、Awesome-CV 等工具对比
+- [主简历](https://resumematcher.fyi/zh/blog/master-resume/)：一份完整的简历，每次投递都从它定制
+- [根据职位描述定制简历](https://resumematcher.fyi/zh/blog/how-to-match-your-resume-to-a-job-description/)：分步骤的方法
+- [用 Ollama 在本地私密定制简历](https://resumematcher.fyi/zh/blog/local-ai-resume-tailoring-ollama/)：简历始终留在你自己的电脑上
 
 <a id="how-to-install"></a>
 
