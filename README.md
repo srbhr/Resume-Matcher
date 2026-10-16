@@ -8,7 +8,7 @@
 
 **English** | [Español](README.es.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
-The AI harness to build tailored resumes for each job application with Claude, ChatGPT, DeepSeek, Kimi, GLM, Gemma, and other LLMs. Supports both local and remote LLMs.
+Open-source resume builder that tailors your resume (CV) to each job description. A self-hosted AI harness for Claude, ChatGPT, DeepSeek, Kimi, GLM, Gemma and other LLMs, local or remote.
 
 ![Resume Matcher Demo](assets/Resume_Matcher_Demo_2.gif)
 
@@ -53,6 +53,17 @@ Resume Matcher works by creating a master resume that you can use to tailor for 
 4. **Cover Letter** and optional interview preparation for the job application
 5. **Customize** the layout and sections to fit your style
 6. **Export** as a professional PDF with your preferred template
+
+### Built for Software Engineers
+
+Installing Resume Matcher takes a terminal, so most of the people running it write software. It fits the way you already work:
+
+- **It runs on your machine.** A FastAPI backend, a Next.js frontend and a SQLite file. Clone the repo or start one Docker container. You don't create an account, and your resume stays in your own database.
+- **You choose the model.** Bring an API key for OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter or Groq, or run a local model with Ollama so your resume never leaves the machine.
+- **Claude Code can drive it.** The [MCP server](SETUP.md#use-resume-matcher-from-claude-code-or-claude-desktop-mcp) lets Claude Code, Cursor or Codex write the tailored resume while Resume Matcher stores, checks and renders it, with no LLM key.
+- **It sticks to your real experience.** The tailoring prompts forbid adding skills, tools, employers or metrics that aren't in your master resume.
+- **The scores are plain code.** The ATS score ([`services/ats.py`](apps/backend/app/services/ats.py)) and the ATS check ([`services/ats_parse/`](apps/backend/app/services/ats_parse/)) make no LLM call. The ATS check runs your PDF through pdfminer to show what an applicant tracking system would extract.
+- **The templates look like engineering resumes.** Deedy, Modern Deedy and a LaTeX-style layout sit next to single- and two-column options. Seven of the designs also come as editable pdfLaTeX projects for Overleaf in [resume-matcher-templates](https://github.com/resume-matcher/resume-matcher-templates).
 
 ### Stay Connected
 
@@ -124,11 +135,11 @@ You can follow me on:
 
 **Master Resume**: Create a comprehensive master resume to draw from your existing one.
 
-![Job Description Input](assets/step_2.webp)
+![Dashboard with a master resume and seven tailored resumes](assets/step_2.webp)
 
 ### Resume Builder
 
-![Resume Builder](assets/step_5.webp)
+![Resume Builder with the template picker and a live preview of a software engineer resume](assets/step_5.webp)
 
 Paste in a job description and get AI-powered resume tailored for that specific role.
 
@@ -143,7 +154,7 @@ You can:
 
 Generate tailored cover letters based on the job description and your resume.
 
-![Cover Letter](assets/cover_letter.webp)
+![Cover letter editor next to its PDF preview](assets/cover_letter.webp)
 
 ### Interview Preparation
 
@@ -157,13 +168,15 @@ Paste several job descriptions on the Tailoring Queue page and they are tailored
 
 Analyze your resume against the job description with a match score, keyword highlighting, and suggestions for improvement.
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.webp)
+![JD Match tab with the ATS score breakdown and matching keywords highlighted](assets/keyword_highlighter.webp)
 
 ### PDF Export
 
 Export your tailored resume and cover letter in PDF.
 
 ### Templates
+
+The templates export text-based PDFs in A4 or US Letter that applicant tracking systems can parse.
 
 | Template Name | Preview | Description |
 |---------------|---------|-------------|
@@ -190,6 +203,19 @@ If you have any suggestions or feature requests, please feel free to open an iss
 - AI Canvas for crafting impactful, metric-driven resume content
 - Email template generator for job applications
 - Multi-job description optimization
+
+## Resume Guides for Software Engineers
+
+The [Resume Matcher blog](https://resumematcher.fyi/blog/) has writing guides for developers, from a first internship resume to a FAANG application:
+
+- [Software engineer resume](https://resumematcher.fyi/blog/software-engineer-resume/): a one-page template, two annotated examples and advice for each section
+- [Computer science resume](https://resumematcher.fyi/blog/computer-science-resume/): for students and new grads, built from projects and internships
+- [FAANG resume](https://resumematcher.fyi/blog/faang-resume/): what Google, Meta and Amazon say they screen for, from their own careers pages
+- [LaTeX resume](https://resumematcher.fyi/blog/latex-resume/): Jake's, sb2nov and Awesome-CV, Overleaf, and how a parser reads the PDF
+- [Open source resume builders](https://resumematcher.fyi/blog/open-source-resume-builders/): Reactive Resume, RenderCV, YAMLResume, Awesome-CV and others compared
+- [Master resume](https://resumematcher.fyi/blog/master-resume/): the one complete resume you tailor each application from
+- [Tailor your resume to a job description](https://resumematcher.fyi/blog/how-to-match-your-resume-to-a-job-description/): the method, step by step
+- [Private AI resume tailoring with Ollama](https://resumematcher.fyi/blog/local-ai-resume-tailoring-ollama/): keep your resume on your own machine
 
 <a id="how-to-install"></a>
 

@@ -8,7 +8,7 @@
 
 [𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
-**Deja de ser rechazado automáticamente por los bots ATS.** Resume Matcher es la plataforma impulsada por IA que aplica ingeniería inversa a los algoritmos de contratación para mostrarte exactamente cómo adaptar tu currículum. Obtén las palabras clave, el formato y los conocimientos que realmente te ayudarán a superar el primer filtro y llegar a manos humanas.
+Constructor de currículums de código abierto que adapta tu currículum (CV u hoja de vida) a cada oferta de trabajo. Una herramienta de IA autoalojada que funciona con Claude, ChatGPT, DeepSeek, Kimi, GLM, Gemma y otros LLM, locales o remotos.
 
 Esperamos convertir esto en **el VS Code para crear currículums**.
 
@@ -55,6 +55,17 @@ Resume Matcher funciona creando un currículum maestro que puedes usar para adap
 4. **Genera** carta de presentación y plantillas de email para la postulación
 5. **Personaliza** el diseño y las secciones a tu estilo
 6. **Exporta** como PDF profesional con tu plantilla preferida
+
+### Hecho para ingenieros de software
+
+Instalar Resume Matcher requiere una terminal, así que la mayoría de quienes lo usan escriben software. Se adapta a tu forma de trabajar:
+
+- **Corre en tu máquina.** Un backend FastAPI, un frontend Next.js y un archivo SQLite. Clona el repositorio o inicia un contenedor Docker. No creas ninguna cuenta y tu currículum se queda en tu propia base de datos.
+- **Tú eliges el modelo.** Usa una API key de OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter o Groq, o ejecuta un modelo local con Ollama para que tu currículum nunca salga de tu máquina.
+- **Claude Code puede manejarlo.** El [servidor MCP](SETUP.es.md#usar-resume-matcher-desde-claude-code-o-claude-desktop-mcp) permite que Claude Code, Cursor o Codex escriban el currículum adaptado mientras Resume Matcher lo guarda, lo revisa y lo renderiza, sin API key de LLM.
+- **Se limita a tu experiencia real.** Los prompts de adaptación prohíben añadir habilidades, herramientas, empresas o métricas que no estén en tu currículum maestro.
+- **Las puntuaciones son código que puedes leer.** La puntuación ATS ([`services/ats.py`](apps/backend/app/services/ats.py)) y la revisión ATS ([`services/ats_parse/`](apps/backend/app/services/ats_parse/)) no llaman a ningún LLM. La revisión ATS pasa tu PDF por pdfminer para mostrarte lo que extraería un sistema de seguimiento de candidatos (ATS).
+- **Las plantillas parecen currículums de ingeniería.** Deedy, Modern Deedy y un diseño estilo LaTeX conviven con opciones de una y dos columnas. Siete de los diseños también existen como proyectos pdfLaTeX editables para Overleaf en [resume-matcher-templates](https://github.com/resume-matcher/resume-matcher-templates).
 
 ### Mantente conectado
 
@@ -126,11 +137,11 @@ Puedes seguirme en:
 
 **Currículum maestro**: crea un currículum maestro completo a partir de tu currículum actual.
 
-![Job Description Input](assets/step_2.webp)
+![Dashboard with a master resume and seven tailored resumes](assets/step_2.webp)
 
 ### Constructor de currículum
 
-![Resume Builder](assets/step_5.webp)
+![Resume Builder with the template picker and a live preview of a software engineer resume](assets/step_5.webp)
 
 Pega una descripción del puesto y obtén un currículum adaptado con ayuda de IA.
 
@@ -145,19 +156,21 @@ Puedes:
 
 Genera cartas de presentación y plantillas de email adaptadas según la descripción del puesto y tu currículum.
 
-![Cover Letter](assets/cover_letter_es.webp)
+![Cover letter editor next to its PDF preview](assets/cover_letter.webp)
 
 ### Puntuación del currículum (función en desarrollo)
 
 Estamos trabajando en una función de puntuación que analiza tu currículum frente a la descripción del puesto y ofrece un puntaje de coincidencia con sugerencias de mejora.
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.webp)
+![JD Match tab with the ATS score breakdown and matching keywords highlighted](assets/keyword_highlighter.webp)
 
 ### Exportación a PDF
 
 Exporta tu currículum adaptado y tu carta de presentación en PDF.
 
 ### Plantillas
+
+Las plantillas exportan PDF con texto real, en A4 o US Letter, que los sistemas de seguimiento de candidatos (ATS) pueden leer.
 
 | Nombre de plantilla | Vista previa | Descripción |
 |---------------------|-------------|-------------|
@@ -184,6 +197,19 @@ Si tienes alguna sugerencia o solicitud de características, no dudes en abrir u
 - Resaltado visual de palabras clave
 - AI Canvas para crear contenido de currículum impactante y basado en métricas
 - Optimización para múltiples descripciones de trabajo
+
+## Guías de currículum para ingenieros de software
+
+El [blog de Resume Matcher](https://resumematcher.fyi/es/blog/) tiene guías para desarrolladores, desde el primer currículum para unas prácticas hasta una postulación a FAANG:
+
+- [Currículum de ingeniero de software](https://resumematcher.fyi/es/blog/software-engineer-resume/): una plantilla de una página, dos ejemplos comentados y consejos para cada sección
+- [Currículum de ciencias de la computación](https://resumematcher.fyi/es/blog/computer-science-resume/): para estudiantes y recién graduados, a partir de proyectos y prácticas
+- [Currículum para FAANG](https://resumematcher.fyi/es/blog/faang-resume/): lo que Google, Meta y Amazon dicen que evalúan, según sus propias páginas de empleo
+- [Currículum en LaTeX](https://resumematcher.fyi/es/blog/latex-resume/): Jake's, sb2nov y Awesome-CV, Overleaf, y cómo lee el PDF un parser
+- [Constructores de currículum de código abierto](https://resumematcher.fyi/es/blog/open-source-resume-builders/): Reactive Resume, RenderCV, YAMLResume, Awesome-CV y otros, comparados
+- [Currículum maestro](https://resumematcher.fyi/es/blog/master-resume/): el currículum completo del que adaptas cada postulación
+- [Adaptar tu currículum (CV) a la descripción de un puesto](https://resumematcher.fyi/es/blog/how-to-match-your-resume-to-a-job-description/): el método, paso a paso
+- [Adapta tu currículum con IA en privado, con Ollama](https://resumematcher.fyi/es/blog/local-ai-resume-tailoring-ollama/): tu currículum se queda en tu propia máquina
 
 <a id="how-to-install"></a>
 
