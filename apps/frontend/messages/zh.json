@@ -149,6 +149,14 @@
       "savedButton": "已保存",
       "localDraftUnavailable": "无法保存本地草稿"
     },
+    "agentUpdate": {
+      "applied": "已由你的编程智能体更新",
+      "conflictTitle": "你的编程智能体修改了这份简历",
+      "conflictBody": "你在同一部分有未保存的编辑，因此已暂停自动保存。使用智能体的版本会丢弃你未保存的编辑；保留你的编辑会将其保存并覆盖智能体的更改。",
+      "useAgent": "使用智能体的版本",
+      "keepMine": "保留我的编辑",
+      "chooseFirst": "你的编程智能体修改了这份简历。请先在顶部横幅中选择使用智能体的版本或保留你的编辑，然后再试一次。"
+    },
     "draftRecovery": {
       "title": "恢复本地草稿？",
       "description": "浏览器中的本地草稿与服务器已保存版本不同。你可以恢复本地草稿继续编辑，或使用服务器版本并丢弃本地草稿。",
@@ -939,6 +947,11 @@
       "claudeCliWarning": "Anthropic 不允许第三方应用通过 Claude Free、Pro 或 Max 订阅发送请求，此选项可能属于这种情况。Anthropic 可以不经通知执行该规定；如需稳定可靠的访问，请使用 Anthropic API 密钥。Resume Matcher 不会看到或存储你的 Claude 凭据，它只是运行你自己的 Claude Code CLI，你需要自行通过 `claude auth login` 登录。请求会计入你的 Claude 订阅用量上限，Anthropic 也可能改为从用量额度中扣除。",
       "communityBuilt": "社区贡献的功能。",
       "chatgptName": "ChatGPT 订阅（使用 ChatGPT 登录）",
+      "agentShortName": "编程智能体",
+      "agentName": "你的编程智能体（Claude Code、Codex、Cursor 或 Copilot）",
+      "agentNoteTitle": "无需 API 密钥",
+      "agentNote": "AI 工作由你的编程智能体完成：它读取你的简历和职位描述，撰写定制版本，并通过 resume-matcher 命令保存到这里。应用本身不调用 AI，因此点击 AI 按钮时会给你一段提示词，粘贴到智能体中即可。",
+      "agentGuideLink": "智能体设置指南",
       "chatgptShortName": "ChatGPT 订阅",
       "chatgptWarningTitle": "预览版",
       "chatgptWarning": "此方式使用 OpenAI 面向开源应用的官方“使用 ChatGPT 登录”（Sign in with ChatGPT），目前为预览版，可能会有变化。适用于 ChatGPT Plus 和 Pro。请求从你的电脑直接发送到 OpenAI 的 API，登录令牌加密保存在这台电脑上。用量计入你的 ChatGPT 订阅限额：Plus 的五小时限额与你其他使用该订阅的应用共享；Pro 没有五小时限额。如需稳定可用，请使用 OpenAI API 密钥。",
@@ -1024,9 +1037,9 @@
         "risk": "此选项使用 OpenAI 面向开源应用的 Sign in with ChatGPT。它仍是预览版，OpenAI 可能会更改或停止它。适用于 ChatGPT Plus 和 Pro。",
         "usage": "请求会计入你的 ChatGPT 订阅用量上限，该上限与使用你订阅的其他应用共享。此选项由社区开发。"
       },
-      "mcpTitle": "推荐：使用 MCP 服务器",
-      "mcpBody": "已经在用 Claude Code 或 Codex？添加 Resume Matcher 的 MCP 服务器，然后让你的智能体定制简历。AI 工作由智能体在它自己的应用中完成，Resume Matcher 负责保存、检查和渲染结果。无需 API 密钥。",
-      "mcpLink": "MCP 设置指南",
+      "mcpTitle": "推荐：让你的编程智能体来完成",
+      "mcpBody": "已经在用 Claude Code、Codex、Cursor 或 Copilot？请改选“编程智能体”。智能体在它自己的应用中完成 AI 工作，Resume Matcher 负责保存、检查和渲染结果。无需 API 密钥。",
+      "mcpLink": "智能体设置指南",
       "alternative": "需要稳定可靠的访问？返回并使用 API 密钥或 Ollama 等本地模型。",
       "back": "不，返回",
       "accept": "是，我接受风险"
@@ -1464,6 +1477,47 @@
       "deleteFailed": "无法移除该职位，请重试。",
       "deleteInProgress": "该职位正在定制中，请在完成后再移除。",
       "clearFailed": "无法清空队列，请重试。"
+    }
+  },
+  "agentPrompt": {
+    "instructions": "将这段提示词粘贴到在 Resume Matcher 文件夹中运行的编程智能体（Claude Code、Codex、Cursor 或 Copilot）。智能体会完成 AI 工作，并把结果保存到这里。",
+    "refresh": "智能体保存后，此页面会自动更新。",
+    "copy": "复制提示词",
+    "copied": "已复制",
+    "modeTitle": "智能体模式已开启",
+    "tailorPageMessage": "在智能体模式下，由你的编程智能体定制简历。请在下方粘贴职位描述，然后复制给智能体的提示词。",
+    "queuePageMessage": "在智能体模式下，批量处理也由编程智能体完成。将每个职位描述保存为 jobs/ 文件夹中的 .md 或 .txt 文件，然后让智能体针对该文件夹中的每个职位定制你的简历。",
+    "getPrompt": "获取给智能体的提示词",
+    "createMaster": {
+      "title": "创建主简历",
+      "prompt": "使用 Resume Matcher，根据这个文件创建我的主简历：<你的简历 PDF 或 DOCX 路径>。如果我没有简历文件，请通过提问和我一起创建。"
+    },
+    "tailor": {
+      "title": "定制你的简历",
+      "prompt": "使用 Resume Matcher，将我的主简历针对这个职位进行定制：\n\n<在此粘贴职位描述>",
+      "promptWithJob": "使用 Resume Matcher，将简历 {resumeId} 针对这个职位进行定制：\n\n{job}",
+      "note": "有多个职位？将每个职位描述保存为 jobs/ 文件夹中的 .md 或 .txt 文件，然后让智能体针对该文件夹中的每个职位定制你的简历。每份简历都会显示在仪表盘上。"
+    },
+    "enhance": {
+      "title": "优化你的简历",
+      "prompt": "使用 Resume Matcher 优化简历 {resumeId} 中的要点。先问我遗漏了哪些成果、数据和工具，然后根据我的回答更新简历。不要添加我没有告诉你的内容。"
+    },
+    "regenerate": {
+      "title": "让智能体改写",
+      "prompt": "使用 Resume Matcher 改写简历 {resumeId} 中的 <要改写的经历、项目或技能>：<需要改进的地方>。保持所有事实真实，并在保存前把改动给我看。"
+    },
+    "coverLetter": {
+      "title": "撰写求职信",
+      "prompt": "使用 Resume Matcher，为简历 {resumeId} 所定制的职位撰写一封求职信，并保存到该简历。"
+    },
+    "outreach": {
+      "title": "撰写联系消息",
+      "prompt": "使用 Resume Matcher，为简历 {resumeId} 所定制的职位撰写一条发给招聘负责人的简短消息，并保存到该简历。"
+    },
+    "interviewPrep": {
+      "title": "准备面试",
+      "prompt": "使用 Resume Matcher 读取简历 {resumeId} 及其所定制的职位，然后帮我准备面试：可能的问题、可以讲述的经历，以及我可以问对方的问题。",
+      "note": "智能体会在它自己的对话中回答。在智能体模式下，面试准备内容不会保存到简历中。"
     }
   }
 }

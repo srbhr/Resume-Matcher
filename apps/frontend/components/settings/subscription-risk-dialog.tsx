@@ -18,8 +18,8 @@ import { useTranslations } from '@/lib/i18n';
 /** Providers that run on the user's own subscription instead of an API key. */
 export type SubscriptionProvider = 'claude_cli' | 'chatgpt';
 
-export const MCP_SETUP_URL =
-  'https://github.com/srbhr/Resume-Matcher/blob/main/SETUP.md#use-resume-matcher-from-claude-code-or-claude-desktop-mcp';
+export const AGENT_SETUP_URL =
+  'https://github.com/srbhr/Resume-Matcher/blob/main/SETUP.md#use-resume-matcher-with-a-coding-agent';
 
 const COPY: Record<SubscriptionProvider, string> = {
   claude_cli: 'settings.subscriptionRisk.claudeCli',
@@ -36,8 +36,8 @@ export interface SubscriptionRiskDialogProps {
 
 /**
  * Asked before switching to a subscription provider: the user accepts the risk
- * or goes back to an API key or local model. Also points to the MCP server,
- * which lets their own Claude Code or Codex do the work instead.
+ * or goes back to an API key or local model. Also points to agent mode, which
+ * lets their own Claude Code, Codex, Cursor or Copilot do the work instead.
  */
 export function SubscriptionRiskDialog({
   provider,
@@ -63,7 +63,7 @@ export function SubscriptionRiskDialog({
           <Alert tone="info" title={t('settings.subscriptionRisk.mcpTitle')}>
             <p>{t('settings.subscriptionRisk.mcpBody')}</p>
             <a
-              href={MCP_SETUP_URL}
+              href={AGENT_SETUP_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-2 inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wider text-primary underline-offset-4 hover:underline"

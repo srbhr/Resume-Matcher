@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from app.chatgpt_auth import is_connected as chatgpt_is_connected
 from app.database import db
-from app.llm import check_llm_health, get_llm_config
+from app.llm import AGENT_PROVIDER, check_llm_health, get_llm_config
 from app.schemas import HealthResponse, StatusResponse
 
 logger = logging.getLogger(__name__)
@@ -42,11 +42,15 @@ async def get_status() -> StatusResponse:
     """
     llm_configured = False
     llm_healthy = False
+    agent_mode = False
     try:
         config = get_llm_config()
+        # In agent mode the user's coding agent does the AI work, so the app
+        # has no model of its own to configure.
+        agent_mode = config.provider == AGENT_PROVIDER
         # ollama / openai_compatible / claude_cli run without a key, matching
         # check_llm_health. chatgpt is configured once the user has signed in.
-        llm_configured = (
+        llm_configured = not agent_mode and (
             bool(config.api_key)
             or config.provider in ("ollama", "openai_compatible", "claude_cli")
             or (config.provider == "chatgpt" and chatgpt_is_connected())
@@ -65,8 +69,11 @@ async def get_status() -> StatusResponse:
     has_master_resume = bool(db_stats.get("has_master_resume"))
 
     return StatusResponse(
-        status="ready" if llm_healthy and has_master_resume else "setup_required",
+        status="ready"
+        if (llm_healthy or agent_mode) and has_master_resume
+        else "setup_required",
         llm_configured=llm_configured,
+        agent_mode=agent_mode,
         llm_healthy=llm_healthy,
         has_master_resume=has_master_resume,
         database_stats=db_stats,

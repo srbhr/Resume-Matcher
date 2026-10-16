@@ -32,8 +32,11 @@ import {
   Copy,
 } from '@phosphor-icons/react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
+import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { isSameResumeData } from '@/lib/utils/resume-draft-storage';
+import { useAgentRefresh } from '@/hooks/use-agent-refresh';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
@@ -50,7 +53,14 @@ export default function ResumeViewerPage() {
   const { uiLanguage } = useLanguage();
   const params = useParams();
   const router = useRouter();
-  const { incrementResumes, decrementResumes, setHasMasterResume } = useStatusCache();
+  const {
+    status: systemStatus,
+    incrementResumes,
+    decrementResumes,
+    setHasMasterResume,
+  } = useStatusCache();
+  // Agent mode: Enhance shows a prompt for the user's coding agent instead.
+  const agentMode = Boolean(systemStatus?.agent_mode);
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +83,9 @@ export default function ResumeViewerPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
   const renameBusyRef = useRef(false);
+  // Bumped when a rename starts and ends: an agent check that overlapped one
+  // must not put the old title back.
+  const titleWritesRef = useRef(0);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
   const [isTailoredResume, setIsTailoredResume] = useState(false);
@@ -171,6 +184,28 @@ export default function ResumeViewerPage() {
 
     loadResume();
   }, [resumeId, beginResumeLoad, isCurrentResumeLoad]);
+
+  // Agent mode: show what the user's coding agent saves (e.g. after Enhance)
+  // without a reload. The title is left alone while the user renames it.
+  const viewedIdRef = useRef(resumeId);
+  useEffect(() => {
+    viewedIdRef.current = resumeId;
+  });
+  useAgentRefresh(agentMode && !loading && Boolean(resumeData), async () => {
+    const id = resumeId;
+    if (!id) return;
+    const titleWrites = titleWritesRef.current;
+    try {
+      const data = await fetchResume(id);
+      if (viewedIdRef.current !== id || !data.processed_resume) return;
+      const latest = data.processed_resume as ResumeData;
+      setResumeData((current) => (current && isSameResumeData(current, latest) ? current : latest));
+      const renamedMeanwhile = titleWritesRef.current !== titleWrites || renameBusyRef.current;
+      if (!isEditingTitle && !renamedMeanwhile) setResumeTitle(data.title ?? null);
+    } catch (err) {
+      console.warn('Could not check for agent changes:', err);
+    }
+  });
 
   const handleRetryProcessing = async () => {
     if (!resumeId) return;
@@ -280,6 +315,7 @@ export default function ResumeViewerPage() {
     const token = beginRename();
     if (token === null) return;
     renameBusyRef.current = true;
+    titleWritesRef.current += 1;
     setIsEditingTitle(false);
     try {
       setRenameError(null);
@@ -292,6 +328,7 @@ export default function ResumeViewerPage() {
       console.error('Failed to rename resume:', err);
       setRenameError(t('resumeViewer.errors.failedToRename'));
     } finally {
+      titleWritesRef.current += 1;
       if (isCurrentRename(token)) renameBusyRef.current = false;
     }
   };
@@ -709,7 +746,14 @@ export default function ResumeViewerPage() {
       />
 
       {/* Enrichment Modal - Only for master resume */}
-      {isMasterResume && (
+      {isMasterResume && agentMode && (
+        <AgentPromptDialog
+          task={showEnrichmentModal ? 'enhance' : null}
+          resumeId={resumeId}
+          onClose={() => setShowEnrichmentModal(false)}
+        />
+      )}
+      {isMasterResume && !agentMode && (
         <EnrichmentModal
           resumeId={resumeId}
           isOpen={showEnrichmentModal}

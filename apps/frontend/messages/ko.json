@@ -543,6 +543,14 @@
       "savedButton": "저장됨",
       "localDraftUnavailable": "로컬 초안을 저장할 수 없음"
     },
+    "agentUpdate": {
+      "applied": "코딩 에이전트가 업데이트함",
+      "conflictTitle": "코딩 에이전트가 이 이력서를 변경했습니다",
+      "conflictBody": "같은 부분에 저장하지 않은 편집이 있어 자동 저장이 일시 중지되었습니다. 에이전트 버전을 사용하면 저장하지 않은 편집이 삭제되고, 내 편집을 유지하면 에이전트의 변경 위에 저장됩니다.",
+      "useAgent": "에이전트 버전 사용",
+      "keepMine": "내 편집 유지",
+      "chooseFirst": "코딩 에이전트가 이 이력서를 변경했습니다. 위쪽 배너에서 에이전트 버전을 사용할지 내 편집을 유지할지 선택한 다음 다시 시도하세요."
+    },
     "draftRecovery": {
       "title": "로컬 초안을 복원할까요?",
       "description": "브라우저에 저장된 로컬 초안이 서버에 저장된 사본과 다릅니다. 초안을 복원해 편집을 계속하거나, 서버 사본을 사용하고 로컬 초안을 삭제할 수 있습니다.",
@@ -939,6 +947,11 @@
       "claudeCliWarning": "Anthropic은 서드파티 앱이 Claude Free, Pro 또는 Max 요금제를 통해 요청을 보내는 것을 허용하지 않으며, 이 옵션도 이에 해당할 수 있습니다. Anthropic은 사전 통지 없이 이를 적용할 수 있습니다(안정적인 이용을 원하면 Anthropic API 키를 사용하세요). Resume Matcher는 Claude 자격 증명을 보거나 저장하지 않으며, 사용자가 `claude auth login`으로 직접 로그인한 본인의 Claude Code CLI를 실행할 뿐입니다. 요청은 Claude 요금제의 사용 한도에 포함되며, Anthropic이 대신 사용 크레딧에서 차감할 수도 있습니다.",
       "communityBuilt": "커뮤니티에서 만든 기능입니다.",
       "chatgptName": "ChatGPT 요금제(Sign in with ChatGPT)",
+      "agentShortName": "코딩 에이전트",
+      "agentName": "사용 중인 코딩 에이전트(Claude Code, Codex, Cursor 또는 Copilot)",
+      "agentNoteTitle": "API 키가 필요 없습니다",
+      "agentNote": "AI 작업은 코딩 에이전트가 합니다. 이력서와 채용 공고를 읽고, 맞춤 버전을 작성해 resume-matcher 명령으로 여기에 저장합니다. 앱 자체는 AI를 호출하지 않으므로 AI 버튼을 누르면 에이전트에 붙여 넣을 프롬프트가 표시됩니다.",
+      "agentGuideLink": "에이전트 설정 가이드",
       "chatgptShortName": "ChatGPT 요금제",
       "chatgptWarningTitle": "프리뷰",
       "chatgptWarning": "OpenAI의 오픈 소스 앱용 공식 Sign in with ChatGPT를 사용합니다. 프리뷰 단계라 변경될 수 있습니다. ChatGPT Plus와 Pro에서 사용할 수 있습니다. 요청은 내 컴퓨터에서 OpenAI API로 직접 전송되며, 로그인 토큰은 이 컴퓨터에 암호화되어 저장됩니다. 사용량은 ChatGPT 요금제 한도에 포함됩니다. Plus에서는 5시간 한도를 같은 요금제를 쓰는 다른 앱과 공유하며, Pro에는 5시간 한도가 없습니다. 안정적으로 이용하려면 OpenAI API 키를 사용하세요.",
@@ -1024,9 +1037,9 @@
         "risk": "OpenAI의 오픈 소스 앱용 Sign in with ChatGPT를 사용합니다. 프리뷰 기능이므로 OpenAI가 변경하거나 중단할 수 있습니다. ChatGPT Plus와 Pro에서 사용할 수 있습니다.",
         "usage": "요청은 ChatGPT 요금제의 사용 한도에 포함되며, 이 한도는 요금제를 사용하는 다른 앱과 공유됩니다. 이 옵션은 커뮤니티에서 만든 기능입니다."
       },
-      "mcpTitle": "권장: MCP 서버 사용",
-      "mcpBody": "이미 Claude Code나 Codex를 사용 중인가요? Resume Matcher의 MCP 서버를 추가하고 에이전트에게 이력서 맞춤 작업을 요청하세요. AI 작업은 에이전트가 자체 앱에서 수행하고, Resume Matcher는 결과를 저장, 검사, 렌더링합니다. API 키가 필요 없습니다.",
-      "mcpLink": "MCP 설정 가이드",
+      "mcpTitle": "추천: 코딩 에이전트에게 맡기세요",
+      "mcpBody": "이미 Claude Code, Codex, Cursor 또는 Copilot을 쓰고 계신가요? 대신 코딩 에이전트를 선택하세요. AI 작업은 에이전트가 자체 앱에서 하고, Resume Matcher는 결과를 저장하고 검사하고 렌더링합니다. API 키가 필요 없습니다.",
+      "mcpLink": "에이전트 설정 가이드",
       "alternative": "안정적인 이용을 원하시나요? 돌아가서 API 키나 Ollama 같은 로컬 모델을 사용하세요.",
       "back": "아니요, 돌아가기",
       "accept": "예, 위험을 감수합니다"
@@ -1464,6 +1477,47 @@
       "deleteFailed": "공고를 제거하지 못했습니다. 다시 시도하세요.",
       "deleteInProgress": "이 공고는 맞춤화 중입니다. 완료된 뒤 제거하세요.",
       "clearFailed": "대기열을 지우지 못했습니다. 다시 시도하세요."
+    }
+  },
+  "agentPrompt": {
+    "instructions": "Resume Matcher 폴더에서 실행 중인 코딩 에이전트(Claude Code, Codex, Cursor 또는 Copilot)에 이 프롬프트를 붙여 넣으세요. 에이전트가 AI 작업을 하고 결과를 여기에 저장합니다.",
+    "refresh": "에이전트가 작업을 저장하면 이 페이지가 자동으로 업데이트됩니다.",
+    "copy": "프롬프트 복사",
+    "copied": "복사됨",
+    "modeTitle": "에이전트 모드가 켜져 있습니다",
+    "tailorPageMessage": "에이전트 모드에서는 코딩 에이전트가 이력서를 맞춤화합니다. 아래에 채용 공고를 붙여 넣은 다음 에이전트용 프롬프트를 복사하세요.",
+    "queuePageMessage": "에이전트 모드에서는 일괄 처리도 코딩 에이전트가 합니다. 각 채용 공고를 jobs/ 폴더에 .md 또는 .txt 파일로 저장한 다음, 그 폴더의 모든 공고에 맞춰 이력서를 맞춤화해 달라고 에이전트에게 요청하세요.",
+    "getPrompt": "에이전트용 프롬프트 받기",
+    "createMaster": {
+      "title": "마스터 이력서 만들기",
+      "prompt": "Resume Matcher로 이 파일에서 내 마스터 이력서를 만들어 줘: <이력서 PDF 또는 DOCX 경로>. 이력서 파일이 없으면 질문하면서 함께 만들어 줘."
+    },
+    "tailor": {
+      "title": "이력서 맞춤화",
+      "prompt": "Resume Matcher로 내 마스터 이력서를 이 채용 공고에 맞춰 줘:\n\n<여기에 채용 공고 붙여 넣기>",
+      "promptWithJob": "Resume Matcher로 이력서 {resumeId}를 이 채용 공고에 맞춰 줘:\n\n{job}",
+      "note": "채용 공고가 여러 개인가요? 각 공고를 jobs/ 폴더에 .md 또는 .txt 파일로 저장하고, 그 폴더의 모든 공고에 맞춰 이력서를 맞춤화해 달라고 에이전트에게 요청하세요. 각각 대시보드에 표시됩니다."
+    },
+    "enhance": {
+      "title": "이력서 개선",
+      "prompt": "Resume Matcher로 이력서 {resumeId}의 글머리 항목을 개선해 줘. 내가 빠뜨린 성과, 수치, 도구에 대해 먼저 물어보고, 내 답변으로 이력서를 업데이트해 줘. 내가 말하지 않은 내용은 추가하지 마."
+    },
+    "regenerate": {
+      "title": "에이전트로 다시 쓰기",
+      "prompt": "Resume Matcher로 이력서 {resumeId}의 <다시 쓸 경력, 프로젝트 또는 기술>을 다시 써 줘: <개선할 점>. 모든 사실은 그대로 유지하고, 저장하기 전에 변경 사항을 보여 줘."
+    },
+    "coverLetter": {
+      "title": "자기소개서 작성",
+      "prompt": "Resume Matcher로 이력서 {resumeId}가 맞춤화된 채용 공고에 맞는 자기소개서를 작성하고, 그 이력서에 저장해 줘."
+    },
+    "outreach": {
+      "title": "아웃리치 메시지 작성",
+      "prompt": "Resume Matcher로 이력서 {resumeId}가 맞춤화된 채용 공고의 채용 담당자에게 보낼 짧은 메시지를 작성하고, 그 이력서에 저장해 줘."
+    },
+    "interviewPrep": {
+      "title": "면접 준비",
+      "prompt": "Resume Matcher로 이력서 {resumeId}와 그 이력서가 맞춤화된 채용 공고를 읽고 면접 준비를 도와줘: 예상 질문, 들려줄 사례, 내가 물어볼 질문.",
+      "note": "에이전트는 자체 채팅에서 답합니다. 에이전트 모드에서는 면접 준비 내용이 이력서에 저장되지 않습니다."
     }
   }
 }

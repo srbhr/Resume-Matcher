@@ -10,6 +10,7 @@ import { Alert } from '@/components/ui/alert';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
+import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import { FadePresence } from '@/components/common/presence';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import type { ATSScore, ImprovedResult } from '@/components/common/resume_previewer_context';
@@ -130,6 +131,9 @@ export default function TailorPage() {
 
   // Check if LLM is configured
   const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
+  // Agent mode: the user's coding agent tailors; the button shows a prompt for it.
+  const agentMode = !statusLoading && Boolean(systemStatus?.agent_mode);
+  const [showAgentPrompt, setShowAgentPrompt] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -514,8 +518,14 @@ export default function TailorPage() {
 
       <div className="p-6">
         <div className="space-y-3">
+          {agentMode && (
+            <Alert tone="info" title={t('agentPrompt.modeTitle')}>
+              {t('agentPrompt.tailorPageMessage')}
+            </Alert>
+          )}
+
           {/* LLM Not Configured Warning */}
-          {!statusLoading && !isLlmConfigured && (
+          {!statusLoading && !isLlmConfigured && !agentMode && (
             <LlmSetupAlert
               titleKey="tailor.setupRequiredTitle"
               messageKey="tailor.noApiKeyMessage"
@@ -643,12 +653,12 @@ export default function TailorPage() {
 
           <Button
             size="lg"
-            onClick={handleGenerate}
+            onClick={agentMode ? () => setShowAgentPrompt(true) : handleGenerate}
             disabled={
               isLoading ||
               statusLoading ||
               !jobDescription.trim() ||
-              !isLlmConfigured ||
+              !(isLlmConfigured || agentMode) ||
               !masterResumeId
             }
             className="w-full"
@@ -664,6 +674,8 @@ export default function TailorPage() {
                 <SpinnerGap className="w-5 h-5 animate-spin" />
                 {t('common.checking')}
               </>
+            ) : agentMode ? (
+              t('agentPrompt.getPrompt')
             ) : !isLlmConfigured ? (
               t('tailor.configureApiKeyFirst')
             ) : (
@@ -675,6 +687,13 @@ export default function TailorPage() {
           {atsResult && <ATSScoreCard atsScore={atsResult} template={atsTemplate} />}
         </div>
       </div>
+
+      <AgentPromptDialog
+        task={showAgentPrompt ? 'tailor' : null}
+        resumeId={masterResumeId ?? ''}
+        jobDescription={jobDescription}
+        onClose={() => setShowAgentPrompt(false)}
+      />
 
       {/* Diff preview modal */}
       {showDiffModal && pendingResult && (
