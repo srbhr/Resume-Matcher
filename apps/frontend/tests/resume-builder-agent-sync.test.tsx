@@ -14,7 +14,11 @@ type Resume = Record<string, unknown> & { summary: string };
 const server = vi.hoisted(() => ({
   resume: null as unknown as Resume,
   coverLetter: '',
+  outreach: '',
+  // When set, reads wait for it: a slow server.
+  gate: null as Promise<void> | null,
 }));
+const form = vi.hoisted(() => ({ mounts: 0, nextEdit: 'Local edit' }));
 const fetchResume = vi.fn();
 const updateResume = vi.fn();
 const updateCoverLetter = vi.fn();
@@ -47,20 +51,25 @@ vi.mock('@/components/common/resume_previewer_context', () => ({
   useResumePreview: () => ({ improvedData: null }),
 }));
 vi.mock('@/components/preview', () => ({ PaginatedPreview: () => null }));
-// Shows the summary the editor holds and makes one local edit.
+// Shows the summary the editor holds, counts mounts and makes one local edit.
 vi.mock('@/components/builder/resume-form', () => ({
-  ResumeForm: ({
+  ResumeForm: function ResumeFormMock({
     resumeData,
     onUpdate,
   }: {
     resumeData: Resume;
     onUpdate: (data: Resume) => void;
-  }) => (
-    <div>
-      <output data-testid="summary">{resumeData.summary}</output>
-      <button onClick={() => onUpdate({ ...resumeData, summary: 'Local edit' })}>edit</button>
-    </div>
-  ),
+  }) {
+    React.useEffect(() => {
+      form.mounts += 1;
+    }, []);
+    return (
+      <div>
+        <output data-testid="summary">{resumeData.summary}</output>
+        <button onClick={() => onUpdate({ ...resumeData, summary: form.nextEdit })}>edit</button>
+      </div>
+    );
+  },
 }));
 vi.mock('@/components/builder/formatting-controls', () => ({ FormattingControls: () => null }));
 vi.mock('@/components/builder/cover-letter-preview', () => ({ CoverLetterPreview: () => null }));
@@ -111,18 +120,28 @@ beforeEach(() => {
   localStorage.clear();
   server.resume = { ...RESUME };
   server.coverLetter = '';
+  server.outreach = '';
+  server.gate = null;
+  form.mounts = 0;
+  form.nextEdit = 'Local edit';
   fetchResume.mockReset();
   updateResume.mockReset();
   updateCoverLetter.mockReset();
   downloadResumePdf.mockReset();
-  fetchResume.mockImplementation(async () => ({
-    processed_resume: server.resume,
-    cover_letter: server.coverLetter,
-    outreach_message: '',
-    parent_id: null,
-    title: 'Resume',
-    raw_resume: { processing_status: 'ready' },
-  }));
+  fetchResume.mockImplementation(async () => {
+    if (server.gate) await server.gate;
+    return {
+      processed_resume: server.resume,
+      cover_letter: server.coverLetter,
+      outreach_message: server.outreach,
+      parent_id: null,
+      title: 'Resume',
+      raw_resume: { processing_status: 'ready' },
+    };
+  });
+  updateCoverLetter.mockImplementation(async (_id: string, content: string) => {
+    server.coverLetter = content;
+  });
   updateResume.mockImplementation(async (_id: string, data: Resume) => {
     server.resume = data;
     return { processed_resume: data };
@@ -279,6 +298,92 @@ describe('builder in agent mode, when the agent saves', () => {
     expect(downloadResumePdf).not.toHaveBeenCalled();
     expect(server.resume.summary).toBe('Agent summary');
     expect(screen.getByText('builder.agentUpdate.chooseFirst')).toBeInTheDocument();
+  });
+
+  it('keeps edits typed while a save waits on the server', async () => {
+    await renderBuilder();
+    fireEvent.click(screen.getByText('edit')); // "Local edit"
+    let release: () => void = () => {};
+    server.gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /builder\.autoSave\.saveNow/ }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    // The user keeps typing while the pre-save check is still waiting.
+    form.nextEdit = 'Second edit';
+    fireEvent.click(screen.getByText('edit'));
+    server.gate = null;
+    await act(async () => {
+      release();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    // The first save went through, but the second edit is still unsaved...
+    expect(server.resume.summary).toBe('Local edit');
+    expect(screen.getByText('builder.autoSave.localDraft')).toBeInTheDocument();
+    // ...so autosave saves it.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
+    expect(server.resume.summary).toBe('Second edit');
+  });
+
+  it("keeps unrelated unsaved edits when the user takes the agent's version", async () => {
+    server.outreach = 'Saved outreach';
+    currentSearch = 'id=res-1&tab=outreach';
+    const ResumeBuilder = await importBuilder();
+    const view = render(<ResumeBuilder agentMode />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    fireEvent.change(screen.getByDisplayValue('Saved outreach'), {
+      target: { value: 'Local outreach' },
+    });
+
+    currentSearch = 'id=res-1&tab=resume';
+    view.rerender(<ResumeBuilder agentMode />);
+    fireEvent.click(screen.getByText('edit'));
+    agentSaves('Agent summary');
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    fireEvent.click(screen.getByText('builder.agentUpdate.useAgent'));
+    expect(screen.getByTestId('summary')).toHaveTextContent('Agent summary');
+
+    currentSearch = 'id=res-1&tab=outreach';
+    view.rerender(<ResumeBuilder agentMode />);
+    expect(screen.getByDisplayValue('Local outreach')).toBeInTheDocument();
+  });
+
+  it("does not save a cover letter over the agent's", async () => {
+    server.coverLetter = 'Saved letter';
+    currentSearch = 'id=res-1&tab=cover-letter';
+    await renderBuilder();
+    fireEvent.change(screen.getByDisplayValue('Saved letter'), {
+      target: { value: 'My letter' },
+    });
+    server.coverLetter = 'Agent letter';
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(updateCoverLetter).not.toHaveBeenCalled();
+    expect(server.coverLetter).toBe('Agent letter');
+    expect(screen.getByText('builder.agentUpdate.conflictTitle')).toBeInTheDocument();
+  });
+
+  it('does not rebuild the resume form when the agent changed only the cover letter', async () => {
+    await renderBuilder();
+    const mounts = form.mounts;
+    server.coverLetter = 'Dear Acme';
+    await nextAgentCheck();
+
+    expect(screen.getByText('builder.agentUpdate.applied')).toBeInTheDocument();
+    expect(form.mounts).toBe(mounts);
   });
 
   it('does not look for agent changes outside agent mode', async () => {

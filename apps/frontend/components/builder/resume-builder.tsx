@@ -137,6 +137,8 @@ type StoredResumeDraft = ResumeDraftEnvelope & { storageKey: string };
 
 type ServerResume = Awaited<ReturnType<typeof fetchResume>>;
 type OwnWrites = { pending: number; epoch: number };
+/** The parts of a resume the agent can change and the editor saves separately. */
+type AgentPart = 'resume' | 'coverLetter' | 'outreach';
 
 /** Identifies one saved version of the parts the agent can change. */
 const agentVersionOf = (data: ServerResume): string =>
@@ -348,6 +350,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   // edits to the same part, and when one was last applied here.
   const [agentUpdate, setAgentUpdate] = useState<ServerResume | null>(null);
   const [agentAppliedAt, setAgentAppliedAt] = useState<number | null>(null);
+  // Remounts the resume form only when the agent replaced the resume itself, so
+  // in-progress form state survives agent updates to other parts.
+  const [resumeFormKey, setResumeFormKey] = useState(0);
   const ownWritesRef = useRef<OwnWrites>({ pending: 0, epoch: 0 });
   const lastSavedDataRef = useRef<ResumeData>(initialData);
   const agentCheckRunningRef = useRef(false);
@@ -736,19 +741,44 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
    * save of ours is in flight (the difference is then most likely ours), or when
    * the server cannot be read (saving proceeds as before).
    */
-  const findAgentConflict = useCallback(async (): Promise<ServerResume | null> => {
-    if (!agentMode || !resumeId || ownWritesRef.current.pending > 0) return null;
-    try {
-      const data = await fetchResume(resumeId);
-      if (!isResumeDataShape(data.processed_resume)) return null;
-      if (isSameResumeData(data.processed_resume, lastSavedDataRef.current)) return null;
-      if (agentVersionOf(data) === dismissedAgentVersionRef.current) return null;
-      return data;
-    } catch (error) {
-      console.warn('Could not check for agent changes before saving:', error);
-      return null;
-    }
-  }, [agentMode, resumeId]);
+  const findAgentConflict = useCallback(
+    async (part: AgentPart): Promise<ServerResume | null> => {
+      if (!agentMode || !resumeId || ownWritesRef.current.pending > 0) return null;
+      try {
+        const data = await fetchResume(resumeId);
+        const baselines = attachmentBaselinesRef.current;
+        const changed =
+          part === 'resume'
+            ? isResumeDataShape(data.processed_resume) &&
+              !isSameResumeData(data.processed_resume, lastSavedDataRef.current)
+            : part === 'coverLetter'
+              ? (data.cover_letter ?? '') !== baselines.coverLetter
+              : (data.outreach_message ?? '') !== baselines.outreachMessage;
+        if (!changed || agentVersionOf(data) === dismissedAgentVersionRef.current) return null;
+        return data;
+      } catch (error) {
+        console.warn('Could not check for agent changes before saving:', error);
+        return null;
+      }
+    },
+    [agentMode, resumeId]
+  );
+
+  /**
+   * Whether saving `part` now is safe. While the user has not chosen between
+   * their edits and the agent's version, or when the agent has just saved this
+   * part, it shows the banner (and, with `notify`, says why) and returns false.
+   */
+  const agentAllowsSave = useCallback(
+    async (part: AgentPart, notify: boolean): Promise<boolean> => {
+      const agentVersion = agentUpdate ?? (await findAgentConflict(part));
+      if (!agentVersion) return true;
+      setAgentUpdate(agentVersion);
+      if (notify) showNotification(t('builder.agentUpdate.chooseFirst'), 'warning');
+      return false;
+    },
+    [agentUpdate, findAgentConflict, showNotification, t]
+  );
 
   const queueResumeSave = useCallback(
     (editorData: ResumeData) => {
@@ -816,7 +846,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       // its floor, and every subsequent keystroke schedules another PATCH.
       unsyncedSinceRef.current = Date.now();
       try {
-        const agentVersion = await findAgentConflict();
+        const agentVersion = await findAgentConflict('resume');
         if (agentVersion) {
           // Ask the user instead; autosave stays paused until they choose.
           setAgentUpdate(agentVersion);
@@ -879,18 +909,14 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
       try {
         setIsSaving(true);
-        // Agent mode: never save over the agent's version before the user has
-        // chosen between it and their edits (Download, Back and Save all land here).
-        const agentVersion = agentUpdate ?? (await findAgentConflict());
-        if (agentVersion) {
-          setAgentUpdate(agentVersion);
-          if (showErrorDialog) {
-            showNotification(t('builder.agentUpdate.chooseFirst'), 'warning');
-          }
-          return false;
-        }
+        // Capture the text and its edit number before any wait, so edits typed
+        // meanwhile stay unsaved (and autosave picks them up) instead of being
+        // marked saved.
         const versionAtFlush = editVersionRef.current;
         const editorSnapshot = resumeData;
+        // Agent mode: never save over the agent's version before the user has
+        // chosen between it and their edits (Download, Back and Save all land here).
+        if (!(await agentAllowsSave('resume', showErrorDialog))) return false;
         const { response, canonicalPayload } = await queueResumeSave(editorSnapshot);
         if (!documentIsActiveRef.current) return false;
         setLastSavedData((response?.processed_resume as ResumeData) ?? canonicalPayload);
@@ -923,9 +949,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       }
     },
     [
-      agentUpdate,
+      agentAllowsSave,
       autoSaveError,
-      findAgentConflict,
       hasUnsavedChanges,
       loadingState,
       queueResumeSave,
@@ -1093,12 +1118,16 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     };
   };
 
-  /** Show the agent's version of each changed part; `discardLocal` also replaces unsaved edits. */
-  const applyAgentVersion = (data: ServerResume, discardLocal = false) => {
+  /**
+   * Show the agent's version of each part it changed, replacing any unsaved
+   * edits to that part. Parts the agent did not change keep the user's edits.
+   */
+  const applyAgentVersion = (data: ServerResume) => {
     const changes = agentChanges(data);
     // Invalidates any check that started before this, so it cannot reopen the banner.
     editVersionRef.current += 1;
-    if (changes.serverResume && (changes.resume || discardLocal)) {
+    if (changes.serverResume && changes.resume) {
+      setResumeFormKey((key) => key + 1);
       setResumeData(changes.serverResume);
       setLastSavedData(changes.serverResume);
       setHasUnsavedChanges(false);
@@ -1110,14 +1139,14 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     }
     const values = { ...attachmentValuesRef.current };
     const baselines = { ...attachmentBaselinesRef.current };
-    if (changes.coverLetterChanged || discardLocal) {
+    if (changes.coverLetterChanged) {
       coverLetterEditVersionRef.current += 1;
       values.coverLetter = changes.coverLetter;
       baselines.coverLetter = changes.coverLetter;
       setCoverLetter(changes.coverLetter);
       setHasUnsavedCoverLetter(false);
     }
-    if (changes.outreachChanged || discardLocal) {
+    if (changes.outreachChanged) {
       outreachEditVersionRef.current += 1;
       values.outreachMessage = changes.outreachMessage;
       baselines.outreachMessage = changes.outreachMessage;
@@ -1292,6 +1321,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     try {
       coverLetterSaveCountRef.current += 1;
       setIsCoverLetterSaving(true);
+      if (!(await agentAllowsSave('coverLetter', showFailure))) return false;
       // A prior generation or newer edit can replace the value while this save waits.
       const { savedContent, savedVersion } = await queueAttachmentWrite(
         coverLetterSaveQueueRef,
@@ -1408,6 +1438,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     try {
       outreachSaveCountRef.current += 1;
       setIsOutreachSaving(true);
+      if (!(await agentAllowsSave('outreach', showFailure))) return false;
       const { savedContent, savedVersion } = await queueAttachmentWrite(
         outreachSaveQueueRef,
         async () => {
@@ -1785,7 +1816,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
             <Alert tone="warning" title={t('builder.agentUpdate.conflictTitle')}>
               <p>{t('builder.agentUpdate.conflictBody')}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" onClick={() => applyAgentVersion(agentUpdate, true)}>
+                <Button size="sm" onClick={() => applyAgentVersion(agentUpdate)}>
                   {t('builder.agentUpdate.useAgent')}
                 </Button>
                 <Button size="sm" variant="outline" onClick={handleKeepMyEdits}>
@@ -1829,7 +1860,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                       onChange={handleSettingsChange}
                     />
                     <ResumeForm
-                      key={agentAppliedAt ?? 0}
+                      key={resumeFormKey}
                       resumeData={resumeData}
                       onUpdate={handleUpdate}
                     />

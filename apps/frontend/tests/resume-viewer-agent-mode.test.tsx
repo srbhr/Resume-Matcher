@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ResumeViewerPage from '@/app/(default)/resumes/[id]/page';
-import { fetchResume } from '@/lib/api/resume';
+import { fetchResume, renameResume } from '@/lib/api/resume';
 import { analyzeResume } from '@/lib/api/enrichment';
 import { AGENT_REFRESH_INTERVAL_MS } from '@/hooks/use-agent-refresh';
 
@@ -40,10 +40,10 @@ vi.mock('@/lib/api/enrichment', () => ({
 
 const mockedFetchResume = vi.mocked(fetchResume);
 
-function resume(summary: string): Awaited<ReturnType<typeof fetchResume>> {
+function resume(summary: string, title = 'Master'): Awaited<ReturnType<typeof fetchResume>> {
   return {
     resume_id: 'resume-a',
-    title: 'Master',
+    title,
     is_master: true,
     processed_resume: {
       personalInfo: { name: 'Ada' },
@@ -89,5 +89,39 @@ describe('resume viewer in agent mode', () => {
     });
 
     expect(screen.getByTestId('summary')).toHaveTextContent('Enhanced by the agent');
+  });
+
+  it('does not let a check that started before a rename restore the old title', async () => {
+    render(<ResumeViewerPage />);
+    await screen.findByTestId('summary');
+
+    // A check starts and the server is slow to answer.
+    let answer: (value: Awaited<ReturnType<typeof fetchResume>>) => void = () => {};
+    mockedFetchResume.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        })
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(AGENT_REFRESH_INTERVAL_MS);
+    });
+
+    // Meanwhile the user renames the resume.
+    vi.mocked(renameResume).mockResolvedValue(undefined as never);
+    fireEvent.click(screen.getByRole('button', { name: 'resumeViewer.renameTitle' }));
+    const input = screen.getByRole('textbox', { name: 'resumeViewer.renameTitle' });
+    fireEvent.change(input, { target: { value: 'Renamed' } });
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter' });
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByRole('heading', { name: 'Renamed' })).toBeInTheDocument();
+
+    await act(async () => {
+      answer(resume('Before', 'Master'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByRole('heading', { name: 'Renamed' })).toBeInTheDocument();
   });
 });

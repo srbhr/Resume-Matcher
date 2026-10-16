@@ -83,6 +83,9 @@ export default function ResumeViewerPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
   const renameBusyRef = useRef(false);
+  // Bumped when a rename starts and ends: an agent check that overlapped one
+  // must not put the old title back.
+  const titleWritesRef = useRef(0);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
   const [isTailoredResume, setIsTailoredResume] = useState(false);
@@ -191,12 +194,14 @@ export default function ResumeViewerPage() {
   useAgentRefresh(agentMode && !loading && Boolean(resumeData), async () => {
     const id = resumeId;
     if (!id) return;
+    const titleWrites = titleWritesRef.current;
     try {
       const data = await fetchResume(id);
       if (viewedIdRef.current !== id || !data.processed_resume) return;
       const latest = data.processed_resume as ResumeData;
       setResumeData((current) => (current && isSameResumeData(current, latest) ? current : latest));
-      if (!isEditingTitle && !renameBusyRef.current) setResumeTitle(data.title ?? null);
+      const renamedMeanwhile = titleWritesRef.current !== titleWrites || renameBusyRef.current;
+      if (!isEditingTitle && !renamedMeanwhile) setResumeTitle(data.title ?? null);
     } catch (err) {
       console.warn('Could not check for agent changes:', err);
     }
@@ -310,6 +315,7 @@ export default function ResumeViewerPage() {
     const token = beginRename();
     if (token === null) return;
     renameBusyRef.current = true;
+    titleWritesRef.current += 1;
     setIsEditingTitle(false);
     try {
       setRenameError(null);
@@ -322,6 +328,7 @@ export default function ResumeViewerPage() {
       console.error('Failed to rename resume:', err);
       setRenameError(t('resumeViewer.errors.failedToRename'));
     } finally {
+      titleWritesRef.current += 1;
       if (isCurrentRename(token)) renameBusyRef.current = false;
     }
   };
