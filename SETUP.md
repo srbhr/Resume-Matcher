@@ -21,6 +21,7 @@ Welcome! This guide will walk you through setting up Resume Matcher on your loca
   - [Option C: Your ChatGPT plan (Sign in with ChatGPT)](#option-c-your-chatgpt-plan-sign-in-with-chatgpt)
 - [Docker Deployment](#docker-deployment)
 - [Accessing the Application](#accessing-the-application)
+- [Use Resume Matcher with a coding agent](#use-resume-matcher-with-a-coding-agent)
 - [Use Resume Matcher from Claude Code or Claude Desktop (MCP)](#use-resume-matcher-from-claude-code-or-claude-desktop-mcp)
 - [Common Commands Reference](#common-commands-reference)
 - [Troubleshooting](#troubleshooting)
@@ -548,6 +549,35 @@ Once the container is running, open your browser:
 4. Click "Save Configuration"
 5. Click "Test Connection" to verify it works
 6. Return to Dashboard and upload your first resume!
+
+---
+
+## Use Resume Matcher with a coding agent
+
+Already use Claude Code, Codex, Cursor, GitHub Copilot or Antigravity? Your agent can do all of Resume Matcher's AI work, so you need **no API key**. The agent reads your resume and job descriptions and writes the tailored versions. Resume Matcher stores them, checks that nothing was invented, scores them and renders the PDFs. You review and edit everything in the web app.
+
+1. Clone this repository and open your agent in its folder.
+2. Ask it: *"Set up Resume Matcher and tailor my resume to this job: …"*
+
+The repository's [`AGENTS.md`](AGENTS.md) (read by Codex, Cursor, Copilot and Antigravity, and by Claude Code through `CLAUDE.md`) sends the agent to the [`resume-matcher` skill](.claude/skills/resume-matcher/SKILL.md). In Claude Code it is also the `/resume-matcher` command. The agent then:
+
+- **Sets up the app**: locally with uv and npm, or with Docker (`docker compose up -d --build`), as you prefer.
+- **Turns on agent mode** once you agree. You can also choose **Coding agent** under Settings > LLM configuration. In agent mode the app makes no AI calls of its own: buttons such as Generate Cover Letter show a prompt to paste into your agent.
+- **Creates your master resume** from your PDF or DOCX, or by asking you questions.
+- **Tailors one resume per job description**. Paste a job description in the chat, or save several as `.md` or `.txt` files in [`jobs/`](jobs/README.md) and ask it to tailor your resume for every job there.
+- **Hands off to the web app**: each tailored resume appears on the dashboard at <http://localhost:3000>, where you edit it and download the PDF. Open pages pick up the agent's saves on their own. If you have unsaved edits to the same part, the editor pauses autosave and asks which version to keep.
+
+The agent works through the `resume-matcher` command, which runs the same tools as the [MCP server](#use-resume-matcher-from-claude-code-or-claude-desktop-mcp) and needs no configuration:
+
+```bash
+uv run --directory apps/backend resume-matcher --help            # local install
+docker exec -i -w /app/backend resume-matcher \
+  python -m app.mcp_server.cli --help                             # Docker
+```
+
+Your job descriptions (`jobs/`) and the app's data (`apps/backend/data/`) stay on your machine and are gitignored.
+
+> **Why not the Claude subscription provider?** That option makes Resume Matcher call Claude through your plan, which Anthropic's terms may not allow for third-party apps. With a coding agent you use your agent yourself, and Resume Matcher never calls it.
 
 ---
 

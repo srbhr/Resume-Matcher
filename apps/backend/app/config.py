@@ -304,6 +304,7 @@ class Settings(BaseSettings):
         "ollama",
         "claude_cli",
         "chatgpt",
+        "agent",
     ] = "openai"
     llm_model: str = "gpt-5-nano-2025-08-07"
     llm_api_key: str = ""

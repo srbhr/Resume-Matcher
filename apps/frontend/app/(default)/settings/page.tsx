@@ -37,6 +37,7 @@ import { API_URL } from '@/lib/api/client';
 import { CHATGPT_RETURN_OUTCOMES, type ChatGptReturnOutcome } from '@/lib/api/chatgpt';
 import { ChatGptConnection } from '@/components/settings/chatgpt-connection';
 import {
+  AGENT_SETUP_URL,
   SubscriptionRiskDialog,
   type SubscriptionProvider,
 } from '@/components/settings/subscription-risk-dialog';
@@ -73,6 +74,7 @@ import {
   Monitor,
   Trash,
   Warning,
+  ArrowSquareOut,
 } from '@phosphor-icons/react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
@@ -97,16 +99,19 @@ const PROVIDERS: LLMProvider[] = [
   'ollama',
   'claude_cli',
   'chatgpt',
+  'agent',
 ];
 
 /** Picker labels translated instead of derived from PROVIDER_INFO's English name. */
 const SHORT_NAME_KEYS: Partial<Record<LLMProvider, string>> = {
   claude_cli: 'settings.llmConfiguration.claudeCliShortName',
   chatgpt: 'settings.llmConfiguration.chatgptShortName',
+  agent: 'settings.llmConfiguration.agentShortName',
 };
 const FULL_NAME_KEYS: Partial<Record<LLMProvider, string>> = {
   claude_cli: 'settings.llmConfiguration.claudeCliName',
   chatgpt: 'settings.llmConfiguration.chatgptName',
+  agent: 'settings.llmConfiguration.agentName',
 };
 /** Claude Code's model aliases; `claude_cli` (the stored default) keeps Claude Code's own model. */
 const CLAUDE_CLI_ALIASES = [
@@ -769,6 +774,7 @@ export default function SettingsPage() {
   const requiresApiBase = providerInfo.requiresBaseUrl ?? false;
   const usesLocalCli = providerInfo.localCli ?? false;
   const usesChatGptSignIn = providerInfo.chatgptSignIn ?? false;
+  const usesAgent = providerInfo.agentMode ?? false;
   // Matched as the backend does (cli_model_arg trims and lowercases).
   const cliModel = model.trim().toLowerCase();
   const savedCliModel = savedModel.trim().toLowerCase();
@@ -1014,7 +1020,20 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              {usesLocalCli ? (
+              {usesAgent ? (
+                <Alert tone="info" title={t('settings.llmConfiguration.agentNoteTitle')}>
+                  <p>{t('settings.llmConfiguration.agentNote')}</p>
+                  <a
+                    href={AGENT_SETUP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wider text-primary underline-offset-4 hover:underline"
+                  >
+                    {t('settings.llmConfiguration.agentGuideLink')}
+                    <ArrowSquareOut aria-hidden="true" className="size-3" />
+                  </a>
+                </Alert>
+              ) : usesLocalCli ? (
                 <>
                   <Alert tone="info">{t('settings.llmConfiguration.claudeCliNote')}</Alert>
                   <div className="space-y-2">
@@ -1148,7 +1167,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {!usesLocalCli && !usesChatGptSignIn && (
+              {!usesLocalCli && !usesChatGptSignIn && !usesAgent && (
                 <>
                   {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
                   <div className="space-y-2">
@@ -1238,24 +1257,27 @@ export default function SettingsPage() {
                     </m.span>
                   </AnimatePresence>
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleTestConnection}
-                  disabled={status === 'testing' || status === 'saving'}
-                >
-                  {status === 'testing' ? (
-                    <>
-                      <SpinnerGap aria-hidden="true" className="animate-spin" />
-                      {t('common.checking')}
-                    </>
-                  ) : (
-                    <>
-                      <Pulse className="w-4 h-4" />
-                      {t('settings.llmConfiguration.testConnection')}
-                    </>
-                  )}
-                </Button>
+                {/* Agent mode has no model of its own to test. */}
+                {!usesAgent && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestConnection}
+                    disabled={status === 'testing' || status === 'saving'}
+                  >
+                    {status === 'testing' ? (
+                      <>
+                        <SpinnerGap aria-hidden="true" className="animate-spin" />
+                        {t('common.checking')}
+                      </>
+                    ) : (
+                      <>
+                        <Pulse className="w-4 h-4" />
+                        {t('settings.llmConfiguration.testConnection')}
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
 
               {usesChatGptSignIn && chatGptConnected === false && (

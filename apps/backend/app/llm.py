@@ -51,6 +51,15 @@ litellm.drop_params = True
 # current code path sends thinking, but future-proofs the Router.
 litellm.modify_params = True
 
+#: The user's coding agent does the AI work through the CLI or MCP tools; the
+#: app itself makes no model calls.
+AGENT_PROVIDER = "agent"
+
+
+class AgentModeError(RuntimeError):
+    """A model call was attempted while the agent provider is selected."""
+
+
 # LLM timeout configuration (seconds) - base values
 LLM_TIMEOUT_HEALTH_CHECK = 30
 LLM_TIMEOUT_COMPLETION = 120
@@ -760,7 +769,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 # default), because the env var may hold a real paid-API key that would then
 # leak to a local/compatible endpoint the user set up expecting no auth.
 _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
-    {"openai_compatible", "ollama", "claude_cli", "chatgpt"}
+    {"openai_compatible", "ollama", "claude_cli", "chatgpt", "agent"}
 )
 
 
@@ -1092,6 +1101,11 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router | None, LLMConfi
     if config is None:
         config = get_llm_config()
 
+    if config.provider == AGENT_PROVIDER:
+        raise AgentModeError(
+            "Agent mode is on: Resume Matcher makes no AI calls. "
+            "Ask your coding agent to do this instead."
+        )
     if config.provider in ("claude_cli", "chatgpt"):
         return None, config
 
@@ -1144,6 +1158,13 @@ async def check_llm_health(
     if config is None:
         config = get_llm_config()
 
+    if config.provider == AGENT_PROVIDER:
+        return {
+            "healthy": False,
+            "provider": config.provider,
+            "model": config.model,
+            "error_code": "agent_mode",
+        }
     if not config.endpoint_confirmed:
         return {
             "healthy": False,

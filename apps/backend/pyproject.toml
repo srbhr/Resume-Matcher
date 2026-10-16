@@ -28,6 +28,7 @@ dependencies = [
 [project.scripts]
 app = "app.main:main"
 resume-matcher-mcp = "app.mcp_server.server:main"
+resume-matcher = "app.mcp_server.cli:main"
 
 [project.optional-dependencies]
 dev = [

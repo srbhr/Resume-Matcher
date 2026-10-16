@@ -663,3 +663,29 @@ it('retains a matching restored attachment backup when replacement storage write
     storage.mockRestore();
   }
 });
+
+describe('builder in agent mode', () => {
+  it.each([
+    ['cover-letter', 'agentPrompt.coverLetter.title'],
+    ['outreach', 'agentPrompt.outreach.title'],
+    ['interview-prep', 'agentPrompt.interviewPrep.title'],
+  ] as const)('%s shows a prompt for the agent instead of generating', async (kind, title) => {
+    fetchResume.mockResolvedValue(response());
+    currentSearch = `id=a&tab=${kind}`;
+    const Builder = await importBuilder();
+    render(<Builder agentMode />);
+    await act(async () => {
+      await fetchResume.mock.results[0].value;
+    });
+    const buttons = await screen.findAllByRole('button', { name: `generate-${kind}` });
+    if (kind === 'interview-prep') {
+      await waitFor(() => expect(fetchJobDescription).toHaveBeenCalledWith('a'));
+    }
+    await act(async () => buttons.at(-1)?.click());
+
+    expect(await screen.findByRole('dialog', { name: title })).toBeInTheDocument();
+    expect(generateCoverLetter).not.toHaveBeenCalled();
+    expect(generateOutreachMessage).not.toHaveBeenCalled();
+    expect(generateInterviewPrep).not.toHaveBeenCalled();
+  });
+});

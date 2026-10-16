@@ -32,6 +32,7 @@ import { PanelHeader } from '@/components/ui/panel-header';
 import { StatusIndicator, type StatusTone } from '@/components/ui/status-indicator';
 import { Textarea } from '@/components/ui/textarea';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
+import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import { FadePresence } from '@/components/common/presence';
 
 const MIN_JOB_DESCRIPTION_LENGTH = 50;
@@ -57,6 +58,9 @@ export default function QueuePage() {
   const { t, locale } = useTranslations();
   const { status: systemStatus, isLoading: statusLoading, incrementJobs } = useStatusCache();
   const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
+  // Agent mode: the user's coding agent tailors; the button shows a prompt for it.
+  const agentMode = !statusLoading && Boolean(systemStatus?.agent_mode);
+  const [showAgentPrompt, setShowAgentPrompt] = useState(false);
 
   // Master resumes
   const [masters, setMasters] = useState<ResumeListItem[]>([]);
@@ -330,7 +334,7 @@ export default function QueuePage() {
     }
   };
 
-  const formDisabled = isAddingToQueue || !isLlmConfigured || !selectedResumeId;
+  const formDisabled = isAddingToQueue || !(isLlmConfigured || agentMode) || !selectedResumeId;
 
   return (
     <PageFrame>
@@ -345,7 +349,13 @@ export default function QueuePage() {
         <section className="space-y-4">
           <PanelHeader tone="input" title={t('queue.form.title')} />
 
-          {!statusLoading && !isLlmConfigured && (
+          {agentMode && (
+            <Alert tone="info" title={t('agentPrompt.modeTitle')}>
+              {t('agentPrompt.queuePageMessage')}
+            </Alert>
+          )}
+
+          {!statusLoading && !isLlmConfigured && !agentMode && (
             <LlmSetupAlert
               titleKey="tailor.setupRequiredTitle"
               messageKey="tailor.noApiKeyMessage"
@@ -476,7 +486,7 @@ export default function QueuePage() {
           <Button
             size="lg"
             className="w-full"
-            onClick={handleAddToQueue}
+            onClick={agentMode ? () => setShowAgentPrompt(true) : handleAddToQueue}
             disabled={formDisabled || !jobDescriptionInput.trim()}
           >
             {isAddingToQueue ? (
@@ -489,12 +499,20 @@ export default function QueuePage() {
                 <SpinnerGap className="animate-spin" aria-hidden="true" />
                 {t('common.checking')}
               </>
+            ) : agentMode ? (
+              t('agentPrompt.getPrompt')
             ) : !isLlmConfigured ? (
               t('tailor.configureApiKeyFirst')
             ) : (
               t('queue.form.submit')
             )}
           </Button>
+          <AgentPromptDialog
+            task={showAgentPrompt ? 'tailor' : null}
+            resumeId={selectedResumeId}
+            jobDescription={jobDescriptionInput}
+            onClose={() => setShowAgentPrompt(false)}
+          />
         </section>
 
         {/* Queue monitor */}

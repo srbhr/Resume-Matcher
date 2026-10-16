@@ -5,6 +5,8 @@ data/config.json
 # `data/*.json` does not match it because the name ends in `.migrated`.
 data/*.migrated
 data/database.json*
+# Uploaded resume files: personal data, like everything else in data/.
+data/uploads/
 !data/.gitkeep
 
 # Config file with API keys - NEVER COMMIT
