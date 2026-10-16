@@ -22,7 +22,8 @@ uv run --directory apps/backend resume-matcher <tool> [arguments]
 - Arguments are either one JSON object (`'{"resume_id": "…"}'`, `@args.json`, or `-` for stdin) or fields: `key=value` (string), `key=@file` (string from a file), `key:=json` (any JSON value), `key:=@file.json` (JSON from a file).
 - **Use absolute paths.** `--directory` runs the command from `apps/backend`, so a relative path resolves from there.
 - The result is JSON on stdout. Exit code 1: the tool failed and stderr says why. Exit code 2: the command line was wrong.
-- Write argument files (large JSON such as a whole resume) to `jobs/.work/` in this repository. It is gitignored and inside every agent's sandbox.
+- Write argument files (large JSON such as a whole resume) to `jobs/.work/` in this repository (`mkdir -p jobs/.work` first). It is gitignored and inside every agent's sandbox.
+- To shorten it, define a shell function, not a variable (zsh does not split a command stored in a variable): `rmx() { uv run --directory "$PWD/apps/backend" resume-matcher "$@"; }`
 
 **Docker install:** run the same tools inside the container, from its backend folder so they use the app's data:
 
@@ -40,23 +41,23 @@ Check whether the app is already running:
 curl -s http://localhost:3000/api/v1/health
 ```
 
-`{"status":"healthy"}` means it is up: go to **Agent mode** below. Otherwise ask the user which install they want, and recommend local when `uv` and Node are installed:
+`{"status":"healthy"}` means it is up: go to **Agent mode** below. Otherwise ask the user which install they want (if their request already says, that is the answer), and recommend local when `uv` and Node are installed:
 
-- **Local** needs Python 3.13+, [uv](https://docs.astral.sh/uv/) and Node.js 24+ (`uv --version`, `node --version`). Start the two servers and keep both running (in the background, or ask the user to run each in its own terminal):
+- **Local** needs Python 3.13+, [uv](https://docs.astral.sh/uv/) and Node.js 24+ (`uv --version`, `node --version`). Install once, then start the backend, wait for it, and start the frontend. Both are long-running: start them in the background so they keep running after you finish (never in the foreground, which blocks you).
 
   ```bash
-  # Backend, from apps/backend
-  cp .env.example .env              # only if .env does not exist yet
-  uv sync
-  uv run playwright install chromium   # once, for PDF rendering
-  uv run app                        # API on http://127.0.0.1:8000
+  # From the repository root
+  mkdir -p jobs/.work
+  (cd apps/backend && { [ -f .env ] || cp .env.example .env; } && uv sync && uv run playwright install chromium)
+  (cd apps/frontend && npm install)
 
-  # Frontend, from apps/frontend
-  npm install
-  npm run dev                       # web app on http://localhost:3000
+  (cd apps/backend && nohup uv run app > ../../jobs/.work/backend.log 2>&1 &)    # API on :8000
+  for i in $(seq 60); do curl -sf http://127.0.0.1:8000/api/v1/health > /dev/null && break; sleep 2; done
+  (cd apps/frontend && nohup npm run dev > ../../jobs/.work/frontend.log 2>&1 &) # web app on :3000
+  for i in $(seq 60); do curl -sf http://localhost:3000/api/v1/health > /dev/null && break; sleep 2; done
   ```
 
-  On Windows use PowerShell: `Copy-Item .env.example .env` instead of `cp`.
+  If a health check still fails after two minutes, read the log in `jobs/.work/`. On Windows use PowerShell: `Copy-Item .env.example .env` instead of `cp`, and start each server with `Start-Process` (or ask the user to run each in its own PowerShell window). Until agent mode is on, the backend log shows an LLM health-check error from the placeholder key in `.env`; it is harmless.
 
 - **Docker** needs Docker Desktop or Docker Engine. From the repository root, run `docker compose up -d --build`. Building from this checkout includes the command-line tool, which older published images lack. The app is on <http://localhost:3000>.
 
@@ -68,7 +69,7 @@ Wait until the health check answers before going on. More detail and troubleshoo
 curl -s http://localhost:3000/api/v1/status
 ```
 
-If `agent_mode` is `false`, ask the user before switching it on. It makes the app stop calling an AI model and show prompts for you instead. Saved API keys are kept, and the user can switch back in Settings at any time.
+If `agent_mode` is `false`, ask the user before switching it on (a request that already asks for agent mode, or for no API key, counts as yes). It makes the app stop calling an AI model and show prompts for you instead. Saved API keys are kept, and the user can switch back in Settings at any time.
 
 ```bash
 curl -s -X PUT http://localhost:3000/api/v1/config/llm-api-key \
@@ -82,7 +83,18 @@ On Windows: `Invoke-RestMethod -Method Put -Uri http://localhost:3000/api/v1/con
 Run `get_status`. If `master_resumes` is 0, ask the user for their resume file (PDF, DOCX, Markdown or text). If they have none, interview them: contact details, each role with dates and achievements, education, skills.
 
 1. `extract_document_text file_path=/abs/path/resume.pdf` turns the file into Markdown.
-2. `get_resume_schema` gives the structure. Build `resume_data` from the Markdown **faithfully**: copy names, employers, titles, dates and bullets as written; do not improve or invent anything yet.
+2. Build `resume_data` from the Markdown **faithfully**: copy names, employers, titles, dates and bullets as written; do not improve or invent anything yet. `get_resume_schema` has the full structure; most resumes need only this much (leave out `sectionMeta` and `customSections` on a new master, and the app fills them in):
+
+   ```json
+   {"personalInfo": {"name": "Ada Lovelace", "title": "Engineer", "email": "ada@example.com",
+                     "phone": "+1 555 0100", "location": "London", "linkedin": "", "github": "", "website": ""},
+    "summary": "One or two sentences from the resume.",
+    "workExperience": [{"id": 1, "title": "Engineer", "company": "Analytical Engines", "location": "London",
+                        "years": "Jan 2020 - Present", "description": ["Bullet one", "Bullet two"]}],
+    "education": [{"id": 1, "institution": "University", "degree": "B.Sc. Mathematics", "years": "2014 - 2018"}],
+    "personalProjects": [],
+    "additional": {"technicalSkills": ["Python"], "languages": [], "certificationsTraining": [], "awards": []}}
+   ```
 3. `create_master_resume resume_data:=@/abs/path/jobs/.work/master.json` (optionally `title=…`).
 4. Ask the user to check it at `http://localhost:3000/resumes/<resume_id>` and fix anything in the editor.
 
@@ -94,11 +106,12 @@ Job descriptions come pasted in chat, or as `.md`/`.txt` files in `jobs/` (ignor
 
 1. **Add the job.** Read it and extract the keywords, then:
    `add_job job_description=@/abs/path/jobs/acme.md company="Acme" role="Platform Engineer" keywords:=@/abs/path/jobs/.work/acme-keywords.json`
-   The keywords object has `required_skills`, `preferred_skills`, `experience_requirements`, `education_requirements`, `key_responsibilities` and `keywords` (lists of short strings). For pasted text, save it to `jobs/.work/<name>.md` first, or pass the JSON object form.
+   The keywords object has `required_skills`, `preferred_skills`, `experience_requirements`, `education_requirements`, `key_responsibilities` and `keywords` (lists of short strings); company and role go in the `company` and `role` arguments. A job pasted in chat is saved to `jobs/.work/<company>.md` first (scratch, not the batch); files the user saved in `jobs/` are the batch.
 2. **Read the source.** `get_resume resume_id=<master id>`. Start from its `resume_data` exactly as returned, including `sectionMeta` and `customSections`; a copy from anywhere else fails validation.
 3. **Write the tailored version** by the rules below.
-4. **Save and check:** `tailor_and_verify @/abs/path/jobs/.work/acme-tailor.json` with `{"source_resume_id", "job_id", "resume_data", "title": "<Role> @ <Company>"}`. It validates, saves a new resume (the master is untouched), renders the PDF, parse-checks it, scores it and adds an Applied card to the tracker.
-   - `saved: false`: read `validation.violations`, fix them (or adopt `validation.repaired_resume_data`) and call it again.
+4. **Save and check:** `tailor_and_verify @/abs/path/jobs/.work/acme-tailor.json` with `{"source_resume_id", "job_id", "resume_data", "title": "<Role> @ <Company>"}`. It validates, saves a new resume (the master is untouched), renders the PDF, parse-checks it, scores it and adds an Applied card to the tracker. Call it **once per job**: every successful call adds another resume and tracker card, so fix things afterwards with `update_resume`.
+   - The result is long. The fields you need: `saved`, `resume.resume_id`, `score.overall_score`, `score.missing_keywords`, `page_count` and `issues` (`verify_resume` returns the same `score`, `page_count` and `issues`).
+   - `saved: false`: nothing was written. Read `validation.violations`, fix them (or adopt `validation.repaired_resume_data`) and call it again.
    - `validation.grounding_warnings` are advisory: check each one against the source and fix anything unsupported.
 5. **Fix `issues`**, then re-check with `verify_resume resume_id=<id>`. Stop after two or three rounds and tell the user what is left.
 
@@ -122,11 +135,12 @@ These are the rules the app's own tailoring follows, and the validator enforces 
 - Rephrase existing bullets to use the job's wording where the source already shows that experience. Reorder skills by relevance, but never remove one.
 - Rewrite the summary for the role from facts already in the resume.
 - Write in the resume's language. No em dashes. Avoid stock phrases such as "spearheaded", "leveraged", "orchestrated", "utilized", "synergy", "cutting-edge" and "results-driven".
-- If the job needs something the user has not shown, say so; do not paper over it.
+- If the job needs something the user has not shown, say so; do not paper over it. `score.missing_keywords` lists what the resume does not support: report those to the user as gaps they can add in the editor if they really have them. A low score from honest gaps is the right result.
+- The `date_consistency` part of the score is low when the source mixes date formats (`Mar 2022 - Present` beside `2015 - 2019`). Keep the dates as written and tell the user they can make the formats match in their master resume.
 
 ## 4. Hand off to the UI
 
-When done, give the user a short table: role and company, ATS score (`resume.ats_score.score.overall_score`), pages, remaining issues, and the link `http://localhost:3000/builder?id=<resume_id>`. Then tell them:
+When done, give the user a short table: role and company, ATS score (`score.overall_score`), pages, remaining issues and gaps, and the link `http://localhost:3000/builder?id=<resume_id>`. Then tell them:
 
 - The dashboard lists every resume: <http://localhost:3000/dashboard>. Open pages update on their own within a few seconds of each save, so there is no need to reload.
 - In the editor they can change any text, section order, template and formatting. Changes save automatically, and **Download** exports the PDF.
