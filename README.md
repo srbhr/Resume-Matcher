@@ -1,14 +1,14 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://resumematcher.fyi/)
 
 # Resume Matcher
 
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi/) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation/) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
 **English** | [Español](README.es.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
-Open-source resume builder that tailors your resume (CV) to each job description. A self-hosted AI harness for Claude, ChatGPT, DeepSeek, Kimi, GLM, Gemma and other LLMs, local or remote.
+Free, open-source resume builder that tailors your resume (CV) to each job description. A self-hosted AI harness for Claude, ChatGPT, DeepSeek, Kimi, GLM, Gemma and other LLMs, local or remote.
 
 ![Resume Matcher Demo](assets/Resume_Matcher_Demo_2.gif)
 
@@ -21,7 +21,7 @@ Open-source resume builder that tailors your resume (CV) to each job description
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.3%20Crescendolls%20-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -98,7 +98,7 @@ Sponsor at a company tier and **your logo + link + blurb lands here** — in fro
 | [ZanReal](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | ZanReal is an AI-driven development company building scalable cloud solutions, from strategy and UX to DevOps, helping teams ship faster and turn ideas into production. 🌐 [zanreal.com](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | **✦ Your company here** | Reach 27k+ developers and 4.9k forks. **[Become a sponsor →](https://github.com/sponsors/srbhr)** |
 
-Read the [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) for tiers and details. Sponsors get a special thank-you in the README and on our website.
+Read the [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring/) for tiers and details. Sponsors get a special thank-you in the README and on our website.
 
 <a id="support-the-development-by-donating"></a>
 
@@ -164,9 +164,11 @@ Generate structured, resume-grounded interview prep for saved tailored resumes. 
 
 Paste several job descriptions on the Tailoring Queue page and they are tailored from your master resume one after another in the background. Role, company and job ID are detected from the text without an AI call, and you can edit them. An optional cooldown between jobs (0 to 60 seconds) lowers the risk of hitting your provider's rate limits. Queued jobs are kept in the database and resume after a restart.
 
-### Resume Scoring & Keyword Highlighting
+### ATS Score, ATS Check & Keyword Highlighting
 
-Analyze your resume against the job description with a match score, keyword highlighting, and suggestions for improvement.
+The JD Match tab shows the job description beside your resume with the shared keywords highlighted, plus an **ATS score** out of 100: keyword match (40%), skills coverage (20%), job-title match (15%), section completeness (15%) and date consistency (10%). It lists the missing keywords, and the ones your master resume already has, so you can add those without inventing anything.
+
+The **ATS Check** tab renders your PDF and reads the text back the way an applicant tracking system's text extractor does, then reports parseability, reading order, contact details and section headings. Both run as plain code. [What is an ATS score?](https://resumematcher.fyi/blog/what-is-an-ats-score/) explains the formulas.
 
 ![JD Match tab with the ATS score breakdown and matching keywords highlighted](assets/keyword_highlighter.webp)
 
@@ -193,7 +195,7 @@ The templates export text-based PDFs in A4 or US Letter that applicant tracking 
 
 ### Internationalization
 
-- **Multi-Language UI**: Interface available in English, Spanish, Chinese, Japanese, and Portuguese (Brazilian)
+- **Multi-Language UI**: Interface available in English, Spanish, Chinese, Japanese, Brazilian Portuguese, French and Korean
 - **Multi-Language Content**: Generate resumes and cover letters in your preferred language
 
 ### Roadmap
@@ -216,6 +218,8 @@ The [Resume Matcher blog](https://resumematcher.fyi/blog/) has writing guides fo
 - [Master resume](https://resumematcher.fyi/blog/master-resume/): the one complete resume you tailor each application from
 - [Tailor your resume to a job description](https://resumematcher.fyi/blog/how-to-match-your-resume-to-a-job-description/): the method, step by step
 - [Private AI resume tailoring with Ollama](https://resumematcher.fyi/blog/local-ai-resume-tailoring-ollama/): keep your resume on your own machine
+- [What is an ATS score?](https://resumematcher.fyi/blog/what-is-an-ats-score/): how resume checkers calculate a score, with Resume Matcher's formulas
+- [ChatGPT prompts for resume tailoring](https://resumematcher.fyi/blog/tailor-resume-with-chatgpt-claude/): prompts for ChatGPT and Claude that don't invent experience
 
 <a id="how-to-install"></a>
 
@@ -314,7 +318,7 @@ Endpoints:
 
 ![how to contribute](assets/how_to_contribute.webp)
 
-We welcome contributions from everyone! Whether you're a developer, designer, or just someone who wants to help out. All the contributors are listed in the [about page](https://resumematcher.fyi/about) on our website and on the GitHub Readme here.
+We welcome contributions from everyone! Whether you're a developer, designer, or just someone who wants to help out. All the contributors are listed in the [about page](https://resumematcher.fyi/about/) on our website and on the GitHub Readme here.
 
 Check out the roadmap if you would like to work on the features that are planned for the future. If you have any suggestions or feature requests, please feel free to open an issue on GitHub and discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
