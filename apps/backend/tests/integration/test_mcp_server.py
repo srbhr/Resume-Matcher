@@ -963,6 +963,25 @@ async def test_verify_resume_treats_stale_keywords_as_missing(
     assert "no_job_keywords" in result["issues"]
 
 
+async def test_verify_resume_treats_empty_keywords_as_missing(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        shared_module, "render_resume_pdf", AsyncMock(return_value=_pdf(1))
+    )
+    async with connect() as mcp:
+        master, job_id = await _john_doe_job(mcp)
+        empty = {"required_skills": [], "preferred_skills": [], "keywords": []}
+        await isolated_db.update_job(job_id, {"job_keywords": empty})
+        result = await call(
+            mcp,
+            "verify_resume",
+            {"resume_id": master["resume_id"], "job_id": job_id},
+        )
+    assert result["score"] is None
+    assert "no_job_keywords" in result["issues"]
+
+
 async def test_verify_resume_uses_the_pdf_route_print_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

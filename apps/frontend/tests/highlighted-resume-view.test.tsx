@@ -34,3 +34,33 @@ describe('HighlightedResumeView bullets', () => {
     expect(container.textContent).not.toContain('•');
   });
 });
+
+describe('HighlightedResumeView coverage', () => {
+  it('shows a highlight for every field the keyword match counts', () => {
+    const data = {
+      education: [{ id: 1, degree: 'BSc', institution: 'U', description: 'Thesis on Rust' }],
+      additional: { awards: ['Kubernetes award'] },
+      sectionMeta: [{ id: 'talks', key: 'talks', displayName: 'Talks', sectionType: 'itemList' }],
+      customSections: {
+        talks: {
+          sectionType: 'itemList',
+          items: [{ id: 1, title: 'GraphQL at scale', description: ['Covered Terraform'] }],
+        },
+        notes: { sectionType: 'text', text: 'Uses Kafka daily' },
+        tools: { sectionType: 'stringList', strings: ['Docker'] },
+      },
+    } as unknown as ResumeData;
+    const keywords = ['Rust', 'Kubernetes', 'GraphQL', 'Terraform', 'Kafka', 'Docker'];
+
+    const { container, getByText } = render(
+      <HighlightedResumeView resumeData={data} keywords={keywords} />
+    );
+
+    const marked = [...container.querySelectorAll('mark')].map((m) => m.textContent);
+    expect(marked).toEqual(['Rust', 'Kubernetes', 'GraphQL', 'Terraform', 'Kafka']);
+    // A string-list entry containing a keyword is highlighted as a whole tag.
+    expect(getByText('Docker')).toHaveClass('bg-highlight');
+    // Custom sections are titled with the user's section name.
+    expect(getByText('Talks')).toBeInTheDocument();
+  });
+});

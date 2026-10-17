@@ -13,7 +13,7 @@ from app.mcp_server.tools._shared import (
     require_valid_structured,
 )
 from app.pdf import PDFRenderError
-from app.routers.resumes import _cached_job_keywords, _grounding_master_data
+from app.routers.resumes import _grounding_master_data, _scorable_job_keywords
 from app.schemas.models import PageFitSettings
 from app.services import ats_parse
 from app.services.ats_parse.models import ParseCheckReport
@@ -76,8 +76,8 @@ async def verify(
     score = None
     job_keywords = None
     if job_id is not None:
-        # Keywords cached for other job text are stale, as for the builder and Recalculate.
-        job_keywords = _cached_job_keywords(await require_job(job_id))
+        # Stale (cached for other job text) or empty keywords count as missing, as in the builder.
+        job_keywords = _scorable_job_keywords(await require_job(job_id))
         if job_keywords:
             master = await _grounding_master_data(resume) or data
             score = keyword_score(data, job_keywords, master)

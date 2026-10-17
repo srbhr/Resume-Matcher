@@ -220,6 +220,22 @@ async def test_job_description_without_valid_keywords_lists_none(
     assert res.status_code == 200, res.text
     assert res.json()["keywords"] is None
 
+    # Valid but empty keywords leave nothing to score against.
+    await isolated_db.update_job(
+        job["job_id"],
+        {
+            "job_keywords": {
+                "required_skills": [],
+                "preferred_skills": [],
+                "keywords": [],
+            },
+            "job_keywords_hash": hashlib.sha256(
+                JOB_CONTENT.encode("utf-8")
+            ).hexdigest(),
+        },
+    )
+    assert (await client.get(url)).json()["keywords"] is None
+
 
 async def test_busy_database_on_recalculate_is_retryable_503(
     client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch

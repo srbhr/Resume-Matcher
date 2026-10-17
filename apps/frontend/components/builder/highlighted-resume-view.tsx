@@ -32,6 +32,14 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
     resumeData.additional?.certificationsTraining?.filter(
       (item): item is string => typeof item === 'string' && item.trim() !== ''
     ) ?? [];
+  const visibleAwards =
+    resumeData.additional?.awards?.filter(
+      (item): item is string => typeof item === 'string' && item.trim() !== ''
+    ) ?? [];
+  // Custom sections count toward the match too, so they are shown with their names.
+  const customSections = Object.entries(resumeData.customSections ?? {});
+  const sectionName = (key: string) =>
+    resumeData.sectionMeta?.find((meta) => meta.key === key)?.displayName || key;
 
   return (
     <div className="h-full flex flex-col">
@@ -109,6 +117,11 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                   </div>
                 )}
                 {edu.years && <div className="text-xs text-steel tabular-nums">{edu.years}</div>}
+                {edu.description && (
+                  <div className="text-sm text-ink-soft">
+                    <HighlightedText text={edu.description} keywords={keywords} />
+                  </div>
+                )}
               </div>
             ))}
           </Section>
@@ -197,8 +210,87 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                 </ul>
               </div>
             )}
+
+            {visibleAwards.length > 0 && (
+              <div className="mb-3">
+                <div className="text-xs font-mono uppercase text-steel mb-1">
+                  {t('resume.sections.awards')}
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {visibleAwards.map((award, i) => (
+                    <li key={i} className="text-ink-soft">
+                      <HighlightedText text={award} keywords={keywords} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Section>
         )}
+
+        {/* Custom sections */}
+        {customSections.map(([key, section]) => (
+          <Section key={key} title={sectionName(key)}>
+            {section.sectionType === 'itemList' &&
+              (section.items ?? []).map((item) => {
+                const description: unknown = item.description;
+                const lines = Array.isArray(description)
+                  ? description.filter((line): line is string => typeof line === 'string')
+                  : typeof description === 'string' && description
+                    ? [description]
+                    : [];
+                return (
+                  <div key={item.id} className="mb-4 last:mb-0">
+                    <div className="font-semibold text-ink-soft">
+                      <HighlightedText text={item.title || ''} keywords={keywords} />
+                    </div>
+                    {item.subtitle && (
+                      <div className="text-sm text-ink-soft">
+                        <HighlightedText text={item.subtitle} keywords={keywords} />
+                      </div>
+                    )}
+                    {item.years && (
+                      <div className="text-xs text-steel mb-1 tabular-nums">{item.years}</div>
+                    )}
+                    {lines.length > 0 && (
+                      <ul className="space-y-1 text-sm">
+                        {lines.map((line, i) => {
+                          const showMarker = item.descriptionStyles?.[i] !== 'plain';
+                          return (
+                            <li key={i} className={cn('flex text-ink-soft', showMarker && 'ml-4')}>
+                              {showMarker && (
+                                <span
+                                  aria-hidden="true"
+                                  className="mr-2 mt-2 size-1 shrink-0 bg-ink"
+                                />
+                              )}
+                              <span>
+                                <HighlightedText text={line} keywords={keywords} />
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            {section.sectionType === 'text' && section.text && (
+              <p className="text-sm text-ink-soft">
+                <HighlightedText text={section.text} keywords={keywords} />
+              </p>
+            )}
+            {section.sectionType === 'stringList' && (
+              <div className="flex flex-wrap gap-1">
+                {(section.strings ?? [])
+                  .filter((entry) => typeof entry === 'string' && entry.trim() !== '')
+                  .map((entry, i) => (
+                    <SkillTag key={i} text={entry} keywords={keywords} />
+                  ))}
+              </div>
+            )}
+          </Section>
+        ))}
       </div>
     </div>
   );
