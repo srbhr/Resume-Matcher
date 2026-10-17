@@ -1,14 +1,14 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://resumematcher.fyi/)
 
 # Resume Matcher
 
 [English](README.md) | [Español](README.es.md) | **简体中文** | [日本語](README.ja.md)
 
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi/) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation/) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
-开源简历生成器：根据每一份职位描述（JD）定制你的简历。自托管的 AI 工具，支持 Claude、ChatGPT、DeepSeek、Kimi、GLM、Gemma 等本地或云端 LLM。
+免费开源简历生成器：根据每一份职位描述（JD）定制你的简历。自托管的 AI 工具，支持 Claude、ChatGPT、DeepSeek、Kimi、GLM、Gemma 等本地或云端 LLM。
 
 ![Resume Matcher Demo](assets/Resume_Matcher_Demo_2.gif)
 
@@ -21,7 +21,7 @@
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.3%20Crescendolls%20-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -100,7 +100,7 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 | [ZanReal](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | ZanReal 是一家以 AI 驱动的开发公司，构建可扩展的云解决方案，从战略、UX 到 DevOps，帮助团队更快交付、把创意变为产品。 🌐 [zanreal.com](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | **✦ 你的公司可展示于此** | 触达 27k+ 开发者与 4.9k Fork。**[成为赞助商 →](https://github.com/sponsors/srbhr)** |
 
-请阅读我们的 [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) 了解您的赞助如何帮助本项目。您将在 ReadME 和我们的网站上获得特别鸣谢。
+请阅读我们的 [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring/) 了解您的赞助如何帮助本项目。您将在 ReadME 和我们的网站上获得特别鸣谢。
 
 <a id="support-the-development-by-donating"></a>
 
@@ -156,9 +156,11 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 ![Cover letter editor next to its PDF preview](assets/cover_letter.webp)
 
-### 简历评分（开发中功能）
+### ATS 评分、ATS 检查与关键词高亮
 
-我们正在开发“简历评分”功能：对比你的简历与职位描述，输出匹配分数，并给出改进建议。
+「JD 匹配」标签页把职位描述和你的简历并排显示，高亮共同的关键词，并给出满分 100 的 **ATS 评分**：关键词匹配（40%）、技能覆盖（20%）、职位名称匹配（15%）、板块完整度（15%）和日期格式一致性（10%）。它会列出缺失的关键词，以及主简历里已有的关键词，这些可以直接加回来，不会编造内容。
+
+**ATS 检查**标签页会生成你的 PDF，像招聘系统（ATS）的文本提取器那样把文字读回来，报告可读性、阅读顺序、联系方式和板块标题。两者都由普通代码计算。[什么是 ATS 分数？](https://resumematcher.fyi/zh/blog/what-is-an-ats-score/)讲了具体公式。
 
 ![JD Match tab with the ATS score breakdown and matching keywords highlighted](assets/keyword_highlighter.webp)
 
@@ -185,7 +187,7 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 ### 国际化
 
-- **多语言 UI**：界面支持英语、西班牙语、中文与日语
+- **多语言 UI**：界面支持英语、西班牙语、中文、日语、巴西葡萄牙语、法语与韩语
 - **多语言内容**：可按你偏好的语言生成简历与求职信
 
 ### 路线图
@@ -208,6 +210,8 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 - [主简历](https://resumematcher.fyi/zh/blog/master-resume/)：一份完整的简历，每次投递都从它定制
 - [根据职位描述定制简历](https://resumematcher.fyi/zh/blog/how-to-match-your-resume-to-a-job-description/)：分步骤的方法
 - [用 Ollama 在本地私密定制简历](https://resumematcher.fyi/zh/blog/local-ai-resume-tailoring-ollama/)：简历始终留在你自己的电脑上
+- [什么是 ATS 分数？](https://resumematcher.fyi/zh/blog/what-is-an-ats-score/)：简历检测工具怎么算分，附 Resume Matcher 的公式
+- [用 ChatGPT 定制简历的提示词](https://resumematcher.fyi/zh/blog/tailor-resume-with-chatgpt-claude/)：适用于 ChatGPT 和 Claude、不编造经历的提示词
 
 <a id="how-to-install"></a>
 
@@ -285,7 +289,7 @@ docker run srbhr/resume-matcher:latest
 
 ![how to contribute](assets/how_to_contribute.webp)
 
-我们欢迎所有人的贡献！无论你是开发者、设计师，还是希望帮忙的用户。所有贡献者都会展示在我们官网的 [about 页面](https://resumematcher.fyi/about)，也会显示在 GitHub README 中。
+我们欢迎所有人的贡献！无论你是开发者、设计师，还是希望帮忙的用户。所有贡献者都会展示在我们官网的 [about 页面](https://resumematcher.fyi/about/)，也会显示在 GitHub README 中。
 
 如果你希望参与未来规划的功能，可以先看看路线图。若你有建议或功能需求，欢迎在 GitHub 提 Issue，并在我们的 [Discord](https://dsc.gg/resume-matcher) 讨论。
 

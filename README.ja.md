@@ -1,14 +1,14 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://resumematcher.fyi/)
 
 # Resume Matcher
 
 [English](README.md) | [Español](README.es.md) | [简体中文](README.zh-CN.md) | **日本語**
 
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi/) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation/) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
-オープンソースの履歴書ビルダー。求人票ごとに履歴書（レジュメ）を最適化します。Claude、ChatGPT、DeepSeek、Kimi、GLM、Gemma などのローカル／リモート LLM に対応した、セルフホスト型の AI ツールです。
+無料のオープンソース履歴書ビルダー。求人票ごとに履歴書（レジュメ）を最適化します。Claude、ChatGPT、DeepSeek、Kimi、GLM、Gemma などのローカル／リモート LLM に対応した、セルフホスト型の AI ツールです。
 
 ![Resume Matcher Demo](assets/Resume_Matcher_Demo_2.gif)
 
@@ -21,7 +21,7 @@
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.3%20Crescendolls%20-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -100,7 +100,7 @@ Resume Matcher は無料かつオープンソースで、スポンサーと支�
 | [ZanReal](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | ZanReal は AI 駆動の開発企業で、戦略・UX から DevOps まで、スケーラブルなクラウドソリューションを構築し、チームがより速くリリースしアイデアを本番へと導く支援をしています。 🌐 [zanreal.com](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | **✦ あなたの企業のロゴをここに** | 27k 超の開発者と 4.9k の Fork にリーチ。**[スポンサーになる →](https://github.com/sponsors/srbhr)** |
 
-スポンサーシップがプロジェクトにどのように役立つかについての詳細は、[Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) をご覧ください。ReadME およびウェブサイトにて特別に感謝の意を表します。
+スポンサーシップがプロジェクトにどのように役立つかについての詳細は、[Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring/) をご覧ください。ReadME およびウェブサイトにて特別に感謝の意を表します。
 
 <a id="support-the-development-by-donating"></a>
 
@@ -156,9 +156,11 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 ![Cover letter editor next to its PDF preview](assets/cover_letter.webp)
 
-### 履歴書スコアリング（開発中）
+### ATS スコア・ATS チェック・キーワードハイライト
 
-履歴書と求人票を比較して、マッチスコアと改善提案を出す機能を開発中です。
+「JD一致」タブでは、求人票と履歴書を並べて共通のキーワードをハイライトし、100 点満点の **ATS スコア**を表示します。内訳はキーワード一致（40%）、スキルの網羅（20%）、職種名の一致（15%）、セクションの充足（15%）、日付形式の一貫性（10%）です。不足しているキーワードと、マスター履歴書にすでにあるキーワードも一覧にするので、後者は事実を足さずに追加できます。
+
+「ATSチェック」タブは PDF を生成し、応募者追跡システム（ATS）のテキスト抽出と同じように文字を読み戻して、読み取りやすさ、読み順、連絡先、セクション見出しを報告します。どちらも普通のコードで動きます。計算式は [What is an ATS score?](https://resumematcher.fyi/blog/what-is-an-ats-score/)（英語）で説明しています。
 
 ![JD Match tab with the ATS score breakdown and matching keywords highlighted](assets/keyword_highlighter.webp)
 
@@ -185,7 +187,7 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 ### 国際化
 
-- **多言語 UI**：英語・スペイン語・中国語・日本語に対応
+- **多言語 UI**：英語・スペイン語・中国語・日本語・ポルトガル語（ブラジル）・フランス語・韓国語に対応
 - **多言語コンテンツ**：希望言語で履歴書とカバーレターを生成
 
 ### ロードマップ
@@ -208,6 +210,8 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 - [Master resume](https://resumematcher.fyi/blog/master-resume/)：すべての応募のもとになる、完全版の履歴書
 - [Tailor your resume to a job description](https://resumematcher.fyi/blog/how-to-match-your-resume-to-a-job-description/)：求人票に合わせて最適化する手順
 - [Private AI resume tailoring with Ollama](https://resumematcher.fyi/blog/local-ai-resume-tailoring-ollama/)：履歴書を自分のマシンから出さずに最適化する
+- [What is an ATS score?](https://resumematcher.fyi/blog/what-is-an-ats-score/)：履歴書チェッカーのスコアの計算方法と Resume Matcher の計算式
+- [ChatGPT prompts for resume tailoring](https://resumematcher.fyi/blog/tailor-resume-with-chatgpt-claude/)：経歴を捏造しない ChatGPT・Claude 用プロンプト
 
 <a id="how-to-install"></a>
 
@@ -285,7 +289,7 @@ docker run srbhr/resume-matcher:latest
 
 ![how to contribute](assets/how_to_contribute.webp)
 
-どなたでもコントリビュート歓迎です。開発者・デザイナー・ユーザーを問わず、協力してくれる方を募集しています。コントリビューター一覧は、公式サイトの [about ページ](https://resumematcher.fyi/about) と GitHub README に掲載されています。
+どなたでもコントリビュート歓迎です。開発者・デザイナー・ユーザーを問わず、協力してくれる方を募集しています。コントリビューター一覧は、公式サイトの [about ページ](https://resumematcher.fyi/about/) と GitHub README に掲載されています。
 
 ロードマップも参考にしてください。提案や機能要望があれば、GitHub で Issue を作成し、[Discord](https://dsc.gg/resume-matcher) でも議論できます。
 

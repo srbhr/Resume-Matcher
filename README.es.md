@@ -1,14 +1,14 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.webp)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.webp)](https://resumematcher.fyi/)
 
 # Resume Matcher
 
 [English](README.md) | **Español** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi/) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation/) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
-Constructor de currículums de código abierto que adapta tu currículum (CV u hoja de vida) a cada oferta de trabajo. Una herramienta de IA autoalojada que funciona con Claude, ChatGPT, DeepSeek, Kimi, GLM, Gemma y otros LLM, locales o remotos.
+Constructor de currículums gratuito y de código abierto que adapta tu currículum (CV u hoja de vida) a cada oferta de trabajo. Una herramienta de IA autoalojada que funciona con Claude, ChatGPT, DeepSeek, Kimi, GLM, Gemma y otros LLM, locales o remotos.
 
 Esperamos convertir esto en **el VS Code para crear currículums**.
 
@@ -23,7 +23,7 @@ Esperamos convertir esto en **el VS Code para crear currículums**.
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.3%20Crescendolls-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -102,7 +102,7 @@ Patrocina con un nivel de empresa y **tu logo + enlace + descripción aparecerá
 | [ZanReal](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | ZanReal es una empresa de desarrollo impulsada por IA que crea soluciones cloud escalables, desde la estrategia y la UX hasta DevOps, ayudando a los equipos a lanzar más rápido y convertir ideas en producción. 🌐 [zanreal.com](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | **✦ Tu empresa aquí** | Llega a más de 27k desarrolladores y 4.9k forks. **[Conviértete en patrocinador →](https://github.com/sponsors/srbhr)** |
 
-Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) para detalles de cómo tu patrocinio ayuda al proyecto. Recibirás un agradecimiento especial en el ReadME y en nuestro sitio web.
+Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring/) para detalles de cómo tu patrocinio ayuda al proyecto. Recibirás un agradecimiento especial en el ReadME y en nuestro sitio web.
 
 <a id="support-the-development-by-donating"></a>
 
@@ -158,9 +158,11 @@ Genera cartas de presentación y plantillas de email adaptadas según la descrip
 
 ![Cover letter editor next to its PDF preview](assets/cover_letter.webp)
 
-### Puntuación del currículum (función en desarrollo)
+### Puntuación ATS, Revisión ATS y resaltado de palabras clave
 
-Estamos trabajando en una función de puntuación que analiza tu currículum frente a la descripción del puesto y ofrece un puntaje de coincidencia con sugerencias de mejora.
+La pestaña Coincidencia JD muestra la oferta junto a tu currículum con las palabras clave en común resaltadas, y una **puntuación ATS** sobre 100: coincidencia de palabras clave (40%), cobertura de habilidades (20%), coincidencia de título (15%), secciones completas (15%) y consistencia de fechas (10%). Lista las palabras clave que faltan y las que ya tiene tu currículum maestro, para que agregues esas sin inventar nada.
+
+La pestaña **Revisión ATS** genera tu PDF, lee el texto de vuelta como lo hace el extractor de texto de un sistema de seguimiento de candidatos e informa la legibilidad, el orden de lectura, los datos de contacto y los encabezados de sección. Las dos funcionan con código simple. [¿Qué es la puntuación ATS?](https://resumematcher.fyi/es/blog/what-is-an-ats-score/) explica las fórmulas.
 
 ![JD Match tab with the ATS score breakdown and matching keywords highlighted](assets/keyword_highlighter.webp)
 
@@ -187,7 +189,7 @@ Las plantillas exportan PDF con texto real, en A4 o US Letter, que los sistemas 
 
 ### Internacionalización
 
-- **UI multilingüe**: interfaz disponible en inglés, español, chino y japonés
+- **UI multilingüe**: interfaz disponible en inglés, español, chino, japonés, portugués de Brasil, francés y coreano
 - **Contenido multilingüe**: genera currículums y cartas de presentación en tu idioma preferido
 
 ### Roadmap
@@ -210,6 +212,8 @@ El [blog de Resume Matcher](https://resumematcher.fyi/es/blog/) tiene guías par
 - [Currículum maestro](https://resumematcher.fyi/es/blog/master-resume/): el currículum completo del que adaptas cada postulación
 - [Adaptar tu currículum (CV) a la descripción de un puesto](https://resumematcher.fyi/es/blog/how-to-match-your-resume-to-a-job-description/): el método, paso a paso
 - [Adapta tu currículum con IA en privado, con Ollama](https://resumematcher.fyi/es/blog/local-ai-resume-tailoring-ollama/): tu currículum se queda en tu propia máquina
+- [¿Qué es la puntuación ATS?](https://resumematcher.fyi/es/blog/what-is-an-ats-score/): cómo calculan la puntuación los verificadores de currículum, con las fórmulas de Resume Matcher
+- [Prompts de ChatGPT para adaptar tu currículum](https://resumematcher.fyi/es/blog/tailor-resume-with-chatgpt-claude/): prompts para ChatGPT y Claude que no inventan experiencia
 
 <a id="how-to-install"></a>
 
@@ -287,7 +291,7 @@ docker run srbhr/resume-matcher:latest
 
 ![Cómo contribuir](assets/how_to_contribute.webp)
 
-¡Damos la bienvenida a las contribuciones de todos! Ya seas un desarrollador, diseñador o simplemente alguien que quiere ayudar. Todos los colaboradores están listados en la [página "Acerca de"](https://resumematcher.fyi/about) en nuestro sitio web y en el Readme de GitHub.
+¡Damos la bienvenida a las contribuciones de todos! Ya seas un desarrollador, diseñador o simplemente alguien que quiere ayudar. Todos los colaboradores están listados en la [página "Acerca de"](https://resumematcher.fyi/about/) en nuestro sitio web y en el Readme de GitHub.
 
 Echa un vistazo al roadmap si te gustaría trabajar en las características que están planeadas para el futuro. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub y discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
