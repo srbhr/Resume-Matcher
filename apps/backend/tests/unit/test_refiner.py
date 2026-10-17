@@ -12,6 +12,7 @@ from app.services.refiner import (
     calculate_keyword_match,
     count_retained_keywords,
     fix_alignment_violations,
+    job_keyword_terms,
     refine_resume,
     remove_ai_phrases,
     validate_master_alignment,
@@ -626,6 +627,19 @@ class TestCalculateKeywordMatch:
         pct = calculate_keyword_match(sample_resume, keywords)
         # "Go" is not in the sample resume as a standalone word
         assert pct == 0.0
+
+    def test_scores_the_distinct_terms_job_keyword_terms_lists(self) -> None:
+        """JD Match shows job_keyword_terms, so the two must count the same terms."""
+        keywords = {
+            "required_skills": ["Python", "Kubernetes"],
+            "preferred_skills": ["Python", "python"],
+            "keywords": ["Terraform", None],
+        }
+        resume = {"summary": "Python and Terraform"}
+        terms = job_keyword_terms(keywords)
+        # Exact duplicates collapse; case variants and posting order are kept.
+        assert terms == ["Python", "Kubernetes", "python", "Terraform"]
+        assert calculate_keyword_match(resume, keywords) == 3 / len(terms) * 100
 
 
 class TestPreserveDescriptionStyles:

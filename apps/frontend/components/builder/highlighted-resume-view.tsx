@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react';
 import { type ResumeData } from '@/components/dashboard/resume-component';
-import { segmentTextByKeywords } from '@/lib/utils/keyword-matcher';
+import { segmentTextByKeywords, type KeywordList } from '@/lib/utils/keyword-matcher';
 import { useTranslations } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface HighlightedResumeViewProps {
   resumeData: ResumeData;
-  keywords: Set<string>;
+  keywords: KeywordList;
 }
 
 /**
@@ -221,7 +221,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 /**
  * Component to render text with highlighted keywords.
  */
-function HighlightedText({ text, keywords }: { text: string; keywords: Set<string> }) {
+function HighlightedText({ text, keywords }: { text: string; keywords: KeywordList }) {
   const segments = useMemo(() => segmentTextByKeywords(text, keywords), [text, keywords]);
 
   return (
@@ -242,8 +242,11 @@ function HighlightedText({ text, keywords }: { text: string; keywords: Set<strin
 /**
  * Skill tag with optional highlighting
  */
-function SkillTag({ text, keywords }: { text: string; keywords: Set<string> }) {
-  const isMatch = keywords.has(text.toLowerCase());
+function SkillTag({ text, keywords }: { text: string; keywords: KeywordList }) {
+  const isMatch = useMemo(
+    () => segmentTextByKeywords(text, keywords).some((segment) => segment.isMatch),
+    [text, keywords]
+  );
 
   return (
     <span

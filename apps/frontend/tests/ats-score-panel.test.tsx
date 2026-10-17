@@ -34,8 +34,14 @@ const record = (overall: number, at = '2026-10-10T10:00:00+00:00'): ATSScoreReco
   calculated_at: at,
 });
 
-async function renderPanel(hasUnsavedChanges = false) {
-  const view = render(<AtsScorePanel resumeId="r1" hasUnsavedChanges={hasUnsavedChanges} />);
+async function renderPanel(hasUnsavedChanges = false, hasJobKeywords = true) {
+  const view = render(
+    <AtsScorePanel
+      resumeId="r1"
+      hasUnsavedChanges={hasUnsavedChanges}
+      hasJobKeywords={hasJobKeywords}
+    />
+  );
   await act(async () => {});
   return view;
 }
@@ -104,6 +110,16 @@ describe('AtsScorePanel', () => {
     api.last.mockResolvedValue(null);
     await renderPanel();
     expect(screen.getByText('builder.jdMatch.atsScore.description')).toBeInTheDocument();
+  });
+
+  it('explains why a job without saved keywords cannot be scored', async () => {
+    api.last.mockResolvedValue(null);
+    await renderPanel(true, false);
+    expect(recalcButton()).toBeDisabled();
+    expect(screen.getByText('builder.jdMatch.atsScore.noKeywords')).toBeInTheDocument();
+    expect(screen.queryByText('builder.jdMatch.atsScore.notCalculated')).not.toBeInTheDocument();
+    // Saving would not help, so the save-first hint stays hidden.
+    expect(screen.queryByText('builder.jdMatch.atsScore.saveFirst')).not.toBeInTheDocument();
   });
 
   it('asks to save first while there are unsaved edits', async () => {

@@ -13,6 +13,8 @@ interface AtsScorePanelProps {
   resumeId: string;
   /** Recalculation scores the saved resume, so it waits until edits are saved. */
   hasUnsavedChanges: boolean;
+  /** Without saved job keywords there is nothing to score against. */
+  hasJobKeywords: boolean;
   template?: TemplateType;
 }
 
@@ -22,7 +24,12 @@ type LoadState =
   | { status: 'failed' };
 
 /** Last calculated ATS score of a tailored resume, with on-demand recalculation. */
-export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScorePanelProps) {
+export function AtsScorePanel({
+  resumeId,
+  hasUnsavedChanges,
+  hasJobKeywords,
+  template,
+}: AtsScorePanelProps) {
   const { t, locale } = useTranslations();
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [recalculating, setRecalculating] = useState(false);
@@ -88,7 +95,7 @@ export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScor
         <Button
           size="sm"
           onClick={handleRecalculate}
-          disabled={loading || recalculating || hasUnsavedChanges}
+          disabled={loading || recalculating || hasUnsavedChanges || !hasJobKeywords}
         >
           {recalculating ? (
             <SpinnerGap aria-hidden="true" className="animate-spin" />
@@ -101,7 +108,12 @@ export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScor
         </Button>
       </div>
 
-      {hasUnsavedChanges && (
+      {!hasJobKeywords && (
+        <Alert tone="info" role="status">
+          {t('builder.jdMatch.atsScore.noKeywords')}
+        </Alert>
+      )}
+      {hasUnsavedChanges && hasJobKeywords && (
         <Alert tone="warning" role="status">
           {t('builder.jdMatch.atsScore.saveFirst')}
         </Alert>
@@ -116,7 +128,8 @@ export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScor
       {record ? (
         <ATSScoreCard atsScore={record.score} template={template} />
       ) : (
-        state.status === 'loaded' && (
+        state.status === 'loaded' &&
+        hasJobKeywords && (
           <p className="text-sm text-ink-soft">{t('builder.jdMatch.atsScore.notCalculated')}</p>
         )
       )}

@@ -111,6 +111,7 @@ from app.services.refiner import (
     analyze_keyword_gaps,
     calculate_keyword_match,
     count_retained_keywords,
+    job_keyword_terms,
     refine_resume,
 )
 from app.services.resume_preservation import (
@@ -2888,9 +2889,13 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
             detail="The associated job description was not found.",
         )
 
+    keywords = _cached_job_keywords(job)
     return {
         "job_id": job["job_id"],
         "content": job["content"],
+        # The terms the ATS score's keyword match counts, so JD Match shows the same number.
+        "keywords": job_keyword_terms(keywords) if keywords else None,
+        "company": job.get("company") or None,
     }
 
 

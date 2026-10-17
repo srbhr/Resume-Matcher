@@ -800,6 +800,16 @@ def fix_alignment_violations(
     return fixed
 
 
+def job_keyword_terms(jd_keywords: dict[str, Any]) -> list[str]:
+    """Distinct JD terms that keyword match is scored on, in posting order."""
+    terms: dict[str, None] = {}
+    for field in ("required_skills", "preferred_skills", "keywords"):
+        for term in jd_keywords.get(field) or []:
+            if isinstance(term, str):
+                terms.setdefault(term, None)
+    return list(terms)
+
+
 def calculate_keyword_match(
     resume: dict[str, Any],
     jd_keywords: dict[str, Any],
@@ -815,10 +825,7 @@ def calculate_keyword_match(
     """
     resume_text = _extract_all_text(resume).lower()
 
-    all_keywords: set[str] = set()
-    all_keywords.update(jd_keywords.get("required_skills", []))
-    all_keywords.update(jd_keywords.get("preferred_skills", []))
-    all_keywords.update(jd_keywords.get("keywords", []))
+    all_keywords = job_keyword_terms(jd_keywords)
 
     # SVC-009: Return 0% if no keywords (not 100% - that's misleading)
     if not all_keywords:

@@ -340,13 +340,16 @@
       },
       "stats": {
         "keywordsExtracted": "{count} palavras-chave extraídas",
+        "jobKeywords": "{count} palavras-chave da vaga",
         "matchesFound": "{count} correspondências encontradas",
-        "matchRateLabel": "Taxa de Correspondência:"
+        "keywordMatchLabel": "Correspondência de palavras-chave:",
+        "wordOverlapLabel": "Palavras em comum:"
       },
       "atsScore": {
         "description": "Pontua o currículo salvo em relação a esta descrição da vaga. A aba VERIFICAÇÃO ATS testa como o próprio PDF é lido.",
         "loading": "Carregando a pontuação ATS…",
         "notCalculated": "A pontuação ATS deste currículo ainda não foi calculada.",
+        "noKeywords": "Esta vaga não tem palavras-chave salvas, então não há com o que pontuar. Adapte o currículo novamente com um provedor de IA configurado ou peça ao seu agente de programação para executar set_job_keywords para esta vaga.",
         "loadFailed": "Não foi possível carregar a pontuação ATS salva. Tente Recalcular ou recarregue a página.",
         "lastCalculated": "Último cálculo: {date}",
         "recalculate": "Recalcular",
