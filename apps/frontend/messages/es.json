@@ -340,13 +340,16 @@
       },
       "stats": {
         "keywordsExtracted": "{count} palabras clave extraídas",
+        "jobKeywords": "{count} palabras clave del puesto",
         "matchesFound": "{count} coincidencias encontradas",
-        "matchRateLabel": "Tasa de coincidencia:"
+        "keywordMatchLabel": "Coincidencia de palabras clave:",
+        "wordOverlapLabel": "Palabras en común:"
       },
       "atsScore": {
         "description": "Puntúa el currículum guardado frente a esta descripción del puesto. La pestaña REVISIÓN ATS comprueba cómo se lee el propio PDF.",
         "loading": "Cargando la puntuación ATS…",
         "notCalculated": "Aún no se ha calculado la puntuación ATS de este currículum.",
+        "noKeywords": "Este puesto no tiene palabras clave guardadas, así que no hay nada con qué puntuarlo. Vuelve a adaptar el currículum con un proveedor de IA configurado, o pide a tu agente de programación que ejecute set_job_keywords para este puesto.",
         "loadFailed": "No se pudo cargar la puntuación ATS guardada. Prueba Recalcular o recarga la página.",
         "lastCalculated": "Último cálculo: {date}",
         "recalculate": "Recalcular",

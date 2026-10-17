@@ -360,6 +360,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
+  // The job's saved keywords (null when it has none) and company, for JD Match.
+  const [jobKeywords, setJobKeywords] = useState<string[] | null>(null);
+  const [jobCompany, setJobCompany] = useState<string | null>(null);
   const [jobContextStatus, setJobContextStatus] = useState<JobContextStatus>('idle');
 
   // AI Regenerate wizard
@@ -641,6 +644,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
           const data = await fetchJobDescription(resumeId);
           if (!cancelled) {
             setJobDescription(data.content);
+            setJobKeywords(data.keywords);
+            setJobCompany(data.company);
             setJobContextStatus('available');
           }
         } catch (err) {
@@ -1219,6 +1224,18 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   };
 
   useAgentRefresh(agentMode && loadingState === 'loaded', () => checkForAgentChanges());
+  // The agent can add keywords to this resume's job (set_job_keywords) while the page is open.
+  useAgentRefresh(
+    agentMode && jobContextStatus === 'available' && jobKeywords === null,
+    async () => {
+      if (!resumeId) return;
+      const data = await fetchJobDescription(resumeId);
+      if (data.keywords) {
+        setJobKeywords(data.keywords);
+        setJobCompany(data.company);
+      }
+    }
+  );
 
   const handleKeepMyEdits = () => {
     if (!agentUpdate) return;
@@ -1929,6 +1946,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                       key={resumeId}
                       resumeId={resumeId}
                       hasUnsavedChanges={hasUnsavedChanges}
+                      hasJobKeywords={jobKeywords !== null}
                       template={templateSettings.template}
                     />
                   )}
@@ -2115,7 +2133,12 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
               {/* JD Match Comparison */}
               {activeTab === 'jd-match' && jobDescription && (
-                <JDComparisonView jobDescription={jobDescription} resumeData={resumeData} />
+                <JDComparisonView
+                  jobDescription={jobDescription}
+                  resumeData={resumeData}
+                  jobKeywords={jobKeywords}
+                  company={jobCompany}
+                />
               )}
 
               {/* ATS Parse Check */}

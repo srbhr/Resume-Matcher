@@ -13,7 +13,7 @@ from app.mcp_server.tools._shared import (
     require_valid_structured,
 )
 from app.pdf import PDFRenderError
-from app.routers.resumes import _grounding_master_data
+from app.routers.resumes import _grounding_master_data, _scorable_job_keywords
 from app.schemas.models import PageFitSettings
 from app.services import ats_parse
 from app.services.ats_parse.models import ParseCheckReport
@@ -30,6 +30,7 @@ def _issues(
     page_count: int | None,
     max_pages: int | None,
     score: dict[str, Any] | None,
+    no_job_keywords: bool,
 ) -> list[str]:
     issues: list[str] = []
     if report is None:
@@ -54,6 +55,8 @@ def _issues(
                 issues.append("roundtrip_truncated")
     if score and score.get("injectable_keywords"):
         issues.append("injectable_keywords")
+    if no_job_keywords:
+        issues.append("no_job_keywords")
     return issues
 
 
@@ -71,8 +74,10 @@ async def verify(
         job_id = improvement["job_id"] if improvement else None
 
     score = None
+    job_keywords = None
     if job_id is not None:
-        job_keywords = (await require_job(job_id)).get("job_keywords")
+        # Stale (cached for other job text) or empty keywords count as missing, as in the builder.
+        job_keywords = _scorable_job_keywords(await require_job(job_id))
         if job_keywords:
             master = await _grounding_master_data(resume) or data
             score = keyword_score(data, job_keywords, master)
@@ -96,7 +101,13 @@ async def verify(
         result["page_count"] = count_pdf_pages(pdf_bytes)
         report = await ats_parse.parse_check_pdf(pdf_bytes, data, fit)
         result["parse_check"] = report.model_dump()
-    result["issues"] = _issues(report, result["page_count"], max_pages, score)
+    result["issues"] = _issues(
+        report,
+        result["page_count"],
+        max_pages,
+        score,
+        no_job_keywords=job_id is not None and not job_keywords,
+    )
     return result
 
 
@@ -112,7 +123,9 @@ async def verify_resume(
     true (an academic CV) there is no page cap: max_pages is ignored and over_page_limit is
     never raised; page_count is still reported. Issue codes: over_page_limit,
     text_layer (the PDF has too little extractable text), multi_column, garbled_glyphs,
-    low_order_fidelity, fields_missing, roundtrip_truncated, injectable_keywords, render_failed.
+    low_order_fidelity, fields_missing, roundtrip_truncated, injectable_keywords,
+    no_job_keywords (the job has no keywords, so there is no score: call set_job_keywords),
+    render_failed.
     """
     resume = await require_resume(resume_id)
     return await verify(resume, job_id, print_settings or PageFitSettings(), max_pages)

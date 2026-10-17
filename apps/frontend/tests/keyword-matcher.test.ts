@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { ResumeData } from '@/components/dashboard/resume-component';
 import {
   calculateMatchStats,
   extractKeywords,
+  keywordInText,
+  resumeKeywordText,
   segmentTextByKeywords,
 } from '@/lib/utils/keyword-matcher';
 
@@ -71,5 +74,94 @@ describe('calculateMatchStats', () => {
     const stats = calculateMatchStats('Python', new Set());
     expect(stats.matchPercentage).toBe(0);
     expect(stats.matchCount).toBe(0);
+  });
+});
+
+describe('extractKeywords on real postings', () => {
+  it('keeps technology names that carry symbols whole', () => {
+    const kw = extractKeywords('C++, C#, .NET and Node.js with CI/CD and UI/UX.');
+    for (const term of ['c++', 'c#', '.net', 'node.js', 'ci/cd', 'ui/ux']) {
+      expect(kw.has(term)).toBe(true);
+    }
+  });
+
+  it('splits slash lists of longer words', () => {
+    const kw = extractKeywords('Python/Django or Ruby/Rails');
+    expect([...kw]).toEqual(['python', 'django', 'ruby', 'rails']);
+  });
+
+  it('keeps two-letter acronyms but not two-letter words', () => {
+    const kw = extractKeywords('AI and ML; go do it');
+    expect(kw.has('ai')).toBe(true);
+    expect(kw.has('ml')).toBe(true);
+    expect(kw.has('go')).toBe(false);
+  });
+
+  it('drops posting filler and the company name', () => {
+    const kw = extractKeywords(
+      'Join TechCorp Inc. using Python, plus similar tools',
+      'TechCorp Inc.'
+    );
+    expect([...kw]).toEqual(['python', 'tools']);
+  });
+
+  it('keeps accented words whole and leaves CJK out', () => {
+    const kw = extractKeywords('Développeur Python, 数据分析');
+    expect([...kw]).toEqual(['développeur', 'python']);
+  });
+});
+
+describe('keywordInText matches the backend refiner', () => {
+  // The cases of test_retained_keywords_use_cjk_substrings_and_latin_term_boundaries.
+  it('uses CJK substrings and Latin term boundaries', () => {
+    const text = '负责数据分析与Pythonによる開発，熟悉Java开发与JavaScript平台';
+    for (const keyword of ['数据', 'Python', 'Java', 'JavaScript']) {
+      expect(keywordInText(keyword, text)).toBe(true);
+    }
+    expect(keywordInText('Java', '负责JavaScript平台开发')).toBe(false);
+  });
+
+  it('matches phrases and symbols as whole terms, case-insensitively', () => {
+    expect(keywordInText('Machine Learning', 'applied machine learning daily')).toBe(true);
+    expect(keywordInText('C++', 'Wrote C++ and Rust')).toBe(true);
+    expect(keywordInText('Python', 'pythonic code')).toBe(false);
+    expect(keywordInText('  ', 'anything')).toBe(false);
+  });
+});
+
+describe('phrase keywords', () => {
+  it('highlights a multi-word keyword as one segment', () => {
+    const segments = segmentTextByKeywords('Built machine learning and C++ tools', [
+      'machine learning',
+      'C++',
+    ]);
+    expect(segments.filter((s) => s.isMatch).map((s) => s.text)).toEqual([
+      'machine learning',
+      'C++',
+    ]);
+    expect(segments.map((s) => s.text).join('')).toBe('Built machine learning and C++ tools');
+  });
+
+  it('rounds ties to even like the stored score (1 of 16 is 6.2%)', () => {
+    const keywords = Array.from({ length: 16 }, (_, i) => `skill${i}`);
+    expect(calculateMatchStats('skill0', keywords).matchPercentage).toBe(6.2);
+    expect(calculateMatchStats('skill0 skill1 skill2', keywords).matchPercentage).toBe(18.8);
+    expect(calculateMatchStats('skill0', ['skill0', 'a', 'b']).matchPercentage).toBe(33.3);
+  });
+});
+
+describe('resumeKeywordText', () => {
+  it('scans the sections the backend scores, not personal info', () => {
+    const text = resumeKeywordText({
+      personalInfo: { name: 'Ada', title: 'Kubernetes Lead' },
+      summary: 'Summary',
+      additional: { technicalSkills: ['Python'], awards: ['Award'] },
+      customSections: {
+        talks: { sectionType: 'stringList', strings: ['GraphQL talk'] },
+        notes: { sectionType: 'text', text: 'Terraform notes' },
+      },
+    } as unknown as ResumeData);
+    expect(text).toBe('Summary Python Award GraphQL talk Terraform notes');
+    expect(keywordInText('Kubernetes', text)).toBe(false);
   });
 });

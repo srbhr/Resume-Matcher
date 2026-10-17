@@ -23,6 +23,7 @@ const fetchResume = vi.fn();
 const updateResume = vi.fn();
 const updateCoverLetter = vi.fn();
 const downloadResumePdf = vi.fn();
+const fetchJobDescription = vi.fn();
 let currentSearch = 'id=res-1';
 
 vi.mock('next/navigation', () => ({
@@ -41,7 +42,8 @@ vi.mock('@/lib/api/resume', () => ({
   generateCoverLetter: vi.fn(),
   generateOutreachMessage: vi.fn(),
   generateInterviewPrep: vi.fn(),
-  fetchJobDescription: vi.fn(() => Promise.resolve(null)),
+  fetchJobDescription: (...args: unknown[]) => fetchJobDescription(...args),
+  fetchLastAtsScore: vi.fn(() => Promise.resolve(null)),
 }));
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));
 vi.mock('@/lib/context/language-context', () => ({
@@ -76,7 +78,11 @@ vi.mock('@/components/builder/cover-letter-preview', () => ({ CoverLetterPreview
 vi.mock('@/components/builder/outreach-preview', () => ({ OutreachPreview: () => null }));
 vi.mock('@/components/builder/generate-prompt', () => ({ GeneratePrompt: () => null }));
 vi.mock('@/components/builder/interview-prep-view', () => ({ InterviewPrepView: () => null }));
-vi.mock('@/components/builder/jd-comparison-view', () => ({ JDComparisonView: () => null }));
+vi.mock('@/components/builder/jd-comparison-view', () => ({
+  JDComparisonView: ({ jobKeywords }: { jobKeywords: string[] | null }) => (
+    <output data-testid="job-keywords">{JSON.stringify(jobKeywords)}</output>
+  ),
+}));
 vi.mock('@/components/builder/regenerate-wizard', () => ({ RegenerateWizard: () => null }));
 vi.mock('@/hooks/use-regenerate-wizard', () => ({
   useRegenerateWizard: () => ({ step: 'idle', reset: vi.fn() }),
@@ -128,6 +134,8 @@ beforeEach(() => {
   updateResume.mockReset();
   updateCoverLetter.mockReset();
   downloadResumePdf.mockReset();
+  fetchJobDescription.mockReset();
+  fetchJobDescription.mockResolvedValue(null);
   fetchResume.mockImplementation(async () => {
     if (server.gate) await server.gate;
     return {
@@ -384,6 +392,32 @@ describe('builder in agent mode, when the agent saves', () => {
 
     expect(screen.getByText('builder.agentUpdate.applied')).toBeInTheDocument();
     expect(form.mounts).toBe(mounts);
+  });
+
+  it('picks up keywords the agent adds to the job', async () => {
+    let keywords: string[] | null = null;
+    fetchJobDescription.mockImplementation(async () => ({
+      job_id: 'job-1',
+      content: 'Python role',
+      keywords,
+      company: 'Acme',
+    }));
+    const tailored = fetchResume.getMockImplementation()!;
+    fetchResume.mockImplementation(async () => ({ ...(await tailored()), parent_id: 'master-1' }));
+    currentSearch = 'id=res-1&tab=jd-match';
+    await renderBuilder();
+    expect(screen.getByTestId('job-keywords')).toHaveTextContent('null');
+    expect(screen.getByText('builder.jdMatch.atsScore.noKeywords')).toBeInTheDocument();
+
+    keywords = ['Python'];
+    await nextAgentCheck();
+
+    expect(screen.getByTestId('job-keywords')).toHaveTextContent('["Python"]');
+    expect(screen.queryByText('builder.jdMatch.atsScore.noKeywords')).toBeNull();
+    // With keywords in hand it stops asking.
+    const calls = fetchJobDescription.mock.calls.length;
+    await nextAgentCheck();
+    expect(fetchJobDescription).toHaveBeenCalledTimes(calls);
   });
 
   it('does not look for agent changes outside agent mode', async () => {

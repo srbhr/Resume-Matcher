@@ -576,10 +576,17 @@ export async function recalculateAtsScore(resumeId: string): Promise<ATSScoreRec
   return res.json();
 }
 
+/** The job description used to tailor a resume */
+export interface ResumeJobDescription {
+  job_id: string;
+  content: string;
+  /** Terms the ATS score's keyword match counts; null when the job has no valid saved keywords. */
+  keywords: string[] | null;
+  company: string | null;
+}
+
 /** Fetches the job description used to tailor a resume */
-export async function fetchJobDescription(
-  resumeId: string
-): Promise<{ job_id: string; content: string }> {
+export async function fetchJobDescription(resumeId: string): Promise<ResumeJobDescription> {
   const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/job-description`);
   if (!res.ok) {
     const text = await res.text().catch(() => '');

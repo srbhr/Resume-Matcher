@@ -111,6 +111,7 @@ from app.services.refiner import (
     analyze_keyword_gaps,
     calculate_keyword_match,
     count_retained_keywords,
+    job_keyword_terms,
     refine_resume,
 )
 from app.services.resume_preservation import (
@@ -2758,6 +2759,17 @@ def _cached_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
     return keywords
 
 
+def _scorable_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
+    """Cached job keywords with at least one term to score against, else None.
+
+    Extraction can return empty lists; such a dict is truthy but scores 0%.
+    """
+    keywords = _cached_job_keywords(job)
+    if keywords and any(term.strip() for term in job_keyword_terms(keywords)):
+        return keywords
+    return None
+
+
 def _score_tailored_data(
     tailored_data: dict[str, Any],
     job_keywords: dict[str, Any],
@@ -2888,9 +2900,13 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
             detail="The associated job description was not found.",
         )
 
+    keywords = _scorable_job_keywords(job)
     return {
         "job_id": job["job_id"],
         "content": job["content"],
+        # The terms the ATS score's keyword match counts, so JD Match shows the same number.
+        "keywords": job_keyword_terms(keywords) if keywords else None,
+        "company": job.get("company") or None,
     }
 
 

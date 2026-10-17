@@ -340,13 +340,16 @@
       },
       "stats": {
         "keywordsExtracted": "已提取 {count} 个关键词",
+        "jobKeywords": "职位关键词 {count} 个",
         "matchesFound": "已匹配 {count} 处",
-        "matchRateLabel": "匹配率："
+        "keywordMatchLabel": "关键词匹配率：",
+        "wordOverlapLabel": "词语重合度："
       },
       "atsScore": {
         "description": "根据此职位描述为已保存的简历评分。PDF 本身的解析情况请在 ATS 检查标签页中查看。",
         "loading": "正在加载 ATS 评分…",
         "notCalculated": "此简历尚未计算 ATS 评分。",
+        "noKeywords": "此职位没有已保存的关键词，因此无法评分。请在配置 AI 服务商后重新定制简历，或让你的编程助手为此职位运行 set_job_keywords。",
         "loadFailed": "无法加载已保存的 ATS 评分。请尝试重新计算，或刷新页面。",
         "lastCalculated": "上次计算：{date}",
         "recalculate": "重新计算",

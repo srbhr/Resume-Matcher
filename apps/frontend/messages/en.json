@@ -340,13 +340,16 @@
       },
       "stats": {
         "keywordsExtracted": "{count} keywords extracted",
+        "jobKeywords": "{count} job keywords",
         "matchesFound": "{count} matches found",
-        "matchRateLabel": "Match Rate:"
+        "keywordMatchLabel": "Keyword match:",
+        "wordOverlapLabel": "Word overlap:"
       },
       "atsScore": {
         "description": "Scores the saved resume against this job description. The ATS CHECK tab tests how the PDF itself parses.",
         "loading": "Loading ATS score…",
         "notCalculated": "ATS score not calculated yet for this resume.",
+        "noKeywords": "This job has no saved keywords, so there's nothing to score against. Tailor the resume again with an AI provider set up, or ask your coding agent to run set_job_keywords for this job.",
         "loadFailed": "Couldn't load the saved ATS score. Try Recalculate, or reload the page.",
         "lastCalculated": "Last calculated {date}",
         "recalculate": "Recalculate",

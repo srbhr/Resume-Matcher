@@ -310,13 +310,16 @@
       },
       "stats": {
         "keywordsExtracted": "{count}개 키워드 추출됨",
+        "jobKeywords": "채용 키워드 {count}개",
         "matchesFound": "{count}개 일치 항목 발견",
-        "matchRateLabel": "일치율:"
+        "keywordMatchLabel": "키워드 일치율:",
+        "wordOverlapLabel": "단어 겹침:"
       },
       "atsScore": {
         "description": "저장된 이력서를 이 채용공고와 비교해 점수를 매깁니다. PDF 자체가 어떻게 읽히는지는 ATS 검사 탭에서 확인하세요.",
         "loading": "ATS 점수 불러오는 중…",
         "notCalculated": "이 이력서의 ATS 점수가 아직 계산되지 않았습니다.",
+        "noKeywords": "이 채용 공고에는 저장된 키워드가 없어 점수를 계산할 수 없습니다. AI 제공자를 설정한 뒤 이력서를 다시 맞춤 작업하거나, 코딩 에이전트에게 이 공고에 대해 set_job_keywords를 실행해 달라고 요청하세요.",
         "loadFailed": "저장된 ATS 점수를 불러올 수 없습니다. 다시 계산하거나 페이지를 새로 고치세요.",
         "lastCalculated": "마지막 계산: {date}",
         "recalculate": "다시 계산",

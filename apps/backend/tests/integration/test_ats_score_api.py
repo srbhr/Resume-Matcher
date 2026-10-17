@@ -192,6 +192,51 @@ async def test_stale_job_keywords_are_not_used(
     assert res.status_code == 409
 
 
+async def test_job_description_lists_the_terms_the_keyword_match_counts(
+    client: AsyncClient, isolated_db: Database
+) -> None:
+    _, job, tailored = await _tailored(isolated_db)
+    await isolated_db.update_job(job["job_id"], {"company": "Acme"})
+    res = await client.get(f"/api/v1/resumes/{tailored['resume_id']}/job-description")
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["content"] == JOB_CONTENT
+    assert body["keywords"] == ["Python", "Kubernetes", "Terraform"]
+    assert body["company"] == "Acme"
+
+
+async def test_job_description_without_valid_keywords_lists_none(
+    client: AsyncClient, isolated_db: Database
+) -> None:
+    _, job, tailored = await _tailored(isolated_db, cache_keywords=False)
+    url = f"/api/v1/resumes/{tailored['resume_id']}/job-description"
+    assert (await client.get(url)).json()["keywords"] is None
+
+    # Keywords cached for different job text are stale, as for recalculation.
+    await isolated_db.update_job(
+        job["job_id"], {"job_keywords": JOB_KEYWORDS, "job_keywords_hash": "stale"}
+    )
+    res = await client.get(url)
+    assert res.status_code == 200, res.text
+    assert res.json()["keywords"] is None
+
+    # Valid but empty keywords leave nothing to score against.
+    await isolated_db.update_job(
+        job["job_id"],
+        {
+            "job_keywords": {
+                "required_skills": [],
+                "preferred_skills": [],
+                "keywords": [],
+            },
+            "job_keywords_hash": hashlib.sha256(
+                JOB_CONTENT.encode("utf-8")
+            ).hexdigest(),
+        },
+    )
+    assert (await client.get(url)).json()["keywords"] is None
+
+
 async def test_busy_database_on_recalculate_is_retryable_503(
     client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
 ) -> None:

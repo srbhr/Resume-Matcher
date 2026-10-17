@@ -121,6 +121,7 @@ Job descriptions come pasted in chat, or as `.md`/`.txt` files in `jobs/` (ignor
    | `over_page_limit` | Tighten the summary and bullets; do not drop roles |
    | `multi_column`, `low_order_fidelity` | Suggest a single-column template such as `swiss-single` |
    | `garbled_glyphs`, `fields_missing` | Check unusual characters and empty fields |
+   | `no_job_keywords` | The job was added without keywords, so there is no score: extract them, call `set_job_keywords`, then `verify_resume` |
    | `render_failed` | The web app is not running at the URL in `render_error`: start it |
 
    Edit with `update_resume resume_id=<id> resume_data:=@…` (it replaces the whole resume, so start from `get_resume`), then `recalculate_ats_score resume_id=<id>`.

@@ -340,13 +340,16 @@
       },
       "stats": {
         "keywordsExtracted": "抽出キーワード数: {count}",
+        "jobKeywords": "求人キーワード数: {count}",
         "matchesFound": "一致数: {count}",
-        "matchRateLabel": "一致率:"
+        "keywordMatchLabel": "キーワード一致率:",
+        "wordOverlapLabel": "語句の重なり:"
       },
       "atsScore": {
         "description": "保存済みの履歴書をこの求人内容に照らして採点します。PDF自体の読み取りはATSチェックタブで確認できます。",
         "loading": "ATSスコアを読み込み中…",
         "notCalculated": "この履歴書のATSスコアはまだ計算されていません。",
+        "noKeywords": "この求人には保存されたキーワードがないため、スコアを計算できません。AIプロバイダーを設定して履歴書をもう一度カスタマイズするか、コーディングエージェントにこの求人の set_job_keywords を実行するよう依頼してください。",
         "loadFailed": "保存されたATSスコアを読み込めませんでした。再計算するか、ページを再読み込みしてください。",
         "lastCalculated": "最終計算：{date}",
         "recalculate": "再計算",
