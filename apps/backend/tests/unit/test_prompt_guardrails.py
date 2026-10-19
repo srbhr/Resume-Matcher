@@ -8,12 +8,18 @@ Two invariants this locks:
    the model-facing first layer and should not regress.
 """
 
+import json
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from app.prompts.refinement import KEYWORD_INJECTION_PROMPT
 from app.prompts.templates import (
     COVER_LETTER_PROMPT,
     DIFF_IMPROVE_PROMPT,
     INTERVIEW_PREP_PROMPT,
 )
+from app.services.cover_letter import generate_cover_letter
 
 
 class TestJdIncorporationIsDefault:
@@ -27,6 +33,92 @@ class TestJdIncorporationIsDefault:
 
     def test_cover_letter_reframes_in_jd_terminology(self):
         assert "terminology" in COVER_LETTER_PROMPT.lower()
+
+
+class TestCoverLetterWritingApproach:
+    @pytest.mark.parametrize("custom", ["", "broken {missing}", "broken {"])
+    async def test_generator_formats_default_and_fallback_with_source_data(
+        self, custom: str
+    ) -> None:
+        resume = {"summary": "Built Python APIs serving 50K requests/day {verified}"}
+        job = "Backend engineer at Acme: improve API reliability {platform}"
+        with (
+            patch(
+                "app.services.cover_letter.load_config_file",
+                return_value={"cover_letter_prompt": custom},
+            ),
+            patch(
+                "app.services.cover_letter.complete",
+                new_callable=AsyncMock,
+                return_value="  Letter body\n",
+            ) as complete,
+        ):
+            result = await generate_cover_letter(resume, job, "es")
+
+        assert result == "Letter body"
+        complete.assert_awaited_once()
+        assert complete.call_args.kwargs["prompt"] == COVER_LETTER_PROMPT.format(
+            resume_data=json.dumps(resume),
+            job_description=job,
+            output_language="Spanish",
+        )
+
+    async def test_generator_preserves_custom_prompt_override(self) -> None:
+        custom = "Custom style: {resume_data}\n{job_description}\n{output_language}"
+        with (
+            patch(
+                "app.services.cover_letter.load_config_file",
+                return_value={"cover_letter_prompt": custom},
+            ),
+            patch(
+                "app.services.cover_letter.complete",
+                new_callable=AsyncMock,
+                return_value="Letter",
+            ) as complete,
+        ):
+            await generate_cover_letter({"summary": "API engineer"}, "Acme role", "en")
+
+        assert (
+            complete.call_args.kwargs["prompt"]
+            == 'Custom style: {"summary": "API engineer"}\nAcme role\nEnglish'
+        )
+
+    def test_uses_specific_four_part_structure(self) -> None:
+        assert "Opening hook" in COVER_LETTER_PROMPT
+        assert "Match paragraph" in COVER_LETTER_PROMPT
+        assert "Company-fit paragraph" in COVER_LETTER_PROMPT
+        assert "Closing" in COVER_LETTER_PROMPT
+        assert "under one page" in COVER_LETTER_PROMPT
+        assert "3-4 concise paragraphs" in COVER_LETTER_PROMPT
+
+    def test_selects_evidence_instead_of_rehashing_resume(self) -> None:
+        assert "two or three strongest evidence-backed matches" in COVER_LETTER_PROMPT
+        assert "measurable results when the resume provides them" in COVER_LETTER_PROMPT
+        assert "instead of rehashing resume bullets" in COVER_LETTER_PROMPT
+
+    def test_requires_specific_company_fit_without_fake_research(self) -> None:
+        assert (
+            "product, mission, project, customer, culture signal, or challenge"
+            in COVER_LETTER_PROMPT
+        )
+        assert "instead of inventing research" in COVER_LETTER_PROMPT
+        assert "generic flattery" in COVER_LETTER_PROMPT
+
+    def test_calibrates_region_tone_and_special_circumstances(self) -> None:
+        assert "US, UK, or AU/NZ" in COVER_LETTER_PROMPT
+        assert "match its tone" in COVER_LETTER_PROMPT
+        assert (
+            "career transition, employment gap, overqualification, or underqualification"
+            in COVER_LETTER_PROMPT
+        )
+
+    def test_avoids_generic_opening_and_uses_safe_greeting(self) -> None:
+        assert (
+            'Never open with "I am writing to express my interest"'
+            in COVER_LETTER_PROMPT
+        )
+        assert 'otherwise use "Dear Hiring Manager"' in COVER_LETTER_PROMPT
+        assert "Never invent a name" in COVER_LETTER_PROMPT
 
 
 class TestAntiFabricationClausesPresent:
@@ -52,7 +144,10 @@ class TestAntiFabricationClausesPresent:
         )
 
     def test_cover_letter_keeps_no_invent_clauses(self):
-        assert "Do NOT invent information not in the resume" in COVER_LETTER_PROMPT
+        assert (
+            "Do NOT invent experience, skills, metrics, motivations, company facts"
+            in COVER_LETTER_PROMPT
+        )
         assert "proven experience supports it" in COVER_LETTER_PROMPT
 
     def test_interview_prep_keeps_no_fabrication_guardrails(self):
