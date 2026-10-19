@@ -363,7 +363,7 @@ DEFAULT_IMPROVE_PROMPT_ID = "keywords"
 # Backward-compatible alias
 IMPROVE_RESUME_PROMPT = IMPROVE_RESUME_PROMPT_FULL
 
-COVER_LETTER_PROMPT = """Write a brief cover letter for this job application.
+COVER_LETTER_PROMPT = """Write a tailored cover letter for this job application.
 
 IMPORTANT: Write in {output_language}.
 
@@ -373,17 +373,27 @@ Job Description:
 Candidate Resume (JSON):
 {resume_data}
 
+Plan silently before writing:
+- Identify the target role, company, and the job's most important requirements.
+- Infer regional conventions from the supplied job description and resume. Use US, UK, or AU/NZ terminology, greeting, and sign-off when the region is clear; otherwise use neutral professional conventions.
+- Infer the employer type and match its tone: conversational and direct for startups/tech, measured for corporate roles, formal and criteria-led for government, personality-forward for creative agencies, and mission-aligned for nonprofits.
+- Select the two or three strongest evidence-backed matches from the resume. Prioritize relevance over impressiveness.
+
 Requirements:
-- 100-150 words maximum
-- 3-4 short paragraphs
-- Opening: Reference ONE specific thing from the job description (product, tech stack, or problem they're solving) - not generic excitement about "the role"
-- Middle: Pick 1-2 qualifications from resume that DIRECTLY match stated requirements, and reframe them in the job's language/terminology where the candidate's proven experience supports it (e.g., if the resume shows "built automated data pipelines" and the job says "ETL," describe that real work as ETL) - prioritize relevance over impressiveness
-- Closing: Simple availability to discuss, no desperate enthusiasm
-- If resume shows career transition, frame the pivot as intentional and relevant
-- Extract company name from job description - do not use placeholders
-- Do NOT invent information not in the resume
-- Tone: Confident peer, not eager applicant
-- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+- Keep the letter under one page, normally 200-300 words, in 3-4 concise paragraphs.
+- Address a named hiring person only when one appears in the supplied inputs; otherwise use "Dear Hiring Manager". Never invent a name.
+- For English letters, use "Kind regards" for AU/NZ; use "Sincerely" or "Kind regards" for US/UK. Localize the greeting and sign-off for other output languages.
+- Opening hook: Explain why this role or its current challenge matters to the candidate, anchored in ONE specific detail from the job description. Never open with "I am writing to express my interest" or generic excitement about "the role."
+- Match paragraph: Connect the selected experience examples directly to stated requirements. Add brief context and measurable results when the resume provides them. Reframe the work in the job's language/terminology where the candidate's proven experience supports it (for example, if the resume shows "built automated data pipelines" and the job says "ETL," describe that real work as ETL).
+- Company-fit paragraph: Reference a specific product, mission, project, customer, culture signal, or challenge stated in the job description and explain why it matters to the candidate. If the inputs contain no such detail, connect to the company's stated goal or role challenge instead of inventing research or using generic flattery.
+- Closing: Include a confident, specific call to action about how the candidate could support the team's stated work. Do not sound desperate.
+- Add context and personality instead of rehashing resume bullets.
+- If the supplied resume clearly indicates a career transition, employment gap, overqualification, or underqualification, address it briefly and honestly using transferable evidence or motivation. Do not speculate about circumstances that are not present.
+- Extract the role and company name from the supplied inputs. Do not output placeholder brackets.
+- Do NOT invent experience, skills, metrics, motivations, company facts, or information not in the supplied resume and job description.
+- Avoid unsupported claims such as "perfect candidate," generic praise such as "innovative company," and weak phrasing such as "I helped with."
+- Tone: Confident peer, factual and specific, calibrated to the employer.
+- Do NOT use an em dash ("—") anywhere in the writing/output; replace it with punctuation appropriate to the language.
 
 Output plain text only. No JSON, no markdown formatting."""
 
