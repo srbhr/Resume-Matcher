@@ -33,6 +33,7 @@ from app.routers import (
     jobs_router,
     resume_wizard_router,
     resumes_router,
+    writing_router,
 )
 from app.routers.resumes import drain_processing_cleanup_tasks
 
@@ -139,6 +140,7 @@ app.include_router(applications_router, prefix="/api/v1")
 app.include_router(resume_wizard_router, prefix="/api/v1")
 app.include_router(ats_router, prefix="/api/v1")
 app.include_router(chatgpt_router, prefix="/api/v1")
+app.include_router(writing_router, prefix="/api/v1")
 # OpenAI redirects to 127.0.0.1:<port>/auth/callback; the path is fixed.
 app.include_router(chatgpt_callback_router)
 

@@ -19,6 +19,8 @@ interface JDComparisonViewProps {
   jobKeywords: string[] | null;
   /** Hiring company, left out of the fallback word list. */
   company?: string | null;
+  /** Keywords the user forced in; highlighted in blue. */
+  forcedKeywords?: string[];
 }
 
 /**
@@ -34,6 +36,7 @@ export function JDComparisonView({
   resumeData,
   jobKeywords,
   company,
+  forcedKeywords,
 }: JDComparisonViewProps) {
   const { t } = useTranslations();
 
@@ -96,7 +99,11 @@ export function JDComparisonView({
 
         {/* Right: Resume with highlights */}
         <div className="overflow-hidden">
-          <HighlightedResumeView resumeData={resumeData} keywords={keywords} />
+          <HighlightedResumeView
+            resumeData={resumeData}
+            keywords={keywords}
+            forcedKeywords={forcedKeywords}
+          />
         </div>
       </div>
     </div>

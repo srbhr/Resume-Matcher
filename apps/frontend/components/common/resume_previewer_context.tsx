@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import type { BulletSelectionSummary } from '@/lib/api/resume';
+import type { WritingReport } from '@/lib/api/writing';
 
 export interface PersonalInfo {
   name: string;
@@ -146,6 +147,17 @@ export interface Data {
   detailed_changes?: ResumeFieldDiff[];
   ats_score?: ATSScore;
   bullet_selection?: BulletSelectionSummary | null;
+  writing?: WritingReport | null;
+  /** Where each forced keyword landed (apply-keywords responses). */
+  keyword_placements?: KeywordPlacement[];
+  /** Keywords the user forced into this preview. */
+  forced_keywords?: string[];
+}
+
+/** Where one forced keyword landed: line paths, or `additional.technicalSkills`. */
+export interface KeywordPlacement {
+  keyword: string;
+  paths: string[];
 }
 
 export interface ImprovedResult {

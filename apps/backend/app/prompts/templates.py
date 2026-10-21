@@ -238,6 +238,9 @@ CRITICAL_TRUTHFULNESS_RULES = {
     "full": _build_truthfulness_rules(
         "You may expand existing bullet points or add new ones that elaborate on existing work, but DO NOT invent entirely new responsibilities"
     ),
+    "heavy": _build_truthfulness_rules(
+        "You may restructure every bullet point, rewrite the summary and reorder bullets within a role, but DO NOT invent responsibilities, tools, metrics or outcomes"
+    ),
 }
 
 IMPROVE_RESUME_PROMPT_NUDGE = """Lightly nudge this resume toward the job description. Output ONLY the JSON object, no other text.
@@ -334,6 +337,37 @@ Original Resume:
 Output in this JSON format:
 {schema}"""
 
+IMPROVE_RESUME_PROMPT_HEAVY = """Rewrite this resume for the job. Output ONLY the JSON object, no other text.
+
+{critical_truthfulness_rules}
+
+IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+Do NOT include personalInfo in your output - it will be preserved from the original resume.
+
+Rules:
+- Rewrite every bullet as Challenge, Action, Result: open with a strong action verb, state what changed because of the work. Keep every fact of the original bullet.
+- Rewrite the summary from scratch as a positioning statement: role identity, years and domain, signature strength, all taken from the resume.
+- You may reorder bullets within a role so the strongest evidence for this job comes first.
+- Keep the same number of bullets in every entry. Do not merge, drop or add bullets.
+- Never invent metrics. When a bullet has no number, state the outcome or scope it already implies.
+- Keep proper nouns (names, company names, locations) unchanged
+- Preserve descriptionStyles arrays and keep them aligned one-to-one with description arrays
+- For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
+- Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+
+Job Description:
+{job_description}
+
+Keywords to emphasize:
+{job_keywords}
+
+Original Resume:
+{original_resume}
+
+Output in this JSON format:
+{schema}"""
+
 IMPROVE_PROMPT_OPTIONS = [
     {
         "id": "nudge",
@@ -350,12 +384,18 @@ IMPROVE_PROMPT_OPTIONS = [
         "label": "Full tailor",
         "description": "Comprehensive tailoring using the job description.",
     },
+    {
+        "id": "heavy",
+        "label": "Heavy rewrite",
+        "description": "Rewrites every bullet and the summary. Bigger edits carry a higher risk of hallucination, so review every line.",
+    },
 ]
 
 IMPROVE_RESUME_PROMPTS = {
     "nudge": IMPROVE_RESUME_PROMPT_NUDGE,
     "keywords": IMPROVE_RESUME_PROMPT_KEYWORDS,
     "full": IMPROVE_RESUME_PROMPT_FULL,
+    "heavy": IMPROVE_RESUME_PROMPT_HEAVY,
 }
 
 DEFAULT_IMPROVE_PROMPT_ID = "keywords"
@@ -488,6 +528,7 @@ DIFF_STRATEGY_INSTRUCTIONS = {
     "nudge": "Make minimal edits. Only rephrase where there is a clear match. Do not add new bullet points.",
     "keywords": "Weave in relevant keywords where evidence already exists. You may rephrase bullets but do not add new ones.",
     "full": "Make targeted adjustments. You may rephrase bullets, add verified JD skills, and add new bullets that elaborate on existing work, but do not invent new responsibilities.",
+    "heavy": 'Heavy rewrite. Rewrite every bullet as Challenge, Action, Result and rewrite the summary from scratch, keeping every fact of each original. You may reorder the bullets within an entry (action "reorder" on its description path) so the strongest evidence comes first. Do not add or append bullets and do not invent responsibilities, tools or metrics.',
 }
 
 # Appended to the strategy rule when the harness already chose the bullets (bullet selection).
@@ -577,7 +618,7 @@ RULES:
 PATHS you can target:
 - "summary" — the resume summary text
 - "workExperience[i].description[j]" — a specific bullet (i = entry index, j = bullet index)
-- "workExperience[i].description" — append a new bullet (action: "append")
+- "workExperience[i].description" — append a new bullet (action: "append"), or reorder that entry's bullets (action: "reorder", value = the entry's original bullets copied exactly in the new order; only when the strategy allows reordering)
 - "personalProjects[i].description[j]" — a specific project bullet
 - "personalProjects[i].description" — append a new project bullet (action: "append")
 - "education[i].description" — the education entry's description text (replace only; it is a single string, not a list)

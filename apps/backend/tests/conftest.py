@@ -147,6 +147,24 @@ def deny_external_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
+def writing_loop_llm_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fail the writing loop's LLM calls at once in pipeline tests.
+
+    Tailoring now ends with a critique-and-rewrite loop. Tests that mock the
+    earlier pipeline steps would otherwise reach a real provider call and wait
+    out its retries; the loop treats this failure as "keep the text" and the
+    code-rule report still runs. Writing-loop tests patch ``complete_json``
+    themselves, which takes precedence inside their ``with patch(...)``.
+    """
+
+    async def unavailable(*args: Any, **kwargs: Any) -> NoReturn:
+        del args, kwargs
+        raise RuntimeError("LLM unavailable in deterministic backend tests")
+
+    monkeypatch.setattr("app.services.writing_loop.complete_json", unavailable)
+
+
+@pytest.fixture(autouse=True)
 async def isolated_backend_state(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

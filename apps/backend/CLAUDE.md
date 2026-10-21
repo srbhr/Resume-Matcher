@@ -35,11 +35,13 @@ Stack: FastAPI 0.143 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 - `jobs.py` — `/jobs/upload` (batch JD text → job_ids), `GET /jobs/{id}`.
 - `ats.py` — `POST /ats/parse-check` (upload), `POST /resumes/{id}/parse-check` (own render + round trip).
 - `enrichment.py` — `/enrichment/analyze/{id}`, `/enhance`, `/apply/{id}`, `/regenerate`, `/apply-regenerated/{id}`.
+- `writing.py` — `POST /writing/check` (code-rule writing score, no LLM), `POST /writing/improve` (critique-and-rewrite on unsaved Builder data; saves nothing). `resumes.py` also has `GET /resumes/improve/progress/{id}` (SSE stages of a run started with that `progress_id`) and `POST /resumes/improve/apply-keywords` (forces chosen job keywords into a preview; returns a new preview).
 
 ### Services
 - `parser.py` — `parse_document` (markitdown bytes→Markdown), `parse_resume_to_json` (LLM→`ResumeData`), `restore_dates_from_markdown` (re-inserts months the LLM drops).
 - `improver.py` (largest) — keyword extraction, **diff-based** improvement (`generate_resume_diffs` → `apply_diffs` with path allow/block-lists → `verify_diff_result`), skill-target planning (`generate_skill_target_plan`/`verify_skill_target_plan`), legacy full-output `improve_resume`, `calculate_resume_diff`. Sanitizes prompt-injection patterns in user input.
 - `refiner.py` — multi-pass polish: keyword injection (LLM), AI-phrase removal (local, via `refinement.py` blacklist), master-alignment validation. Driven by `RefinementConfig`.
+- `writing_quality.py` (code rules, score, `fact_violations` rewrite check), `writing_loop.py` (critic + one rewrite of hard findings, run after `refine_resume` in every tailoring; Light nudge only critiques), `keyword_forcing.py` (apply-keywords placement + verification), `progress.py` (stage registry behind the SSE endpoint).
 - `cover_letter.py` — `generate_cover_letter`, `generate_outreach_message`, `generate_resume_title`; resolves custom-vs-default feature prompts at runtime.
 
 ---
@@ -67,11 +69,12 @@ Prompts are **plain Python string constants** — no Jinja, no external prompt f
 | `app/prompts/templates.py` | Resume parse, keyword extraction, the 3 improve variants, diff prompt, skill-target plan, cover-letter / outreach / title, `RESUME_SCHEMA_EXAMPLE`, `CRITICAL_TRUTHFULNESS_RULES`, `LANGUAGE_NAMES` + `get_language_name()` |
 | `app/prompts/enrichment.py` | `ANALYZE_RESUME_PROMPT`, `ENHANCE_DESCRIPTION_PROMPT`, `REGENERATE_ITEM_PROMPT`, `REGENERATE_SKILLS_PROMPT` |
 | `app/prompts/refinement.py` | `KEYWORD_INJECTION_PROMPT`, `VALIDATION_POLISH_PROMPT`, `AI_PHRASE_BLACKLIST`, `AI_PHRASE_REPLACEMENTS` |
+| `app/prompts/writing.py` | `WRITING_RUBRIC` (copied verbatim into the resume-matcher SKILL.md; a test keeps them equal), `WRITING_CRITIQUE_PROMPT`, `WRITING_REWRITE_PROMPT`, `KEYWORD_PLACEMENT_PROMPT`, `FORCED_KEYWORDS_PREP_NOTE` |
 | `app/prompts/__init__.py` | Re-exports template constants; placeholder validation |
 
 **Loading / parameterization:** services `from app.prompts import ...` then call `PROMPT.format(**vars)`. So `{placeholder}` = a real format key, and any *literal* `{}` (e.g. JSON examples) **must be doubled `{{ }}`** — see `EXTRACT_KEYWORDS_PROMPT`, `DIFF_IMPROVE_PROMPT`, the enrichment prompts. `PARSE_RESUME_PROMPT` is the exception: it embeds the schema via `{schema}` so it does *not* double-brace.
 
-**Improve prompt selection:** `IMPROVE_RESUME_PROMPTS` = `{nudge, keywords, full}`; `IMPROVE_PROMPT_OPTIONS` is the UI list; `DEFAULT_IMPROVE_PROMPT_ID = "keywords"`. The active id comes from `config.json` `default_prompt_id` (validated against option ids) or the request's `prompt_id`. `CRITICAL_TRUTHFULNESS_RULES[id]` is injected into each improve prompt via `{critical_truthfulness_rules}`.
+**Improve prompt selection:** `IMPROVE_RESUME_PROMPTS` = `{nudge, keywords, full, heavy}` (`heavy` = Heavy rewrite: full CAR rewrites, new summary, bullet reorder via a deferred `reorder` diff on a description path); `IMPROVE_PROMPT_OPTIONS` is the UI list; `DEFAULT_IMPROVE_PROMPT_ID = "keywords"`. The active id comes from `config.json` `default_prompt_id` (validated against option ids) or the request's `prompt_id`. `CRITICAL_TRUTHFULNESS_RULES[id]` is injected into each improve prompt via `{critical_truthfulness_rules}`.
 
 **Custom feature prompts (user-editable):** cover-letter & outreach prompts can be overridden in `config.json` (`cover_letter_prompt`, `outreach_message_prompt`). On save (`PUT /config/feature-prompts`) they are validated by `validate_prompt_placeholders()` to contain all of `REQUIRED_FEATURE_PROMPT_PLACEHOLDERS` = `{job_description}`, `{resume_data}`, `{output_language}`; missing → HTTP 422. Empty string = "use default". At runtime `cover_letter.py::_resolve_feature_prompt` picks custom-or-default and falls back to the built-in default (with a warning) if a custom prompt fails `.format()`.
 

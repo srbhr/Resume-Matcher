@@ -15,10 +15,13 @@ import {
 } from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
 import type {
+  KeywordPlacement,
   ResumeDiffSummary,
   ResumeFieldDiff,
 } from '@/components/common/resume_previewer_context';
+import type { ResumeData } from '@/components/dashboard/resume-component';
 import type { BulletSelectionSummary } from '@/lib/api/resume';
+import { locatePath, splitByKeywords } from '@/lib/utils/resume-paths';
 
 interface DiffPreviewModalProps {
   isOpen: boolean;
@@ -30,6 +33,17 @@ interface DiffPreviewModalProps {
   detailedChanges?: ResumeFieldDiff[];
   errorMessage?: string;
   selectionSummary?: BulletSelectionSummary | null;
+  /** The preview came from Heavy rewrite: warn to review every line. */
+  heavyMode?: boolean;
+  /** Keyword picker shown under the summary (the ATS keyword chips). */
+  keywordPanel?: React.ReactNode;
+  /** Where each forced keyword landed, and the resume to name the lines. */
+  placements?: KeywordPlacement[];
+  resume?: ResumeData | null;
+  /** ATS score before and after the last keyword apply, shown with the placements. */
+  scoreChange?: { before: number; after: number } | null;
+  /** Another action (applying keywords) is running: saving or rejecting must wait. */
+  actionsDisabled?: boolean;
 }
 
 export function DiffPreviewModal({
@@ -42,6 +56,12 @@ export function DiffPreviewModal({
   detailedChanges,
   errorMessage,
   selectionSummary,
+  heavyMode = false,
+  keywordPanel,
+  placements,
+  resume,
+  scoreChange,
+  actionsDisabled = false,
 }: DiffPreviewModalProps) {
   const { t } = useTranslations();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -115,6 +135,7 @@ export function DiffPreviewModal({
   };
 
   const selectionLine = selectionSummary ? formatSelectionSummary(selectionSummary, t) : null;
+  const highlighted = placements?.filter((p) => p.paths.length > 0).map((p) => p.keyword) ?? [];
 
   // Group changes by type
   const summaryChanges = detailedChanges.filter((c) => c.field_type === 'summary');
@@ -143,6 +164,11 @@ export function DiffPreviewModal({
             {'// '}
             {t('tailor.diffModal.subtitle')}
           </p>
+          {heavyMode && (
+            <p className="mt-1 w-fit border border-ink bg-ink px-2 py-1 font-mono text-xs uppercase tracking-wider text-white">
+              {t('tailor.diffModal.heavyTag')}
+            </p>
+          )}
         </DialogHeader>
 
         <DialogBody className="space-y-4">
@@ -195,7 +221,23 @@ export function DiffPreviewModal({
                 {t('tailor.diffModal.warningMessage')}
               </Alert>
             )}
+
+            {heavyMode && (
+              <Alert tone="warning" className="mt-4">
+                {t('tailor.heavyWarning')}
+              </Alert>
+            )}
           </div>
+
+          {placements && placements.length > 0 && (
+            <KeywordPlacementList
+              placements={placements}
+              resume={resume}
+              scoreChange={scoreChange}
+            />
+          )}
+
+          {keywordPanel}
 
           {/* Detailed changes list */}
           <div className="space-y-4">
@@ -208,7 +250,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('summary')}
               >
                 {summaryChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -222,7 +264,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('skills')}
               >
                 {skillChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -236,7 +278,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('experience')}
               >
                 {experienceChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -250,7 +292,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('descriptions')}
               >
                 {descChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -264,7 +306,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('education')}
               >
                 {educationChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -278,7 +320,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('project')}
               >
                 {projectChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -292,7 +334,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('certifications')}
               >
                 {certChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -306,7 +348,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('languages')}
               >
                 {languageChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -320,7 +362,7 @@ export function DiffPreviewModal({
                 onToggle={() => toggleSection('awards')}
               >
                 {awardChanges.map((change, idx) => (
-                  <ChangeItem key={idx} change={change} />
+                  <ChangeItem key={idx} change={change} highlight={highlighted} />
                 ))}
               </ChangeSection>
             )}
@@ -336,7 +378,7 @@ export function DiffPreviewModal({
 
         {/* Action buttons */}
         <DialogFooter className="justify-between">
-          <Button variant="outline" onClick={onReject} disabled={isConfirming}>
+          <Button variant="outline" onClick={onReject} disabled={isConfirming || actionsDisabled}>
             <X className="w-4 h-4" />
             {t('tailor.diffModal.rejectButton')}
           </Button>
@@ -344,7 +386,11 @@ export function DiffPreviewModal({
             {isConfirming && elapsed > 0 && (
               <span className="font-mono text-xs tabular-nums text-ink-soft">{elapsed}s</span>
             )}
-            <Button variant="success" onClick={onConfirm} disabled={isConfirming}>
+            <Button
+              variant="success"
+              onClick={onConfirm}
+              disabled={isConfirming || actionsDisabled}
+            >
               {isConfirming ? (
                 <>
                   <SpinnerGap className="w-4 h-4 animate-spin" />
@@ -452,9 +498,11 @@ function ChangeSection({ title, count, isExpanded, onToggle, children }: ChangeS
 // Helper component: change item
 interface ChangeItemProps {
   change: ResumeFieldDiff;
+  /** Keywords to mark in the new text (forced keywords). */
+  highlight?: string[];
 }
 
-function ChangeItem({ change }: ChangeItemProps) {
+function ChangeItem({ change, highlight = [] }: ChangeItemProps) {
   const { t } = useTranslations();
   // Background tint + leading glyph instead of left-stripe borders.
   // Side-stripe borders are an impeccable absolute_ban (BAN 1) — the most
@@ -494,7 +542,17 @@ function ChangeItem({ change }: ChangeItemProps) {
             </del>
           )}
           {change.new_value && (
-            <ins className="block text-sm text-ink-soft no-underline">{change.new_value}</ins>
+            <ins className="block text-sm text-ink-soft no-underline">
+              {splitByKeywords(change.new_value, highlight).map((part, i) =>
+                part.match ? (
+                  <mark key={i} className="bg-primary px-1 text-white">
+                    {part.text}
+                  </mark>
+                ) : (
+                  <span key={i}>{part.text}</span>
+                )
+              )}
+            </ins>
           )}
         </div>
         {change.change_type === 'added' && change.confidence === 'high' && (
@@ -506,5 +564,61 @@ function ChangeItem({ change }: ChangeItemProps) {
         )}
       </div>
     </div>
+  );
+}
+
+// Helper component: where each forced keyword landed
+function KeywordPlacementList({
+  placements,
+  resume,
+  scoreChange,
+}: {
+  placements: KeywordPlacement[];
+  resume?: ResumeData | null;
+  scoreChange?: { before: number; after: number } | null;
+}) {
+  const { t } = useTranslations();
+  const where = (path: string) => {
+    const location = locatePath(resume, path);
+    if (location.kind === 'summary') return t('tailor.forceKeywords.where.summary');
+    if (location.kind === 'skills') return t('tailor.forceKeywords.where.skills');
+    if (location.kind === 'bullet')
+      return t('tailor.forceKeywords.where.bullet', { entry: location.entry, line: location.line });
+    return path;
+  };
+  return (
+    <section
+      aria-labelledby="keyword-placements-heading"
+      className="border-2 border-primary bg-info-tint p-4"
+    >
+      <h3
+        id="keyword-placements-heading"
+        className="mb-3 font-mono text-sm font-bold uppercase tracking-wider text-primary"
+      >
+        {t('tailor.forceKeywords.placementsTitle')}
+      </h3>
+      {scoreChange && (
+        <p className="mb-3 font-mono text-sm font-bold tabular-nums text-ink">
+          {t('tailor.forceKeywords.scoreChange', {
+            before: scoreChange.before.toFixed(1),
+            after: scoreChange.after.toFixed(1),
+          })}
+        </p>
+      )}
+      <ul className="space-y-2">
+        {placements.map((placement) => (
+          <li key={placement.keyword} className="flex flex-wrap items-baseline gap-2 text-sm">
+            <mark className="bg-primary px-1 font-mono text-xs text-white">
+              {placement.keyword}
+            </mark>
+            <span className="text-ink">
+              {placement.paths.length > 0
+                ? placement.paths.map(where).join(' · ')
+                : t('tailor.forceKeywords.nowhere')}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

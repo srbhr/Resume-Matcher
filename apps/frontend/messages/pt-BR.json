@@ -242,7 +242,8 @@
       "outreach": "MENSAGEM DE CONTATO",
       "jdMatch": "ANÁLISE DE VAGA",
       "interviewPrep": "PREPARAÇÃO",
-      "atsCheck": "VERIFICAÇÃO ATS"
+      "atsCheck": "VERIFICAÇÃO ATS",
+      "writing": "Escrita"
     },
     "pageSize": {
       "usLetter": "Carta US"
@@ -356,7 +357,9 @@
         "recalculating": "Calculando…",
         "saveFirst": "Salve suas alterações e depois recalcule.",
         "recalculateFailed": "Não foi possível calcular a pontuação ATS. Se este currículo foi adaptado antes de as pontuações serem salvas, adapte-o novamente na página Personalizar Currículo."
-      }
+      },
+      "forcedColor": "Azul",
+      "forcedLegend": "marca as palavras-chave que você mesmo adicionou. Esteja pronto para falar delas."
     },
     "genericItemForm": {
       "itemLabel": "Item",
@@ -544,7 +547,8 @@
       "outreachEditor": "Editor de Mensagem de Contato",
       "jdMatchAnalysis": "Análise de Correspondência de Vaga",
       "interviewPrep": "Preparação para entrevista",
-      "atsCheck": "Verificação de leitura ATS"
+      "atsCheck": "Verificação de leitura ATS",
+      "writing": "Escrita"
     },
     "alerts": {
       "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
@@ -692,6 +696,21 @@
           "warn": "Nenhuma data reconhecível."
         }
       }
+    },
+    "writing": {
+      "aboutTitle": "Pontuação de escrita",
+      "aboutDescription": "Regras fixas verificam cada tópico e o resumo: travessões, inícios fracos como \"Responsável por\", primeira pessoa, frases feitas, linhas longas e números ausentes. Melhorar escrita reescreve as linhas fracas sem adicionar nem remover nenhum fato.",
+      "improve": "Melhorar escrita",
+      "improving": "Melhorando",
+      "needsProvider": "Configure um provedor de IA em Configurações para usar Melhorar escrita.",
+      "error": "Não foi possível melhorar a escrita. Tente novamente.",
+      "changedMeanwhile": "O currículo mudou durante a reescrita. Execute Melhorar escrita de novo.",
+      "reviewTitle": "Mudanças propostas",
+      "noChanges": "Nada a mudar: cada linha já segue as regras, ou uma reescrita mudaria um fato.",
+      "applyNote": "As mudanças aplicadas vão para o editor e são salvas como qualquer edição.",
+      "discard": "Descartar",
+      "applyChanges": "Aplicar mudanças",
+      "checkError": "Não foi possível pontuar a escrita."
     }
   },
   "enrichment": {
@@ -765,6 +784,10 @@
       "full": {
         "label": "Personalização completa",
         "description": "Personalização abrangente usando a descrição da vaga."
+      },
+      "heavy": {
+        "label": "Reescrita completa",
+        "description": "Reescreve cada tópico e o resumo. Mudanças maiores aumentam o risco de alucinação, então revise cada linha."
       }
     },
     "length": {
@@ -816,7 +839,8 @@
       "languageChanges": "Alterações de idiomas",
       "awardChanges": "Alterações de prêmios",
       "rejectButton": "Rejeitar e regenerar",
-      "confirmButton": "Confirmar e salvar"
+      "confirmButton": "Confirmar e salvar",
+      "heavyTag": "Reescrita completa"
     },
     "atsScore": {
       "title": "Detalhamento da pontuação ATS",
@@ -828,7 +852,8 @@
       "missingKeywords": "Palavras-chave ausentes",
       "injectableKeywords": "Seguras para adicionar (no seu currículo principal)",
       "recommendations": "Recomendações",
-      "twoColumnWarning": "Layout em duas colunas: muitos ATS leem as colunas fora de ordem. Mude para um modelo de uma coluna no editor antes de se candidatar."
+      "twoColumnWarning": "Layout em duas colunas: muitos ATS leem as colunas fora de ordem. Mude para um modelo de uma coluna no editor antes de se candidatar.",
+      "was": "antes {score}"
     },
     "regenerateDialog": {
       "title": "Regenerar o currículo personalizado?",
@@ -868,6 +893,73 @@
       "unavailable": "Ajuste de página indisponível",
       "finalOver": "Pode passar do limite de páginas após a reescrita",
       "notRechecked": "Ajuste ao limite de páginas não verificado após a reescrita"
+    },
+    "heavyWarning": "A reescrita completa faz mudanças maiores, então tem mais chance de afirmar algo que você não fez. Confira cada linha antes de salvar.",
+    "progress": {
+      "title": "Trabalhando no seu currículo",
+      "elapsed": "{seconds} s",
+      "slow": "Ainda trabalhando. Alguns modelos levam um ou dois minutos; esta lista se atualiza sozinha.",
+      "steps": {
+        "keywords": "Ler a vaga",
+        "select": "Escolher os tópicos mais fortes",
+        "plan": "Planejar as habilidades",
+        "tailor": "Adaptar o currículo",
+        "refine": "Incluir palavras-chave e checar fatos",
+        "critique": "Revisar a escrita",
+        "rewrite": "Reescrever linhas fracas",
+        "verify": "Verificar e preparar a revisão"
+      },
+      "state": {
+        "done": "concluído",
+        "current": "em andamento",
+        "pending": "aguardando"
+      }
+    },
+    "writingScore": {
+      "title": "Escrita",
+      "scoreNote": "Pontuado por regras fixas, então o número é o mesmo com qualquer provedor de IA.",
+      "beforeAfter": "antes {before}",
+      "rewritten": "{count} linhas reescritas",
+      "rejected": "{count} reescritas descartadas porque mudavam um fato",
+      "noFindings": "Nenhum problema de escrita encontrado.",
+      "findingsTitle": "Linhas para revisar",
+      "notesTitle": "Notas do revisor",
+      "severity": {
+        "hard": "Corrigir",
+        "soft": "Considerar"
+      },
+      "rules": {
+        "em_dash": "Travessão",
+        "weak_opener": "Início fraco",
+        "no_outcome": "Sem resultado",
+        "first_person": "Primeira pessoa",
+        "ai_phrase": "Frase feita",
+        "repeated_opener": "Início repetido",
+        "long_bullet": "Linha longa",
+        "no_metric": "Sem número"
+      }
+    },
+    "forceKeywords": {
+      "title": "Adicionar palavras-chave que faltam",
+      "description": "Escolha palavras-chave da vaga para incluir. Cada uma vai para suas habilidades e, no máximo, para duas linhas onde fizer sentido.",
+      "supported": "Seu currículo principal mostra estas",
+      "unsupported": "Não estão no seu currículo principal",
+      "apply": "Aplicar",
+      "haveThis": "Eu tenho",
+      "attestNote": "Escolha \"Eu tenho\" só para habilidades que você realmente tem. Espere perguntas sobre elas na entrevista.",
+      "addToMaster": "Adicionar também as habilidades confirmadas ao meu currículo principal",
+      "applyButton": "Aplicar {count} palavras-chave",
+      "applying": "Aplicando palavras-chave",
+      "placementsTitle": "Onde suas palavras-chave entraram",
+      "where": {
+        "summary": "Resumo",
+        "skills": "Habilidades",
+        "bullet": "{entry}, linha {line}"
+      },
+      "nowhere": "Não foi possível incluir",
+      "error": "Não foi possível aplicar as palavras-chave. Tente novamente.",
+      "scoreChange": "Pontuação ATS {before} → {after}",
+      "limitReached": "Você pode adicionar até {max} palavras-chave a um currículo."
     }
   },
   "settings": {
@@ -1521,6 +1613,10 @@
       "title": "Preparar para a entrevista",
       "prompt": "Use o Resume Matcher para ler o currículo {resumeId} e a vaga à qual ele foi adaptado, e me ajude a preparar a entrevista: perguntas prováveis, histórias para contar e perguntas para fazer a eles.",
       "note": "Seu agente responde no próprio chat. No modo agente, a preparação para a entrevista não é salva no currículo."
+    },
+    "improveWriting": {
+      "title": "Melhorar a escrita",
+      "prompt": "Use o Resume Matcher para melhorar a escrita do currículo {resumeId}: faça duas rodadas de escrita (avalie cada linha pela rubrica, reescreva as fracas mantendo cada fato, verifique) e salve."
     }
   }
 }

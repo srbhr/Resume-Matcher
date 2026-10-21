@@ -19,10 +19,15 @@ import {
   uploadJobDescriptions,
   previewImproveResume,
   confirmImproveResume,
+  applyKeywords,
   fetchResumeList,
   toPageFitSettings,
+  type ForcedKeywordInput,
   type ResumeListItem,
 } from '@/lib/api/resume';
+import { newProgressId, subscribeToProgress } from '@/lib/api/progress';
+import type { WritingReport } from '@/lib/api/writing';
+import { keywordInText, resumeKeywordText } from '@/lib/utils/keyword-matcher';
 import {
   DEFAULT_TAILOR_LENGTH,
   TAILOR_BULLET_CAPS,
@@ -43,6 +48,12 @@ import { ListNumbers, SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
+import {
+  KeywordForcingPanel,
+  MAX_FORCED_KEYWORDS,
+} from '@/components/tailor/keyword-forcing-panel';
+import { TailorProgress } from '@/components/tailor/tailor-progress';
+import { WritingScoreCard } from '@/components/tailor/writing-score-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
 import { cn } from '@/lib/utils';
@@ -78,6 +89,19 @@ export default function TailorPage() {
   const [atsResult, setAtsResult] = useState<ATSScore | null>(null);
   // Template the preview was fitted with; the ATS card warns on two-column layouts.
   const [atsTemplate, setAtsTemplate] = useState<TemplateType | undefined>(undefined);
+  // ATS score before the last keyword apply; the card shows it as "was".
+  const [atsPrevious, setAtsPrevious] = useState<number | undefined>(undefined);
+  // Writing critique of the last preview, and the resume its paths point into.
+  const [writingResult, setWritingResult] = useState<WritingReport | null>(null);
+  const [writingResume, setWritingResume] = useState<ResumeData | null>(null);
+  // Live stage of the running preview (null until the first update).
+  const [progressStage, setProgressStage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  // Keywords forced into the pending preview, and the confirmed ones to add to the master.
+  const [forcedKeywords, setForcedKeywords] = useState<string[]>([]);
+  const [masterSkillsToAdd, setMasterSkillsToAdd] = useState<string[]>([]);
+  const [keywordBusy, setKeywordBusy] = useState(false);
+  const [keywordError, setKeywordError] = useState<string | null>(null);
   const [diffConfirmError, setDiffConfirmError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
@@ -226,7 +250,17 @@ export default function TailorPage() {
           suggestion: item.suggestion,
           lineNumber: typeof item.lineNumber === 'number' ? item.lineNumber : null,
         })) ?? [],
+      forced_keywords: forcedKeywords,
+      master_skills_to_add: masterSkillsToAdd,
     };
+  };
+
+  const resetKeywordState = () => {
+    setForcedKeywords([]);
+    setMasterSkillsToAdd([]);
+    setAtsPrevious(undefined);
+    setKeywordError(null);
+    setKeywordBusy(false);
   };
 
   const confirmAndNavigate = async (result: ImprovedResult, token: number) => {
@@ -280,6 +314,15 @@ export default function TailorPage() {
 
   const runGenerate = async (resumeId: string, description: string, token: number) => {
     setAtsResult(null);
+    setWritingResult(null);
+    setWritingResume(null);
+    resetKeywordState();
+    setProgressStage(null);
+    setIsGenerating(true);
+    const progressId = newProgressId();
+    const stopProgress = subscribeToProgress(progressId, (stage) => {
+      if (isCurrent(token)) setProgressStage(stage);
+    });
     try {
       // 1. Upload Job Description
       // The API expects an array of strings
@@ -293,12 +336,10 @@ export default function TailorPage() {
       const templateSettings =
         masters.find((m) => m.resume_id === resumeId)?.template_settings ??
         DEFAULT_TEMPLATE_SETTINGS;
-      const result = await previewImproveResume(
-        resumeId,
-        jobId,
-        selectedPromptId,
-        buildPreviewLengthOptions(tailorLength, toPageFitSettings(templateSettings, locale))
-      );
+      const result = await previewImproveResume(resumeId, jobId, selectedPromptId, {
+        ...buildPreviewLengthOptions(tailorLength, toPageFitSettings(templateSettings, locale)),
+        progressId,
+      });
       if (!isCurrent(token)) return;
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
@@ -318,11 +359,73 @@ export default function TailorPage() {
       setPendingResult(result);
       setAtsResult(result.data.ats_score ?? null);
       setAtsTemplate(templateSettings.template);
+      setWritingResult(result.data.writing ?? null);
+      setWritingResume((result.data.resume_preview as ResumeData) ?? null);
       setShowDiffModal(true);
     } catch (err) {
       if (!isCurrent(token)) return;
       console.error(err);
       setError(getPreviewErrorMessage(err, t));
+    } finally {
+      stopProgress();
+      if (isCurrent(token)) setIsGenerating(false);
+    }
+  };
+
+  // Work chosen keywords into the pending preview; the result replaces it.
+  const handleApplyKeywords = async (keywords: ForcedKeywordInput[], addToMaster: boolean) => {
+    const current = pendingResult;
+    const sourceId = previewSourceIdRef.current;
+    if (!current?.data.preview_id || !sourceId || keywordBusy || confirmationBusy.current) return;
+    const token = begin();
+    if (token === null) return;
+    setKeywordBusy(true);
+    setKeywordError(null);
+    try {
+      const next = await applyKeywords({
+        resume_id: sourceId,
+        job_id: current.data.job_id,
+        preview_id: current.data.preview_id,
+        improved_data: current.data.resume_preview as ResumeData,
+        keywords,
+        prompt_id: selectedPromptId,
+      });
+      if (!isCurrent(token)) return;
+      const placed = next.data.forced_keywords ?? [];
+      const attested = new Set(keywords.filter((k) => k.attested).map((k) => k.keyword));
+      setForcedKeywords((prev) => [...new Set([...prev, ...placed])]);
+      if (addToMaster) {
+        setMasterSkillsToAdd((prev) => [
+          ...new Set([...prev, ...placed.filter((k) => attested.has(k))]),
+        ]);
+      }
+      setAtsPrevious(atsResult?.overall_score);
+      setAtsResult(next.data.ats_score ?? null);
+      if (next.data.writing) {
+        setWritingResult({
+          ...next.data.writing,
+          critic_notes: writingResult?.critic_notes ?? [],
+          rewritten_paths: writingResult?.rewritten_paths ?? [],
+          rejected_rewrites: writingResult?.rejected_rewrites ?? 0,
+        });
+      }
+      setWritingResume((next.data.resume_preview as ResumeData) ?? null);
+      // Earlier applications stay listed: their keywords are still in the resume.
+      const latest = next.data.keyword_placements ?? [];
+      const earlier = (current.data.keyword_placements ?? []).filter(
+        (p) => !latest.some((n) => n.keyword === p.keyword)
+      );
+      setPendingResult({
+        ...next,
+        data: { ...next.data, keyword_placements: [...earlier, ...latest] },
+      });
+    } catch (err) {
+      if (!isCurrent(token)) return;
+      console.error(err);
+      if (offerFreshPreview(err)) return;
+      setKeywordError(t('tailor.forceKeywords.error'));
+    } finally {
+      if (isCurrent(token)) setKeywordBusy(false);
     }
   };
 
@@ -352,7 +455,7 @@ export default function TailorPage() {
 
   // User confirms changes
   const handleConfirmChanges = async () => {
-    if (!pendingResult || confirmationBusy.current) return;
+    if (!pendingResult || confirmationBusy.current || keywordBusy) return;
     const token = begin();
     if (token === null) return;
     confirmationBusy.current = true;
@@ -385,6 +488,7 @@ export default function TailorPage() {
   const handleRejectChanges = () => {
     if (confirmationBusy.current) return;
     invalidate();
+    resetKeywordState();
     confirmationBusy.current = false;
     setIsConfirming(false);
     setShowDiffModal(false);
@@ -396,6 +500,7 @@ export default function TailorPage() {
   const handleCloseDiffModal = () => {
     if (confirmationBusy.current) return;
     invalidate();
+    resetKeywordState();
     confirmationBusy.current = false;
     setIsConfirming(false);
     setShowDiffModal(false);
@@ -463,6 +568,13 @@ export default function TailorPage() {
       }
     }
   };
+
+  // Missing keywords the pending preview still lacks (forced ones drop off the chips).
+  const previewText = pendingResult?.data?.resume_preview
+    ? resumeKeywordText(pendingResult.data.resume_preview as ResumeData)
+    : '';
+  const unplacedKeywords = (keywords: string[]) =>
+    keywords.filter((k) => !forcedKeywords.includes(k) && !keywordInText(k, previewText));
 
   return (
     <PageFrame
@@ -579,6 +691,11 @@ export default function TailorPage() {
                         label: t('tailor.promptOptions.full.label'),
                         description: t('tailor.promptOptions.full.description'),
                       },
+                      {
+                        id: 'heavy',
+                        label: t('tailor.promptOptions.heavy.label'),
+                        description: t('tailor.promptOptions.heavy.description'),
+                      },
                     ]
               }
               value={selectedPromptId}
@@ -591,6 +708,10 @@ export default function TailorPage() {
               disabled={isLoading || promptLoading}
             />
           </div>
+
+          <FadePresence show={selectedPromptId === 'heavy'}>
+            <Alert tone="warning">{t('tailor.heavyWarning')}</Alert>
+          </FadePresence>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Dropdown
@@ -683,8 +804,22 @@ export default function TailorPage() {
             )}
           </Button>
 
+          {isGenerating && (
+            <TailorProgress
+              stage={progressStage}
+              elapsed={elapsed}
+              withSelection={
+                tailorLength.maxPages != null || tailorLength.maxBulletsPerEntry != null
+              }
+              withRewrite={selectedPromptId !== 'nudge'}
+            />
+          )}
+
           {/* ATS Score Breakdown: the last preview's score, kept after the diff modal closes */}
-          {atsResult && <ATSScoreCard atsScore={atsResult} template={atsTemplate} />}
+          {atsResult && (
+            <ATSScoreCard atsScore={atsResult} template={atsTemplate} previousScore={atsPrevious} />
+          )}
+          {writingResult && <WritingScoreCard writing={writingResult} resume={writingResume} />}
         </div>
       </div>
 
@@ -707,6 +842,27 @@ export default function TailorPage() {
           detailedChanges={pendingResult?.data?.detailed_changes}
           errorMessage={diffConfirmError ?? undefined}
           selectionSummary={pendingResult?.data?.bullet_selection}
+          heavyMode={selectedPromptId === 'heavy'}
+          actionsDisabled={keywordBusy}
+          placements={pendingResult?.data?.keyword_placements}
+          scoreChange={
+            atsPrevious != null && atsResult
+              ? { before: atsPrevious, after: atsResult.overall_score }
+              : null
+          }
+          resume={pendingResult?.data?.resume_preview as ResumeData | undefined}
+          keywordPanel={
+            atsResult && pendingResult?.data?.preview_id ? (
+              <KeywordForcingPanel
+                unsupported={unplacedKeywords(atsResult.missing_keywords)}
+                supported={unplacedKeywords(atsResult.injectable_keywords)}
+                onApply={(keywords, addToMaster) => void handleApplyKeywords(keywords, addToMaster)}
+                busy={keywordBusy}
+                error={keywordError}
+                remaining={Math.max(0, MAX_FORCED_KEYWORDS - forcedKeywords.length)}
+              />
+            ) : null
+          }
         />
       )}
 

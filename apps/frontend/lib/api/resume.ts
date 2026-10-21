@@ -170,6 +170,10 @@ interface ImproveResumeConfirmRequest {
     suggestion: string;
     lineNumber?: number | null;
   }>;
+  /** Keywords the user forced into this preview (stored; they lead interview prep). */
+  forced_keywords?: string[];
+  /** Confirmed keywords to add to the master resume's skills. */
+  master_skills_to_add?: string[];
 }
 
 function normalizeResumeId(resumeId: string): string {
@@ -255,18 +259,49 @@ export async function previewImproveResume(
   resumeId: string,
   jobId: string,
   promptId?: string,
-  options?: { maxBulletsPerEntry?: number; pageFit?: PageFitSettings; maxPages?: number }
+  options?: {
+    maxBulletsPerEntry?: number;
+    pageFit?: PageFitSettings;
+    maxPages?: number;
+    /** Id to follow the live stages with subscribeToProgress. */
+    progressId?: string;
+  }
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
     job_id: jobId,
     prompt_id: promptId ?? null,
+    ...(options?.progressId ? { progress_id: options.progressId } : {}),
     ...(options?.maxBulletsPerEntry !== undefined
       ? { max_bullets_per_entry: options.maxBulletsPerEntry }
       : {}),
     ...(options?.pageFit !== undefined ? { page_fit: options.pageFit } : {}),
     ...(options?.maxPages !== undefined ? { max_pages: options.maxPages } : {}),
   });
+}
+
+/** A job keyword to work into a preview; `attested` = the user confirmed "I have this". */
+export interface ForcedKeywordInput {
+  keyword: string;
+  attested: boolean;
+}
+
+/**
+ * Works chosen job keywords into a preview. The result is a new preview (new
+ * preview_id) to review and confirm; nothing is saved yet.
+ */
+export async function applyKeywords(payload: {
+  resume_id: string;
+  job_id: string;
+  preview_id: string;
+  improved_data: ResumeData;
+  keywords: ForcedKeywordInput[];
+  prompt_id?: string;
+}): Promise<ImprovedResult> {
+  return postImprove(
+    '/resumes/improve/apply-keywords',
+    payload as unknown as Record<string, unknown>
+  );
 }
 
 /** Confirms and saves a tailored resume */
@@ -583,6 +618,8 @@ export interface ResumeJobDescription {
   /** Terms the ATS score's keyword match counts; null when the job has no valid saved keywords. */
   keywords: string[] | null;
   company: string | null;
+  /** Keywords the user forced in; JD Match highlights them apart. */
+  forced_keywords?: string[];
 }
 
 /** Fetches the job description used to tailor a resume */

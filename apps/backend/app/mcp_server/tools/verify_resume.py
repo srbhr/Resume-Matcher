@@ -3,6 +3,7 @@ from typing import Annotated, Any
 
 from pydantic import Field
 
+from app.config_cache import get_content_language
 from app.database import db
 from app.mcp_server.tools._shared import (
     keyword_score,
@@ -18,6 +19,7 @@ from app.schemas.models import PageFitSettings
 from app.services import ats_parse
 from app.services.ats_parse.models import ParseCheckReport
 from app.services.page_fit import count_pdf_pages, page_limit
+from app.services.writing_quality import writing_report
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,7 @@ def _issues(
     max_pages: int | None,
     score: dict[str, Any] | None,
     no_job_keywords: bool,
+    weak_writing: bool = False,
 ) -> list[str]:
     issues: list[str] = []
     if report is None:
@@ -57,6 +60,8 @@ def _issues(
         issues.append("injectable_keywords")
     if no_job_keywords:
         issues.append("no_job_keywords")
+    if weak_writing:
+        issues.append("weak_writing")
     return issues
 
 
@@ -89,6 +94,9 @@ async def verify(
         "page_count": None,
         "max_pages": max_pages,
         "score": score,
+        "writing": writing_report(data, get_content_language()).model_dump(
+            include={"score", "findings"}
+        ),
         "parse_check": None,
     }
     report = None
@@ -107,6 +115,9 @@ async def verify(
         max_pages,
         score,
         no_job_keywords=job_id is not None and not job_keywords,
+        weak_writing=any(
+            f["severity"] == "hard" for f in result["writing"]["findings"]
+        ),
     )
     return result
 
@@ -125,7 +136,9 @@ async def verify_resume(
     text_layer (the PDF has too little extractable text), multi_column, garbled_glyphs,
     low_order_fidelity, fields_missing, roundtrip_truncated, injectable_keywords,
     no_job_keywords (the job has no keywords, so there is no score: call set_job_keywords),
-    render_failed.
+    weak_writing (a line has an em dash or a weak opener: see writing.findings, each with
+    the path to fix), render_failed. writing.score (0 to 100) comes from the same code rules
+    as the app's Writing score.
     """
     resume = await require_resume(resume_id)
     return await verify(resume, job_id, print_settings or PageFitSettings(), max_pages)

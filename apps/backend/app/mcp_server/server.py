@@ -35,7 +35,9 @@ employers, dates and entry counts; never invent metrics or skills.
 validates, saves, renders once, parse-checks and scores. If saved is false, fix \
 the violations and call it again.
 5. For each code in issues, edit with update_resume, then verify_resume. On \
-multi_column or low_order_fidelity, suggest a single-column template. PDF \
+multi_column or low_order_fidelity, suggest a single-column template. On \
+weak_writing, rewrite the lines in writing.findings (no em dashes, no weak \
+openers, every fact of the line kept, nothing added). PDF \
 rendering needs the web frontend running. recalculate_ats_score refreshes the \
 score the builder shows after edits.
 6. export_resume_pdf to write the final file.

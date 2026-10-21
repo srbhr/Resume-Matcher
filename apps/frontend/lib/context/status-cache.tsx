@@ -259,6 +259,11 @@ export function useStatusCache() {
   return context;
 }
 
+/** The status cache, or null outside a StatusCacheProvider (for optional UI hints). */
+export function useOptionalStatusCache() {
+  return useContext(StatusCacheContext);
+}
+
 /**
  * Hook to check if status data is stale (older than threshold)
  */

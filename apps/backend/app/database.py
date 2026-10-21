@@ -291,6 +291,7 @@ class Database:
             "job_id": row.job_id,
             "improvements": row.improvements,
             "ats_score": row.ats_score,
+            "forced_keywords": list(row.forced_keywords or []),
             "created_at": row.created_at,
         }
 
@@ -854,6 +855,25 @@ class Database:
             await session.commit()
         return {"preview_id": row.preview_id, "expires_at": row.expires_at}
 
+    async def get_preview(self, preview_id: str) -> dict[str, Any] | None:
+        """Read a registered preview without claiming it."""
+        async with self._session() as session:
+            row = await session.get(TailoringPreview, preview_id)
+            if row is None:
+                return None
+            return {
+                "preview_id": row.preview_id,
+                "source_id": row.source_id,
+                "job_id": row.job_id,
+                "payload_hash": row.payload_hash,
+                "source_hash": row.source_hash,
+                "job_hash": row.job_hash,
+                "expires_at": row.expires_at,
+                "improvements": copy.deepcopy(row.improvements or []),
+                "source_data": copy.deepcopy(row.source_data),
+                "result_resume_id": row.result_resume_id,
+            }
+
     async def claim_preview(
         self,
         *,
@@ -950,6 +970,7 @@ class Database:
         response_data: dict[str, Any],
         improvements: list[dict[str, Any]],
         ats_score: dict[str, Any] | None = None,
+        forced_keywords: list[str] | None = None,
     ) -> dict[str, Any]:
         """Commit resume, required relation and replay snapshot atomically."""
         async with self._write_session() as session:
@@ -983,6 +1004,7 @@ class Database:
                     job_id=preview.job_id,
                     improvements=improvements,
                     ats_score=copy.deepcopy(ats_score),
+                    forced_keywords=list(forced_keywords or []) or None,
                     created_at=now,
                 )
             )
@@ -1056,6 +1078,39 @@ class Database:
             "improvements": improvements,
             "created_at": now,
         }
+
+    async def add_resume_skills(self, resume_id: str, skills: list[str]) -> list[str]:
+        """Append skills a resume lacks, reading and writing in one transaction.
+
+        Concurrent confirmations and editor saves cannot overwrite each other's
+        additions. Returns the skills actually added.
+        """
+        async with self._write_session() as session:
+            row = await session.get(Resume, resume_id)
+            if row is None:
+                raise ResumeNotFoundError(resume_id)
+            data = copy.deepcopy(row.processed_data or {})
+            if not data:
+                return []
+            additional = data.get("additional")
+            if not isinstance(additional, dict):
+                additional = {}
+                data["additional"] = additional
+            current = additional.get("technicalSkills")
+            current = (
+                [s for s in current if isinstance(s, str)]
+                if isinstance(current, list)
+                else []
+            )
+            known = {s.casefold() for s in current}
+            added = [s for s in dict.fromkeys(skills) if s.casefold() not in known]
+            if not added:
+                return []
+            additional["technicalSkills"] = current + added
+            row.processed_data = data
+            row.updated_at = _now()
+            await session.commit()
+            return added
 
     async def get_improvement_by_job(self, job_id: str) -> dict[str, Any] | None:
         """Get the latest improvement record tailored against a job, if any."""

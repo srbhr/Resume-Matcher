@@ -242,7 +242,8 @@
       "outreach": "連絡メール",
       "jdMatch": "JD一致",
       "interviewPrep": "面接準備",
-      "atsCheck": "ATSチェック"
+      "atsCheck": "ATSチェック",
+      "writing": "文章"
     },
     "pageSize": {
       "usLetter": "USレター"
@@ -356,7 +357,9 @@
         "recalculating": "計算中…",
         "saveFirst": "変更を保存してから再計算してください。",
         "recalculateFailed": "ATSスコアを計算できませんでした。スコアが保存される前にカスタマイズした履歴書の場合は、「履歴書をカスタマイズ」ページでもう一度カスタマイズしてください。"
-      }
+      },
+      "forcedColor": "青",
+      "forcedLegend": "はあなたが自分で追加したキーワードです。説明できるよう準備してください。"
     },
     "genericItemForm": {
       "itemLabel": "項目",
@@ -544,7 +547,8 @@
       "outreachEditor": "連絡メール編集",
       "jdMatchAnalysis": "JD一致分析",
       "interviewPrep": "面接準備",
-      "atsCheck": "ATS読み取りチェック"
+      "atsCheck": "ATS読み取りチェック",
+      "writing": "文章"
     },
     "alerts": {
       "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
@@ -692,6 +696,21 @@
           "warn": "認識できる日付が見つかりません。"
         }
       }
+    },
+    "writing": {
+      "aboutTitle": "文章スコア",
+      "aboutDescription": "固定ルールがすべての箇条書きと要約を確認します：エムダッシュ、「〜を担当」のような弱い書き出し、一人称、決まり文句、長い行、数値の不足。文章を改善は、事実を追加も削除もせずに弱い行を書き直します。",
+      "improve": "文章を改善",
+      "improving": "改善中",
+      "needsProvider": "文章を改善を使うには、設定でAIプロバイダーを設定してください。",
+      "error": "文章を改善できませんでした。もう一度お試しください。",
+      "changedMeanwhile": "書き直しの間に履歴書が変更されました。もう一度文章を改善を実行してください。",
+      "reviewTitle": "提案された変更",
+      "noChanges": "変更はありません。すべての行がルールを満たしているか、書き直すと事実が変わってしまいます。",
+      "applyNote": "適用した変更はエディターに入り、通常の編集と同じように保存されます。",
+      "discard": "破棄",
+      "applyChanges": "変更を適用",
+      "checkError": "文章を採点できませんでした。"
     }
   },
   "enrichment": {
@@ -765,6 +784,10 @@
       "full": {
         "label": "完全に調整",
         "description": "求人情報を使って全面的に調整。"
+      },
+      "heavy": {
+        "label": "大幅な書き直し",
+        "description": "すべての箇条書きと要約を書き直します。変更が大きいほど事実と異なる内容が入る可能性が高くなるため、すべての行を確認してください。"
       }
     },
     "length": {
@@ -816,7 +839,8 @@
       "languageChanges": "言語の変更",
       "awardChanges": "賞の変更",
       "rejectButton": "拒否して再生成",
-      "confirmButton": "確認して保存"
+      "confirmButton": "確認して保存",
+      "heavyTag": "大幅な書き直し"
     },
     "atsScore": {
       "title": "ATSスコアの内訳",
@@ -828,7 +852,8 @@
       "missingKeywords": "不足しているキーワード",
       "injectableKeywords": "追加可能（マスター履歴書に記載あり）",
       "recommendations": "推奨事項",
-      "twoColumnWarning": "2カラムのレイアウト：多くのATSは列を正しい順序で読み取れません。応募前にビルダーで1カラムのテンプレートに切り替えてください。"
+      "twoColumnWarning": "2カラムのレイアウト：多くのATSは列を正しい順序で読み取れません。応募前にビルダーで1カラムのテンプレートに切り替えてください。",
+      "was": "変更前 {score}"
     },
     "regenerateDialog": {
       "title": "カスタマイズ済み履歴書を再生成しますか？",
@@ -868,6 +893,73 @@
       "unavailable": "ページ調整は利用できません",
       "finalOver": "書き換え後にページ数の上限を超える可能性があります",
       "notRechecked": "書き換え後のページ数上限への収まりは再確認されていません"
+    },
+    "heavyWarning": "大幅な書き直しは変更が大きいため、実際には行っていないことを書いてしまう可能性が高くなります。保存する前にすべての行を確認してください。",
+    "progress": {
+      "title": "履歴書を作成中",
+      "elapsed": "{seconds}秒",
+      "slow": "処理を続けています。モデルによっては1〜2分かかります。この一覧は自動で更新されます。",
+      "steps": {
+        "keywords": "求人を読む",
+        "select": "強い箇条書きを選ぶ",
+        "plan": "示すスキルを計画する",
+        "tailor": "履歴書を調整する",
+        "refine": "キーワードを反映し事実を確認する",
+        "critique": "文章を評価する",
+        "rewrite": "弱い行を書き直す",
+        "verify": "確認してレビューを準備する"
+      },
+      "state": {
+        "done": "完了",
+        "current": "進行中",
+        "pending": "待機中"
+      }
+    },
+    "writingScore": {
+      "title": "文章",
+      "scoreNote": "固定ルールで採点するため、どのAIプロバイダーでも同じ点数になります。",
+      "beforeAfter": "変更前 {before}",
+      "rewritten": "{count}行を書き直しました",
+      "rejected": "事実が変わるため{count}件の書き直しを取り消しました",
+      "noFindings": "文章の問題は見つかりませんでした。",
+      "findingsTitle": "確認する行",
+      "notesTitle": "レビュアーのメモ",
+      "severity": {
+        "hard": "修正",
+        "soft": "検討"
+      },
+      "rules": {
+        "em_dash": "エムダッシュ",
+        "weak_opener": "弱い書き出し",
+        "no_outcome": "成果がない",
+        "first_person": "一人称",
+        "ai_phrase": "決まり文句",
+        "repeated_opener": "同じ書き出し",
+        "long_bullet": "長い行",
+        "no_metric": "数値なし"
+      }
+    },
+    "forceKeywords": {
+      "title": "不足しているキーワードを追加",
+      "description": "履歴書に反映する求人のキーワードを選んでください。それぞれスキル欄に入り、合う行があれば最大2行に入ります。",
+      "supported": "マスター履歴書にあるもの",
+      "unsupported": "マスター履歴書にないもの",
+      "apply": "反映",
+      "haveThis": "持っている",
+      "attestNote": "「持っている」は本当に持っているスキルだけに選んでください。面接で質問される可能性があります。",
+      "addToMaster": "確認したスキルをマスター履歴書にも追加する",
+      "applyButton": "{count}個のキーワードを反映",
+      "applying": "キーワードを反映中",
+      "placementsTitle": "キーワードの反映先",
+      "where": {
+        "summary": "要約",
+        "skills": "スキル",
+        "bullet": "{entry}、{line}行目"
+      },
+      "nowhere": "反映できませんでした",
+      "error": "キーワードを反映できませんでした。もう一度お試しください。",
+      "scoreChange": "ATSスコア {before} → {after}",
+      "limitReached": "1つの履歴書に追加できるキーワードは最大{max}個です。"
     }
   },
   "settings": {
@@ -1521,6 +1613,10 @@
       "title": "面接の準備",
       "prompt": "Resume Matcher を使って、履歴書 {resumeId} と、それが最適化された求人を読み、面接の準備を手伝ってください：想定される質問、話すべきエピソード、こちらから聞く質問。",
       "note": "エージェントは自身のチャットで回答します。エージェントモードでは、面接準備の内容は履歴書に保存されません。"
+    },
+    "improveWriting": {
+      "title": "文章を改善",
+      "prompt": "Resume Matcher を使って履歴書 {resumeId} の文章を改善してください：文章ラウンドを2回行い（各行を基準で評価し、事実をすべて残したまま弱い行を書き直し、確認する）、保存してください。"
     }
   }
 }

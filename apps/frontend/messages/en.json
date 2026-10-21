@@ -242,7 +242,8 @@
       "outreach": "OUTREACH MAIL",
       "jdMatch": "JD MATCH",
       "interviewPrep": "INTERVIEW PREP",
-      "atsCheck": "ATS CHECK"
+      "atsCheck": "ATS CHECK",
+      "writing": "Writing"
     },
     "pageSize": {
       "usLetter": "US Letter"
@@ -356,7 +357,9 @@
         "recalculating": "Calculating…",
         "saveFirst": "Save your changes, then recalculate.",
         "recalculateFailed": "Couldn't calculate an ATS score. If this resume was tailored before scores were saved, tailor it again from the Tailor Resume page."
-      }
+      },
+      "forcedColor": "Blue",
+      "forcedLegend": "marks keywords you added yourself. Be ready to talk about them."
     },
     "genericItemForm": {
       "itemLabel": "Item",
@@ -544,7 +547,8 @@
       "outreachEditor": "Outreach Message Editor",
       "jdMatchAnalysis": "JD Match Analysis",
       "interviewPrep": "Interview Prep",
-      "atsCheck": "ATS Parse Check"
+      "atsCheck": "ATS Parse Check",
+      "writing": "Writing"
     },
     "alerts": {
       "saveNotAvailable": "Save is only available when editing an existing resume.",
@@ -692,6 +696,21 @@
           "warn": "No recognizable dates found."
         }
       }
+    },
+    "writing": {
+      "aboutTitle": "Writing score",
+      "aboutDescription": "Fixed rules check every bullet and the summary: em dashes, weak openers like \"Responsible for\", first person, stock phrases, long lines and missing numbers. Improve writing rewrites the weak lines without adding or dropping any fact.",
+      "improve": "Improve writing",
+      "improving": "Improving",
+      "needsProvider": "Set up an AI provider in Settings to use Improve writing.",
+      "error": "Could not improve the writing. Please try again.",
+      "changedMeanwhile": "The resume changed while the rewrite ran. Run Improve writing again.",
+      "reviewTitle": "Proposed changes",
+      "noChanges": "Nothing to change: every line already meets the rules, or a rewrite would have changed a fact.",
+      "applyNote": "Applied changes go into the editor and save like any edit.",
+      "discard": "Discard",
+      "applyChanges": "Apply changes",
+      "checkError": "Could not score the writing."
     }
   },
   "enrichment": {
@@ -765,6 +784,10 @@
       "full": {
         "label": "Full tailor",
         "description": "Comprehensive tailoring using the job description."
+      },
+      "heavy": {
+        "label": "Heavy rewrite",
+        "description": "Rewrites every bullet and the summary. Bigger edits carry a higher risk of hallucination, so review every line."
       }
     },
     "length": {
@@ -816,7 +839,8 @@
       "languageChanges": "Language Changes",
       "awardChanges": "Award Changes",
       "rejectButton": "Reject & Regenerate",
-      "confirmButton": "Confirm & Save"
+      "confirmButton": "Confirm & Save",
+      "heavyTag": "Heavy rewrite"
     },
     "atsScore": {
       "title": "ATS Score Breakdown",
@@ -828,7 +852,8 @@
       "missingKeywords": "Missing Keywords",
       "injectableKeywords": "Safe to Add (in your master resume)",
       "recommendations": "Recommendations",
-      "twoColumnWarning": "Two-column layout: many ATS parsers read columns out of order. Switch to a single-column template in the Builder before applying."
+      "twoColumnWarning": "Two-column layout: many ATS parsers read columns out of order. Switch to a single-column template in the Builder before applying.",
+      "was": "was {score}"
     },
     "regenerateDialog": {
       "title": "Regenerate tailored resume?",
@@ -868,6 +893,73 @@
       "unavailable": "Page fit unavailable",
       "finalOver": "May run over the page limit after rewriting",
       "notRechecked": "Page fit not re-checked after rewriting"
+    },
+    "heavyWarning": "Heavy rewrite makes bigger changes, so it is more likely to state something you did not do. Check every line before you save.",
+    "progress": {
+      "title": "Working on your resume",
+      "elapsed": "{seconds}s",
+      "slow": "Still working. Some models take a minute or two; this list updates by itself.",
+      "steps": {
+        "keywords": "Read the job",
+        "select": "Pick the strongest bullets",
+        "plan": "Plan the skills to show",
+        "tailor": "Tailor the resume",
+        "refine": "Work in keywords and check facts",
+        "critique": "Critique the writing",
+        "rewrite": "Rewrite weak lines",
+        "verify": "Verify and prepare the review"
+      },
+      "state": {
+        "done": "done",
+        "current": "in progress",
+        "pending": "waiting"
+      }
+    },
+    "writingScore": {
+      "title": "Writing",
+      "scoreNote": "Scored by fixed rules, so the number is the same with every AI provider.",
+      "beforeAfter": "was {before}",
+      "rewritten": "{count} lines rewritten",
+      "rejected": "{count} rewrites dropped because they changed a fact",
+      "noFindings": "No writing problems found.",
+      "findingsTitle": "Lines to look at",
+      "notesTitle": "Reviewer notes",
+      "severity": {
+        "hard": "Fix",
+        "soft": "Consider"
+      },
+      "rules": {
+        "em_dash": "Em dash",
+        "weak_opener": "Weak opener",
+        "no_outcome": "No outcome",
+        "first_person": "First person",
+        "ai_phrase": "Stock phrase",
+        "repeated_opener": "Repeated opener",
+        "long_bullet": "Long line",
+        "no_metric": "No number"
+      }
+    },
+    "forceKeywords": {
+      "title": "Add missing keywords",
+      "description": "Pick job keywords to work into this resume. Each one goes into your skills, plus at most two lines where it fits.",
+      "supported": "Your master resume shows these",
+      "unsupported": "Not in your master resume",
+      "apply": "Apply",
+      "haveThis": "I have this",
+      "attestNote": "Pick \"I have this\" only for skills you really have. Expect questions about them in the interview.",
+      "addToMaster": "Also add the skills I confirmed to my master resume",
+      "applyButton": "Apply {count} keywords",
+      "applying": "Applying keywords",
+      "placementsTitle": "Where your keywords went",
+      "where": {
+        "summary": "Summary",
+        "skills": "Skills",
+        "bullet": "{entry}, line {line}"
+      },
+      "nowhere": "Could not be placed",
+      "error": "Could not apply the keywords. Please try again.",
+      "scoreChange": "ATS score {before} → {after}",
+      "limitReached": "You can add up to {max} keywords to one resume."
     }
   },
   "settings": {
@@ -1521,6 +1613,10 @@
       "title": "Prepare for the interview",
       "prompt": "Use Resume Matcher to read resume {resumeId} and the job it was tailored to, then help me prepare for the interview: likely questions, the stories to tell and questions to ask them.",
       "note": "Your agent answers in its own chat. In agent mode, interview prep is not saved to the resume."
+    },
+    "improveWriting": {
+      "title": "Improve the writing",
+      "prompt": "Use Resume Matcher to improve the writing of resume {resumeId}: run two writing rounds (critique every line against the rubric, rewrite the weak ones keeping every fact, verify), then save."
     }
   }
 }
