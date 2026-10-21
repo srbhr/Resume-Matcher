@@ -1277,7 +1277,7 @@
     "copyToClipboard": "Copiar al Portapapeles",
     "editor": {
       "placeholder": "Tu carta de presentación aparecerá aquí después de adaptar tu currículum con la generación de carta activada...",
-      "tip": "CONSEJO: Una buena carta suele tener 300-400 palabras. Edita para personalizar."
+      "tip": "CONSEJO: La carta predeterminada cabe en una página, normalmente 200-300 palabras. Edita para personalizar."
     },
     "preview": {
       "defaultName": "Tu nombre",

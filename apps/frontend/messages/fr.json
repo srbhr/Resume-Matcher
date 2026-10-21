@@ -1278,7 +1278,7 @@
     "copied": "Copié !",
     "editor": {
       "placeholder": "Votre lettre de motivation apparaîtra ici après la personnalisation de votre CV avec la génération de lettre de motivation activée...",
-      "tip": "CONSEIL : Une bonne lettre de motivation fait généralement 300 à 400 mots. Modifiez-la selon vos besoins."
+      "tip": "CONSEIL : La lettre par défaut tient sur une page, en général 200 à 300 mots. Modifiez-la selon vos besoins."
     },
     "preview": {
       "defaultName": "Votre nom",
