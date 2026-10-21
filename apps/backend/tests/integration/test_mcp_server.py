@@ -881,6 +881,30 @@ async def test_verify_resume_flags_page_limit_and_writes_nothing(
     assert not (settings.data_dir / "exports").exists()
 
 
+async def test_verify_resume_reports_weak_writing_with_paths(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        shared_module, "render_resume_pdf", AsyncMock(return_value=_pdf(1))
+    )
+    resume = john_doe()
+    resume["workExperience"][0]["description"][0] = "Responsible for the build — CI"
+    async with connect() as mcp:
+        master = await _master(mcp, resume)
+        result = await call(mcp, "verify_resume", {"resume_id": master["resume_id"]})
+    assert "weak_writing" in result["issues"]
+    hard = {
+        (f["path"], f["rule"])
+        for f in result["writing"]["findings"]
+        if f["severity"] == "hard"
+    }
+    assert hard == {
+        ("workExperience[0].description[0]", "weak_opener"),
+        ("workExperience[0].description[0]", "em_dash"),
+    }
+    assert 0 <= result["writing"]["score"] < 100
+
+
 async def test_verify_resume_in_cv_mode_reports_pages_without_a_limit(
     isolated_db: Database, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -173,11 +173,13 @@ async def run_writing_loop(
     heavy: bool = False,
     known_terms: list[str] | None = None,
     progress: dict[str, str] | None = None,
+    raise_errors: bool = False,
 ) -> WritingLoopResult:
     """Critique ``data`` and rewrite the lines with hard findings once.
 
-    Failures of the AI calls never fail the caller: the loop keeps the data it
-    had and reports what the code rules found.
+    By default a failed AI call never fails the caller: the loop keeps the
+    data it had and reports what the code rules found. ``raise_errors`` makes
+    the failure propagate instead (the standalone action reports it).
     """
     current = copy.deepcopy(data)
     findings = check_writing(current, language)
@@ -189,6 +191,8 @@ async def run_writing_loop(
     except (AIOperationDeadlineExceeded, PromptSizeError):
         raise
     except Exception as e:
+        if raise_errors:
+            raise
         logger.warning("Writing critique failed, using code rules only: %s", e)
 
     targets: list[tuple[str, str, list[str]]] = []
@@ -215,6 +219,8 @@ async def run_writing_loop(
         except (AIOperationDeadlineExceeded, PromptSizeError):
             raise
         except Exception as e:
+            if raise_errors:
+                raise
             logger.warning("Writing rewrite failed, keeping the critiqued text: %s", e)
             changes = []
         accepted: list[ResumeChange] = []

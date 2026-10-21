@@ -122,10 +122,30 @@ Job descriptions come pasted in chat, or as `.md`/`.txt` files in `jobs/` (ignor
    | `multi_column`, `low_order_fidelity` | Suggest a single-column template such as `swiss-single` |
    | `garbled_glyphs`, `fields_missing` | Check unusual characters and empty fields |
    | `no_job_keywords` | The job was added without keywords, so there is no score: extract them, call `set_job_keywords`, then `verify_resume` |
+   | `weak_writing` | A line has an em dash or a weak opener: `writing.findings` gives each path. Fix it in the writing rounds below |
    | `render_failed` | The web app is not running at the URL in `render_error`: start it |
 
    Edit with `update_resume resume_id=<id> resume_data:=@…` (it replaces the whole resume, so start from `get_resume`), then `recalculate_ats_score resume_id=<id>`.
-6. **Batch from `jobs/`:** after each job, move its file to `jobs/done/` so a rerun skips it.
+6. **Run two writing rounds.** The app's own tailoring critiques and rewrites once; you have no API cost, so do it twice. Each round:
+   1. Critique the summary and every bullet against the writing rubric below, together with the `writing.findings` that `verify_resume` returned.
+   2. Rewrite only the lines that break the rubric. Every number, name, tool and skill of the original line stays; add none. A line with no number gets its outcome or scope from what the line already says; if a real number would help, ask the user instead of guessing.
+   3. `update_resume`, then `verify_resume`. `writing.score` should rise and `weak_writing` should clear.
+7. **Batch from `jobs/`:** after each job, move its file to `jobs/done/` so a rerun skips it.
+
+### Writing rubric
+
+The app's critique prompt uses this exact text (a test keeps the two in sync).
+
+<!-- writing-rubric:start -->
+- Start every bullet with a strong action verb in the past tense (present tense for a current role). Never open with "Responsible for", "Helped with", "Assisted in", "Involved in", "Participated in", "Worked on" or "Tasked with".
+- Shape each bullet as Challenge, Action, Result: the situation, what the candidate did, and what changed because of it.
+- State the result. Keep every number in the source exactly. Never invent a number, percentage, amount, count or time saved, and never add size words ("significantly", "dramatically", "greatly") the source does not use.
+- When the source has no number, state the result through scope and outcome the source already gives: who used the work, what it replaced, what it made possible, how often it ran.
+- Keep every fact: each number, name, product, tool, skill and outcome in the original stays in the rewrite. Add none.
+- One idea per bullet, at most about 35 words. No first-person pronouns ("I", "my").
+- No em dashes ("—") or double hyphens ("--"). Use a comma, a semicolon or a new sentence.
+- Avoid stock phrases such as "spearheaded", "leveraged", "orchestrated", "utilized", "synergy", "cutting-edge" and "results-driven".
+<!-- writing-rubric:end -->
 
 ### Tailoring rules
 
@@ -159,6 +179,7 @@ The app's AI buttons hand these prompts to you:
 | Outreach message | Same, 70 to 100 words, opening with something specific from the job, then `set_outreach_message` |
 | Enhance a resume | Ask the user about missing results, numbers and tools; then `get_resume`, edit, `update_resume`. Add only what they told you |
 | Rewrite parts | Show the user the changes first, then `update_resume` |
+| Improve writing | Run the two writing rounds from step 6 on that resume, with no job: `get_resume`, critique, rewrite, `update_resume`, `verify_resume` |
 | Interview prep | Answer in the chat from `get_resume` and `get_resume_job`; the app does not store it in agent mode |
 | PDF file | `export_resume_pdf resume_id=<id>` writes `data/exports/<id>-<template>.pdf` (pass `output_path` for elsewhere), or use **Download** in the editor |
 | Tracker | `list_applications`, `update_application` |

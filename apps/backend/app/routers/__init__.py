@@ -10,6 +10,7 @@ from app.routers.health import router as health_router
 from app.routers.jobs import router as jobs_router
 from app.routers.resume_wizard import router as resume_wizard_router
 from app.routers.resumes import router as resumes_router
+from app.routers.writing import router as writing_router
 
 __all__ = [
     "resumes_router",
@@ -22,4 +23,5 @@ __all__ = [
     "ats_router",
     "chatgpt_router",
     "chatgpt_callback_router",
+    "writing_router",
 ]

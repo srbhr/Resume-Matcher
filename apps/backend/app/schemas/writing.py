@@ -32,7 +32,9 @@ class WritingCheckRequest(BaseModel):
 
 class WritingImproveRequest(BaseModel):
     resume_data: ResumeData
-    progress_id: str | None = Field(default=None, max_length=64)
+    progress_id: str | None = Field(
+        default=None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$"
+    )
 
 
 class WritingChange(BaseModel):
