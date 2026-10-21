@@ -90,3 +90,9 @@ Output this exact JSON:
 }}
 
 In "reason", put only the keyword the change places."""
+
+
+FORCED_KEYWORDS_PREP_NOTE = """
+
+Claimed keywords: the candidate added these job keywords to the resume themselves: {keywords}.
+Put each one first in "skill_gaps" (as "you listed this, be ready to back it up with a real example") and ask about each in "resume_questions". Do not treat them as proven by the rest of the resume."""

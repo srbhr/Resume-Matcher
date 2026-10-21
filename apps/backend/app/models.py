@@ -113,6 +113,8 @@ class Improvement(Base):
     improvements: Mapped[list] = mapped_column(JSON, default=list)
     # Last calculated ATS score against this job: {"score": {...}, "calculated_at": iso}.
     ats_score: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Keywords the user forced into this resume (they lead interview prep).
+    forced_keywords: Mapped[list | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
 
 

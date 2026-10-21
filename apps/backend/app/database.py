@@ -291,6 +291,7 @@ class Database:
             "job_id": row.job_id,
             "improvements": row.improvements,
             "ats_score": row.ats_score,
+            "forced_keywords": list(row.forced_keywords or []),
             "created_at": row.created_at,
         }
 
@@ -854,6 +855,23 @@ class Database:
             await session.commit()
         return {"preview_id": row.preview_id, "expires_at": row.expires_at}
 
+    async def get_preview(self, preview_id: str) -> dict[str, Any] | None:
+        """Read a registered preview without claiming it."""
+        async with self._session() as session:
+            row = await session.get(TailoringPreview, preview_id)
+            if row is None:
+                return None
+            return {
+                "preview_id": row.preview_id,
+                "source_id": row.source_id,
+                "job_id": row.job_id,
+                "payload_hash": row.payload_hash,
+                "expires_at": row.expires_at,
+                "improvements": copy.deepcopy(row.improvements or []),
+                "source_data": copy.deepcopy(row.source_data),
+                "result_resume_id": row.result_resume_id,
+            }
+
     async def claim_preview(
         self,
         *,
@@ -950,6 +968,7 @@ class Database:
         response_data: dict[str, Any],
         improvements: list[dict[str, Any]],
         ats_score: dict[str, Any] | None = None,
+        forced_keywords: list[str] | None = None,
     ) -> dict[str, Any]:
         """Commit resume, required relation and replay snapshot atomically."""
         async with self._write_session() as session:
@@ -983,6 +1002,7 @@ class Database:
                     job_id=preview.job_id,
                     improvements=improvements,
                     ats_score=copy.deepcopy(ats_score),
+                    forced_keywords=list(forced_keywords or []) or None,
                     created_at=now,
                 )
             )

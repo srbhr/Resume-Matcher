@@ -121,6 +121,7 @@ def _init_postgres(engine: Engine, schema: str | None) -> None:
             conn.exec_driver_sql(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
         Base.metadata.create_all(conn)
         _add_missing_column(conn, Improvement.__table__.c.ats_score, schema)
+        _add_missing_column(conn, Improvement.__table__.c.forced_keywords, schema)
         _add_missing_column(conn, Resume.__table__.c.template_settings, schema)
 
 
@@ -162,6 +163,7 @@ def init_models_sync(engine: Engine, schema: str | None = None) -> None:
             )
 
         _add_missing_column(conn, Improvement.__table__.c.ats_score)
+        _add_missing_column(conn, Improvement.__table__.c.forced_keywords)
         _add_missing_column(conn, Resume.__table__.c.template_settings)
 
         preview_columns = (

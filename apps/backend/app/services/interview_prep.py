@@ -10,6 +10,7 @@ from app.llm import (
     get_safe_max_tokens,
 )
 from app.prompts import INTERVIEW_PREP_PROMPT, get_language_name
+from app.prompts.writing import FORCED_KEYWORDS_PREP_NOTE
 from app.schemas import InterviewPrepData
 
 _JOB_DESCRIPTION_PROMPT_CHAR_LIMIT = 12_000
@@ -101,8 +102,14 @@ async def generate_interview_prep(
     resume_data: dict[str, Any],
     job_description: str,
     language: str = "en",
+    *,
+    forced_keywords: list[str] | None = None,
 ) -> InterviewPrepData:
-    """Generate structured interview preparation for a tailored resume."""
+    """Generate structured interview preparation for a tailored resume.
+
+    ``forced_keywords`` are job keywords the user added to the resume
+    themselves; the prep puts them first so the user is ready to back them up.
+    """
     prompt = INTERVIEW_PREP_PROMPT.format(
         job_description=_truncate_text_for_prompt(
             job_description,
@@ -111,6 +118,10 @@ async def generate_interview_prep(
         resume_data=_serialize_resume_data_for_prompt(resume_data),
         output_language=get_language_name(language),
     )
+    if forced_keywords:
+        prompt += FORCED_KEYWORDS_PREP_NOTE.format(
+            keywords=", ".join(forced_keywords[:30])
+        )
     config = get_llm_config()
     max_tokens = get_safe_max_tokens(
         get_model_name(config),
