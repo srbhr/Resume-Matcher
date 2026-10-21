@@ -49,6 +49,7 @@ import {
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
 import { AtsCheckView } from './ats-check-view';
+import { WritingPanel } from './writing-panel';
 import { AtsScorePanel } from './ats-score-panel';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
@@ -80,7 +81,14 @@ import {
   type AttachmentDraftEnvelope,
 } from '@/lib/utils/attachment-draft-storage';
 
-type TabId = 'resume' | 'cover-letter' | 'outreach' | 'interview-prep' | 'jd-match' | 'ats-check';
+type TabId =
+  | 'resume'
+  | 'cover-letter'
+  | 'outreach'
+  | 'interview-prep'
+  | 'jd-match'
+  | 'ats-check'
+  | 'writing';
 type JobContextStatus = 'idle' | 'loading' | 'available' | 'missing';
 
 const TAB_IDS: TabId[] = [
@@ -90,6 +98,7 @@ const TAB_IDS: TabId[] = [
   'interview-prep',
   'jd-match',
   'ats-check',
+  'writing',
 ];
 const RESUME_AUTOSAVE_DEBOUNCE_MS = 2500;
 const FORMATTING_SAVE_DEBOUNCE_MS = 600;
@@ -363,6 +372,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   // The job's saved keywords (null when it has none) and company, for JD Match.
   const [jobKeywords, setJobKeywords] = useState<string[] | null>(null);
   const [jobCompany, setJobCompany] = useState<string | null>(null);
+  const [jobForcedKeywords, setJobForcedKeywords] = useState<string[]>([]);
   const [jobContextStatus, setJobContextStatus] = useState<JobContextStatus>('idle');
 
   // AI Regenerate wizard
@@ -646,6 +656,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
             setJobDescription(data.content);
             setJobKeywords(data.keywords);
             setJobCompany(data.company);
+            setJobForcedKeywords(data.forced_keywords ?? []);
             setJobContextStatus('available');
           }
         } catch (err) {
@@ -1862,7 +1873,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                           ? t('builder.leftPanel.interviewPrep')
                           : activeTab === 'jd-match'
                             ? t('builder.leftPanel.jdMatchAnalysis')
-                            : t('builder.leftPanel.atsCheck')
+                            : activeTab === 'writing'
+                              ? t('builder.leftPanel.writing')
+                              : t('builder.leftPanel.atsCheck')
                 }
               />
 
@@ -1982,6 +1995,14 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                         );
                       })()}
                     </p>
+                    {jobForcedKeywords.length > 0 && (
+                      <p className="mt-2 text-sm text-ink-soft leading-relaxed">
+                        <mark className="bg-primary px-1 text-white">
+                          {t('builder.jdMatch.forcedColor')}
+                        </mark>{' '}
+                        {t('builder.jdMatch.forcedLegend')}
+                      </p>
+                    )}
                   </div>
 
                   <div className="border-2 border-ink bg-white p-4">
@@ -1995,6 +2016,19 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                     </ul>
                   </div>
                 </div>
+              )}
+
+              {/* Writing: score, Improve writing and its review */}
+              {activeTab === 'writing' && (
+                <WritingPanel
+                  resumeData={resumeData}
+                  onApply={(data) => {
+                    handleUpdate(data);
+                    setResumeFormKey((key) => key + 1);
+                  }}
+                  agentMode={agentMode}
+                  onAgentPrompt={() => setAgentTask('improveWriting')}
+                />
               )}
 
               {/* ATS Check Info Panel */}
@@ -2070,6 +2104,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                     label: t('builder.previewTabs.atsCheck'),
                     disabled: !resumeId,
                   },
+                  { id: 'writing', label: t('builder.previewTabs.writing') },
                 ]}
                 activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as TabId)}
@@ -2083,8 +2118,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
               aria-labelledby={`builder-tab-${activeTab}`}
               className="flex-1 overflow-y-auto"
             >
-              {/* Resume Preview */}
-              {activeTab === 'resume' && (
+              {/* Resume Preview (the Writing tab shows the resume it edits) */}
+              {(activeTab === 'resume' || activeTab === 'writing') && (
                 <PaginatedPreview
                   resumeData={localizedResumeDataForPreview}
                   settings={templateSettings}
@@ -2138,6 +2173,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                   resumeData={resumeData}
                   jobKeywords={jobKeywords}
                   company={jobCompany}
+                  forcedKeywords={jobForcedKeywords}
                 />
               )}
 

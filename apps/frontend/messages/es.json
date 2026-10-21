@@ -242,7 +242,8 @@
       "outreach": "MENSAJE",
       "jdMatch": "COINCIDENCIA JD",
       "interviewPrep": "PREPARACIÓN",
-      "atsCheck": "REVISIÓN ATS"
+      "atsCheck": "REVISIÓN ATS",
+      "writing": "Redacción"
     },
     "pageSize": {
       "usLetter": "Carta (EE. UU.)"
@@ -356,7 +357,9 @@
         "recalculating": "Calculando…",
         "saveFirst": "Guarda tus cambios y luego recalcula.",
         "recalculateFailed": "No se pudo calcular la puntuación ATS. Si este currículum se adaptó antes de que se guardaran las puntuaciones, vuelve a adaptarlo desde la página Personalizar CV."
-      }
+      },
+      "forcedColor": "Azul",
+      "forcedLegend": "marca las palabras clave que añadiste tú. Prepárate para hablar de ellas."
     },
     "genericItemForm": {
       "itemLabel": "Elemento",
@@ -544,7 +547,8 @@
       "outreachEditor": "Editor de mensaje",
       "jdMatchAnalysis": "Análisis de coincidencia JD",
       "interviewPrep": "Preparación de entrevista",
-      "atsCheck": "Revisión de lectura ATS"
+      "atsCheck": "Revisión de lectura ATS",
+      "writing": "Redacción"
     },
     "alerts": {
       "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
@@ -692,6 +696,21 @@
           "warn": "No se encontraron fechas reconocibles."
         }
       }
+    },
+    "writing": {
+      "aboutTitle": "Puntuación de redacción",
+      "aboutDescription": "Reglas fijas revisan cada viñeta y el resumen: rayas, inicios débiles como \"Responsable de\", primera persona, frases hechas, líneas largas y cifras ausentes. Mejorar redacción reescribe las líneas débiles sin añadir ni quitar ningún hecho.",
+      "improve": "Mejorar redacción",
+      "improving": "Mejorando",
+      "needsProvider": "Configura un proveedor de IA en Ajustes para usar Mejorar redacción.",
+      "error": "No se pudo mejorar la redacción. Inténtalo de nuevo.",
+      "changedMeanwhile": "El currículum cambió mientras se reescribía. Vuelve a ejecutar Mejorar redacción.",
+      "reviewTitle": "Cambios propuestos",
+      "noChanges": "Nada que cambiar: cada línea ya cumple las reglas, o una reescritura habría cambiado un hecho.",
+      "applyNote": "Los cambios aplicados van al editor y se guardan como cualquier edición.",
+      "discard": "Descartar",
+      "applyChanges": "Aplicar cambios",
+      "checkError": "No se pudo puntuar la redacción."
     }
   },
   "enrichment": {
@@ -765,6 +784,10 @@
       "full": {
         "label": "Ajuste completo",
         "description": "Ajuste integral usando la descripción del puesto."
+      },
+      "heavy": {
+        "label": "Reescritura profunda",
+        "description": "Reescribe cada viñeta y el resumen. Los cambios grandes aumentan el riesgo de alucinaciones, así que revisa cada línea."
       }
     },
     "length": {
@@ -816,7 +839,8 @@
       "languageChanges": "Cambios en idiomas",
       "awardChanges": "Cambios en premios",
       "rejectButton": "Rechazar y regenerar",
-      "confirmButton": "Confirmar y guardar"
+      "confirmButton": "Confirmar y guardar",
+      "heavyTag": "Reescritura profunda"
     },
     "atsScore": {
       "title": "Desglose de puntuación ATS",
@@ -828,7 +852,8 @@
       "missingKeywords": "Palabras clave faltantes",
       "injectableKeywords": "Seguras de añadir (en tu currículum maestro)",
       "recommendations": "Recomendaciones",
-      "twoColumnWarning": "Diseño a dos columnas: muchos ATS leen las columnas fuera de orden. Cambia a una plantilla de una columna en el editor antes de postular."
+      "twoColumnWarning": "Diseño a dos columnas: muchos ATS leen las columnas fuera de orden. Cambia a una plantilla de una columna en el editor antes de postular.",
+      "was": "antes {score}"
     },
     "regenerateDialog": {
       "title": "¿Regenerar el currículum personalizado?",
@@ -868,6 +893,71 @@
       "unavailable": "Ajuste de página no disponible",
       "finalOver": "Podría superar el límite de páginas tras la reescritura",
       "notRechecked": "Ajuste al límite de páginas no verificado tras la reescritura"
+    },
+    "heavyWarning": "La reescritura profunda hace cambios más grandes, así que es más probable que afirme algo que no hiciste. Revisa cada línea antes de guardar.",
+    "progress": {
+      "title": "Trabajando en tu currículum",
+      "elapsed": "{seconds} s",
+      "slow": "Sigue en marcha. Algunos modelos tardan uno o dos minutos; esta lista se actualiza sola.",
+      "steps": {
+        "keywords": "Leer la oferta",
+        "select": "Elegir las viñetas más fuertes",
+        "plan": "Planificar las habilidades",
+        "tailor": "Adaptar el currículum",
+        "refine": "Incorporar palabras clave y verificar hechos",
+        "critique": "Revisar la redacción",
+        "rewrite": "Reescribir líneas débiles",
+        "verify": "Verificar y preparar la revisión"
+      },
+      "state": {
+        "done": "hecho",
+        "current": "en curso",
+        "pending": "en espera"
+      }
+    },
+    "writingScore": {
+      "title": "Redacción",
+      "scoreNote": "Puntuado con reglas fijas, así que la cifra es la misma con cualquier proveedor de IA.",
+      "beforeAfter": "antes {before}",
+      "rewritten": "{count} líneas reescritas",
+      "rejected": "{count} reescrituras descartadas porque cambiaban un hecho",
+      "noFindings": "No se encontraron problemas de redacción.",
+      "findingsTitle": "Líneas a revisar",
+      "notesTitle": "Notas del revisor",
+      "severity": {
+        "hard": "Corregir",
+        "soft": "Considerar"
+      },
+      "rules": {
+        "em_dash": "Raya",
+        "weak_opener": "Inicio débil",
+        "no_outcome": "Sin resultado",
+        "first_person": "Primera persona",
+        "ai_phrase": "Frase hecha",
+        "repeated_opener": "Inicio repetido",
+        "long_bullet": "Línea larga",
+        "no_metric": "Sin cifra"
+      }
+    },
+    "forceKeywords": {
+      "title": "Añadir palabras clave que faltan",
+      "description": "Elige palabras clave de la oferta para incorporarlas. Cada una va a tus habilidades y, como mucho, a dos líneas donde encaje.",
+      "supported": "Tu currículum maestro las muestra",
+      "unsupported": "No están en tu currículum maestro",
+      "apply": "Aplicar",
+      "haveThis": "La tengo",
+      "attestNote": "Elige \"La tengo\" solo para habilidades que de verdad tienes. Espera preguntas sobre ellas en la entrevista.",
+      "addToMaster": "Añadir también las habilidades confirmadas a mi currículum maestro",
+      "applyButton": "Aplicar {count} palabras clave",
+      "applying": "Aplicando palabras clave",
+      "placementsTitle": "Dónde quedaron tus palabras clave",
+      "where": {
+        "summary": "Resumen",
+        "skills": "Habilidades",
+        "bullet": "{entry}, línea {line}"
+      },
+      "nowhere": "No se pudo colocar",
+      "error": "No se pudieron aplicar las palabras clave. Inténtalo de nuevo."
     }
   },
   "settings": {
@@ -1521,6 +1611,10 @@
       "title": "Prepárate para la entrevista",
       "prompt": "Usa Resume Matcher para leer el currículum {resumeId} y el empleo al que se adaptó, y ayúdame a preparar la entrevista: preguntas probables, las historias que contar y preguntas para hacerles.",
       "note": "Tu agente responde en su propio chat. En modo agente, la preparación de la entrevista no se guarda en el currículum."
+    },
+    "improveWriting": {
+      "title": "Mejorar la redacción",
+      "prompt": "Usa Resume Matcher para mejorar la redacción del currículum {resumeId}: haz dos rondas de redacción (revisa cada línea con la rúbrica, reescribe las débiles conservando cada hecho, verifica) y guarda."
     }
   }
 }

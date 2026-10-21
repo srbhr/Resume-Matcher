@@ -161,6 +161,7 @@ describe('tailor page master picker', () => {
     expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, {
       pageFit: { template: 'modern', lang: 'es' },
       maxPages: 2,
+      progressId: expect.any(String),
     });
   });
 
@@ -173,6 +174,7 @@ describe('tailor page master picker', () => {
     expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, {
       pageFit: { template: 'swiss-single', lang: 'es' },
       maxPages: 2,
+      progressId: expect.any(String),
     });
   });
 
@@ -185,7 +187,10 @@ describe('tailor page master picker', () => {
     fireEvent.click(screen.getByRole('option', { name: /tailor\.length\.bulletOptions\.5/ }));
     await fillJobDescriptionAndGenerate();
     // No page limit: no page fit is requested, only the per-role cap.
-    expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, { maxBulletsPerEntry: 5 });
+    expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, {
+      maxBulletsPerEntry: 5,
+      progressId: expect.any(String),
+    });
     expect(JSON.parse(localStorage.getItem('tailor_length_settings') ?? '{}')).toEqual({
       maxPages: null,
       maxBulletsPerEntry: 5,
@@ -334,9 +339,7 @@ describe('tailor page in agent mode', () => {
       fireEvent.change(screen.getByRole('textbox'), { target: { value: job } });
       await act(async () => screen.getByRole('button', { name: 'agentPrompt.getPrompt' }).click());
 
-      expect(
-        screen.getByRole('dialog', { name: 'agentPrompt.tailor.title' })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'agentPrompt.tailor.title' })).toBeInTheDocument();
       // The test t() returns keys only, so the prompt is the with-job variant's key.
       expect(screen.getByText('agentPrompt.tailor.promptWithJob')).toBeInTheDocument();
       expect(api.upload).not.toHaveBeenCalled();

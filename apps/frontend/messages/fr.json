@@ -242,7 +242,8 @@
       "outreach": "MESSAGE DE CONTACT",
       "jdMatch": "CORRESPONDANCE FP",
       "interviewPrep": "PRÉPARATION ENTRETIEN",
-      "atsCheck": "VÉRIF. ATS"
+      "atsCheck": "VÉRIF. ATS",
+      "writing": "Rédaction"
     },
     "pageSize": {
       "usLetter": "Lettre US"
@@ -356,7 +357,9 @@
         "recalculating": "Calcul en cours…",
         "saveFirst": "Enregistrez vos modifications, puis recalculez.",
         "recalculateFailed": "Impossible de calculer le score ATS. Si ce CV a été adapté avant l'enregistrement des scores, adaptez-le à nouveau depuis la page Personnaliser le CV."
-      }
+      },
+      "forcedColor": "Bleu",
+      "forcedLegend": "signale les mots-clés que vous avez ajoutés vous-même. Soyez prêt à en parler."
     },
     "genericItemForm": {
       "itemLabel": "Élément",
@@ -544,7 +547,8 @@
       "outreachEditor": "Éditeur de message de contact",
       "jdMatchAnalysis": "Analyse de correspondance FP",
       "interviewPrep": "Préparation à l'entretien",
-      "atsCheck": "Vérification de lecture ATS"
+      "atsCheck": "Vérification de lecture ATS",
+      "writing": "Rédaction"
     },
     "alerts": {
       "saveNotAvailable": "L'enregistrement n'est disponible que lors de la modification d'un CV existant.",
@@ -692,6 +696,21 @@
           "warn": "Aucune date reconnaissable."
         }
       }
+    },
+    "writing": {
+      "aboutTitle": "Score de rédaction",
+      "aboutDescription": "Des règles fixes vérifient chaque puce et le résumé : tirets cadratins, débuts faibles comme « Responsable de », première personne, formules toutes faites, lignes longues et chiffres absents. Améliorer la rédaction réécrit les lignes faibles sans ajouter ni retirer aucun fait.",
+      "improve": "Améliorer la rédaction",
+      "improving": "Amélioration",
+      "needsProvider": "Configurez un fournisseur d'IA dans les Paramètres pour utiliser Améliorer la rédaction.",
+      "error": "Impossible d'améliorer la rédaction. Veuillez réessayer.",
+      "changedMeanwhile": "Le CV a changé pendant la réécriture. Relancez Améliorer la rédaction.",
+      "reviewTitle": "Changements proposés",
+      "noChanges": "Rien à changer : chaque ligne respecte déjà les règles, ou une réécriture aurait changé un fait.",
+      "applyNote": "Les changements appliqués vont dans l'éditeur et s'enregistrent comme toute modification.",
+      "discard": "Ignorer",
+      "applyChanges": "Appliquer les changements",
+      "checkError": "Impossible de noter la rédaction."
     }
   },
   "enrichment": {
@@ -765,6 +784,10 @@
       "full": {
         "label": "Personnalisation complète",
         "description": "Personnalisation complète en utilisant la fiche de poste."
+      },
+      "heavy": {
+        "label": "Réécriture complète",
+        "description": "Réécrit chaque puce et le résumé. Des changements plus importants augmentent le risque d'hallucination : relisez chaque ligne."
       }
     },
     "length": {
@@ -816,7 +839,8 @@
       "languageChanges": "Modifications des langues",
       "awardChanges": "Modifications des récompenses",
       "rejectButton": "Rejeter et régénérer",
-      "confirmButton": "Confirmer et enregistrer"
+      "confirmButton": "Confirmer et enregistrer",
+      "heavyTag": "Réécriture complète"
     },
     "atsScore": {
       "title": "Détail du score ATS",
@@ -828,7 +852,8 @@
       "missingKeywords": "Mots-clés manquants",
       "injectableKeywords": "Ajout sûr (présents dans votre CV principal)",
       "recommendations": "Recommandations",
-      "twoColumnWarning": "Mise en page sur deux colonnes : de nombreux ATS lisent les colonnes dans le désordre. Passez à un modèle à une colonne dans l'éditeur avant de postuler."
+      "twoColumnWarning": "Mise en page sur deux colonnes : de nombreux ATS lisent les colonnes dans le désordre. Passez à un modèle à une colonne dans l'éditeur avant de postuler.",
+      "was": "avant {score}"
     },
     "regenerateDialog": {
       "title": "Régénérer le CV personnalisé ?",
@@ -868,6 +893,71 @@
       "unavailable": "Ajustement à la page indisponible",
       "finalOver": "Pourrait dépasser la limite de pages après réécriture",
       "notRechecked": "Respect de la limite de pages non revérifié après la réécriture"
+    },
+    "heavyWarning": "La réécriture complète fait des changements plus importants, elle risque donc davantage d'affirmer quelque chose que vous n'avez pas fait. Vérifiez chaque ligne avant d'enregistrer.",
+    "progress": {
+      "title": "Travail sur votre CV",
+      "elapsed": "{seconds} s",
+      "slow": "Toujours en cours. Certains modèles prennent une ou deux minutes ; cette liste se met à jour toute seule.",
+      "steps": {
+        "keywords": "Lire l'offre",
+        "select": "Choisir les puces les plus fortes",
+        "plan": "Planifier les compétences",
+        "tailor": "Adapter le CV",
+        "refine": "Intégrer les mots-clés et vérifier les faits",
+        "critique": "Relire la rédaction",
+        "rewrite": "Réécrire les lignes faibles",
+        "verify": "Vérifier et préparer la revue"
+      },
+      "state": {
+        "done": "terminé",
+        "current": "en cours",
+        "pending": "en attente"
+      }
+    },
+    "writingScore": {
+      "title": "Rédaction",
+      "scoreNote": "Noté par des règles fixes : le score est le même avec chaque fournisseur d'IA.",
+      "beforeAfter": "avant {before}",
+      "rewritten": "{count} lignes réécrites",
+      "rejected": "{count} réécritures écartées car elles changeaient un fait",
+      "noFindings": "Aucun problème de rédaction trouvé.",
+      "findingsTitle": "Lignes à revoir",
+      "notesTitle": "Notes du relecteur",
+      "severity": {
+        "hard": "À corriger",
+        "soft": "À envisager"
+      },
+      "rules": {
+        "em_dash": "Tiret cadratin",
+        "weak_opener": "Début faible",
+        "no_outcome": "Sans résultat",
+        "first_person": "Première personne",
+        "ai_phrase": "Formule toute faite",
+        "repeated_opener": "Début répété",
+        "long_bullet": "Ligne longue",
+        "no_metric": "Sans chiffre"
+      }
+    },
+    "forceKeywords": {
+      "title": "Ajouter les mots-clés manquants",
+      "description": "Choisissez des mots-clés de l'offre à intégrer. Chacun va dans vos compétences, et au plus dans deux lignes où il a sa place.",
+      "supported": "Votre CV principal les montre",
+      "unsupported": "Absents de votre CV principal",
+      "apply": "Appliquer",
+      "haveThis": "Je l'ai",
+      "attestNote": "Choisissez « Je l'ai » uniquement pour les compétences que vous avez vraiment. Attendez-vous à des questions en entretien.",
+      "addToMaster": "Ajouter aussi les compétences confirmées à mon CV principal",
+      "applyButton": "Appliquer {count} mots-clés",
+      "applying": "Application des mots-clés",
+      "placementsTitle": "Où sont allés vos mots-clés",
+      "where": {
+        "summary": "Résumé",
+        "skills": "Compétences",
+        "bullet": "{entry}, ligne {line}"
+      },
+      "nowhere": "Impossible à placer",
+      "error": "Impossible d'appliquer les mots-clés. Veuillez réessayer."
     }
   },
   "settings": {
@@ -1521,6 +1611,10 @@
       "title": "Préparer l'entretien",
       "prompt": "Utilise Resume Matcher pour lire le CV {resumeId} et l'offre à laquelle il est adapté, puis aide-moi à préparer l'entretien : questions probables, exemples à raconter et questions à leur poser.",
       "note": "Votre agent répond dans sa propre conversation. En mode agent, la préparation à l'entretien n'est pas enregistrée dans le CV."
+    },
+    "improveWriting": {
+      "title": "Améliorer la rédaction",
+      "prompt": "Utilise Resume Matcher pour améliorer la rédaction du CV {resumeId} : fais deux tours de rédaction (relis chaque ligne selon la grille, réécris les plus faibles en gardant chaque fait, vérifie), puis enregistre."
     }
   }
 }

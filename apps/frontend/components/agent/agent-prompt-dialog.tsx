@@ -22,7 +22,8 @@ export type AgentTask =
   | 'regenerate'
   | 'coverLetter'
   | 'outreach'
-  | 'interviewPrep';
+  | 'interviewPrep'
+  | 'improveWriting';
 
 /** Tasks with an extra line under the prompt (agentPrompt.<task>.note). */
 const HAS_NOTE: ReadonlySet<AgentTask> = new Set(['tailor', 'interviewPrep']);

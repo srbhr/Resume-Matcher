@@ -13,6 +13,8 @@ export const DURATION = {
   routeCover: 0.2,
   /** Block Dissolve: the reveal of the Dashboard. */
   routeTransition: 0.25,
+  /** A score counting from its old value to its new one (feedback after an action). */
+  scoreCount: 0.6,
 } as const;
 
 /** Critically damped: velocity carries through interruptions, never bounces. */

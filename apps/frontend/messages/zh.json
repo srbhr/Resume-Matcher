@@ -242,7 +242,8 @@
       "outreach": "联系邮件",
       "jdMatch": "JD 匹配",
       "interviewPrep": "面试准备",
-      "atsCheck": "ATS 检查"
+      "atsCheck": "ATS 检查",
+      "writing": "文字"
     },
     "pageSize": {
       "usLetter": "美式信纸"
@@ -356,7 +357,9 @@
         "recalculating": "计算中…",
         "saveFirst": "请先保存修改，然后重新计算。",
         "recalculateFailed": "无法计算 ATS 评分。如果此简历是在保存评分功能之前定制的，请在“定制简历”页面重新定制。"
-      }
+      },
+      "forcedColor": "蓝色",
+      "forcedLegend": "标出的是你自己添加的关键词。请准备好谈论它们。"
     },
     "genericItemForm": {
       "itemLabel": "条目",
@@ -544,7 +547,8 @@
       "outreachEditor": "联系邮件编辑",
       "jdMatchAnalysis": "JD 匹配分析",
       "interviewPrep": "面试准备",
-      "atsCheck": "ATS 解析检查"
+      "atsCheck": "ATS 解析检查",
+      "writing": "文字"
     },
     "alerts": {
       "saveNotAvailable": "仅在编辑现有简历时可保存。",
@@ -692,6 +696,21 @@
           "warn": "没有找到可识别的日期。"
         }
       }
+    },
+    "writing": {
+      "aboutTitle": "文字评分",
+      "aboutDescription": "固定规则会检查每一条要点和摘要：破折号、“负责……”这类无力的开头、第一人称、套话、过长的行和缺少的数字。改进文字会改写薄弱的行，不增加也不删除任何事实。",
+      "improve": "改进文字",
+      "improving": "正在改进",
+      "needsProvider": "请先在设置中配置 AI 服务商，才能使用改进文字。",
+      "error": "无法改进文字，请重试。",
+      "changedMeanwhile": "改写期间简历发生了变化。请重新运行改进文字。",
+      "reviewTitle": "建议的修改",
+      "noChanges": "没有可改的内容：每一行都已符合规则，或改写会改变事实。",
+      "applyNote": "应用的修改会进入编辑器，并像其他编辑一样保存。",
+      "discard": "放弃",
+      "applyChanges": "应用修改",
+      "checkError": "无法为文字评分。"
     }
   },
   "enrichment": {
@@ -765,6 +784,10 @@
       "full": {
         "label": "完全定制",
         "description": "基于职位描述进行全面定制。"
+      },
+      "heavy": {
+        "label": "深度改写",
+        "description": "改写每一条要点和摘要。改动越大，出现不实内容的风险越高，请逐行检查。"
       }
     },
     "length": {
@@ -816,7 +839,8 @@
       "languageChanges": "语言变更",
       "awardChanges": "奖项变更",
       "rejectButton": "拒绝并重新生成",
-      "confirmButton": "确认并保存"
+      "confirmButton": "确认并保存",
+      "heavyTag": "深度改写"
     },
     "atsScore": {
       "title": "ATS 评分明细",
@@ -828,7 +852,8 @@
       "missingKeywords": "缺失关键词",
       "injectableKeywords": "可安全添加（主简历中已有）",
       "recommendations": "建议",
-      "twoColumnWarning": "双栏布局：许多 ATS 会打乱各栏的阅读顺序。投递前请在简历生成器中切换为单栏模板。"
+      "twoColumnWarning": "双栏布局：许多 ATS 会打乱各栏的阅读顺序。投递前请在简历生成器中切换为单栏模板。",
+      "was": "之前 {score}"
     },
     "regenerateDialog": {
       "title": "重新生成定制简历？",
@@ -868,6 +893,71 @@
       "unavailable": "无法进行页面适配",
       "finalOver": "改写后可能超出页数上限",
       "notRechecked": "改写后未重新检查是否符合页数上限"
+    },
+    "heavyWarning": "深度改写改动较大，更可能写出你没做过的事。保存前请逐行检查。",
+    "progress": {
+      "title": "正在处理你的简历",
+      "elapsed": "{seconds} 秒",
+      "slow": "仍在处理。有些模型需要一两分钟；此列表会自动更新。",
+      "steps": {
+        "keywords": "阅读职位",
+        "select": "挑选最有力的要点",
+        "plan": "规划要展示的技能",
+        "tailor": "定制简历",
+        "refine": "融入关键词并核对事实",
+        "critique": "评审文字",
+        "rewrite": "改写薄弱的行",
+        "verify": "核对并准备审阅"
+      },
+      "state": {
+        "done": "已完成",
+        "current": "进行中",
+        "pending": "等待中"
+      }
+    },
+    "writingScore": {
+      "title": "文字",
+      "scoreNote": "由固定规则评分，因此无论使用哪个 AI 服务商，分数都相同。",
+      "beforeAfter": "之前 {before}",
+      "rewritten": "已改写 {count} 行",
+      "rejected": "{count} 条改写因改变了事实而被舍弃",
+      "noFindings": "未发现文字问题。",
+      "findingsTitle": "需要查看的行",
+      "notesTitle": "评审意见",
+      "severity": {
+        "hard": "需修改",
+        "soft": "可考虑"
+      },
+      "rules": {
+        "em_dash": "破折号",
+        "weak_opener": "开头无力",
+        "no_outcome": "没有结果",
+        "first_person": "第一人称",
+        "ai_phrase": "套话",
+        "repeated_opener": "开头重复",
+        "long_bullet": "行过长",
+        "no_metric": "没有数字"
+      }
+    },
+    "forceKeywords": {
+      "title": "补充缺失的关键词",
+      "description": "选择要融入简历的职位关键词。每个关键词都会进入技能列表，并最多放入两行合适的内容中。",
+      "supported": "你的主简历中有这些",
+      "unsupported": "你的主简历中没有",
+      "apply": "应用",
+      "haveThis": "我具备",
+      "attestNote": "只为你真正具备的技能选择“我具备”。面试时可能会被问到。",
+      "addToMaster": "同时把我确认的技能添加到主简历",
+      "applyButton": "应用 {count} 个关键词",
+      "applying": "正在应用关键词",
+      "placementsTitle": "关键词放在了哪里",
+      "where": {
+        "summary": "摘要",
+        "skills": "技能",
+        "bullet": "{entry}，第 {line} 行"
+      },
+      "nowhere": "无法放入",
+      "error": "无法应用关键词，请重试。"
     }
   },
   "settings": {
@@ -1521,6 +1611,10 @@
       "title": "准备面试",
       "prompt": "使用 Resume Matcher 读取简历 {resumeId} 及其所定制的职位，然后帮我准备面试：可能的问题、可以讲述的经历，以及我可以问对方的问题。",
       "note": "智能体会在它自己的对话中回答。在智能体模式下，面试准备内容不会保存到简历中。"
+    },
+    "improveWriting": {
+      "title": "改进文字",
+      "prompt": "用 Resume Matcher 改进简历 {resumeId} 的文字：进行两轮文字修改（按评分标准评审每一行，在保留所有事实的前提下改写薄弱的行，然后核对），再保存。"
     }
   }
 }

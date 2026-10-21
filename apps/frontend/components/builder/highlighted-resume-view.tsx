@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { segmentTextByKeywords, type KeywordList } from '@/lib/utils/keyword-matcher';
 import { useTranslations } from '@/lib/i18n';
@@ -9,13 +9,40 @@ import { cn } from '@/lib/utils';
 interface HighlightedResumeViewProps {
   resumeData: ResumeData;
   keywords: KeywordList;
+  /** Keywords the user forced in; highlighted in blue instead of yellow. */
+  forcedKeywords?: string[];
 }
+
+/** Lowercased forced keywords, read by every highlighted span. */
+const ForcedKeywords = createContext<ReadonlySet<string>>(new Set());
 
 /**
  * Display resume content with matching keywords highlighted.
  * Shows all resume sections with visual highlighting of JD matches.
  */
-export function HighlightedResumeView({ resumeData, keywords }: HighlightedResumeViewProps) {
+export function HighlightedResumeView({
+  resumeData,
+  keywords,
+  forcedKeywords,
+}: HighlightedResumeViewProps) {
+  const forced = useMemo(
+    () => new Set((forcedKeywords ?? []).map((k) => k.trim().toLowerCase())),
+    [forcedKeywords]
+  );
+  return (
+    <ForcedKeywords.Provider value={forced}>
+      <HighlightedResume resumeData={resumeData} keywords={keywords} />
+    </ForcedKeywords.Provider>
+  );
+}
+
+function HighlightedResume({
+  resumeData,
+  keywords,
+}: {
+  resumeData: ResumeData;
+  keywords: KeywordList;
+}) {
   const { t } = useTranslations();
 
   // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
@@ -315,12 +342,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  */
 function HighlightedText({ text, keywords }: { text: string; keywords: KeywordList }) {
   const segments = useMemo(() => segmentTextByKeywords(text, keywords), [text, keywords]);
+  const forced = useContext(ForcedKeywords);
 
   return (
     <span>
       {segments.map((segment, i) =>
         segment.isMatch ? (
-          <mark key={i} className="bg-highlight text-ink px-1">
+          <mark
+            key={i}
+            className={
+              forced.has(segment.text.toLowerCase())
+                ? 'bg-primary text-white px-1'
+                : 'bg-highlight text-ink px-1'
+            }
+          >
             {segment.text}
           </mark>
         ) : (
@@ -335,15 +370,21 @@ function HighlightedText({ text, keywords }: { text: string; keywords: KeywordLi
  * Skill tag with optional highlighting
  */
 function SkillTag({ text, keywords }: { text: string; keywords: KeywordList }) {
-  const isMatch = useMemo(
-    () => segmentTextByKeywords(text, keywords).some((segment) => segment.isMatch),
+  const forced = useContext(ForcedKeywords);
+  const matches = useMemo(
+    () => segmentTextByKeywords(text, keywords).filter((segment) => segment.isMatch),
     [text, keywords]
   );
+  const isForced = matches.some((segment) => forced.has(segment.text.toLowerCase()));
 
   return (
     <span
       className={`inline-block px-2 py-1 text-xs ${
-        isMatch ? 'bg-highlight text-ink font-medium' : 'bg-canvas text-ink-soft'
+        isForced
+          ? 'bg-primary text-white font-medium'
+          : matches.length > 0
+            ? 'bg-highlight text-ink font-medium'
+            : 'bg-canvas text-ink-soft'
       }`}
     >
       {text}

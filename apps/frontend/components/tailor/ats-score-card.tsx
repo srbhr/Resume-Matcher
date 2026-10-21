@@ -1,15 +1,50 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
+import { useReducedMotion } from 'motion/react';
 import type { ATSScore, ATSSubScores } from '@/components/common/resume_previewer_context';
 import { Alert } from '@/components/ui/alert';
 import { useTranslations } from '@/lib/i18n';
 import { isTwoColumnTemplate, type TemplateType } from '@/lib/types/template-settings';
+import { DURATION } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 interface ATSScoreCardProps {
   atsScore: ATSScore;
   /** Template the resume will be exported with; drives the layout warning. */
   template?: TemplateType;
+  /** Score before the last action (e.g. applying keywords); shown as "was". */
+  previousScore?: number;
+}
+
+/**
+ * Counts from the previous value to ``value`` once per change, when ``enabled``
+ * (after an action the user took); instant with reduced motion.
+ */
+function useCountUp(value: number, enabled: boolean): number {
+  const reduceMotion = useReducedMotion();
+  const [shown, setShown] = useState(value);
+  const fromRef = useRef(value);
+  useEffect(() => {
+    const from = fromRef.current;
+    fromRef.current = value;
+    if (!enabled || reduceMotion || from === value || !Number.isFinite(from)) {
+      setShown(value);
+      return;
+    }
+    const start = performance.now();
+    const duration = DURATION.scoreCount * 1000;
+    let frame = 0;
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - progress) ** 3;
+      setShown(from + (value - from) * eased);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, enabled, reduceMotion]);
+  return shown;
 }
 
 // Display order; title_match and date_consistency are null when they couldn't be scored.
@@ -94,10 +129,11 @@ function KeywordList({
   );
 }
 
-export function ATSScoreCard({ atsScore, template }: ATSScoreCardProps) {
+export function ATSScoreCard({ atsScore, template, previousScore }: ATSScoreCardProps) {
   const { t } = useTranslations();
   const { overall_score, sub_scores, missing_keywords, injectable_keywords, recommendations } =
     atsScore;
+  const shownScore = useCountUp(overall_score, previousScore != null);
   return (
     <section
       aria-labelledby="ats-score-heading"
@@ -108,13 +144,19 @@ export function ATSScoreCard({ atsScore, template }: ATSScoreCardProps) {
           {t('tailor.atsScore.title')}
         </h2>
         <p className="flex items-end gap-1">
+          {previousScore != null && previousScore !== overall_score && (
+            <span className="mb-1 mr-2 font-mono text-sm tabular-nums text-ink-soft">
+              {t('tailor.atsScore.was', { score: previousScore.toFixed(1) })}
+            </span>
+          )}
           <span
             className={cn(
               'font-mono text-3xl font-bold tabular-nums',
               BAND_TEXT[band(overall_score)]
             )}
+            aria-label={overall_score.toFixed(1)}
           >
-            {overall_score.toFixed(1)}
+            {shownScore.toFixed(1)}
           </span>
           <span className="mb-1 font-mono text-sm text-steel">/100</span>
         </p>

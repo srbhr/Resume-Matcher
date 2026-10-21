@@ -212,7 +212,8 @@
       "outreach": "아웃리치 메일",
       "jdMatch": "채용공고 매칭",
       "interviewPrep": "면접 준비",
-      "atsCheck": "ATS 검사"
+      "atsCheck": "ATS 검사",
+      "writing": "문장"
     },
     "pageSize": {
       "usLetter": "US 레터"
@@ -326,7 +327,9 @@
         "recalculating": "계산 중…",
         "saveFirst": "변경 사항을 저장한 후 다시 계산하세요.",
         "recalculateFailed": "ATS 점수를 계산할 수 없습니다. 점수 저장 기능 이전에 맞춤 작업한 이력서라면 '이력서 맞춤화' 페이지에서 다시 맞춤 작업을 하세요."
-      }
+      },
+      "forcedColor": "파란색",
+      "forcedLegend": "은 직접 추가한 키워드입니다. 설명할 준비를 하세요."
     },
     "genericItemForm": {
       "itemLabel": "항목",
@@ -514,7 +517,8 @@
       "outreachEditor": "아웃리치 메시지 편집기",
       "jdMatchAnalysis": "채용공고 매칭 분석",
       "interviewPrep": "면접 준비",
-      "atsCheck": "ATS 판독 검사"
+      "atsCheck": "ATS 판독 검사",
+      "writing": "문장"
     },
     "alerts": {
       "saveNotAvailable": "저장은 기존 이력서를 편집할 때만 사용할 수 있습니다.",
@@ -692,6 +696,21 @@
           "warn": "인식할 수 있는 날짜가 없습니다."
         }
       }
+    },
+    "writing": {
+      "aboutTitle": "문장 점수",
+      "aboutDescription": "고정 규칙이 모든 항목과 요약을 확인합니다: 엠 대시, \"~을 담당\" 같은 약한 시작, 1인칭, 상투적 표현, 긴 줄, 빠진 수치. 문장 개선은 사실을 더하거나 빼지 않고 약한 줄을 다시 씁니다.",
+      "improve": "문장 개선",
+      "improving": "개선 중",
+      "needsProvider": "문장 개선을 쓰려면 설정에서 AI 제공자를 설정하세요.",
+      "error": "문장을 개선하지 못했습니다. 다시 시도해 주세요.",
+      "changedMeanwhile": "다시 쓰는 동안 이력서가 바뀌었습니다. 문장 개선을 다시 실행하세요.",
+      "reviewTitle": "제안된 변경",
+      "noChanges": "바꿀 것이 없습니다. 모든 줄이 이미 규칙을 지키거나, 다시 쓰면 사실이 바뀝니다.",
+      "applyNote": "적용한 변경은 편집기에 들어가고 일반 편집처럼 저장됩니다.",
+      "discard": "버리기",
+      "applyChanges": "변경 적용",
+      "checkError": "문장을 채점하지 못했습니다."
     }
   },
   "enrichment": {
@@ -765,6 +784,10 @@
       "full": {
         "label": "전체 맞춤화",
         "description": "채용 공고를 활용해 전면적으로 맞춤화합니다."
+      },
+      "heavy": {
+        "label": "전면 재작성",
+        "description": "모든 항목과 요약을 다시 씁니다. 변경이 클수록 사실과 다른 내용이 들어갈 위험이 커지므로 모든 줄을 검토하세요."
       }
     },
     "length": {
@@ -816,7 +839,8 @@
       "languageChanges": "언어 변경 사항",
       "awardChanges": "수상 내역 변경 사항",
       "rejectButton": "거부하고 다시 생성",
-      "confirmButton": "확인하고 저장"
+      "confirmButton": "확인하고 저장",
+      "heavyTag": "전면 재작성"
     },
     "atsScore": {
       "title": "ATS 점수 상세",
@@ -828,7 +852,8 @@
       "missingKeywords": "누락된 키워드",
       "injectableKeywords": "추가 가능(마스터 이력서에 있음)",
       "recommendations": "추천 사항",
-      "twoColumnWarning": "2단 레이아웃: 많은 ATS가 열을 잘못된 순서로 읽습니다. 지원하기 전에 빌더에서 1단 템플릿으로 변경하세요."
+      "twoColumnWarning": "2단 레이아웃: 많은 ATS가 열을 잘못된 순서로 읽습니다. 지원하기 전에 빌더에서 1단 템플릿으로 변경하세요.",
+      "was": "이전 {score}"
     },
     "regenerateDialog": {
       "title": "맞춤화된 이력서를 다시 생성하시겠습니까?",
@@ -868,6 +893,71 @@
       "unavailable": "페이지 맞춤을 사용할 수 없습니다",
       "finalOver": "다시 작성한 후 페이지 제한을 초과할 수 있습니다",
       "notRechecked": "다시 작성한 후 페이지 제한 맞춤을 다시 확인하지 못했습니다"
+    },
+    "heavyWarning": "전면 재작성은 변경이 커서 하지 않은 일을 적을 가능성이 더 높습니다. 저장하기 전에 모든 줄을 확인하세요.",
+    "progress": {
+      "title": "이력서 작업 중",
+      "elapsed": "{seconds}초",
+      "slow": "아직 작업 중입니다. 일부 모델은 1~2분이 걸립니다. 이 목록은 자동으로 업데이트됩니다.",
+      "steps": {
+        "keywords": "채용 공고 읽기",
+        "select": "가장 강한 항목 고르기",
+        "plan": "보여줄 기술 계획하기",
+        "tailor": "이력서 맞춤화",
+        "refine": "키워드 반영 및 사실 확인",
+        "critique": "문장 평가",
+        "rewrite": "약한 줄 다시 쓰기",
+        "verify": "확인 및 검토 준비"
+      },
+      "state": {
+        "done": "완료",
+        "current": "진행 중",
+        "pending": "대기 중"
+      }
+    },
+    "writingScore": {
+      "title": "문장",
+      "scoreNote": "고정 규칙으로 채점하므로 어떤 AI 제공자를 써도 점수가 같습니다.",
+      "beforeAfter": "이전 {before}",
+      "rewritten": "{count}줄을 다시 썼습니다",
+      "rejected": "사실이 바뀌어 다시 쓰기 {count}건을 버렸습니다",
+      "noFindings": "문장 문제를 찾지 못했습니다.",
+      "findingsTitle": "살펴볼 줄",
+      "notesTitle": "검토자 메모",
+      "severity": {
+        "hard": "수정",
+        "soft": "고려"
+      },
+      "rules": {
+        "em_dash": "엠 대시",
+        "weak_opener": "약한 시작",
+        "no_outcome": "성과 없음",
+        "first_person": "1인칭",
+        "ai_phrase": "상투적 표현",
+        "repeated_opener": "반복된 시작",
+        "long_bullet": "긴 줄",
+        "no_metric": "수치 없음"
+      }
+    },
+    "forceKeywords": {
+      "title": "빠진 키워드 추가",
+      "description": "이력서에 반영할 채용 공고 키워드를 고르세요. 각각 기술 목록에 들어가고, 맞는 줄이 있으면 최대 두 줄에 들어갑니다.",
+      "supported": "마스터 이력서에 있는 키워드",
+      "unsupported": "마스터 이력서에 없는 키워드",
+      "apply": "반영",
+      "haveThis": "보유함",
+      "attestNote": "\"보유함\"은 실제로 가진 기술에만 선택하세요. 면접에서 질문받을 수 있습니다.",
+      "addToMaster": "확인한 기술을 마스터 이력서에도 추가",
+      "applyButton": "키워드 {count}개 반영",
+      "applying": "키워드 반영 중",
+      "placementsTitle": "키워드가 들어간 위치",
+      "where": {
+        "summary": "요약",
+        "skills": "기술",
+        "bullet": "{entry}, {line}번째 줄"
+      },
+      "nowhere": "넣을 수 없음",
+      "error": "키워드를 반영하지 못했습니다. 다시 시도해 주세요."
     }
   },
   "settings": {
@@ -1521,6 +1611,10 @@
       "title": "면접 준비",
       "prompt": "Resume Matcher로 이력서 {resumeId}와 그 이력서가 맞춤화된 채용 공고를 읽고 면접 준비를 도와줘: 예상 질문, 들려줄 사례, 내가 물어볼 질문.",
       "note": "에이전트는 자체 채팅에서 답합니다. 에이전트 모드에서는 면접 준비 내용이 이력서에 저장되지 않습니다."
+    },
+    "improveWriting": {
+      "title": "문장 개선",
+      "prompt": "Resume Matcher로 이력서 {resumeId}의 문장을 개선해 줘: 문장 라운드를 두 번 진행하고(모든 줄을 기준에 따라 평가하고, 모든 사실을 유지한 채 약한 줄을 다시 쓰고, 확인), 저장해 줘."
     }
   }
 }
