@@ -9,4 +9,4 @@ import os
 # LITELLM_LOCAL_MODEL_COST_MAP=False to opt back into the live registry.
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
