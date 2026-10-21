@@ -1278,7 +1278,7 @@
     "copied": "Copied!",
     "editor": {
       "placeholder": "Your cover letter will appear here after tailoring your resume with cover letter generation enabled...",
-      "tip": "TIP: A good cover letter is typically 300-400 words. Edit as needed to personalize."
+      "tip": "TIP: The default letter fits on one page, usually 200-300 words. Edit as needed to personalize."
     },
     "preview": {
       "defaultName": "Your Name",

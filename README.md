@@ -154,6 +154,10 @@ You can:
 
 Generate tailored cover letters based on the job description and your resume.
 
+The default writing approach uses a specific opening hook, two or three relevant experience examples, a company-fit paragraph grounded in the supplied job description, and a confident call to action. Letters aim for 200–300 words and adapt tone and regional conventions when the inputs provide enough context. Names, metrics, company research, and personal motivations must be supported by the supplied information. Existing custom cover-letter prompts in Settings continue to override the default.
+
+This approach is adapted from the [jezweb resume-cover-letter skill](https://github.com/jezweb/claude-skills/blob/main/plugins/writing/skills/resume-cover-letter/SKILL.md). Resume Matcher's existing editor, preview, and PDF export remain available.
+
 ![Cover letter editor next to its PDF preview](assets/cover_letter.webp)
 
 ### Interview Preparation

@@ -175,7 +175,7 @@ The app's AI buttons hand these prompts to you:
 
 | Request | Tools |
 |---|---|
-| Cover letter | `get_resume_job resume_id=<id>`, write it (100 to 150 words in 3 or 4 short paragraphs, using only facts from the resume), `set_cover_letter resume_id=<id> content=@…` |
+| Cover letter | `get_resume_job resume_id=<id>`, write it like the app's default: under one page, 200 to 300 words in 3 or 4 paragraphs (a hook tied to one detail of the job, two or three matching examples from the resume, why this company using what the job description says, a specific close). Greet a named person only if the job names one, else "Dear Hiring Manager"; use only facts from the resume and the job description, `set_cover_letter resume_id=<id> content=@…` |
 | Outreach message | Same, 70 to 100 words, opening with something specific from the job, then `set_outreach_message` |
 | Enhance a resume | Ask the user about missing results, numbers and tools; then `get_resume`, edit, `update_resume`. Add only what they told you |
 | Rewrite parts | Show the user the changes first, then `update_resume` |
