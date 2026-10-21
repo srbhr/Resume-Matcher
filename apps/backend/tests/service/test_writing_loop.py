@@ -213,3 +213,29 @@ async def test_ignores_rewrites_of_lines_that_were_not_targeted() -> None:
         == "Migrated 12 services to Kubernetes, on time"
     )
     assert result.report.rejected_rewrites == 1
+
+
+@pytest.mark.asyncio
+async def test_a_rewrite_with_a_shifted_path_is_matched_by_its_original() -> None:
+    # Seen live: the model rewrote the right line but labelled the next index.
+    llm = _llm(
+        {"bullets": []},
+        {
+            "changes": [
+                _change(
+                    "workExperience[0].description[1]",
+                    WEAK,
+                    "Migrated 12 services to Kubernetes, ending hand-run deploys",
+                )
+            ]
+        },
+    )
+    with patch("app.services.writing_loop.complete_json", llm):
+        result = await run_writing_loop(_resume(), language="en")
+
+    rows = result.data["workExperience"][0]["description"]
+    assert rows == [
+        "Migrated 12 services to Kubernetes, ending hand-run deploys",
+        PLAIN,
+    ]
+    assert result.report.rewritten_paths == ["workExperience[0].description[0]"]

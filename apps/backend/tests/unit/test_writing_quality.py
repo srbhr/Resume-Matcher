@@ -5,6 +5,7 @@ from app.services.writing_quality import (
     fact_violations,
     hard_paths,
     iter_writing_units,
+    path_for_original,
     scrub_em_dashes,
     writing_report,
     writing_score,
@@ -149,3 +150,15 @@ def test_scrub_em_dashes() -> None:
     assert scrub_em_dashes("Built X — used by Y") == "Built X, used by Y"
     assert scrub_em_dashes("Built X -- used by Y") == "Built X, used by Y"
     assert scrub_em_dashes("co-op") == "co-op"
+
+
+def test_path_for_original_prefers_a_unique_text_match() -> None:
+    data = _resume("Built X", "Built  y", "Built X")
+    assert path_for_original(data, "built Y", "workExperience[0].description[0]") == (
+        "workExperience[0].description[1]"
+    )
+    # Two identical lines: the model's own path stands.
+    assert path_for_original(data, "Built X", "workExperience[0].description[2]") == (
+        "workExperience[0].description[2]"
+    )
+    assert path_for_original(data, None, "summary") == "summary"

@@ -23,6 +23,7 @@ from app.services.refiner import _extract_all_text, _keyword_in_text
 from app.services.writing_quality import (
     fact_violations,
     iter_writing_units,
+    path_for_original,
     scrub_em_dashes,
 )
 
@@ -97,6 +98,9 @@ def _verified_changes(
             continue
         if change.action != "replace" or not isinstance(change.value, str):
             continue
+        change = change.model_copy(
+            update={"path": path_for_original(data, change.original, change.path)}
+        )
         if change.path in seen_paths or (
             change.path != "summary"
             and not change.path.startswith(("workExperience[", "personalProjects["))

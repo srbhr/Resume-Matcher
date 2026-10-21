@@ -30,6 +30,7 @@ from app.services.writing_quality import (
     fact_violations,
     hard_paths,
     iter_writing_units,
+    path_for_original,
     scrub_em_dashes,
     writing_score,
 )
@@ -225,6 +226,11 @@ async def run_writing_loop(
             changes = []
         accepted: list[ResumeChange] = []
         for change in changes:
+            change = change.model_copy(
+                update={
+                    "path": path_for_original(current, change.original, change.path)
+                }
+            )
             if (
                 change.action != "replace"
                 or change.path not in target_paths

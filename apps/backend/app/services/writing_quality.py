@@ -81,6 +81,23 @@ def iter_writing_units(data: dict[str, Any]) -> Iterator[tuple[str, str]]:
                     yield f"{section}[{i}].description[{j}]", row
 
 
+def path_for_original(data: dict[str, Any], original: Any, fallback: str) -> str:
+    """The path of the one line whose text is ``original``, else ``fallback``.
+
+    Models copy a line's text reliably but sometimes shift its index, so an
+    exact, unique text match is the better address for a rewrite.
+    """
+    if not isinstance(original, str) or not original.strip():
+        return fallback
+    key = " ".join(original.split()).casefold()
+    matches = [
+        path
+        for path, text in iter_writing_units(data)
+        if " ".join(text.split()).casefold() == key
+    ]
+    return matches[0] if len(matches) == 1 else fallback
+
+
 def _excerpt(text: str, limit: int = 120) -> str:
     text = " ".join(text.split())
     return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
