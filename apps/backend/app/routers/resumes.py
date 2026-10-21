@@ -13,7 +13,7 @@ from typing import Any, NoReturn
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import ValidationError
 
 from app.ai_budget import (
@@ -74,6 +74,7 @@ from app.schemas import (
 )
 from app.schemas.models import ResumeTemplate
 from app.schemas.refinement import RefinementConfig
+from app.schemas.writing_report import WritingReport
 from app.services.ats import compute_ats_score
 from app.services.bullet_selector import SELECTABLE_SECTIONS
 from app.services.cover_letter import (
@@ -107,6 +108,7 @@ from app.services.parser import (
     parse_resume_to_json,
     restore_dates_from_markdown,
 )
+from app.services.progress import progress_events, tracked_progress
 from app.services.refiner import (
     analyze_keyword_gaps,
     calculate_keyword_match,
@@ -124,6 +126,7 @@ from app.services.tailor_selection import (
     final_page_check,
     run_bullet_selection,
 )
+from app.services.writing_loop import finalized_writing_report, run_writing_loop
 
 logger = logging.getLogger(__name__)
 _PROCESSING_CLEANUP_TIMEOUT_SECONDS = 5.0
@@ -1297,8 +1300,22 @@ async def improve_resume_preview_endpoint(
     language = get_content_language()
     prompt_id = request.prompt_id or _get_default_prompt_id()
 
-    progress = {"stage": "load_job_keywords"}
     detail = "Failed to preview resume. Please try again."
+    with tracked_progress(request.progress_id, "load_job_keywords") as progress:
+        return await _run_preview_with_progress(
+            request, resume, job, language, prompt_id, progress, detail
+        )
+
+
+async def _run_preview_with_progress(
+    request: ImproveResumeRequest,
+    resume: dict[str, Any],
+    job: dict[str, Any],
+    language: str,
+    prompt_id: str,
+    progress: dict[str, str],
+    detail: str,
+) -> ImproveResumeResponse:
     try:
         return await asyncio.wait_for(
             _improve_preview_flow(
@@ -1438,6 +1455,7 @@ async def _improve_preview_flow(
             changes=diff_result.changes,
             allowed_skill_targets=skill_targets,
             fixed_row_sections=fixed_row_sections,
+            allow_bullet_reorder=prompt_id == "heavy",
         )
         allow_appended_rows = any(
             change.action == "append" for change in applied_changes
@@ -1530,6 +1548,10 @@ async def _improve_preview_flow(
         logger.warning("Refinement failed, using unrefined result: %s", e)
         if refinement_attempted:
             response_warnings.append(REFINEMENT_FAILED_WARNING)
+
+    improved_data, writing = await _run_tailor_writing_loop(
+        improved_data, language, prompt_id, progress
+    )
 
     if original_resume_data:
         improved_data = finalize_ai_resume(
@@ -1624,10 +1646,51 @@ async def _improve_preview_flow(
                 refinement_successful,
             ),
             bullet_selection=bullet_selection,
+            writing=finalized_writing_report(
+                writing, improved_data, language, original_resume_data
+            ),
             warnings=response_warnings,
             refinement_attempted=refinement_attempted,
             refinement_successful=refinement_successful,
         ),
+    )
+
+
+async def _run_tailor_writing_loop(
+    improved_data: dict[str, Any],
+    language: str,
+    prompt_id: str,
+    progress: dict[str, str] | None = None,
+) -> tuple[dict[str, Any], WritingReport | None]:
+    """Critique the tailored resume; rewrite hard findings unless Light nudge.
+
+    A failure keeps the tailored resume as it was (the report is then None).
+    """
+    try:
+        loop = await run_writing_loop(
+            improved_data,
+            language=language,
+            rewrite=prompt_id != "nudge",
+            heavy=prompt_id == "heavy",
+            progress=progress,
+        )
+        return loop.data, loop.report
+    except (AIOperationDeadlineExceeded, PromptSizeError):
+        raise
+    except Exception as e:
+        logger.warning("Writing loop failed, keeping the tailored text: %s", e)
+        return improved_data, None
+
+
+@router.get("/improve/progress/{progress_id}")
+async def improve_progress_stream(progress_id: str) -> StreamingResponse:
+    """Stream the live stages of a preview or writing run (server-sent events)."""
+    if not progress_id or len(progress_id) > 64:
+        raise HTTPException(status_code=404, detail="Unknown progress id")
+    return StreamingResponse(
+        progress_events(progress_id, settings.request_timeout_seconds + 30),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
     )
 
 
@@ -1868,6 +1931,7 @@ async def execute_tailoring_pipeline(
         improved_data, applied_changes, rejected_changes = apply_diffs(
             original=original_resume_data,
             changes=diff_result.changes,
+            allow_bullet_reorder=effective_prompt_id == "heavy",
         )
         allow_appended_rows = any(
             change.action == "append" for change in applied_changes
@@ -1948,6 +2012,10 @@ async def execute_tailoring_pipeline(
         logger.warning("Refinement failed, using unrefined result: %s", e)
         if refinement_attempted:
             response_warnings.append(REFINEMENT_FAILED_WARNING)
+
+    improved_data, _writing = await _run_tailor_writing_loop(
+        improved_data, language, effective_prompt_id
+    )
 
     if original_resume_data:
         improved_data = finalize_ai_resume(

@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from app.ai_limits import validate_source_size
 from app.config import normalize_provider
 from app.schemas.refinement import RefinementStats
+from app.schemas.writing_report import KeywordPlacement, WritingReport
 
 _TEXT_VALUE_KEYS = (
     "text",
@@ -678,6 +679,8 @@ class ImproveResumeRequest(BaseModel):
     page_fit: PageFitSettings | None = None
     # Page budget for page_fit; ignored without page_fit.
     max_pages: int = Field(1, ge=1, le=5)
+    # Client-chosen id for GET /resumes/improve/progress/{id} (live stages).
+    progress_id: str | None = Field(None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class BulletSelectionSummary(BaseModel):
@@ -831,6 +834,14 @@ class ImproveResumeData(BaseModel):
     # Harness bullet selection summary (None unless max_bullets_per_entry or page_fit was requested)
     bullet_selection: BulletSelectionSummary | None = None
 
+    # Writing critique: score from the code rules, critic notes, rewrite counts
+    writing: WritingReport | None = None
+
+    # Keyword forcing: where each applied keyword landed, and the keywords the
+    # user forced (they lead interview prep)
+    keyword_placements: list[KeywordPlacement] = Field(default_factory=list)
+    forced_keywords: list[str] = Field(default_factory=list)
+
     # Warning and status fields for transparency
     warnings: list[str] = Field(default_factory=list)
     refinement_attempted: bool = False
@@ -852,6 +863,10 @@ class ImproveResumeConfirmRequest(BaseModel):
     preview_id: str | None = None
     improved_data: ResumeData
     improvements: list[ImprovementSuggestion]
+    # Keywords the user forced into this preview; stored on the job link.
+    forced_keywords: list[str] = Field(default_factory=list, max_length=30)
+    # Confirmed ("I have this") keywords to add to the master's skills list.
+    master_skills_to_add: list[str] = Field(default_factory=list, max_length=30)
 
     @model_validator(mode="after")
     def _validate_source_budget(self) -> "ImproveResumeConfirmRequest":

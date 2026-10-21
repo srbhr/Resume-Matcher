@@ -312,12 +312,57 @@ def is_fixed_row_append(
     return change.action == "append" and section in fixed_row_sections
 
 
+_BULLET_LIST_PATH_RE = re.compile(
+    r"^(?:workExperience|personalProjects)\[\d+\]\.description$"
+)
+
+
+def _bullet_order(source_rows: list[Any], proposed: list[Any]) -> list[int] | None:
+    """Indices of ``source_rows`` in the order of ``proposed``, or None.
+
+    ``proposed`` must be an exact permutation of the source bullets (compared
+    case-insensitively); anything else is not a pure reorder.
+    """
+    if len(proposed) != len(source_rows) or not all(
+        isinstance(item, str) for item in proposed
+    ):
+        return None
+    remaining: dict[str, list[int]] = {}
+    for index, row in enumerate(source_rows):
+        if not isinstance(row, str):
+            return None
+        remaining.setdefault(row.strip().casefold(), []).append(index)
+    order: list[int] = []
+    for item in proposed:
+        bucket = remaining.get(item.strip().casefold())
+        if not bucket:
+            return None
+        order.append(bucket.pop(0))
+    return order
+
+
+def _apply_bullet_order(result: dict[str, Any], path: str, order: list[int]) -> bool:
+    entry_path = path.rsplit(".", 1)[0]
+    entry, resolved = _resolve_path(result, entry_path)
+    if not resolved or not isinstance(entry, dict):
+        return False
+    rows = entry.get("description")
+    if not isinstance(rows, list) or len(rows) != len(order):
+        return False
+    entry["description"] = [rows[i] for i in order]
+    styles = entry.get("descriptionStyles")
+    if isinstance(styles, list) and len(styles) == len(order):
+        entry["descriptionStyles"] = [styles[i] for i in order]
+    return True
+
+
 def apply_diffs(
     original: dict[str, Any],
     changes: list[ResumeChange],
     allowed_skill_targets: list[dict[str, Any] | str] | None = None,
     *,
     fixed_row_sections: tuple[str, ...] = (),
+    allow_bullet_reorder: bool = False,
 ) -> tuple[dict[str, Any], list[ResumeChange], list[ResumeChange]]:
     """Apply verified diffs to original resume.
 
@@ -335,6 +380,10 @@ def apply_diffs(
         allowed_skill_targets: Verified skill targets allowed for add_skill actions
         fixed_row_sections: Sections whose bullet set the harness already chose;
             appends to them are rejected so rewriting never adds bullets
+        allow_bullet_reorder: Whether a "reorder" of a work or project entry's
+            bullets is allowed (heavy rewrite). It names the original bullets in
+            their new order and is applied after every other change, so replaces
+            keep addressing the original indices.
 
     Returns:
         (result_dict, applied_changes, rejected_changes)
@@ -343,6 +392,7 @@ def apply_diffs(
     applied: list[ResumeChange] = []
     rejected: list[ResumeChange] = []
     allowed_skill_keys = _build_allowed_skill_target_keys(allowed_skill_targets)
+    bullet_orders: list[tuple[ResumeChange, list[int]]] = []
 
     for change in changes:
         path = change.path
@@ -408,6 +458,21 @@ def apply_diffs(
                 continue
             actual_value.append(change.value)
             applied.append(change)
+
+        elif action == "reorder" and _BULLET_LIST_PATH_RE.match(path):
+            source_rows, _ = _resolve_path(original, path)
+            order = (
+                _bullet_order(source_rows, change.value)
+                if allow_bullet_reorder
+                and isinstance(source_rows, list)
+                and isinstance(change.value, list)
+                else None
+            )
+            if order is None or any(queued.path == path for queued, _ in bullet_orders):
+                logger.info("Diff rejected (bullet reorder): %s", path)
+                rejected.append(change)
+                continue
+            bullet_orders.append((change, order))
 
         elif action == "reorder":
             if not isinstance(actual_value, list) or not isinstance(change.value, list):
@@ -514,6 +579,12 @@ def apply_diffs(
 
         else:
             logger.info("Diff rejected (unknown action): %s", action)
+            rejected.append(change)
+
+    for change, order in bullet_orders:
+        if _apply_bullet_order(result, change.path, order):
+            applied.append(change)
+        else:
             rejected.append(change)
 
     return result, applied, rejected
