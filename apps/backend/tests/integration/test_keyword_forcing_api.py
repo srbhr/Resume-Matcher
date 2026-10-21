@@ -316,3 +316,23 @@ def test_add_skill_uses_the_job_spelling(
     ]
     accepted = _verified_changes(sample_resume, ["Kubernetes"], proposed)
     assert [c.value for c in accepted] == ["Kubernetes"]
+
+
+async def test_expired_preview_is_refused(
+    isolated_db: Any, sample_resume: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    resume_id, preview = await _preview(sample_resume)
+    real_get = isolated_db.get_preview
+
+    async def expired(preview_id: str) -> dict[str, Any] | None:
+        row = await real_get(preview_id)
+        assert row is not None
+        return {**row, "expires_at": "2000-01-01T00:00:00+00:00"}
+
+    monkeypatch.setattr(isolated_db, "get_preview", expired)
+    llm = AsyncMock()
+    resp = await _apply(
+        resume_id, preview, [{"keyword": "Kubernetes", "attested": True}], llm
+    )
+    assert resp.status_code == 409
+    assert llm.await_count == 0

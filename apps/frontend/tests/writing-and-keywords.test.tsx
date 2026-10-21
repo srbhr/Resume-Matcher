@@ -206,12 +206,16 @@ describe('DiffPreviewModal keyword reveal', () => {
         ]}
         resume={resume}
         heavyMode
+        scoreChange={{ before: 68.7, after: 77.1 }}
         keywordPanel={<p>keyword panel slot</p>}
       />
     );
     expect(screen.getByText('tailor.diffModal.heavyTag')).toBeInTheDocument();
     expect(screen.getByText('tailor.heavyWarning')).toBeInTheDocument();
     expect(screen.getByText('keyword panel slot')).toBeInTheDocument();
+    expect(
+      screen.getByText('tailor.forceKeywords.scoreChange {"before":"68.7","after":"77.1"}')
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         'tailor.forceKeywords.where.bullet {"entry":"Acme","line":2} · tailor.forceKeywords.where.skills'

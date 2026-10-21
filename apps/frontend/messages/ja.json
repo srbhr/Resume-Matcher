@@ -957,7 +957,8 @@
         "bullet": "{entry}、{line}行目"
       },
       "nowhere": "反映できませんでした",
-      "error": "キーワードを反映できませんでした。もう一度お試しください。"
+      "error": "キーワードを反映できませんでした。もう一度お試しください。",
+      "scoreChange": "ATSスコア {before} → {after}"
     }
   },
   "settings": {

@@ -957,7 +957,8 @@
         "bullet": "{entry}, line {line}"
       },
       "nowhere": "Could not be placed",
-      "error": "Could not apply the keywords. Please try again."
+      "error": "Could not apply the keywords. Please try again.",
+      "scoreChange": "ATS score {before} → {after}"
     }
   },
   "settings": {

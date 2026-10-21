@@ -833,6 +833,11 @@ export default function TailorPage() {
           selectionSummary={pendingResult?.data?.bullet_selection}
           heavyMode={selectedPromptId === 'heavy'}
           placements={pendingResult?.data?.keyword_placements}
+          scoreChange={
+            atsPrevious != null && atsResult
+              ? { before: atsPrevious, after: atsResult.overall_score }
+              : null
+          }
           resume={pendingResult?.data?.resume_preview as ResumeData | undefined}
           keywordPanel={
             atsResult && pendingResult?.data?.preview_id ? (

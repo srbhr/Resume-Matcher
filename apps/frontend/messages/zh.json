@@ -957,7 +957,8 @@
         "bullet": "{entry}，第 {line} 行"
       },
       "nowhere": "无法放入",
-      "error": "无法应用关键词，请重试。"
+      "error": "无法应用关键词，请重试。",
+      "scoreChange": "ATS 分数 {before} → {after}"
     }
   },
   "settings": {

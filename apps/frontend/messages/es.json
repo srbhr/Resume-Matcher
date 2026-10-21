@@ -957,7 +957,8 @@
         "bullet": "{entry}, línea {line}"
       },
       "nowhere": "No se pudo colocar",
-      "error": "No se pudieron aplicar las palabras clave. Inténtalo de nuevo."
+      "error": "No se pudieron aplicar las palabras clave. Inténtalo de nuevo.",
+      "scoreChange": "Puntuación ATS {before} → {after}"
     }
   },
   "settings": {

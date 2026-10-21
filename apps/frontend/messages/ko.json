@@ -957,7 +957,8 @@
         "bullet": "{entry}, {line}번째 줄"
       },
       "nowhere": "넣을 수 없음",
-      "error": "키워드를 반영하지 못했습니다. 다시 시도해 주세요."
+      "error": "키워드를 반영하지 못했습니다. 다시 시도해 주세요.",
+      "scoreChange": "ATS 점수 {before} → {after}"
     }
   },
   "settings": {

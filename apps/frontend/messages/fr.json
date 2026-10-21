@@ -957,7 +957,8 @@
         "bullet": "{entry}, ligne {line}"
       },
       "nowhere": "Impossible à placer",
-      "error": "Impossible d'appliquer les mots-clés. Veuillez réessayer."
+      "error": "Impossible d'appliquer les mots-clés. Veuillez réessayer.",
+      "scoreChange": "Score ATS {before} → {after}"
     }
   },
   "settings": {

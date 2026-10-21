@@ -40,6 +40,8 @@ interface DiffPreviewModalProps {
   /** Where each forced keyword landed, and the resume to name the lines. */
   placements?: KeywordPlacement[];
   resume?: ResumeData | null;
+  /** ATS score before and after the last keyword apply, shown with the placements. */
+  scoreChange?: { before: number; after: number } | null;
 }
 
 export function DiffPreviewModal({
@@ -56,6 +58,7 @@ export function DiffPreviewModal({
   keywordPanel,
   placements,
   resume,
+  scoreChange,
 }: DiffPreviewModalProps) {
   const { t } = useTranslations();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -224,7 +227,11 @@ export function DiffPreviewModal({
           </div>
 
           {placements && placements.length > 0 && (
-            <KeywordPlacementList placements={placements} resume={resume} />
+            <KeywordPlacementList
+              placements={placements}
+              resume={resume}
+              scoreChange={scoreChange}
+            />
           )}
 
           {keywordPanel}
@@ -557,9 +564,11 @@ function ChangeItem({ change, highlight = [] }: ChangeItemProps) {
 function KeywordPlacementList({
   placements,
   resume,
+  scoreChange,
 }: {
   placements: KeywordPlacement[];
   resume?: ResumeData | null;
+  scoreChange?: { before: number; after: number } | null;
 }) {
   const { t } = useTranslations();
   const where = (path: string) => {
@@ -581,6 +590,14 @@ function KeywordPlacementList({
       >
         {t('tailor.forceKeywords.placementsTitle')}
       </h3>
+      {scoreChange && (
+        <p className="mb-3 font-mono text-sm font-bold tabular-nums text-ink">
+          {t('tailor.forceKeywords.scoreChange', {
+            before: scoreChange.before.toFixed(1),
+            after: scoreChange.after.toFixed(1),
+          })}
+        </p>
+      )}
       <ul className="space-y-2">
         {placements.map((placement) => (
           <li key={placement.keyword} className="flex flex-wrap items-baseline gap-2 text-sm">
