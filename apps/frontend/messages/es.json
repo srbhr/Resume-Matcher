@@ -958,7 +958,8 @@
       },
       "nowhere": "No se pudo colocar",
       "error": "No se pudieron aplicar las palabras clave. Inténtalo de nuevo.",
-      "scoreChange": "Puntuación ATS {before} → {after}"
+      "scoreChange": "Puntuación ATS {before} → {after}",
+      "limitReached": "Puedes añadir hasta {max} palabras clave a un currículum."
     }
   },
   "settings": {

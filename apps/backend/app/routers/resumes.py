@@ -1732,20 +1732,7 @@ async def _add_master_skills(master_id: str, keywords: list[str]) -> None:
     if not keywords:
         return
     try:
-        master = await db.get_resume(master_id)
-        data = copy.deepcopy(master.get("processed_data") or {}) if master else {}
-        if not data:
-            return
-        additional = data.setdefault("additional", {})
-        skills = additional.setdefault("technicalSkills", [])
-        known = {s.casefold() for s in skills if isinstance(s, str)}
-        added = [k for k in keywords if k.casefold() not in known]
-        if not added:
-            return
-        skills.extend(added)
-        await db.update_resume(
-            master_id, {"processed_data": ResumeData.model_validate(data).model_dump()}
-        )
+        await db.add_resume_skills(master_id, keywords)
     except Exception:
         logger.warning(
             "Adding confirmed skills to master %s failed", master_id, exc_info=True
@@ -1826,21 +1813,23 @@ async def apply_keywords_endpoint(
     ).model_dump()
     placements = keyword_placements(current, final, keywords)
 
-    registered = await db.register_preview(
-        source_id=request.resume_id,
-        job_id=request.job_id,
-        payload_hash=_hash_improved_data(final),
-        source_hash=resume_fingerprint(
-            resume["content"],
-            resume.get("processed_data"),
-            resume.get("original_markdown"),
-        ),
-        job_hash=job_fingerprint(job["content"]),
-        prompt_id=request.prompt_id or _get_default_prompt_id(),
-        ttl_seconds=settings.preview_ttl_seconds,
-        improvements=preview["improvements"],
-        source_data=preview["source_data"],
-    )
+    # The replacement keeps the original preview's input fingerprints, so
+    # register_preview (which re-checks them in its write transaction) refuses
+    # it when the master or the job changed since the first preview.
+    try:
+        registered = await db.register_preview(
+            source_id=request.resume_id,
+            job_id=request.job_id,
+            payload_hash=_hash_improved_data(final),
+            source_hash=preview["source_hash"],
+            job_hash=preview["job_hash"],
+            prompt_id=request.prompt_id or _get_default_prompt_id(),
+            ttl_seconds=settings.preview_ttl_seconds,
+            improvements=preview["improvements"],
+            source_data=preview["source_data"],
+        )
+    except PreviewConflictError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
     response_warnings: list[str] = []
     diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
         resume, final, source

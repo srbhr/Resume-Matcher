@@ -8,6 +8,9 @@ import type { ForcedKeywordInput } from '@/lib/api/resume';
 import { useTranslations } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
+/** Keywords one preview can carry; matches the confirm request's limit. */
+export const MAX_FORCED_KEYWORDS = 30;
+
 interface KeywordForcingPanelProps {
   /** Job keywords the master resume does not show: need "I have this". */
   unsupported: string[];
@@ -16,6 +19,8 @@ interface KeywordForcingPanelProps {
   onApply: (keywords: ForcedKeywordInput[], addToMaster: boolean) => void;
   busy?: boolean;
   error?: string | null;
+  /** How many more keywords this preview may take (the server keeps at most 30). */
+  remaining?: number;
 }
 
 function Chip({
@@ -64,6 +69,7 @@ export function KeywordForcingPanel({
   onApply,
   busy = false,
   error,
+  remaining = MAX_FORCED_KEYWORDS,
 }: KeywordForcingPanelProps) {
   const { t } = useTranslations();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -80,6 +86,7 @@ export function KeywordForcingPanel({
     });
 
   const unsupportedSet = new Set(unsupported);
+  const full = selected.size >= remaining;
   const anyAttested = [...selected].some((k) => unsupportedSet.has(k));
 
   const apply = () => {
@@ -117,7 +124,7 @@ export function KeywordForcingPanel({
                 key={keyword}
                 keyword={keyword}
                 selected={selected.has(keyword)}
-                disabled={busy}
+                disabled={busy || (full && !selected.has(keyword))}
                 onToggle={() => toggle(keyword)}
                 actionLabel={t('tailor.forceKeywords.apply')}
               />
@@ -137,7 +144,7 @@ export function KeywordForcingPanel({
                 key={keyword}
                 keyword={keyword}
                 selected={selected.has(keyword)}
-                disabled={busy}
+                disabled={busy || (full && !selected.has(keyword))}
                 onToggle={() => toggle(keyword)}
                 actionLabel={t('tailor.forceKeywords.haveThis')}
               />
@@ -158,6 +165,12 @@ export function KeywordForcingPanel({
           />
           {t('tailor.forceKeywords.addToMaster')}
         </label>
+      )}
+
+      {full && (
+        <p className="text-sm text-ink-soft">
+          {t('tailor.forceKeywords.limitReached', { max: MAX_FORCED_KEYWORDS })}
+        </p>
       )}
 
       {error && <Alert tone="error">{error}</Alert>}

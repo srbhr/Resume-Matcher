@@ -181,8 +181,15 @@ async def force_keywords(
         logger.info(
             "Keyword placement: %d change(s) refused by apply_diffs", len(rejected)
         )
-    text = _extract_all_text(result)
-    missing = [k for k in pending if not _keyword_in_text(k, text)]
+    # Every keyword reaches the skills list or the summary on its own; a bullet
+    # edit alone is not enough (optional edits may be the only placement).
+    skills_text = " ".join(_skills(result))
+    summary = result.get("summary") if isinstance(result.get("summary"), str) else ""
+    missing = [
+        k
+        for k in pending
+        if not _keyword_in_text(k, skills_text) and not _keyword_in_text(k, summary)
+    ]
     if missing:
         fallback = [
             ResumeChange(

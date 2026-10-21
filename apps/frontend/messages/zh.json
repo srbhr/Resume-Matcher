@@ -958,7 +958,8 @@
       },
       "nowhere": "无法放入",
       "error": "无法应用关键词，请重试。",
-      "scoreChange": "ATS 分数 {before} → {after}"
+      "scoreChange": "ATS 分数 {before} → {after}",
+      "limitReached": "每份简历最多可添加 {max} 个关键词。"
     }
   },
   "settings": {

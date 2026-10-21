@@ -866,6 +866,8 @@ class Database:
                 "source_id": row.source_id,
                 "job_id": row.job_id,
                 "payload_hash": row.payload_hash,
+                "source_hash": row.source_hash,
+                "job_hash": row.job_hash,
                 "expires_at": row.expires_at,
                 "improvements": copy.deepcopy(row.improvements or []),
                 "source_data": copy.deepcopy(row.source_data),
@@ -1076,6 +1078,39 @@ class Database:
             "improvements": improvements,
             "created_at": now,
         }
+
+    async def add_resume_skills(self, resume_id: str, skills: list[str]) -> list[str]:
+        """Append skills a resume lacks, reading and writing in one transaction.
+
+        Concurrent confirmations and editor saves cannot overwrite each other's
+        additions. Returns the skills actually added.
+        """
+        async with self._write_session() as session:
+            row = await session.get(Resume, resume_id)
+            if row is None:
+                raise ResumeNotFoundError(resume_id)
+            data = copy.deepcopy(row.processed_data or {})
+            if not data:
+                return []
+            additional = data.get("additional")
+            if not isinstance(additional, dict):
+                additional = {}
+                data["additional"] = additional
+            current = additional.get("technicalSkills")
+            current = (
+                [s for s in current if isinstance(s, str)]
+                if isinstance(current, list)
+                else []
+            )
+            known = {s.casefold() for s in current}
+            added = [s for s in dict.fromkeys(skills) if s.casefold() not in known]
+            if not added:
+                return []
+            additional["technicalSkills"] = current + added
+            row.processed_data = data
+            row.updated_at = _now()
+            await session.commit()
+            return added
 
     async def get_improvement_by_job(self, job_id: str) -> dict[str, Any] | None:
         """Get the latest improvement record tailored against a job, if any."""

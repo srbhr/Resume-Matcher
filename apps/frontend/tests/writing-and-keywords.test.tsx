@@ -250,3 +250,43 @@ describe('HighlightedResumeView forced keywords', () => {
     expect(kubernetesTag.className).toContain('bg-primary');
   });
 });
+
+describe('review fixes', () => {
+  it('stops selecting keywords at the remaining limit', () => {
+    render(
+      <KeywordForcingPanel
+        unsupported={['Helm', 'Kafka']}
+        supported={['Docker']}
+        onApply={vi.fn()}
+        remaining={1}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Docker/ }));
+    expect(screen.getByRole('button', { name: /Helm/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Docker/ })).toBeEnabled();
+    expect(screen.getByText('tailor.forceKeywords.limitReached {"max":30}')).toBeInTheDocument();
+  });
+
+  it('blocks saving and rejecting while keywords are being applied', () => {
+    render(
+      <DiffPreviewModal
+        isOpen
+        onClose={vi.fn()}
+        onReject={vi.fn()}
+        onConfirm={vi.fn()}
+        diffSummary={{
+          total_changes: 0,
+          skills_added: 0,
+          skills_removed: 0,
+          descriptions_modified: 0,
+          certifications_added: 0,
+          high_risk_changes: 0,
+        }}
+        detailedChanges={[]}
+        actionsDisabled
+      />
+    );
+    expect(screen.getByRole('button', { name: 'tailor.diffModal.confirmButton' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /tailor\.diffModal\.rejectButton/ })).toBeDisabled();
+  });
+});

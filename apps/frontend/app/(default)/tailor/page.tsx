@@ -48,7 +48,10 @@ import { ListNumbers, SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
-import { KeywordForcingPanel } from '@/components/tailor/keyword-forcing-panel';
+import {
+  KeywordForcingPanel,
+  MAX_FORCED_KEYWORDS,
+} from '@/components/tailor/keyword-forcing-panel';
 import { TailorProgress } from '@/components/tailor/tailor-progress';
 import { WritingScoreCard } from '@/components/tailor/writing-score-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -373,7 +376,7 @@ export default function TailorPage() {
   const handleApplyKeywords = async (keywords: ForcedKeywordInput[], addToMaster: boolean) => {
     const current = pendingResult;
     const sourceId = previewSourceIdRef.current;
-    if (!current?.data.preview_id || !sourceId || keywordBusy) return;
+    if (!current?.data.preview_id || !sourceId || keywordBusy || confirmationBusy.current) return;
     const token = begin();
     if (token === null) return;
     setKeywordBusy(true);
@@ -407,7 +410,15 @@ export default function TailorPage() {
         });
       }
       setWritingResume((next.data.resume_preview as ResumeData) ?? null);
-      setPendingResult(next);
+      // Earlier applications stay listed: their keywords are still in the resume.
+      const latest = next.data.keyword_placements ?? [];
+      const earlier = (current.data.keyword_placements ?? []).filter(
+        (p) => !latest.some((n) => n.keyword === p.keyword)
+      );
+      setPendingResult({
+        ...next,
+        data: { ...next.data, keyword_placements: [...earlier, ...latest] },
+      });
     } catch (err) {
       if (!isCurrent(token)) return;
       console.error(err);
@@ -444,7 +455,7 @@ export default function TailorPage() {
 
   // User confirms changes
   const handleConfirmChanges = async () => {
-    if (!pendingResult || confirmationBusy.current) return;
+    if (!pendingResult || confirmationBusy.current || keywordBusy) return;
     const token = begin();
     if (token === null) return;
     confirmationBusy.current = true;
@@ -832,6 +843,7 @@ export default function TailorPage() {
           errorMessage={diffConfirmError ?? undefined}
           selectionSummary={pendingResult?.data?.bullet_selection}
           heavyMode={selectedPromptId === 'heavy'}
+          actionsDisabled={keywordBusy}
           placements={pendingResult?.data?.keyword_placements}
           scoreChange={
             atsPrevious != null && atsResult
@@ -847,6 +859,7 @@ export default function TailorPage() {
                 onApply={(keywords, addToMaster) => void handleApplyKeywords(keywords, addToMaster)}
                 busy={keywordBusy}
                 error={keywordError}
+                remaining={Math.max(0, MAX_FORCED_KEYWORDS - forcedKeywords.length)}
               />
             ) : null
           }

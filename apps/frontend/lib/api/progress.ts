@@ -1,12 +1,10 @@
 import { API_BASE } from './client';
 
-/** A fresh id for GET /resumes/improve/progress/{id}; letters and digits only. */
+/** A fresh random id for GET /resumes/improve/progress/{id}: 32 hex characters. */
 export function newProgressId(): string {
-  const uuid =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
-  return uuid.replace(/[^A-Za-z0-9]/g, '');
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**

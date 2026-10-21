@@ -958,7 +958,8 @@
       },
       "nowhere": "Não foi possível incluir",
       "error": "Não foi possível aplicar as palavras-chave. Tente novamente.",
-      "scoreChange": "Pontuação ATS {before} → {after}"
+      "scoreChange": "Pontuação ATS {before} → {after}",
+      "limitReached": "Você pode adicionar até {max} palavras-chave a um currículo."
     }
   },
   "settings": {

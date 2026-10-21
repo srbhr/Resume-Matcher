@@ -958,7 +958,8 @@
       },
       "nowhere": "Could not be placed",
       "error": "Could not apply the keywords. Please try again.",
-      "scoreChange": "ATS score {before} → {after}"
+      "scoreChange": "ATS score {before} → {after}",
+      "limitReached": "You can add up to {max} keywords to one resume."
     }
   },
   "settings": {

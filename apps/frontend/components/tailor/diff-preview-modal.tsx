@@ -42,6 +42,8 @@ interface DiffPreviewModalProps {
   resume?: ResumeData | null;
   /** ATS score before and after the last keyword apply, shown with the placements. */
   scoreChange?: { before: number; after: number } | null;
+  /** Another action (applying keywords) is running: saving or rejecting must wait. */
+  actionsDisabled?: boolean;
 }
 
 export function DiffPreviewModal({
@@ -59,6 +61,7 @@ export function DiffPreviewModal({
   placements,
   resume,
   scoreChange,
+  actionsDisabled = false,
 }: DiffPreviewModalProps) {
   const { t } = useTranslations();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -375,7 +378,7 @@ export function DiffPreviewModal({
 
         {/* Action buttons */}
         <DialogFooter className="justify-between">
-          <Button variant="outline" onClick={onReject} disabled={isConfirming}>
+          <Button variant="outline" onClick={onReject} disabled={isConfirming || actionsDisabled}>
             <X className="w-4 h-4" />
             {t('tailor.diffModal.rejectButton')}
           </Button>
@@ -383,7 +386,11 @@ export function DiffPreviewModal({
             {isConfirming && elapsed > 0 && (
               <span className="font-mono text-xs tabular-nums text-ink-soft">{elapsed}s</span>
             )}
-            <Button variant="success" onClick={onConfirm} disabled={isConfirming}>
+            <Button
+              variant="success"
+              onClick={onConfirm}
+              disabled={isConfirming || actionsDisabled}
+            >
               {isConfirming ? (
                 <>
                   <SpinnerGap className="w-4 h-4 animate-spin" />

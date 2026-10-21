@@ -336,3 +336,60 @@ async def test_expired_preview_is_refused(
     )
     assert resp.status_code == 409
     assert llm.await_count == 0
+
+
+async def test_master_changed_after_preview_is_refused(
+    isolated_db: Any, sample_resume: dict[str, Any]
+) -> None:
+    resume_id, preview = await _preview(sample_resume)
+    master = await isolated_db.get_resume(resume_id)
+    edited = copy.deepcopy(master["processed_data"])
+    edited["summary"] = "Edited in the builder after the preview."
+    await isolated_db.update_resume(resume_id, {"processed_data": edited})
+
+    resp = await _apply(
+        resume_id,
+        preview,
+        [{"keyword": "Kubernetes", "attested": True}],
+        AsyncMock(return_value=_placement(MIGRATION + " on Kubernetes")),
+    )
+    assert resp.status_code == 409
+
+
+async def test_a_tool_placed_only_in_a_bullet_still_reaches_skills(
+    isolated_db: Any, sample_resume: dict[str, Any]
+) -> None:
+    resume_id, preview = await _preview(sample_resume)
+    bullet_only = {"changes": _placement(MIGRATION + " on Kubernetes")["changes"][1:]}
+    resp = await _apply(
+        resume_id,
+        preview,
+        [{"keyword": "Kubernetes", "attested": True}],
+        AsyncMock(return_value=bullet_only),
+    )
+    data = resp.json()["data"]
+    assert data["keyword_placements"][0]["paths"] == [
+        "workExperience[0].description[1]",
+        "additional.technicalSkills",
+    ]
+
+
+async def test_concurrent_master_skill_additions_are_both_kept(
+    isolated_db: Any, sample_resume: dict[str, Any]
+) -> None:
+    import asyncio
+
+    resume_id, _ = await _preview(sample_resume)
+    await asyncio.gather(
+        isolated_db.add_resume_skills(resume_id, ["Kubernetes"]),
+        isolated_db.add_resume_skills(resume_id, ["Terraform", "kubernetes"]),
+    )
+    skills = (await isolated_db.get_resume(resume_id))["processed_data"]["additional"][
+        "technicalSkills"
+    ]
+    assert skills.count("Kubernetes") + skills.count("kubernetes") == 1
+    assert "Terraform" in skills
+    assert (
+        skills[: len(sample_resume["additional"]["technicalSkills"])]
+        == sample_resume["additional"]["technicalSkills"]
+    )

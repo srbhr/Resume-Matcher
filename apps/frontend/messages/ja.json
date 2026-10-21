@@ -958,7 +958,8 @@
       },
       "nowhere": "反映できませんでした",
       "error": "キーワードを反映できませんでした。もう一度お試しください。",
-      "scoreChange": "ATSスコア {before} → {after}"
+      "scoreChange": "ATSスコア {before} → {after}",
+      "limitReached": "1つの履歴書に追加できるキーワードは最大{max}個です。"
     }
   },
   "settings": {

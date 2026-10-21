@@ -958,7 +958,8 @@
       },
       "nowhere": "Impossible à placer",
       "error": "Impossible d'appliquer les mots-clés. Veuillez réessayer.",
-      "scoreChange": "Score ATS {before} → {after}"
+      "scoreChange": "Score ATS {before} → {after}",
+      "limitReached": "Vous pouvez ajouter jusqu'à {max} mots-clés à un CV."
     }
   },
   "settings": {
