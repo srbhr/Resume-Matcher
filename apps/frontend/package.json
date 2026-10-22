@@ -34,7 +34,7 @@
     "isomorphic-dompurify": "^4.5.0",
     "lucide-react": "^0.577.0",
     "motion": "13.4.4",
-    "next": "^16.4.0",
+    "next": "^16.4.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.7.0"
