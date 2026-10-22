@@ -113,7 +113,6 @@ from app.services.parser import (
 from app.services.progress import progress_events, tracked_progress
 from app.services.refiner import (
     _extract_all_text,
-    _keyword_in_text,
     analyze_keyword_gaps,
     calculate_keyword_match,
     count_retained_keywords,
@@ -130,6 +129,7 @@ from app.services.tailor_selection import (
     final_page_check,
     run_bullet_selection,
 )
+from app.services.text_match import keyword_in_text
 from app.services.writing_loop import finalized_writing_report, run_writing_loop
 
 logger = logging.getLogger(__name__)
@@ -1790,7 +1790,7 @@ async def apply_keywords_endpoint(
             raise HTTPException(
                 status_code=400, detail="Only keywords from this job can be applied."
             )
-        if not item.attested and not _keyword_in_text(term, master_text):
+        if not item.attested and not keyword_in_text(term, master_text):
             raise HTTPException(
                 status_code=400,
                 detail="Confirm each keyword your master resume does not show.",

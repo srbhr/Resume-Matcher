@@ -22,6 +22,8 @@ import logging
 import re
 from typing import Any
 
+from app.services.text_match import keyword_in_text
+
 logger = logging.getLogger(__name__)
 
 # Weights must sum to 1.0
@@ -86,19 +88,6 @@ def _extract_all_text(data: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def _keyword_in_text(keyword: str, text_lower: str) -> bool:
-    """Whole-word match against pre-lowercased text to avoid false positives.
-
-    Args:
-        keyword: The keyword to search for (will be lowercased internally).
-        text_lower: Full text that has already been lowercased by the caller.
-    """
-    escaped = re.escape(keyword.strip().lower())
-    if not escaped:
-        return False
-    return bool(re.search(rf"(?<!\w){escaped}(?!\w)", text_lower))
-
-
 def _title_tokens(text: str) -> set[str]:
     """Lowercased title words, minus filler words like "of" / "and"."""
     return {
@@ -144,7 +133,7 @@ def _compute_skills_coverage(
             continue
         skill_lower = skill.lower()
         # Direct skill list match or whole-word text match (resume_text is pre-lowercased)
-        if skill_lower in resume_skills_lower or _keyword_in_text(skill, resume_text):
+        if skill_lower in resume_skills_lower or keyword_in_text(skill, resume_text):
             matched += 1
 
     return min(100.0, (matched / len(jd_skills)) * 100)
@@ -172,9 +161,9 @@ def compute_title_match(
         else ""
     )
 
-    if _keyword_in_text(role, headline.lower()):
+    if keyword_in_text(role, headline.lower()):
         return _TITLE_IN_HEADLINE
-    if _keyword_in_text(role, summary.lower()):
+    if keyword_in_text(role, summary.lower()):
         return _TITLE_IN_SUMMARY
 
     role_tokens = _title_tokens(role)

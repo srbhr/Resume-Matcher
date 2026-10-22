@@ -19,7 +19,8 @@ from app.prompts.writing import KEYWORD_PLACEMENT_PROMPT
 from app.schemas.models import ImproveDiffResult, ResumeChange
 from app.schemas.writing_report import KeywordPlacement
 from app.services.improver import _resolve_path, _sanitize_user_input, apply_diffs
-from app.services.refiner import _extract_all_text, _keyword_in_text
+from app.services.refiner import _extract_all_text
+from app.services.text_match import keyword_in_text
 from app.services.writing_quality import (
     fact_violations,
     iter_writing_units,
@@ -113,7 +114,7 @@ def _verified_changes(
         placed = [
             k
             for k in keywords
-            if _keyword_in_text(k, after) and not _keyword_in_text(k, before)
+            if keyword_in_text(k, after) and not keyword_in_text(k, before)
         ]
         if not placed or any(
             lines_used.get(k, 0) >= MAX_LINES_PER_KEYWORD for k in placed
@@ -145,8 +146,8 @@ def keyword_placements(
         paths = [
             path
             for path, text in new_units.items()
-            if _keyword_in_text(keyword, text)
-            and not _keyword_in_text(keyword, old_units.get(path, ""))
+            if keyword_in_text(keyword, text)
+            and not keyword_in_text(keyword, old_units.get(path, ""))
         ]
         if keyword.casefold() in new_skills and keyword.casefold() not in old_skills:
             paths.append(_SKILLS_PATH)
@@ -165,7 +166,7 @@ async def force_keywords(
     A failed AI call still places every keyword in the skills list, so an
     explicit request is never silently dropped.
     """
-    pending = [k for k in keywords if not _keyword_in_text(k, _extract_all_text(data))]
+    pending = [k for k in keywords if not keyword_in_text(k, _extract_all_text(data))]
     if not pending:
         return data
     try:
@@ -188,7 +189,7 @@ async def force_keywords(
     missing = [
         k
         for k in pending
-        if not _keyword_in_text(k, skills_text) and not _keyword_in_text(k, summary)
+        if not keyword_in_text(k, skills_text) and not keyword_in_text(k, summary)
     ]
     if missing:
         fallback = [

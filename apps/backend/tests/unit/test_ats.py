@@ -314,3 +314,40 @@ def test_keyword_lists_follow_job_posting_order() -> None:
         _resume(), job, 50.0, ["gRPC", "Go", "Terraform"], ["Kubernetes"]
     )
     assert result["missing_keywords"] == ["Terraform", "Go", "gRPC"]
+
+
+class TestCjkMatching:
+    """ATS matching must handle CJK text, which has no spaces between words."""
+
+    def test_latin_skill_inside_cjk_prose_counts(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[{"title": "工程师", "description": ["使用python开发后端"]}],
+        )
+        job = {**JOB, "required_skills": ["Python"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 100.0
+
+    def test_cjk_skill_inside_cjk_prose_counts(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[{"title": "分析师", "description": ["负责数据分析工作"]}],
+        )
+        job = {**JOB, "required_skills": ["数据分析"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 100.0
+
+    def test_cjk_title_inside_longer_headline_matches(self) -> None:
+        resume = _resume(
+            personalInfo={**BASE_RESUME["personalInfo"], "title": "高级后端工程师"}
+        )
+        assert compute_title_match(resume, {**JOB, "role": "后端工程师"}) == 100.0
+
+    def test_latin_word_boundaries_still_hold(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[{"title": "Dev", "description": ["Wrote javascript"]}],
+        )
+        job = {**JOB, "required_skills": ["Java"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0

@@ -42,6 +42,7 @@ Stack: FastAPI 0.143 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 - `improver.py` (largest) — keyword extraction, **diff-based** improvement (`generate_resume_diffs` → `apply_diffs` with path allow/block-lists → `verify_diff_result`), skill-target planning (`generate_skill_target_plan`/`verify_skill_target_plan`), legacy full-output `improve_resume`, `calculate_resume_diff`. Sanitizes prompt-injection patterns in user input.
 - `refiner.py` — multi-pass polish: keyword injection (LLM), AI-phrase removal (local, via `refinement.py` blacklist), master-alignment validation. Driven by `RefinementConfig`.
 - `writing_quality.py` (code rules, score, `fact_violations` rewrite check), `writing_loop.py` (critic + one rewrite of hard findings, run after `refine_resume` in every tailoring; Light nudge only critiques), `keyword_forcing.py` (apply-keywords placement + verification), `progress.py` (stage registry behind the SSE endpoint).
+- `text_match.py` — `keyword_in_text` (whole-term match; CJK-aware, since CJK text has no spaces) and `normalize_skill_key`. The one matcher for ATS scoring, tailoring, refinement and writing checks; don't add a local `\b`/`(?<!\w)` copy.
 - `cover_letter.py` — `generate_cover_letter`, `generate_outreach_message`, `generate_resume_title`; resolves custom-vs-default feature prompts at runtime.
 
 ---

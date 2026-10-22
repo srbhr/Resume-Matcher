@@ -30,53 +30,19 @@ from app.schemas.refinement import (
     RefinementResult,
 )
 from app.services.resume_preservation import finalize_ai_resume
+from app.services.text_match import keyword_in_text, normalize_skill_key
 
 logger = logging.getLogger(__name__)
 
 # LLM-012: Job description truncation limits
 MAX_JD_LENGTH = 2000
 MIN_TRUNCATION_WARNING_LENGTH = 1500
-# Han (including supplementary planes), Kana, and Hangul syllables/Jamo.
-_CJK_CHAR_CLASS = (
-    r"[\u1100-\u11ff\u3040-\u30ff\u3130-\u318f\u31f0-\u31ff"
-    r"\u3400-\u9fff\ua960-\ua97f\uac00-\ud7ff\uf900-\ufaff"
-    r"\uff66-\uffdc\U0001b000-\U0001b16f\U00020000-\U0003ffff]"
-)
-_CJK_RE = re.compile(_CJK_CHAR_CLASS)
-
-
-def _keyword_in_text(keyword: str, text: str) -> bool:
-    """Check for a CJK substring or a bounded non-CJK term in text.
-
-    Han, Kana, and Hangul characters may adjoin Latin skills without whitespace,
-    so they also form boundaries for adjacent Latin terms. Other word characters
-    retain boundaries so 'python' does not match 'pythonic' and 'java' does not
-    match 'javascript'.
-    """
-    normalized_keyword = keyword.strip().lower()
-    if not normalized_keyword:
-        return False
-    normalized_text = text.lower()
-    if _CJK_RE.search(normalized_keyword):
-        return normalized_keyword in normalized_text
-    escaped = re.escape(normalized_keyword)
-    pattern = (
-        rf"(?:(?<!\w)|(?<={_CJK_CHAR_CLASS}))"
-        rf"{escaped}"
-        rf"(?:(?!\w)|(?={_CJK_CHAR_CLASS}))"
-    )
-    return bool(re.search(pattern, normalized_text))
 
 
 def count_retained_keywords(keywords: list[str], resume: dict[str, Any]) -> int:
     """Count refinement keywords still present in the finalized resume."""
     text = _extract_all_text(resume)
-    return sum(_keyword_in_text(keyword, text) for keyword in keywords)
-
-
-def _normalize_skill_key(skill: str) -> str:
-    """Normalize a skill for case-insensitive comparisons."""
-    return re.sub(r"\s+", " ", skill.strip()).casefold()
+    return sum(keyword_in_text(keyword, text) for keyword in keywords)
 
 
 def _extract_jd_skill_keys(
@@ -93,9 +59,9 @@ def _extract_jd_skill_keys(
             if (
                 isinstance(value, str)
                 and value.strip()
-                and _keyword_in_text(value, job_description)
+                and keyword_in_text(value, job_description)
             ):
-                keys.add(_normalize_skill_key(value))
+                keys.add(normalize_skill_key(value))
     return keys
 
 
@@ -239,7 +205,7 @@ async def refine_resume(
             for keyword in (
                 keyword_analysis.injectable_keywords if keyword_analysis else []
             )
-            if _keyword_in_text(keyword, _extract_all_text(current))
+            if keyword_in_text(keyword, _extract_all_text(current))
         ],
         alignment_violations_fixed=alignment_fixed,
         keyword_analysis=keyword_analysis,
@@ -280,9 +246,9 @@ def analyze_keyword_gaps(
     non_injectable: list[str] = []
 
     for keyword in all_jd_keywords:
-        if not _keyword_in_text(keyword, tailored_text):
+        if not keyword_in_text(keyword, tailored_text):
             missing.append(keyword)
-            if _keyword_in_text(keyword, master_text):
+            if keyword_in_text(keyword, master_text):
                 injectable.append(keyword)
             else:
                 non_injectable.append(keyword)
@@ -469,21 +435,21 @@ def validate_master_alignment(
         if isinstance(s, str)
     )
     allowed_skills = {
-        _normalize_skill_key(skill)
+        normalize_skill_key(skill)
         for skill in (allowed_new_skills or set())
         if isinstance(skill, str) and skill.strip()
     }
     master_full_text = _extract_all_text(master).lower()
 
     for skill in tailored_skills - master_skills:
-        if _normalize_skill_key(skill) in allowed_skills:
+        if normalize_skill_key(skill) in allowed_skills:
             continue
         # Check substring/containment: e.g. "Python" in "Python 3.x"
         has_substring_match = any(
             skill in ms or ms in skill for ms in master_skills if ms
         )
         # Check if skill appears anywhere in master resume text
-        found_in_text = _keyword_in_text(skill, master_full_text)
+        found_in_text = keyword_in_text(skill, master_full_text)
 
         if has_substring_match or found_in_text:
             violations.append(
@@ -833,7 +799,7 @@ def calculate_keyword_match(
         return 0.0
 
     # SVC-010: Use word boundary matching instead of substring
-    matched = sum(1 for kw in all_keywords if _keyword_in_text(kw, resume_text))
+    matched = sum(1 for kw in all_keywords if keyword_in_text(kw, resume_text))
     return (matched / len(all_keywords)) * 100
 
 
