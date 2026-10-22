@@ -366,6 +366,37 @@ class TestSkillsCoverageUsesRenderedContent:
         result = compute_ats_score(resume, job, 100.0, [], [])
         assert result["sub_scores"]["skills_coverage"] == 0.0
 
+    def test_skill_only_in_condensed_role_details_does_not_count(self) -> None:
+        # A condensed role prints as one line, "Title, Company, years"; its
+        # description and location never reach the page.
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[
+                {
+                    "title": "Intern",
+                    "company": "Old Co",
+                    "location": "Kubernetes City",
+                    "years": "2012 - 2013",
+                    "condensed": True,
+                    "description": ["Ran Terraform"],
+                }
+            ],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes", "Terraform"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0
+
+    def test_condensed_role_title_still_counts(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[
+                {"title": "Kubernetes Admin", "company": "Old Co", "condensed": True}
+            ],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 100.0
+
     def test_skill_only_in_section_label_does_not_count(self) -> None:
         resume = _resume(
             sectionMeta=[{"key": "custom_1", "displayName": "Kubernetes"}],

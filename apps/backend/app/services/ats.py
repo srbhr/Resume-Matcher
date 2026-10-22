@@ -22,6 +22,7 @@ import logging
 import re
 from typing import Any
 
+from app.services.ats_parse.roundtrip import CONDENSED_ORDER
 from app.services.text_match import keyword_in_text
 
 logger = logging.getLogger(__name__)
@@ -109,13 +110,22 @@ def _rendered_content(resume: dict[str, Any]) -> dict[str, Any]:
     """The resume minus what never reaches the page, so an ATS cannot read it.
 
     Section labels in sectionMeta ("Summary", "Experience", ...) are
-    configuration, not content, and hidden sections are not rendered.
+    configuration, not content, and hidden sections are not rendered. A
+    condensed work entry prints only its title, company and years.
     """
     content = {
         key: value
         for key, value in resume.items()
         if key != "sectionMeta" and _is_section_visible(resume, key)
     }
+    work = content.get("workExperience")
+    if isinstance(work, list):
+        content["workExperience"] = [
+            {k: entry.get(k) for k in CONDENSED_ORDER}
+            if isinstance(entry, dict) and entry.get("condensed")
+            else entry
+            for entry in work
+        ]
     custom = content.get("customSections")
     if isinstance(custom, dict):
         content["customSections"] = {
