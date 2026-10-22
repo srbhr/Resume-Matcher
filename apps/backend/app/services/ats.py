@@ -22,6 +22,9 @@ import logging
 import re
 from typing import Any
 
+from app.services.ats_parse.roundtrip import CONDENSED_ORDER
+from app.services.text_match import keyword_in_text
+
 logger = logging.getLogger(__name__)
 
 # Weights must sum to 1.0
@@ -86,19 +89,6 @@ def _extract_all_text(data: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def _keyword_in_text(keyword: str, text_lower: str) -> bool:
-    """Whole-word match against pre-lowercased text to avoid false positives.
-
-    Args:
-        keyword: The keyword to search for (will be lowercased internally).
-        text_lower: Full text that has already been lowercased by the caller.
-    """
-    escaped = re.escape(keyword.strip().lower())
-    if not escaped:
-        return False
-    return bool(re.search(rf"(?<!\w){escaped}(?!\w)", text_lower))
-
-
 def _title_tokens(text: str) -> set[str]:
     """Lowercased title words, minus filler words like "of" / "and"."""
     return {
@@ -114,6 +104,36 @@ def _is_section_visible(resume: dict[str, Any], key: str) -> bool:
         if isinstance(meta, dict) and meta.get("key") == key:
             return meta.get("isVisible", True) is not False
     return True
+
+
+def _rendered_content(resume: dict[str, Any]) -> dict[str, Any]:
+    """The resume minus what never reaches the page, so an ATS cannot read it.
+
+    Section labels in sectionMeta ("Summary", "Experience", ...) are
+    configuration, not content, and hidden sections are not rendered. A
+    condensed work entry prints only its title, company and years.
+    """
+    content = {
+        key: value
+        for key, value in resume.items()
+        if key != "sectionMeta" and _is_section_visible(resume, key)
+    }
+    work = content.get("workExperience")
+    if isinstance(work, list):
+        content["workExperience"] = [
+            {k: entry.get(k) for k in CONDENSED_ORDER}
+            if isinstance(entry, dict) and entry.get("condensed")
+            else entry
+            for entry in work
+        ]
+    custom = content.get("customSections")
+    if isinstance(custom, dict):
+        content["customSections"] = {
+            key: value
+            for key, value in custom.items()
+            if _is_section_visible(resume, key)
+        }
+    return content
 
 
 def _compute_skills_coverage(
@@ -132,10 +152,11 @@ def _compute_skills_coverage(
     if not jd_skills:
         return 0.0
 
-    resume_skills: list[str] = (
-        resume.get("additional", {}).get("technicalSkills", []) or []
-    )
-    resume_text = _extract_all_text(resume).lower()
+    content = _rendered_content(resume)
+    resume_skills: list[str] = (content.get("additional") or {}).get(
+        "technicalSkills", []
+    ) or []
+    resume_text = _extract_all_text(content).lower()
     resume_skills_lower = {s.lower() for s in resume_skills if isinstance(s, str)}
 
     matched = 0
@@ -144,7 +165,7 @@ def _compute_skills_coverage(
             continue
         skill_lower = skill.lower()
         # Direct skill list match or whole-word text match (resume_text is pre-lowercased)
-        if skill_lower in resume_skills_lower or _keyword_in_text(skill, resume_text):
+        if skill_lower in resume_skills_lower or keyword_in_text(skill, resume_text):
             matched += 1
 
     return min(100.0, (matched / len(jd_skills)) * 100)
@@ -172,9 +193,9 @@ def compute_title_match(
         else ""
     )
 
-    if _keyword_in_text(role, headline.lower()):
+    if keyword_in_text(role, headline.lower()):
         return _TITLE_IN_HEADLINE
-    if _keyword_in_text(role, summary.lower()):
+    if keyword_in_text(role, summary.lower()):
         return _TITLE_IN_SUMMARY
 
     role_tokens = _title_tokens(role)
@@ -244,22 +265,7 @@ def compute_section_completeness(resume: dict[str, Any]) -> float:
 
     # Legacy/unstructured data: scan the text for section headings. Contact info
     # only counts when it is structured; it can't be detected from free text.
-    # Section labels in sectionMeta ("Summary", "Experience", ...) are
-    # configuration, not content, so leave them out of the scan. So are hidden
-    # sections: they are not rendered, so they cannot be parsed.
-    content = {
-        key: value
-        for key, value in resume.items()
-        if key != "sectionMeta" and _is_section_visible(resume, key)
-    }
-    custom = content.get("customSections")
-    if isinstance(custom, dict):
-        content["customSections"] = {
-            key: value
-            for key, value in custom.items()
-            if _is_section_visible(resume, key)
-        }
-    text = _extract_all_text(content).lower()
+    text = _extract_all_text(_rendered_content(resume)).lower()
     headings_found = sum(
         1 for patterns in _SECTION_PATTERNS.values() if any(p in text for p in patterns)
     )

@@ -11,8 +11,8 @@ from typing import Any
 
 from app.prompts.refinement import AI_PHRASE_BLACKLIST
 from app.schemas.writing import WritingFinding, WritingReport
-from app.services.refiner import _keyword_in_text
 from app.services.resume_preservation import _novel_numbers
+from app.services.text_match import keyword_in_text
 
 EM_DASH_RE = re.compile(r"—|(?<![\w-])-{2,3}(?![\w-])|(?<=\w)-{2,3}(?=\w)")
 
@@ -135,7 +135,7 @@ def check_writing(data: dict[str, Any], language: str = "en") -> list[WritingFin
         if _FIRST_PERSON_RE.search(text):
             add("first_person", "soft")
         lowered = text.casefold()
-        if any(_keyword_in_text(phrase, lowered) for phrase in _AI_PHRASES):
+        if any(keyword_in_text(phrase, lowered) for phrase in _AI_PHRASES):
             add("ai_phrase", "soft")
         if is_bullet and len(text.split()) > _LONG_BULLET_WORDS:
             add("long_bullet", "soft")
@@ -255,8 +255,8 @@ def fact_violations(
     for term in known_terms:
         if not isinstance(term, str) or not term.strip():
             continue
-        in_before = _keyword_in_text(term, before)
-        in_after = _keyword_in_text(term, after)
+        in_before = keyword_in_text(term, before)
+        in_after = keyword_in_text(term, after)
         if in_before and not in_after:
             violations.append(f"dropped_skill:{term}")
         elif in_after and not in_before and term.strip().casefold() not in allowed_keys:

@@ -43,7 +43,7 @@ curl -s http://localhost:3000/api/v1/health
 
 `{"status":"healthy"}` means it is up: go to **Agent mode** below. Otherwise ask the user which install they want (if their request already says, that is the answer), and recommend local when `uv` and Node are installed:
 
-- **Local** needs Python 3.13+, [uv](https://docs.astral.sh/uv/) and Node.js 24+ (`uv --version`, `node --version`). Install once, then start the backend, wait for it, and start the frontend. Both are long-running: start them in the background so they keep running after you finish (never in the foreground, which blocks you).
+- **Local** needs Python 3.13+, [uv](https://docs.astral.sh/uv/) and Node.js 24.22.1, pinned in `.nvmrc` (`uv --version`, `node --version`). Install once, then start the backend, wait for it, and start the frontend. Both are long-running: start them in the background so they keep running after you finish (never in the foreground, which blocks you).
 
   ```bash
   # From the repository root

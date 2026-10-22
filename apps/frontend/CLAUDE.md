@@ -49,7 +49,7 @@ components/
   resume/            # resume render templates (single/two-column, modern) + styles/*.module.css
   preview/           # paginated A4/Letter preview (use-pagination.ts)
   home/              # hero, swiss-grid
-  settings/          # api-key-menu
+  settings/          # chatgpt-connection, community, subscription-risk-dialog
   effects/           # background-effect (client wrapper, renders nothing when off),
                      #   dither-field (the canvas pixel-beams background)
   common/            # error-boundary, resume_previewer_context, motion-provider,

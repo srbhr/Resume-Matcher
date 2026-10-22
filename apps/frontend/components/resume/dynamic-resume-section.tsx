@@ -13,6 +13,25 @@ import baseStyles from './styles/_base.module.css';
 interface DynamicResumeSectionProps {
   sectionMeta: SectionMeta;
   resumeData: ResumeData;
+  titleClassName?: string;
+  subtitleClassName?: string;
+}
+
+/** Whether a custom section has anything to render for its type. */
+export function customSectionHasContent(
+  sectionType: SectionMeta['sectionType'],
+  customSection: CustomSection
+): boolean {
+  switch (sectionType) {
+    case 'text':
+      return Boolean(customSection.text?.trim());
+    case 'itemList':
+      return Boolean(customSection.items?.length);
+    case 'stringList':
+      return Boolean(customSection.strings?.length);
+    default:
+      return false;
+  }
 }
 
 /**
@@ -24,34 +43,22 @@ interface DynamicResumeSectionProps {
 export const DynamicResumeSection: React.FC<DynamicResumeSectionProps> = ({
   sectionMeta,
   resumeData,
+  titleClassName = baseStyles['resume-section-title'],
+  subtitleClassName = baseStyles['resume-item-subtitle'],
 }) => {
   // Get the custom section data
   const customSection = resumeData.customSections?.[sectionMeta.key];
 
   if (!customSection) return null;
 
-  // Check if section has content
-  const hasContent = (() => {
-    switch (sectionMeta.sectionType) {
-      case 'text':
-        return Boolean(customSection.text?.trim());
-      case 'itemList':
-        return Boolean(customSection.items?.length);
-      case 'stringList':
-        return Boolean(customSection.strings?.length);
-      default:
-        return false;
-    }
-  })();
-
-  if (!hasContent) return null;
+  if (!customSectionHasContent(sectionMeta.sectionType, customSection)) return null;
 
   return (
     <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
-      <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+      <h3 {...RESUME_SECTION_TITLE} className={titleClassName}>
         {sectionMeta.displayName}
       </h3>
-      {renderContent(sectionMeta.sectionType, customSection)}
+      {renderContent(sectionMeta.sectionType, customSection, subtitleClassName)}
     </div>
   );
 };
@@ -59,12 +66,21 @@ export const DynamicResumeSection: React.FC<DynamicResumeSectionProps> = ({
 /**
  * Render section content based on type
  */
-function renderContent(sectionType: SectionMeta['sectionType'], customSection: CustomSection) {
+function renderContent(
+  sectionType: SectionMeta['sectionType'],
+  customSection: CustomSection,
+  subtitleClassName: string
+) {
   switch (sectionType) {
     case 'text':
       return <TextSectionContent text={customSection.text || ''} />;
     case 'itemList':
-      return <ItemListSectionContent items={customSection.items || []} />;
+      return (
+        <ItemListSectionContent
+          items={customSection.items || []}
+          subtitleClassName={subtitleClassName}
+        />
+      );
     case 'stringList':
       return <StringListSectionContent strings={customSection.strings || []} />;
     default:
@@ -84,7 +100,10 @@ const TextSectionContent: React.FC<{ text: string }> = ({ text }) => {
 /**
  * Item List Section Content (like Experience)
  */
-const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ items }) => {
+const ItemListSectionContent: React.FC<{
+  items: CustomSectionItem[];
+  subtitleClassName: string;
+}> = ({ items, subtitleClassName }) => {
   if (items.length === 0) return null;
 
   return (
@@ -104,7 +123,7 @@ const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ item
           {/* Subtitle and Location Row */}
           {(item.subtitle || item.location) && (
             <div
-              className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
+              className={`flex justify-between items-center ${baseStyles['resume-row']} ${subtitleClassName}`}
             >
               {item.subtitle && <span>{item.subtitle}</span>}
               {item.location && <span>{item.location}</span>}

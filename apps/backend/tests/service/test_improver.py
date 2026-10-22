@@ -479,6 +479,22 @@ class TestSkillTargetPlanning:
         assert verified["accepted"][0]["source"] == "existing"
         assert verified["accepted"][1]["source"] == "jd_added"
 
+    def test_verify_skill_target_plan_finds_jd_skills_in_cjk_job_description(
+        self, sample_resume
+    ):
+        """CJK has no spaces, so a JD skill sits right next to CJK characters."""
+        verified = verify_skill_target_plan(
+            {"target_skills": [{"skill": "Kubernetes"}, {"skill": "数据分析"}]},
+            original_resume_data=sample_resume,
+            job_keywords={"required_skills": ["Kubernetes", "数据分析"]},
+            job_description="要求熟悉Kubernetes和数据分析工作",
+        )
+        assert [item["skill"] for item in verified["accepted"]] == [
+            "Kubernetes",
+            "数据分析",
+        ]
+        assert all(item["source"] == "jd_added" for item in verified["accepted"])
+
 
 class TestGenerateResumeDiffsEdgeCases:
     """Edge cases for generate_resume_diffs."""

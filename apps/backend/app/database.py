@@ -58,16 +58,6 @@ logger = logging.getLogger(__name__)
 # attaches dynamically is stored in ``metadata_json`` (see Job model).
 _JOB_CORE_FIELDS = frozenset({"job_id", "content", "resume_id", "created_at"})
 
-# Application status columns (stable keys, decoupled from i18n labels).
-APPLICATION_STATUSES: tuple[str, ...] = (
-    "saved",
-    "applied",
-    "no_response",
-    "response",
-    "interview",
-    "accepted",
-    "rejected",
-)
 ProcessingFinishOutcome = Literal["committed", "stale", "missing"]
 QueueDeleteOutcome = Literal["deleted", "missing", "in_progress"]
 

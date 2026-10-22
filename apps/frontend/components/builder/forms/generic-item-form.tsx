@@ -1,33 +1,16 @@
 'use client';
 
 import React, { useId } from 'react';
-import dynamic from 'next/dynamic';
 import { Input } from '@/components/ui/input';
-import { Label, labelClass } from '@/components/ui/label';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 
-// Lazy-load TipTap-based editor — keeps it out of the initial bundle.
-const RichTextEditor = dynamic(
-  () => import('@/components/ui/rich-text-editor').then((m) => m.RichTextEditor),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="min-h-[100px] border border-ink bg-transparent" aria-busy="true" />
-    ),
-  }
-);
-import { TextAlignLeft, Copy, ListBullets, Plus, Trash } from '@phosphor-icons/react';
+import { Copy, Plus, Trash } from '@phosphor-icons/react';
 import type { CustomSectionItem } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
-import {
-  alignDescriptionStyles,
-  fromDescriptionRows,
-  toDescriptionRows,
-  toggleDescriptionStyle,
-  type DescriptionRow,
-} from '@/lib/utils/description-styles';
 import { SortableItemList } from '../sortable-item-list';
+import { DescriptionPointsEditor, type DescriptionPatch } from './description-points-editor';
 import { duplicateById } from '@/lib/utils/reorder-items';
 
 interface GenericItemFormProps {
@@ -115,71 +98,8 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
     );
   };
 
-  const handleDescriptionChange = (id: number, index: number, value: string) => {
-    onChange(
-      items.map((item) => {
-        if (item.id === id) {
-          const newDesc = [...(item.description || [])];
-          newDesc[index] = value;
-          return { ...item, description: newDesc };
-        }
-        return item;
-      })
-    );
-  };
-
-  const handleAddDescription = (id: number) => {
-    onChange(
-      items.map((item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            description: [...(item.description || []), ''],
-            descriptionStyles: [...(item.descriptionStyles || []), 'bullet'],
-          };
-        }
-        return item;
-      })
-    );
-  };
-
-  const handleToggleDescriptionStyle = (id: number, index: number) => {
-    onChange(
-      items.map((item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            descriptionStyles: toggleDescriptionStyle(
-              item.description,
-              item.descriptionStyles,
-              index
-            ),
-          };
-        }
-        return item;
-      })
-    );
-  };
-
-  const handleReorderDescriptions = (id: number, rows: DescriptionRow[]) => {
-    onChange(
-      items.map((item) => (item.id === id ? { ...item, ...fromDescriptionRows(rows) } : item))
-    );
-  };
-
-  const handleRemoveDescription = (id: number, index: number) => {
-    onChange(
-      items.map((item) => {
-        if (item.id === id) {
-          const newDesc = [...(item.description || [])];
-          newDesc.splice(index, 1);
-          const newStyles = alignDescriptionStyles(item.description, item.descriptionStyles);
-          newStyles.splice(index, 1);
-          return { ...item, description: newDesc, descriptionStyles: newStyles };
-        }
-        return item;
-      })
-    );
+  const handleDescriptionPatch = (id: number, patch: DescriptionPatch) => {
+    onChange(items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
   return (
@@ -286,68 +206,13 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
                 )}
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className={labelClass}>
-                    {t('builder.genericItemForm.fields.descriptionPoints')}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleAddDescription(item.id)}
-                    className="h-6 text-xs text-primary hover:text-primary-hover hover:bg-info-tint"
-                  >
-                    <Plus aria-hidden="true" />
-                    {t('builder.genericItemForm.actions.addPoint')}
-                  </Button>
-                </div>
-                {item.description?.length ? (
-                  <SortableItemList
-                    id={`custom-${sectionKey}-${item.id}-points`}
-                    items={toDescriptionRows(item.description, item.descriptionStyles)}
-                    onReorder={(rows) => handleReorderDescriptions(item.id, rows)}
-                    className="space-y-3"
-                    handleLabel={t('builder.genericItemForm.actions.reorderPoint')}
-                  >
-                    {({ text: desc, style }, idx) => (
-                      <div className="flex gap-3">
-                        <div className="flex-1">
-                          <RichTextEditor
-                            value={desc}
-                            onChange={(html) => handleDescriptionChange(item.id, idx, html)}
-                            placeholder={finalDescriptionPlaceholder}
-                            minHeight="60px"
-                          />
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleToggleDescriptionStyle(item.id, idx)}
-                          className="text-steel hover:text-primary self-end"
-                          aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
-                          title={t('builder.genericItemForm.actions.togglePointStyle')}
-                        >
-                          {style === 'plain' ? (
-                            <TextAlignLeft aria-hidden="true" />
-                          ) : (
-                            <ListBullets aria-hidden="true" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleRemoveDescription(item.id, idx)}
-                          className="text-steel hover:text-destructive self-end"
-                          aria-label={t('a11y.removeDescription')}
-                          title={t('a11y.removeDescription')}
-                        >
-                          <Trash aria-hidden="true" />
-                        </Button>
-                      </div>
-                    )}
-                  </SortableItemList>
-                ) : null}
-              </div>
+              <DescriptionPointsEditor
+                id={`custom-${sectionKey}-${item.id}-points`}
+                description={item.description}
+                descriptionStyles={item.descriptionStyles}
+                placeholder={finalDescriptionPlaceholder}
+                onChange={(patch) => handleDescriptionPatch(item.id, patch)}
+              />
             </div>
           )}
         </SortableItemList>

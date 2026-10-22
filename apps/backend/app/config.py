@@ -48,7 +48,8 @@ def _read_config_json() -> dict[str, Any]:
     if config_path.exists():
         try:
             config = json.loads(config_path.read_text())
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError) as e:
+            logger.error("Failed to load config: %s", e)
             return {}
         if isinstance(config, dict) and "provider" in config:
             config["provider"] = normalize_provider(config["provider"])

@@ -5,15 +5,11 @@ This module owns the cached read of ``config.json`` so that routers
 """
 
 import copy
-import json
-import logging
 import time
 from pathlib import Path
 from typing import Any
 
-from app.config import get_config_path
-
-logger = logging.getLogger(__name__)
+from app.config import _read_config_json, get_config_path
 
 # Cache state — accessed without a lock because:
 # 1. The app runs single-worker uvicorn (one thread, cooperative async).
@@ -54,19 +50,9 @@ def load_config() -> dict[str, Any]:
         return copy.deepcopy(_config_cache)
 
     _config_cache_path = config_path
-    if not config_path.exists():
-        _config_cache = {}
-        _config_cache_time = now
-        return {}
-    try:
-        _config_cache = json.loads(config_path.read_text())
-        _config_cache_time = now
-        return copy.deepcopy(_config_cache)
-    except (json.JSONDecodeError, OSError) as e:
-        logger.error("Failed to load config: %s", e)
-        _config_cache = {}
-        _config_cache_time = now
-        return {}
+    _config_cache = _read_config_json()
+    _config_cache_time = now
+    return copy.deepcopy(_config_cache)
 
 
 def get_content_language() -> str:

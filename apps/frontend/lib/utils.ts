@@ -42,10 +42,7 @@ export function formatDateRange(dateString: string | undefined | null): string {
   formatted = formatted.replace(/(\d{4})\s+(\d{4})/g, '$1 - $2');
 
   // Handle "Jun 2025 Present" pattern
-  formatted = formatted.replace(
-    /([A-Za-z]+\.?\s+\d{4})\s+(Present|Current|Now|Ongoing)/gi,
-    '$1 - $2'
-  );
+  formatted = formatted.replace(/([a-z]+\.?\s+\d{4})\s+(Present|Current|Now|Ongoing)/gi, '$1 - $2');
 
   return formatted;
 }

@@ -11,7 +11,7 @@ from app.llm import complete_json
 from app.prompts import BULLET_RELEVANCE_PROMPT
 from app.services.bullet_selector import BulletKey, bullet_path, iter_bullet_rows
 from app.services.improver import _sanitize_user_input
-from app.services.refiner import _keyword_in_text
+from app.services.text_match import keyword_in_text
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def keyword_scores(
     """Deterministic fallback: 20 points per distinct JD term found, capped at 100.
 
     Counts how many distinct job keywords appear in each bullet (case-insensitive,
-    via the refiner's ``_keyword_in_text``: whole terms, substrings for CJK) and
+    via ``text_match.keyword_in_text``: whole terms, substrings for CJK) and
     scores it as 20 points per keyword, maxed at 100.
 
     Args:
@@ -113,7 +113,7 @@ def keyword_scores(
     terms = _job_terms(job_keywords)
     scores: dict[BulletKey, float] = {}
     for key, text, _entry in iter_bullet_rows(data):
-        hits = sum(1 for term in terms if _keyword_in_text(term, text))
+        hits = sum(1 for term in terms if keyword_in_text(term, text))
         scores[key] = float(min(100, 20 * hits))
     return scores
 

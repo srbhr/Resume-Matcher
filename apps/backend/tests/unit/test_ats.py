@@ -314,3 +314,93 @@ def test_keyword_lists_follow_job_posting_order() -> None:
         _resume(), job, 50.0, ["gRPC", "Go", "Terraform"], ["Kubernetes"]
     )
     assert result["missing_keywords"] == ["Terraform", "Go", "gRPC"]
+
+
+class TestCjkMatching:
+    """ATS matching must handle CJK text, which has no spaces between words."""
+
+    def test_latin_skill_inside_cjk_prose_counts(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[{"title": "工程师", "description": ["使用python开发后端"]}],
+        )
+        job = {**JOB, "required_skills": ["Python"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 100.0
+
+    def test_cjk_skill_inside_cjk_prose_counts(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[{"title": "分析师", "description": ["负责数据分析工作"]}],
+        )
+        job = {**JOB, "required_skills": ["数据分析"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 100.0
+
+    def test_cjk_title_inside_longer_headline_matches(self) -> None:
+        resume = _resume(
+            personalInfo={**BASE_RESUME["personalInfo"], "title": "高级后端工程师"}
+        )
+        assert compute_title_match(resume, {**JOB, "role": "后端工程师"}) == 100.0
+
+    def test_latin_word_boundaries_still_hold(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[{"title": "Dev", "description": ["Wrote javascript"]}],
+        )
+        job = {**JOB, "required_skills": ["Java"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0
+
+
+class TestSkillsCoverageUsesRenderedContent:
+    """Hidden sections and sectionMeta labels are not rendered, so an ATS can't
+    read them; skills coverage must ignore them like section completeness does."""
+
+    def test_skill_only_in_hidden_section_does_not_count(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": ["Kubernetes"]},
+            sectionMeta=[{"key": "additional", "isVisible": False}],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0
+
+    def test_skill_only_in_condensed_role_details_does_not_count(self) -> None:
+        # A condensed role prints as one line, "Title, Company, years"; its
+        # description and location never reach the page.
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[
+                {
+                    "title": "Intern",
+                    "company": "Old Co",
+                    "location": "Kubernetes City",
+                    "years": "2012 - 2013",
+                    "condensed": True,
+                    "description": ["Ran Terraform"],
+                }
+            ],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes", "Terraform"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0
+
+    def test_condensed_role_title_still_counts(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": []},
+            workExperience=[
+                {"title": "Kubernetes Admin", "company": "Old Co", "condensed": True}
+            ],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 100.0
+
+    def test_skill_only_in_section_label_does_not_count(self) -> None:
+        resume = _resume(
+            sectionMeta=[{"key": "custom_1", "displayName": "Kubernetes"}],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0

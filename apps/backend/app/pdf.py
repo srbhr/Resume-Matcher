@@ -103,8 +103,6 @@ _PDF_CLEANUP_RESERVE_SECONDS = _bounded_env_float(
 class PDFRenderError(Exception):
     """Custom exception for PDF rendering errors with helpful messages."""
 
-    pass
-
 
 class PDFRenderOverloadedError(PDFRenderError):
     """Raised when all renderer slots are active; exports are never queued."""
@@ -777,7 +775,7 @@ def _retire_shared_browser(
     """Detach a browser with an unclosed page and retain capacity for teardown."""
     global _browser, _playwright
     if _browser is not browser:
-        return
+        return None
 
     playwright = _playwright
     _browser = None

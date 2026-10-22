@@ -29,6 +29,7 @@ from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeDiffSummary, ResumeFieldDiff
 from app.schemas.models import ImproveDiffResult, ResumeChange
 from app.services.parser import has_meaningful_resume_content
+from app.services.text_match import keyword_in_text, normalize_skill_key
 
 logger = logging.getLogger(__name__)
 
@@ -526,7 +527,7 @@ def apply_diffs(
                         # else: a duplicate of an already-placed original — skip
                     elif is_skills and cf not in added_new:
                         skill = item.strip()
-                        if skill and _normalize_skill_key(skill) in allowed_skill_keys:
+                        if skill and normalize_skill_key(skill) in allowed_skill_keys:
                             reordered.append(
                                 skill
                             )  # verified new skill, requested position
@@ -568,7 +569,7 @@ def apply_diffs(
                 logger.info("Diff rejected (duplicate skill): %s", new_skill)
                 rejected.append(change)
                 continue
-            if _normalize_skill_key(new_skill) not in allowed_skill_keys:
+            if normalize_skill_key(new_skill) not in allowed_skill_keys:
                 logger.info(
                     "Diff rejected (skill not in verified targets): %s", new_skill
                 )
@@ -849,11 +850,6 @@ def _prepare_keywords_for_prompt(job_keywords: dict[str, Any]) -> str:
     return "\n\n".join(sections) if sections else "No specific keywords extracted."
 
 
-def _normalize_skill_key(skill: str) -> str:
-    """Normalize a skill for case-insensitive comparison."""
-    return re.sub(r"\s+", " ", skill.strip()).casefold()
-
-
 def _extract_skill_index(items: Any) -> dict[str, str]:
     """Build a normalized skill index from a string list."""
     if not isinstance(items, list):
@@ -864,16 +860,8 @@ def _extract_skill_index(items: Any) -> dict[str, str]:
             continue
         skill = item.strip()
         if skill:
-            index.setdefault(_normalize_skill_key(skill), skill)
+            index.setdefault(normalize_skill_key(skill), skill)
     return index
-
-
-def _skill_mentioned_in_text(skill: str, text: str) -> bool:
-    """Return True when a skill phrase appears as a whole term in text."""
-    escaped = re.escape(skill.strip().lower())
-    if not escaped:
-        return False
-    return bool(re.search(rf"(?<!\w){escaped}(?!\w)", text.lower()))
 
 
 def _build_allowed_skill_target_keys(
@@ -889,7 +877,7 @@ def _build_allowed_skill_target_keys(
         else:
             continue
         if skill.strip():
-            keys.add(_normalize_skill_key(skill))
+            keys.add(normalize_skill_key(skill))
     return keys
 
 
@@ -908,17 +896,16 @@ def _extract_jd_skill_index(
                 continue
             skill = value.strip()
             if skill and (
-                job_description is None
-                or _skill_mentioned_in_text(skill, job_description)
+                job_description is None or keyword_in_text(skill, job_description)
             ):
-                index.setdefault(_normalize_skill_key(skill), skill)
+                index.setdefault(normalize_skill_key(skill), skill)
     return index
 
 
 def _skill_present_in_resume_text(skill: str, resume_data: dict[str, Any]) -> bool:
     """Return True when a skill phrase already appears in the resume text."""
     text = json.dumps(resume_data, ensure_ascii=False)
-    return _skill_mentioned_in_text(skill, text)
+    return keyword_in_text(skill, text)
 
 
 def verify_skill_target_plan(
@@ -956,7 +943,7 @@ def verify_skill_target_plan(
         else:
             continue
 
-        skill_key = _normalize_skill_key(skill)
+        skill_key = normalize_skill_key(skill)
         if not skill or skill_key in seen:
             continue
         seen.add(skill_key)

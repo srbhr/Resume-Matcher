@@ -2,6 +2,9 @@
   "name": "resume-matcher-ui",
   "version": "1.4.0",
   "private": true,
+  "engines": {
+    "node": "24.22.1"
+  },
   "scripts": {
     "dev": "next dev --turbopack -H 127.0.0.1",
     "build": "next build",
