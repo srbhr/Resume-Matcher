@@ -105,6 +105,27 @@ def _is_section_visible(resume: dict[str, Any], key: str) -> bool:
     return True
 
 
+def _rendered_content(resume: dict[str, Any]) -> dict[str, Any]:
+    """The resume minus what never reaches the page, so an ATS cannot read it.
+
+    Section labels in sectionMeta ("Summary", "Experience", ...) are
+    configuration, not content, and hidden sections are not rendered.
+    """
+    content = {
+        key: value
+        for key, value in resume.items()
+        if key != "sectionMeta" and _is_section_visible(resume, key)
+    }
+    custom = content.get("customSections")
+    if isinstance(custom, dict):
+        content["customSections"] = {
+            key: value
+            for key, value in custom.items()
+            if _is_section_visible(resume, key)
+        }
+    return content
+
+
 def _compute_skills_coverage(
     resume: dict[str, Any],
     job_keywords: dict[str, Any],
@@ -121,10 +142,11 @@ def _compute_skills_coverage(
     if not jd_skills:
         return 0.0
 
-    resume_skills: list[str] = (
-        resume.get("additional", {}).get("technicalSkills", []) or []
-    )
-    resume_text = _extract_all_text(resume).lower()
+    content = _rendered_content(resume)
+    resume_skills: list[str] = (content.get("additional") or {}).get(
+        "technicalSkills", []
+    ) or []
+    resume_text = _extract_all_text(content).lower()
     resume_skills_lower = {s.lower() for s in resume_skills if isinstance(s, str)}
 
     matched = 0
@@ -233,22 +255,7 @@ def compute_section_completeness(resume: dict[str, Any]) -> float:
 
     # Legacy/unstructured data: scan the text for section headings. Contact info
     # only counts when it is structured; it can't be detected from free text.
-    # Section labels in sectionMeta ("Summary", "Experience", ...) are
-    # configuration, not content, so leave them out of the scan. So are hidden
-    # sections: they are not rendered, so they cannot be parsed.
-    content = {
-        key: value
-        for key, value in resume.items()
-        if key != "sectionMeta" and _is_section_visible(resume, key)
-    }
-    custom = content.get("customSections")
-    if isinstance(custom, dict):
-        content["customSections"] = {
-            key: value
-            for key, value in custom.items()
-            if _is_section_visible(resume, key)
-        }
-    text = _extract_all_text(content).lower()
+    text = _extract_all_text(_rendered_content(resume)).lower()
     headings_found = sum(
         1 for patterns in _SECTION_PATTERNS.values() if any(p in text for p in patterns)
     )

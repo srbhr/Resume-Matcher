@@ -351,3 +351,25 @@ class TestCjkMatching:
         job = {**JOB, "required_skills": ["Java"]}
         result = compute_ats_score(resume, job, 100.0, [], [])
         assert result["sub_scores"]["skills_coverage"] == 0.0
+
+
+class TestSkillsCoverageUsesRenderedContent:
+    """Hidden sections and sectionMeta labels are not rendered, so an ATS can't
+    read them; skills coverage must ignore them like section completeness does."""
+
+    def test_skill_only_in_hidden_section_does_not_count(self) -> None:
+        resume = _resume(
+            additional={"technicalSkills": ["Kubernetes"]},
+            sectionMeta=[{"key": "additional", "isVisible": False}],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0
+
+    def test_skill_only_in_section_label_does_not_count(self) -> None:
+        resume = _resume(
+            sectionMeta=[{"key": "custom_1", "displayName": "Kubernetes"}],
+        )
+        job = {**JOB, "required_skills": ["Kubernetes"]}
+        result = compute_ats_score(resume, job, 100.0, [], [])
+        assert result["sub_scores"]["skills_coverage"] == 0.0
