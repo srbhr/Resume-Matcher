@@ -12,6 +12,7 @@ import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/clean.module.css';
+import { customSectionHasContent } from './dynamic-resume-section';
 
 interface ResumeCleanProps {
   earlierExperienceLabel?: string;
@@ -403,20 +404,7 @@ const DynamicResumeSectionClean: React.FC<{
   const customSection = resumeData.customSections?.[sectionMeta.key];
   if (!customSection) return null;
 
-  const hasContent = (() => {
-    switch (sectionMeta.sectionType) {
-      case 'text':
-        return Boolean(customSection.text?.trim());
-      case 'itemList':
-        return Boolean(customSection.items?.length);
-      case 'stringList':
-        return Boolean(customSection.strings?.length);
-      default:
-        return false;
-    }
-  })();
-
-  if (!hasContent) return null;
+  if (!customSectionHasContent(sectionMeta.sectionType, customSection)) return null;
 
   return (
     <div {...RESUME_SECTION} className={baseStyles['resume-section']}>

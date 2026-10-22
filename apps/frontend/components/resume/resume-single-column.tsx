@@ -14,12 +14,15 @@ import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-single.module.css';
+import modernStyles from './styles/modern.module.css';
 
 interface ResumeSingleColumnProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
   showContactIcons?: boolean;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
+  /** Modern variant: accent-coloured section titles and a name underline. */
+  accent?: boolean;
 }
 
 /**
@@ -27,6 +30,7 @@ interface ResumeSingleColumnProps {
  *
  * Traditional full-width layout with sections stacked vertically.
  * Best for detailed experience descriptions and maximum content density.
+ * With `accent`, renders the Modern template (see resume-modern.tsx).
  *
  * Section order: Determined by sectionMeta ordering
  */
@@ -35,8 +39,12 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
   showContactIcons = false,
   additionalSectionLabels,
   earlierExperienceLabel,
+  accent = false,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
+  const sectionTitleClass = accent
+    ? modernStyles['section-title-accent']
+    : baseStyles['resume-section-title'];
 
   // Get sorted visible sections
   const sortedSections = getSortedSections(data);
@@ -105,7 +113,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!summary) return null;
         return (
           <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
-            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+            <h3 {...RESUME_SECTION_TITLE} className={sectionTitleClass}>
               {section.displayName}
             </h3>
             <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
@@ -116,7 +124,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!workExperience || workExperience.length === 0) return null;
         return (
           <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
-            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+            <h3 {...RESUME_SECTION_TITLE} className={sectionTitleClass}>
               {section.displayName}
             </h3>
             <div className={baseStyles['resume-items']}>
@@ -157,7 +165,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!personalProjects || personalProjects.length === 0) return null;
         return (
           <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
-            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+            <h3 {...RESUME_SECTION_TITLE} className={sectionTitleClass}>
               {section.displayName}
             </h3>
             <div className={baseStyles['resume-items']}>
@@ -237,7 +245,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!education || education.length === 0) return null;
         return (
           <div key={section.id} {...RESUME_SECTION} className={baseStyles['resume-section']}>
-            <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+            <h3 {...RESUME_SECTION_TITLE} className={sectionTitleClass}>
               {section.displayName}
             </h3>
             <div className={baseStyles['resume-items']}>
@@ -273,25 +281,34 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             additional={additional}
             displayName={section.displayName}
             labels={additionalSectionLabels}
+            titleClassName={sectionTitleClass}
           />
         );
 
       default:
         // Custom section - render using DynamicResumeSection
         if (!section.isDefault) {
-          return <DynamicResumeSection key={section.id} sectionMeta={section} resumeData={data} />;
+          return (
+            <DynamicResumeSection
+              key={section.id}
+              sectionMeta={section}
+              resumeData={data}
+              titleClassName={sectionTitleClass}
+              subtitleClassName={accent ? baseStyles['resume-meta'] : undefined}
+            />
+          );
         }
         return null;
     }
   };
 
   return (
-    <div className={styles.container}>
+    <div className={accent ? modernStyles.container : styles.container}>
       {/* Header Section - Centered Layout (always first) */}
       {personalInfo && (
         <header
-          className={`text-center ${baseStyles['resume-header']} border-b`}
-          style={{ borderColor: 'var(--resume-border-primary)' }}
+          className={`text-center ${baseStyles['resume-header']}${accent ? '' : ' border-b'}`}
+          style={accent ? undefined : { borderColor: 'var(--resume-border-primary)' }}
         >
           {/* Name - Centered */}
           {personalInfo.name && (
@@ -300,10 +317,13 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             </h1>
           )}
 
+          {/* Decorative accent underline under name */}
+          {accent && <div className={modernStyles['name-underline']} aria-hidden="true" />}
+
           {/* Title - Centered, below name */}
           {personalInfo.title && (
             <h2
-              className={`${baseStyles['resume-title']} ${baseStyles['resume-meta']} tracking-wide uppercase mb-3`}
+              className={`${baseStyles['resume-title']} ${baseStyles['resume-meta']} tracking-wide uppercase ${accent ? 'mt-3 ' : ''}mb-3`}
             >
               {personalInfo.title}
             </h2>
@@ -363,7 +383,8 @@ const AdditionalSection: React.FC<{
   additional: ResumeData['additional'];
   displayName?: string;
   labels?: Partial<AdditionalSectionLabels>;
-}> = ({ additional, displayName = 'Skills & Awards', labels }) => {
+  titleClassName: string;
+}> = ({ additional, displayName = 'Skills & Awards', labels, titleClassName }) => {
   if (!additional) return null;
 
   const {
@@ -405,7 +426,7 @@ const AdditionalSection: React.FC<{
 
   return (
     <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
-      <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title']}>
+      <h3 {...RESUME_SECTION_TITLE} className={titleClassName}>
         {displayName}
       </h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
