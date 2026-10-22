@@ -79,12 +79,6 @@ export async function fetchLlmConfig(): Promise<LLMConfig> {
   return res.json();
 }
 
-// Legacy function for backwards compatibility
-export async function fetchLlmApiKey(): Promise<string> {
-  const config = await fetchLlmConfig();
-  return config.api_key ?? '';
-}
-
 // Update LLM configuration
 export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfig> {
   const res = await apiFetch('/config/llm-api-key', {
@@ -131,12 +125,6 @@ export class LlmConfigError extends Error {
 
 /** The server refuses to move a saved key to a new endpoint unless the key is sent too. */
 export const API_KEY_REQUIRED_FOR_ENDPOINT = 'api_key_required_for_endpoint';
-
-// Legacy function for backwards compatibility
-export async function updateLlmApiKey(value: string): Promise<string> {
-  const config = await updateLlmConfig({ api_key: value });
-  return config.api_key ?? '';
-}
 
 // Test LLM connection with optional config (for pre-save testing)
 export async function testLlmConnection(config?: LLMConfigUpdate): Promise<LLMHealthCheck> {

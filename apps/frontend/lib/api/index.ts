@@ -48,9 +48,7 @@ export {
 // Config operations
 export {
   fetchLlmConfig,
-  fetchLlmApiKey,
   updateLlmConfig,
-  updateLlmApiKey,
   testLlmConnection,
   fetchSystemStatus,
   PROVIDER_INFO,
