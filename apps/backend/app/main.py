@@ -73,7 +73,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     await queue_manager.start()
     # PDF renderer uses lazy initialization - will initialize on first use
-    # await init_pdf_renderer()
     yield
     # Shutdown - wrap each cleanup in try-except to ensure all resources are released
     try:

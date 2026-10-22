@@ -529,9 +529,6 @@ Rules:
 
 Output the title only, nothing else."""
 
-# Alias for backward compatibility
-RESUME_SCHEMA = RESUME_SCHEMA_EXAMPLE
-
 # Diff-based improvement: outputs targeted changes instead of full resume
 
 DIFF_STRATEGY_INSTRUCTIONS = {

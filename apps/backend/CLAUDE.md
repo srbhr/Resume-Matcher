@@ -66,9 +66,9 @@ Prompts are **plain Python string constants** — no Jinja, no external prompt f
 
 | File | Holds |
 |------|-------|
-| `app/prompts/templates.py` | Resume parse, keyword extraction, the 3 improve variants, diff prompt, skill-target plan, cover-letter / outreach / title, `RESUME_SCHEMA_EXAMPLE`, `CRITICAL_TRUTHFULNESS_RULES`, `LANGUAGE_NAMES` + `get_language_name()` |
+| `app/prompts/templates.py` | Resume parse, keyword extraction, the 4 improve variants, diff prompt, skill-target plan, cover-letter / outreach / title, `RESUME_SCHEMA_EXAMPLE`, `CRITICAL_TRUTHFULNESS_RULES`, `LANGUAGE_NAMES` + `get_language_name()` |
 | `app/prompts/enrichment.py` | `ANALYZE_RESUME_PROMPT`, `ENHANCE_DESCRIPTION_PROMPT`, `REGENERATE_ITEM_PROMPT`, `REGENERATE_SKILLS_PROMPT` |
-| `app/prompts/refinement.py` | `KEYWORD_INJECTION_PROMPT`, `VALIDATION_POLISH_PROMPT`, `AI_PHRASE_BLACKLIST`, `AI_PHRASE_REPLACEMENTS` |
+| `app/prompts/refinement.py` | `KEYWORD_INJECTION_PROMPT`, `AI_PHRASE_BLACKLIST`, `AI_PHRASE_REPLACEMENTS` |
 | `app/prompts/writing.py` | `WRITING_RUBRIC` (copied verbatim into the resume-matcher SKILL.md; a test keeps them equal), `WRITING_CRITIQUE_PROMPT`, `WRITING_REWRITE_PROMPT`, `KEYWORD_PLACEMENT_PROMPT`, `FORCED_KEYWORDS_PREP_NOTE` |
 | `app/prompts/__init__.py` | Re-exports template constants; placeholder validation |
 

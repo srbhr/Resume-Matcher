@@ -47,10 +47,6 @@ def _forget(progress_id: str, progress: dict[str, str]) -> None:
         del _REGISTRY[progress_id]
 
 
-def get_progress(progress_id: str) -> dict[str, str] | None:
-    return _REGISTRY.get(progress_id)
-
-
 async def progress_events(progress_id: str, max_seconds: float) -> AsyncIterator[str]:
     """Server-sent events: one ``data`` line per new stage, then ``done``."""
     deadline = time.monotonic() + max_seconds
