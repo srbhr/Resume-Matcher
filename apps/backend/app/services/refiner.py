@@ -11,7 +11,6 @@ import copy
 import json
 import logging
 import re
-from functools import lru_cache
 from typing import Any
 
 from app.ai_budget import AIOperationDeadlineExceeded
@@ -806,27 +805,12 @@ def calculate_keyword_match(
 def _extract_all_text(data: dict[str, Any]) -> str:
     """Extract all text content from resume data for keyword matching.
 
-    SVC-011: Uses caching to avoid repeated extraction on same resume data.
-
     Args:
         data: Resume data dictionary
 
     Returns:
         Concatenated text from all resume sections
     """
-    # Create a cache key from the data
-    data_json = json.dumps(data, sort_keys=True, default=str)
-    return _extract_all_text_cached(data_json)
-
-
-@lru_cache(maxsize=100)
-def _extract_all_text_cached(data_json: str) -> str:
-    """Cached implementation of text extraction.
-
-    SVC-011: LRU cache avoids re-extracting text from the same resume
-    multiple times during a single refinement pass.
-    """
-    data = json.loads(data_json)
     parts: list[str] = []
 
     # Summary
