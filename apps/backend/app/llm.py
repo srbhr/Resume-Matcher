@@ -571,21 +571,21 @@ def _extract_text_parts(
     next_depth = depth + 1
     if hasattr(value, "text"):
         return _extract_text_parts(
-            getattr(value, "text"),
+            value.text,
             next_depth,
             max_depth,
             exclude_reasoning=exclude_reasoning,
         )
     if hasattr(value, "content"):
         return _extract_text_parts(
-            getattr(value, "content"),
+            value.content,
             next_depth,
             max_depth,
             exclude_reasoning=exclude_reasoning,
         )
     if hasattr(value, "value"):
         return _extract_text_parts(
-            getattr(value, "value"),
+            value.value,
             next_depth,
             max_depth,
             exclude_reasoning=exclude_reasoning,
