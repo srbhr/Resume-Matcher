@@ -1,6 +1,6 @@
 # Guía de configuración de Resume Matcher
 
-[English](SETUP.md) | [**Español**](SETUP.es.md) | [简体中文](SETUP.zh-CN.md) | [日本語](SETUP.ja.md)
+[English](SETUP.md) | [**Español**](SETUP.es.md) | [简体中文](SETUP.zh-CN.md) | [日本語](SETUP.ja.md) | [Português (BR)](SETUP.pt-BR.md)
 
 ¡Bienvenido! Esta guía te acompaña para configurar Resume Matcher en tu máquina local. Tanto si eres desarrollador y quieres contribuir como si solo quieres ejecutarlo localmente, aquí tienes todo lo necesario.
 

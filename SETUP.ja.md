@@ -1,6 +1,6 @@
 # Resume Matcher セットアップガイド
 
-[English](SETUP.md) | [Español](SETUP.es.md) | [简体中文](SETUP.zh-CN.md) | [**日本語**](SETUP.ja.md)
+[English](SETUP.md) | [Español](SETUP.es.md) | [简体中文](SETUP.zh-CN.md) | [**日本語**](SETUP.ja.md) | [Português (BR)](SETUP.pt-BR.md)
 
 ようこそ！このガイドでは、ローカル環境で Resume Matcher をセットアップする手順を説明します。開発に参加したい方も、手元でアプリを動かしたい方も、この手順で始められます。
 
