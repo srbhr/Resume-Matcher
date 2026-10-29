@@ -166,7 +166,7 @@ Essa abordagem é adaptada da [skill resume-cover-letter da jezweb](https://gith
 
 Gere uma preparação para entrevistas estruturada e baseada no seu currículo, para os currículos adaptados que você salvou. Use a aba Preparação para entrevista (Interview Prep) do Construtor sob demanda ou ative a geração automática em Configurações.
 
-### Fila de adaptação
+### Fila de personalização
 
 Cole várias descrições de vaga na página Fila de personalização (Tailoring Queue) e elas são adaptadas a partir do seu currículo mestre, uma depois da outra, em segundo plano. Cargo, empresa e ID da vaga são detectados a partir do texto sem chamar IA, e você pode editá-los. Um intervalo opcional entre as vagas (de 0 a 60 segundos) reduz o risco de atingir os limites de taxa do seu provedor. As vagas na fila ficam salvas no banco de dados e continuam depois de uma reinicialização.
 
@@ -324,7 +324,7 @@ Endpoints:
 
 ![how to contribute](assets/how_to_contribute.webp)
 
-Contribuições de todos são bem-vindas! Seja você desenvolvedor, designer ou apenas alguém que quer ajudar. Todos os contribuidores estão listados na [página sobre](https://resumematcher.fyi/about/) do nosso site e no README do GitHub aqui.
+Contribuições de todos são bem-vindas! Seja você uma pessoa desenvolvedora, designer ou apenas alguém que quer ajudar. Todos os contribuidores estão listados na [página sobre](https://resumematcher.fyi/about/) do nosso site e no README do GitHub aqui.
 
 Confira o roadmap se quiser trabalhar nos recursos planejados para o futuro. Se você tiver sugestões ou pedidos de recursos, fique à vontade para abrir uma issue no GitHub e discutir no nosso servidor do [Discord](https://dsc.gg/resume-matcher).
 
