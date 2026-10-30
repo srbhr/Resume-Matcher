@@ -1,6 +1,6 @@
 # Resume Matcher 安装与配置指南
 
-[English](SETUP.md) | [Español](SETUP.es.md) | [**简体中文**](SETUP.zh-CN.md) | [日本語](SETUP.ja.md)
+[English](SETUP.md) | [Español](SETUP.es.md) | [**简体中文**](SETUP.zh-CN.md) | [日本語](SETUP.ja.md) | [Português (BR)](SETUP.pt-BR.md)
 
 欢迎！本指南将带你在本地完成 Resume Matcher 的安装与配置。无论你是想参与开发，还是只想在本机运行应用，都可以按本文档完成上手。
 
