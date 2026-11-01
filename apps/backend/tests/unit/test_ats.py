@@ -107,6 +107,62 @@ class TestTitleMatch:
         assert compute_title_match(_resume(), {**JOB, "role": role}) is None
 
 
+class TestChineseKeywordMatching:
+    """CJK text has no spaces: Python's ``\\w`` covers Han characters, so a
+    ``(?<!\\w)…(?!\\w)`` boundary rejects any Chinese term sitting inside a
+    Chinese sentence. Regression for job titles such as 上位机软件工程师
+    scoring 0 in a summary that states them verbatim."""
+
+    CJK_JOB: dict[str, Any] = {
+        "role": "上位机软件工程师",
+        "required_skills": ["C++", "界面开发"],
+        "preferred_skills": [],
+        "keywords": ["上位机"],
+    }
+
+    def test_cjk_title_inside_summary_sentence_scores_partial(self) -> None:
+        resume = _resume(
+            personalInfo={**BASE_RESUME["personalInfo"], "title": "C++ 上位机开发工程师"},
+            summary="2027 届硕士，聚焦上位机软件工程师方向，以 C++17/Qt 为主力技术栈。",
+        )
+        assert compute_title_match(resume, self.CJK_JOB) == 75.0
+
+    def test_cjk_title_inside_headline_scores_full(self) -> None:
+        resume = _resume(
+            personalInfo={
+                **BASE_RESUME["personalInfo"],
+                "title": "求职意向：上位机软件工程师（深圳）",
+            },
+        )
+        assert compute_title_match(resume, self.CJK_JOB) == 100.0
+
+    def test_cjk_skill_embedded_in_text_counts(self) -> None:
+        # The summary states 界面开发 verbatim; C++ is absent, so coverage is 1/2.
+        resume = _resume(
+            summary="负责上位机界面开发与设备通信。",
+            additional={"technicalSkills": []},
+        )
+        result = compute_ats_score(
+            refined_resume=resume,
+            job_keywords=self.CJK_JOB,
+            keyword_match_percentage=0.0,
+            missing_keywords=[],
+            injectable_keywords=[],
+        )
+        assert result["sub_scores"]["skills_coverage"] == 50.0
+
+    def test_latin_terms_keep_word_boundaries(self) -> None:
+        resume = _resume(summary="Built pythonic tooling.", additional={"technicalSkills": []})
+        result = compute_ats_score(
+            refined_resume=resume,
+            job_keywords={"role": "", "required_skills": ["Python"], "preferred_skills": [], "keywords": []},
+            keyword_match_percentage=0.0,
+            missing_keywords=[],
+            injectable_keywords=[],
+        )
+        assert result["sub_scores"]["skills_coverage"] == 0.0
+
+
 class TestDateConsistency:
     def test_single_format_scores_full(self) -> None:
         assert compute_date_consistency(_resume()) == 100.0

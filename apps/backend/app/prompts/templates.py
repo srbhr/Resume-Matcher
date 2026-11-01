@@ -206,6 +206,11 @@ Extract numeric years (e.g., "5+ years" → 5) and infer seniority level.
 Set "company" to the hiring company name and "role" to the job title exactly as
 written in the posting; use an empty string for either if it is not stated.
 
+Only list things a candidate can possess: technologies, tools, languages, methods,
+domain experience, and responsibilities. Posting metadata is never a skill - do
+not put company name, city, salary, headcount, degree, posting dates, the job
+category label, or the names of accepted majors into any skill or keyword field.
+
 Job description:
 {job_description}"""
 

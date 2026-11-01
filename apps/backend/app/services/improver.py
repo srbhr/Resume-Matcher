@@ -28,6 +28,7 @@ from app.prompts import (
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeDiffSummary, ResumeFieldDiff
 from app.schemas.models import ImproveDiffResult, ResumeChange
+from app.services.jd_metadata import filter_metadata_keywords
 from app.services.parser import has_meaningful_resume_content
 from app.services.text_match import keyword_in_text, normalize_skill_key
 
@@ -784,7 +785,9 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
         schema_type="keywords",
         response_validator=_validate_keyword_result,
     )
-    return _validate_keyword_result(result)
+    # Posting headers (公司/城市/薪资/需求专业/职位类别…) are not requirements; a
+    # keyword that only exists there can never be matched by a resume.
+    return filter_metadata_keywords(_validate_keyword_result(result), job_description)
 
 
 MONTH_PATTERN = re.compile(
