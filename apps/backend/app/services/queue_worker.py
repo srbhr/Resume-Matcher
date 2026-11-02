@@ -174,7 +174,14 @@ class QueueManager:
         task.cancel()
         # wait() lets a cancellation of stop() itself propagate, unlike
         # awaiting the task and swallowing every CancelledError.
-        await asyncio.wait({task})
+        try:
+            await asyncio.wait({task})
+        except asyncio.CancelledError:
+            # Let the worker finish handing its item back before the caller
+            # moves on (shutdown closes the database next). A second cancel
+            # interrupts this wait too.
+            await asyncio.wait({task})
+            raise
         if not task.cancelled():
             task.result()  # surface a crash that finished before the cancel landed
         logger.info("Tailoring queue worker stopped.")
@@ -188,8 +195,9 @@ class QueueManager:
         The worker is restarted afterwards if it was running.
         """
         was_running = self._task is not None
-        await self.stop()
         try:
+            # Inside the try: a cancelled stop must still restart the worker.
+            await self.stop()
             yield
         finally:
             if was_running:

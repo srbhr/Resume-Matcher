@@ -341,9 +341,8 @@ async def test_each_item_runs_under_the_ai_operation_deadline(
     assert (item["status"], item["error"]) == ("failed", "timeout")
 
 
-async def test_stop_propagates_its_own_cancellation() -> None:
-    """Cancelling stop() while the worker unwinds must cancel the caller too."""
-    manager = QueueManager()
+def _slow_unwinding_worker() -> tuple[asyncio.Task[None], asyncio.Event, asyncio.Event]:
+    """A worker that sets ``unwinding`` when cancelled and finishes only after ``release``."""
     unwinding, release = asyncio.Event(), asyncio.Event()
 
     async def slow_unwind() -> None:
@@ -354,19 +353,63 @@ async def test_stop_propagates_its_own_cancellation() -> None:
             await release.wait()
             raise
 
-    worker = asyncio.create_task(slow_unwind())
+    return asyncio.create_task(slow_unwind()), unwinding, release
+
+
+async def test_cancelled_stop_waits_for_the_worker_then_propagates() -> None:
+    """Cancelling stop() must let the worker finish unwinding, then cancel the caller."""
+    manager = QueueManager()
+    worker, unwinding, release = _slow_unwinding_worker()
     manager._task = worker
     await asyncio.sleep(0)
     stopper = asyncio.create_task(manager.stop())
     await unwinding.wait()
     stopper.cancel()
     try:
+        for _ in range(3):
+            await asyncio.sleep(0)
+        # The worker is still handing its item back, so stop() has not returned.
+        assert not stopper.done()
+        release.set()
         with pytest.raises(asyncio.CancelledError):
             await stopper
+        assert worker.done()
     finally:
         release.set()
         await asyncio.wait({worker}, timeout=1)
-    assert worker.cancelled()
+
+
+async def test_cancelled_pause_still_restarts_the_worker(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A reset cancelled while the worker unwinds must not leave the queue stopped."""
+
+    async def idle(self: QueueManager) -> None:
+        del self
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(QueueManager, "_run", idle)
+    manager = QueueManager()
+    worker, unwinding, release = _slow_unwinding_worker()
+    manager._task = worker
+    await asyncio.sleep(0)
+
+    async def reset() -> None:
+        async with manager.paused():
+            raise AssertionError("the reset must not run once it was cancelled")
+
+    resetter = asyncio.create_task(reset())
+    await unwinding.wait()
+    resetter.cancel()
+    release.set()
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            await resetter
+        assert worker.done()
+        assert manager._task is not None
+        assert manager._task is not worker
+    finally:
+        await manager.stop()
 
 
 async def test_stop_surfaces_a_worker_crash() -> None:
