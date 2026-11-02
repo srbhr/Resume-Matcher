@@ -6,7 +6,7 @@ export const labelClass =
   'font-mono text-xs font-medium uppercase leading-none tracking-wider text-steel';
 
 const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
-  ({ className, ...props }, ref) => (
+  ({ className, children, ...props }, ref) => (
     <label
       ref={ref}
       className={cn(
@@ -15,7 +15,9 @@ const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLL
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </label>
   )
 );
 Label.displayName = 'Label';

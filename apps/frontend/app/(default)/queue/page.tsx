@@ -468,7 +468,9 @@ export default function QueuePage() {
               aria-describedby="queue-cooldown-hint"
               className="max-w-32 font-mono tabular-nums"
               value={rateLimitSeconds}
-              onChange={(e) => setRateLimitSeconds(clampCooldown(parseFloat(e.target.value)))}
+              onChange={(e) =>
+                setRateLimitSeconds(clampCooldown(Number.parseFloat(e.target.value)))
+              }
               disabled={isAddingToQueue}
             />
             <p id="queue-cooldown-hint" className="text-sm text-ink-soft">

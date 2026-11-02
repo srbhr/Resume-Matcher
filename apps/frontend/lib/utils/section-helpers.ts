@@ -153,8 +153,8 @@ export function getAllSections(resumeData: ResumeData): SectionMeta[] {
 export function generateCustomSectionId(existingSections: SectionMeta[]): string {
   const customSections = existingSections.filter((s) => s.id.startsWith('custom_'));
   const maxId = customSections.reduce((max, s) => {
-    const num = parseInt(s.id.replace('custom_', ''), 10);
-    return isNaN(num) ? max : Math.max(max, num);
+    const num = Number.parseInt(s.id.replace('custom_', ''), 10);
+    return Number.isNaN(num) ? max : Math.max(max, num);
   }, 0);
   return `custom_${maxId + 1}`;
 }

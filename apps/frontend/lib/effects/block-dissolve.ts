@@ -114,7 +114,7 @@ export function parseHex(value: string): Rgb {
   const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value.trim());
   if (!m) return [0, 0, 0];
   const hex = m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1];
-  const n = parseInt(hex, 16);
+  const n = Number.parseInt(hex, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
