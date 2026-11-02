@@ -188,7 +188,8 @@ _BLOCKED_FIELD_NAMES = frozenset(
     }
 )
 
-_METRIC_RE = re.compile(r"\d+%|\d+x|\$\d+")
+# Starting only where a digit run starts keeps a long unsuffixed run linear.
+_METRIC_RE = re.compile(r"(?<!\d)\d+[%x]|\$\d+")
 
 
 def _is_path_allowed(path: str) -> bool:

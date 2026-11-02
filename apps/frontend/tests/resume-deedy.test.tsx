@@ -133,6 +133,39 @@ describe('ResumeDeedy', () => {
     expect(screen.getByText('Excellence Award (2019)')).toBeInTheDocument();
   });
 
+  it('reads a year written before or after the title', () => {
+    const { container, rerender } = render(<ResumeDeedy data={buildData()} />);
+    const cells = () =>
+      Array.from(container.querySelectorAll('[class*="awards"] > span')).map((c) => c.textContent);
+    const forms = buildData();
+    forms.additional!.awards = [
+      '2014 KPCB Fellow',
+      '2015: Hackathon Winner',
+      'Dean List, 2016',
+      'Research Grant - 2017',
+      'Scholar 2018',
+      'Excellence Award (2019)',
+    ];
+    rerender(<ResumeDeedy data={forms} />);
+    // No award has a rank, so the layout is year | title.
+    expect(cells()).toEqual([
+      ...['2014', 'KPCB Fellow'],
+      ...['2015', 'Hackathon Winner'],
+      ...['2016', 'Dean List'],
+      ...['2017', 'Research Grant'],
+      ...['2018', 'Scholar'],
+      ...['2019', 'Excellence Award'],
+    ]);
+  });
+
+  it('keeps an award whole when only blank text sits beside its year', () => {
+    const { container, rerender } = render(<ResumeDeedy data={buildData()} />);
+    const blank = buildData();
+    blank.additional!.awards = ['Excellence Award (2019)', '\t(2014)'];
+    rerender(<ResumeDeedy data={blank} />);
+    expect(container.querySelectorAll('[class*="awards"] > span')).toHaveLength(0);
+  });
+
   it('numbers publication entries', () => {
     render(<ResumeDeedy data={buildData()} />);
     expect(screen.getByText('[1]')).toBeInTheDocument();

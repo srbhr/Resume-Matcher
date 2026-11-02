@@ -386,7 +386,7 @@ def remove_ai_phrases(
                 # or a space before punctuation ("Joined ."), and at either end of
                 # the string a lone leading/trailing space; tidy just that.
                 cleaned = re.sub(r"(?<=\S)[ \t]{2,}(?=\S)", " ", cleaned)
-                cleaned = re.sub(r"[ \t]+([.,;:!?])", r"\1", cleaned)
+                cleaned = re.sub(r"(?<![ \t])[ \t]+([.,;:!?])", r"\1", cleaned)
                 cleaned = cleaned.strip(" \t")
         return cleaned
 

@@ -8,7 +8,7 @@ const DEFAULT_PUBLIC_API_URL = '/';
 // Server-side origin of the backend; same env var and default as the proxy in
 // next.config.ts, so print pages reach the backend wherever the proxy does.
 const INTERNAL_API_ORIGIN = (process.env.BACKEND_ORIGIN || 'http://127.0.0.1:8000').replace(
-  /\/+$/,
+  /(?<!\/)\/+$/,
   ''
 );
 
@@ -17,7 +17,7 @@ function normalizeApiUrl(value: string): string {
   if (!trimmed || trimmed === '/') {
     return '/';
   }
-  return trimmed.replace(/\/+$/, '');
+  return trimmed.replace(/(?<!\/)\/+$/, '');
 }
 
 function toApiBase(apiUrl: string): string {
