@@ -211,6 +211,6 @@ export function readSwissColor(el: Element, token: string): [number, number, num
   const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(raw)?.[1];
   if (!hex) return [0, 0, 0];
   const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
-  const channel = (i: number) => parseInt(full.slice(i * 2, i * 2 + 2), 16) / 255;
+  const channel = (i: number) => Number.parseInt(full.slice(i * 2, i * 2 + 2), 16) / 255;
   return [channel(0), channel(1), channel(2)];
 }

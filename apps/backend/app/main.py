@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import sys
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -74,26 +74,41 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await queue_manager.start()
     # PDF renderer uses lazy initialization - will initialize on first use
     yield
-    # Shutdown - wrap each cleanup in try-except to ensure all resources are released
+    await _shutdown()
+
+
+async def _run_shutdown_step(step: Awaitable[object], error_message: str) -> None:
+    """Run one shutdown step, logging a failure so the next step still runs."""
     try:
-        await queue_manager.stop()
+        await step
     except Exception:
-        logger.exception("Error stopping the tailoring queue")
+        logger.exception(error_message)
+
+
+async def _shutdown() -> None:
+    """Release every resource, in order.
+
+    Each step runs even if an earlier one fails or shutdown is cancelled; a
+    cancellation still propagates once every step has run.
+    """
+    from app.services.queue_worker import queue_manager
 
     try:
-        await drain_processing_cleanup_tasks()
-    except Exception:
-        logger.exception("Error draining processing cleanup")
-
-    try:
-        await close_pdf_renderer()
-    except Exception as e:
-        logger.error(f"Error closing PDF renderer: {e}")
-
-    try:
-        await db.close()
-    except Exception as e:
-        logger.error(f"Error closing database: {e}")
+        await _run_shutdown_step(
+            queue_manager.stop(), "Error stopping the tailoring queue"
+        )
+    finally:
+        try:
+            await _run_shutdown_step(
+                drain_processing_cleanup_tasks(), "Error draining processing cleanup"
+            )
+        finally:
+            try:
+                await _run_shutdown_step(
+                    close_pdf_renderer(), "Error closing PDF renderer"
+                )
+            finally:
+                await _run_shutdown_step(db.close(), "Error closing database")
 
 
 app = FastAPI(

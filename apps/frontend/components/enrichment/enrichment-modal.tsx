@@ -56,7 +56,7 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
       document.body.style.overflow = 'hidden';
       // Start analysis when modal opens
       if (state.step === 'idle') {
-        startAnalysis();
+        void startAnalysis();
       }
     } else {
       dialogRef.current?.close();
@@ -131,7 +131,7 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
 
   // Handle finish questions - generate enhancements
   const handleFinishQuestions = () => {
-    generateEnhancements();
+    void generateEnhancements();
   };
 
   if (!isOpen) return null;

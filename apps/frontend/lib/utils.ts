@@ -32,17 +32,29 @@ export function formatDateRange(dateString: string | undefined | null): string {
   let formatted = dateString.replace(/[–—]/g, '-');
 
   // Normalize spacing around existing hyphens
-  formatted = formatted.replace(/\s*-\s*/g, ' - ');
+  const segments = formatted.split('-');
+  formatted = segments
+    .map((segment, i) => {
+      const start = i > 0 ? segment.trimStart() : segment;
+      return i < segments.length - 1 ? start.trimEnd() : start;
+    })
+    .join(' - ');
 
   // Handle "Jun 2025 Aug 2025" pattern (month year month year without separator)
   // Match: word/abbrev + 4-digit year + space + word/abbrev + 4-digit year
-  formatted = formatted.replace(/([A-Za-z]+\.?\s+\d{4})\s+([A-Za-z]+\.?\s+\d{4})/g, '$1 - $2');
+  formatted = formatted.replace(
+    /(?<![A-Za-z])([A-Za-z]+\.?\s+\d{4})\s+([A-Za-z]+\.?\s+\d{4})/g,
+    '$1 - $2'
+  );
 
   // Handle "2023 2025" pattern (year year without separator)
   formatted = formatted.replace(/(\d{4})\s+(\d{4})/g, '$1 - $2');
 
   // Handle "Jun 2025 Present" pattern
-  formatted = formatted.replace(/([a-z]+\.?\s+\d{4})\s+(Present|Current|Now|Ongoing)/gi, '$1 - $2');
+  formatted = formatted.replace(
+    /(?<![a-z])([a-z]+\.?\s+\d{4})\s+(Present|Current|Now|Ongoing)/gi,
+    '$1 - $2'
+  );
 
   return formatted;
 }

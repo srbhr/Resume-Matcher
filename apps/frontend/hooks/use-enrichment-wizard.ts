@@ -307,7 +307,7 @@ export function useEnrichmentWizard(resumeId: string) {
       });
     } else {
       // Start fresh
-      startAnalysis();
+      void startAnalysis();
     }
   }, [state, startAnalysis]);
 

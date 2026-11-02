@@ -52,7 +52,7 @@ export function AtsScorePanel({
       }
     };
 
-    loadLastScore();
+    void loadLastScore();
     return () => {
       cancelled = true;
     };

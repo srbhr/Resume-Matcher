@@ -577,7 +577,9 @@ def restore_dates_from_markdown(
     for line_index, line in enumerate(lines):
         line_context = " ".join(line.casefold().split())
         for match in _MD_DATE_RE.finditer(line):
-            full_date = re.sub(r"\s*[-–—]\s*", " - ", match.group(0).strip())
+            full_date = " - ".join(
+                part.strip() for part in re.split(r"[-–—]", match.group(0).strip())
+            )
             key = date_key(full_date)
             if key:
                 occurrences.append((key, full_date, line_context, line_index))
@@ -707,7 +709,7 @@ _EXTRACTION_GAP_RE = re.compile(r"\s{2,}")
 _FINAL_CONJUNCTION_RE = re.compile(r"^(?:and|or|&)\s+", re.IGNORECASE)
 # "Rust and Go" closing a list without an Oxford comma holds two skills; "&"
 # stays whole: "Drag & Drop", "R & D".
-_INLINE_CONJUNCTION_RE = re.compile(r"\s+(?:and|or)\s+", re.IGNORECASE)
+_INLINE_CONJUNCTION_RE = re.compile(r"(?<!\s)\s+(?:and|or)\s+", re.IGNORECASE)
 _SKILL_HEADING_RE = re.compile(
     r"^(?:(?:technical|core|key|other)\s+)?"
     r"(?:skills?|technologies|tools|frameworks?|platforms?|tech(?:nology)?\s+stack|stack)$",

@@ -73,9 +73,9 @@ export function computePageStarts(
 
 function lineHeightOf(element: Element): number {
   const style = getComputedStyle(element);
-  const lineHeight = parseFloat(style.lineHeight);
+  const lineHeight = Number.parseFloat(style.lineHeight);
   if (Number.isFinite(lineHeight) && lineHeight > 0) return lineHeight;
-  const fontSize = parseFloat(style.fontSize);
+  const fontSize = Number.parseFloat(style.fontSize);
   return Number.isFinite(fontSize) && fontSize > 0 ? fontSize * 1.2 : 0;
 }
 

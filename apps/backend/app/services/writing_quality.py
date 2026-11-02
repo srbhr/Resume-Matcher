@@ -51,7 +51,8 @@ _METRIC_PENALTY = 5
 # Fact tokens: tool-like tokens (C++, Node.js, CI/CD, S3), acronyms and
 # capitalized words that do not start a sentence (names, products).
 _WORD_RE = re.compile(r"[^\W_][\w+#./&-]*", re.UNICODE)
-_SENTENCE_START_RE = re.compile(r"(?:^|[.!?;:]\s+|\n)\W*$")
+_NON_WORD_RUN_RE = re.compile(r"\W*")
+_SENTENCE_BREAK_RE = re.compile(r"[.!?;:]\s|\n")
 
 
 def _is_bullet(styles: Any, index: int) -> bool:
@@ -194,6 +195,21 @@ def hard_paths(findings: Iterable[WritingFinding]) -> list[str]:
     return list(dict.fromkeys(f.path for f in findings if f.severity == "hard").keys())
 
 
+def _starts_sentence(prefix: str) -> bool:
+    """True when the text before a word ends at a sentence start.
+
+    That is: only non-word characters follow the start of the string, a newline,
+    or sentence punctuation plus whitespace. All of those are non-word
+    characters, so only the trailing non-word run needs checking. Matching it on
+    the reversed text keeps this linear.
+    """
+    run = _NON_WORD_RUN_RE.match(prefix[::-1])
+    tail_length = run.end() if run else 0
+    if tail_length == len(prefix):
+        return True
+    return _SENTENCE_BREAK_RE.search(prefix[len(prefix) - tail_length :]) is not None
+
+
 def _fact_tokens(text: str) -> set[str]:
     tokens: set[str] = set()
     for match in _WORD_RE.finditer(text):
@@ -202,9 +218,7 @@ def _fact_tokens(text: str) -> set[str]:
             continue
         tool_like = bool(re.search(r"[\d+#]|\w[./]\w", token))
         acronym = token.isupper() and any(c.isalpha() for c in token)
-        capitalized = token[0].isupper() and not _SENTENCE_START_RE.search(
-            text[: match.start()]
-        )
+        capitalized = token[0].isupper() and not _starts_sentence(text[: match.start()])
         if tool_like or acronym or capitalized:
             tokens.add(token.casefold())
     return tokens
@@ -267,6 +281,6 @@ def fact_violations(
 def scrub_em_dashes(text: str) -> str:
     """Replace em dashes and double hyphens with a comma."""
     cleaned = EM_DASH_RE.sub(", ", text)
-    cleaned = re.sub(r"\s+,", ",", cleaned)
+    cleaned = re.sub(r"(?<!\s)\s+,", ",", cleaned)
     cleaned = re.sub(r",\s*,", ",", cleaned)
     return re.sub(r"[ \t]{2,}", " ", cleaned).strip()

@@ -115,8 +115,8 @@ async function fetchResumeData(id: string, draftToken?: string): Promise<ResumeD
  */
 function parseSpacingLevel(value: string | undefined, defaultValue: SpacingLevel): SpacingLevel {
   if (!value) return defaultValue;
-  const num = parseInt(value, 10);
-  if (isNaN(num) || num < 1 || num > 5) return defaultValue;
+  const num = Number.parseInt(value, 10);
+  if (Number.isNaN(num) || num < 1 || num > 5) return defaultValue;
   return num as SpacingLevel;
 }
 
@@ -125,8 +125,8 @@ function parseSpacingLevel(value: string | undefined, defaultValue: SpacingLevel
  */
 function parseMargin(value: string | undefined, defaultValue: number): number {
   if (!value) return defaultValue;
-  const num = parseInt(value, 10);
-  if (isNaN(num)) return defaultValue;
+  const num = Number.parseInt(value, 10);
+  if (Number.isNaN(num)) return defaultValue;
   return Math.max(5, Math.min(25, num));
 }
 

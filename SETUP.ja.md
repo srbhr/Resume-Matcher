@@ -520,8 +520,9 @@ npm run start
 # Lint
 npm run lint
 
-# Oxfmt で整形
-npm run format
+# 変更したファイルだけを Oxfmt で整形する。`npm run format` は使わない
+# （自分が触っていないファイルまで、プロジェクト全体を整形してしまうため）
+npx oxfmt path/to/changed-file.tsx
 
 # 別ポートで起動
 npm run dev -- -p 3001

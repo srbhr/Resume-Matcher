@@ -187,7 +187,7 @@ function normalizeCustomSections(value: unknown): Record<string, CustomSection> 
             strings: stringList(section.strings),
             items: Array.isArray(section.items)
               ? section.items
-                  .map(normalizeCustomItem)
+                  .map((item, index) => normalizeCustomItem(item, index))
                   .filter((item): item is CustomSectionItem => item !== null)
               : [],
           },
@@ -215,15 +215,17 @@ function normalizeResumeData(value: unknown, fallback: ResumeData): ResumeData {
     summary: stringValue(value.summary, fallback.summary),
     workExperience: Array.isArray(value.workExperience)
       ? value.workExperience
-          .map(normalizeExperience)
+          .map((item, index) => normalizeExperience(item, index))
           .filter((item): item is Experience => item !== null)
       : [],
     education: Array.isArray(value.education)
-      ? value.education.map(normalizeEducation).filter((item): item is Education => item !== null)
+      ? value.education
+          .map((item, index) => normalizeEducation(item, index))
+          .filter((item): item is Education => item !== null)
       : [],
     personalProjects: Array.isArray(value.personalProjects)
       ? value.personalProjects
-          .map(normalizeProject)
+          .map((item, index) => normalizeProject(item, index))
           .filter((item): item is Project => item !== null)
       : [],
     additional: {

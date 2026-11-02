@@ -620,7 +620,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       setLoadingState('loaded');
     };
 
-    loadResumeData();
+    void loadResumeData();
 
     return () => {
       cancelled = true;
@@ -674,7 +674,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       }
     };
 
-    loadJobDescription();
+    void loadJobDescription();
     return () => {
       cancelled = true;
     };
@@ -1550,7 +1550,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       setShowRegenerateDialog('cover-letter');
       return;
     }
-    doGenerateCoverLetter();
+    void doGenerateCoverLetter();
   };
 
   const doGenerateOutreach = async () => {
@@ -1599,7 +1599,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       setShowRegenerateDialog('outreach');
       return;
     }
-    doGenerateOutreach();
+    void doGenerateOutreach();
   };
 
   const canGenerateInterviewPrep =
@@ -1652,7 +1652,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       setShowRegenerateDialog('interview-prep');
       return;
     }
-    doGenerateInterviewPrep();
+    void doGenerateInterviewPrep();
   };
 
   const regenerateDialogContentTitle =
@@ -1671,11 +1671,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
   const handleConfirmRegenerate = () => {
     if (showRegenerateDialog === 'cover-letter') {
-      doGenerateCoverLetter();
+      void doGenerateCoverLetter();
     } else if (showRegenerateDialog === 'outreach') {
-      doGenerateOutreach();
+      void doGenerateOutreach();
     } else if (showRegenerateDialog === 'interview-prep') {
-      doGenerateInterviewPrep();
+      void doGenerateInterviewPrep();
     }
   };
 

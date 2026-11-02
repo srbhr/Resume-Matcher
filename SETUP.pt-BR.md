@@ -705,8 +705,9 @@ npm run start
 # Roda o linter
 npm run lint
 
-# Formata o código com Oxfmt
-npm run format
+# Formata só os arquivos que você alterou (Oxfmt). Não rode `npm run format`:
+# ele reformata todos os arquivos do projeto, não só os seus.
+npx oxfmt caminho/do/arquivo-alterado.tsx
 
 # Roda em outra porta
 npm run dev -- -p 3001

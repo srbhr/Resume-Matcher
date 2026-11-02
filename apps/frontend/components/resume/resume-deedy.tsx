@@ -62,8 +62,8 @@ const linkHandle = (value: string): string => {
   const bare = value
     .replace(/^(?:https?:)?\/\//, '')
     .replace(/^www\./, '')
-    .replace(/[?#].*$/, '')
-    .replace(/\/+$/, '');
+    .split(/[?#]/, 1)[0]
+    .replace(/(?<!\/)\/+$/, '');
   return bare.slice(bare.lastIndexOf('/') + 1) || bare;
 };
 
@@ -81,6 +81,35 @@ interface Award {
 
 const YEAR = /^(?:19|20)\d{2}$/;
 const HAS_YEAR = /\b(?:19|20)\d{2}\b/;
+const LEADING_YEAR = /^((?:19|20)\d{2})(?:\s*[,:-]\s*|\s+)(\S.*)$/;
+const PARENTHESISED_YEAR = /\(((?:19|20)\d{2})\)$/;
+
+/** "KPCB Fellow (2014)" -> ["2014", "KPCB Fellow"]. */
+const yearInParentheses = (text: string): [string, string] | null => {
+  const match = PARENTHESISED_YEAR.exec(text);
+  const title = match ? text.slice(0, match.index).trimEnd() : '';
+  return match && title ? [match[1], title] : null;
+};
+
+/** "KPCB Fellow, 2014", "KPCB Fellow - 2014" or "KPCB Fellow 2014" -> ["2014", "KPCB Fellow"]. */
+const yearAfterSeparator = (text: string): [string, string] | null => {
+  const year = text.slice(-4);
+  if (!YEAR.test(year)) return null;
+  const head = text.slice(0, -4);
+  const body = head.trimEnd();
+  const spaceBeforeYear = body.length < head.length;
+  const separator = body.at(-1);
+  const beforeSeparator = body.slice(0, -1);
+  const titles = [
+    separator === ',' ? beforeSeparator.trimEnd() : '',
+    separator === '-' && spaceBeforeYear && /\s$/.test(beforeSeparator)
+      ? beforeSeparator.trimEnd()
+      : '',
+    spaceBeforeYear ? body : '',
+  ];
+  const title = titles.find(Boolean);
+  return title ? [year, title] : null;
+};
 
 /**
  * Split an award into year | rank | title when the text allows it:
@@ -88,20 +117,15 @@ const HAS_YEAR = /\b(?:19|20)\d{2}\b/;
  * "KPCB Fellow (2014)". Text that names more than one year stays whole.
  */
 const parseAward = (text: string): Award => {
-  const parts = text.split(/\s+\|\s+/);
+  const parts = text.split(/(?<!\s)\s+\|\s+/);
   if (YEAR.test(parts[0]) && parts.length === 3) {
     return { year: parts[0], rank: parts[1], title: parts[2] };
   }
   if (YEAR.test(parts[0]) && parts.length === 2) return { year: parts[0], title: parts[1] };
-  const leading = text.match(/^((?:19|20)\d{2})(?:\s*[,:-]\s*|\s+)(.+)$/);
-  const trailing =
-    text.match(/^(.+?)\s*\(((?:19|20)\d{2})\)$/) ??
-    text.match(/^(.+?)(?:\s*,\s*|\s+-\s+|\s+)((?:19|20)\d{2})$/);
+  const leading = LEADING_YEAR.exec(text);
   const [year, title] = leading
     ? [leading[1], leading[2]]
-    : trailing
-      ? [trailing[2], trailing[1]]
-      : [];
+    : (yearInParentheses(text) ?? yearAfterSeparator(text) ?? []);
   return year && title && !HAS_YEAR.test(title) ? { year, title } : { title: text };
 };
 

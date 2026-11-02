@@ -520,8 +520,9 @@ npm run start
 # Ejecutar linter
 npm run lint
 
-# Formatear código con Oxfmt
-npm run format
+# Formatear solo los archivos que cambiaste (Oxfmt). No ejecutes `npm run format`:
+# reformatea todos los archivos del proyecto, no solo los tuyos.
+npx oxfmt ruta/al/archivo-cambiado.tsx
 
 # Ejecutar en un puerto diferente
 npm run dev -- -p 3001

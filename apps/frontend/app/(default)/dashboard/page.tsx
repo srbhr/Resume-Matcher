@@ -207,7 +207,7 @@ export default function DashboardPage() {
     const storedId = localStorage.getItem('master_resume_id');
     if (storedId) {
       adoptMasterResume(storedId);
-      checkResumeStatus(storedId);
+      void checkResumeStatus(storedId);
     }
   }, [adoptMasterResume, checkResumeStatus]);
 
@@ -252,7 +252,7 @@ export default function DashboardPage() {
           const sameMaster = activeMasterIdRef.current === resolvedMasterId;
           localStorage.setItem('master_resume_id', resolvedMasterId);
           adoptMasterResume(resolvedMasterId);
-          checkResumeStatus(resolvedMasterId, background && sameMaster);
+          void checkResumeStatus(resolvedMasterId, background && sameMaster);
         } else {
           localStorage.removeItem('master_resume_id');
           adoptMasterResume(null);
@@ -331,7 +331,7 @@ export default function DashboardPage() {
   }, [otherMasters, listRevision, loadTailoredResumes]);
 
   useEffect(() => {
-    loadTailoredResumes();
+    void loadTailoredResumes();
   }, [loadTailoredResumes]);
 
   // Agent mode: resumes the agent saves appear without a reload.
@@ -341,7 +341,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleFocus = () => {
       otherMastersPollAttemptsRef.current = 0;
-      loadTailoredResumes();
+      void loadTailoredResumes();
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
@@ -362,7 +362,7 @@ export default function DashboardPage() {
       localStorage.setItem('master_resume_id', resumeId);
       adoptMasterResume(resumeId);
       // Check status after upload completes
-      checkResumeStatus(resumeId);
+      void checkResumeStatus(resumeId);
     }
     otherMastersPollAttemptsRef.current = 0;
     void loadTailoredResumes();

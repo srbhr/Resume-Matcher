@@ -53,8 +53,8 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
   const contentId = useId();
   const compactMultiplier = settings.compactMode ? COMPACT_MULTIPLIER : 1;
   const sectionGapRem =
-    parseFloat(SECTION_SPACING_MAP[settings.spacing.section]) * compactMultiplier;
-  const itemGapRem = parseFloat(ITEM_SPACING_MAP[settings.spacing.item]) * compactMultiplier;
+    Number.parseFloat(SECTION_SPACING_MAP[settings.spacing.section]) * compactMultiplier;
+  const itemGapRem = Number.parseFloat(ITEM_SPACING_MAP[settings.spacing.item]) * compactMultiplier;
   const lineHeightValue = settings.compactMode
     ? LINE_HEIGHT_MAP[settings.spacing.lineHeight] * COMPACT_LINE_HEIGHT_MULTIPLIER
     : LINE_HEIGHT_MAP[settings.spacing.lineHeight];
@@ -526,7 +526,7 @@ const MarginSlider: React.FC<MarginSliderProps> = ({ label, value, onChange }) =
         min={5}
         max={25}
         value={value}
-        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        onChange={(e) => onChange(Number.parseInt(e.target.value, 10))}
         className="w-full accent-ink"
       />
       <span className="font-mono text-xs w-6 text-right text-ink-soft tabular-nums">{value}</span>
