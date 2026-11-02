@@ -52,36 +52,46 @@ export function usePagination({
     setIsCalculating(true);
 
     // Wait for fonts to load before measuring
-    void document.fonts.ready.then(() => {
-      const contentArea = getContentAreaPx(pageSize, margins);
-      const pageHeight = contentArea.height;
-      const contentHeight = container.scrollHeight;
+    void document.fonts.ready
+      .then(() => {
+        const contentArea = getContentAreaPx(pageSize, margins);
+        const pageHeight = contentArea.height;
+        const contentHeight = container.scrollHeight;
 
-      setTotalContentHeight(contentHeight);
+        setTotalContentHeight(contentHeight);
 
-      // If content fits on one page, we're done
-      if (contentHeight <= pageHeight) {
-        setPages([{ pageNumber: 1, contentOffset: 0, contentEnd: contentHeight }]);
+        // If content fits on one page, we're done
+        if (contentHeight <= pageHeight) {
+          setPages([{ pageNumber: 1, contentOffset: 0, contentEnd: contentHeight }]);
+          setIsCalculating(false);
+          return;
+        }
+
+        // Break where the PDF does: the templates' data-resume-* hooks become keep zones.
+        const breakPoints = computePageStarts(
+          contentHeight,
+          pageHeight,
+          collectKeepZones(container)
+        );
+
+        // Convert break points to page objects with start and end
+        const newPages: PageBreak[] = breakPoints.map((offset, index) => ({
+          pageNumber: index + 1,
+          contentOffset: offset,
+          contentEnd: index < breakPoints.length - 1 ? breakPoints[index + 1] : contentHeight,
+        }));
+
+        const nonEmptyPages = newPages.filter(
+          (page, index) => page.contentEnd - page.contentOffset > 1 || index === 0
+        );
+        setPages(nonEmptyPages.length > 0 ? nonEmptyPages : newPages.slice(0, 1));
         setIsCalculating(false);
-        return;
-      }
-
-      // Break where the PDF does: the templates' data-resume-* hooks become keep zones.
-      const breakPoints = computePageStarts(contentHeight, pageHeight, collectKeepZones(container));
-
-      // Convert break points to page objects with start and end
-      const newPages: PageBreak[] = breakPoints.map((offset, index) => ({
-        pageNumber: index + 1,
-        contentOffset: offset,
-        contentEnd: index < breakPoints.length - 1 ? breakPoints[index + 1] : contentHeight,
-      }));
-
-      const nonEmptyPages = newPages.filter(
-        (page, index) => page.contentEnd - page.contentOffset > 1 || index === 0
-      );
-      setPages(nonEmptyPages.length > 0 ? nonEmptyPages : newPages.slice(0, 1));
-      setIsCalculating(false);
-    });
+      })
+      .catch((error: unknown) => {
+        // A failed measurement must not leave the preview stuck in "calculating".
+        console.error('Page-break calculation failed:', error);
+        setIsCalculating(false);
+      });
   }, [pageSize, margins, measurementRef]);
 
   // Debounced recalculation
