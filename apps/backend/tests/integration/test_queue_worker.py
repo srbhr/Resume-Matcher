@@ -339,3 +339,47 @@ async def test_each_item_runs_under_the_ai_operation_deadline(
     item = await isolated_db.get_queue_item("q1")
     assert item is not None
     assert (item["status"], item["error"]) == ("failed", "timeout")
+
+
+async def test_stop_propagates_its_own_cancellation() -> None:
+    """Cancelling stop() while the worker unwinds must cancel the caller too."""
+    manager = QueueManager()
+    unwinding, release = asyncio.Event(), asyncio.Event()
+
+    async def slow_unwind() -> None:
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            unwinding.set()
+            await release.wait()
+            raise
+
+    worker = asyncio.create_task(slow_unwind())
+    manager._task = worker
+    await asyncio.sleep(0)
+    stopper = asyncio.create_task(manager.stop())
+    await unwinding.wait()
+    stopper.cancel()
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            await stopper
+    finally:
+        release.set()
+        await asyncio.wait({worker}, timeout=1)
+    assert worker.cancelled()
+
+
+async def test_stop_surfaces_a_worker_crash() -> None:
+    """A worker that already died with an error must not be reported as a clean stop."""
+    manager = QueueManager()
+
+    async def crash() -> None:
+        raise RuntimeError("synthetic worker crash")
+
+    worker = asyncio.create_task(crash())
+    await asyncio.wait({worker})
+    manager._task = worker
+
+    with pytest.raises(RuntimeError, match="synthetic worker crash"):
+        await manager.stop()
+    assert manager._task is None

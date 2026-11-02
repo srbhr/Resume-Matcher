@@ -807,8 +807,6 @@ async def _release_slot_after_worker(worker: asyncio.Task[bytes]) -> None:
     """Retain capacity until a non-cancellable thread worker actually exits."""
     try:
         await worker
-    except asyncio.CancelledError:
-        return
     except Exception:
         logger.exception("Detached PDF fallback worker failed")
     finally:

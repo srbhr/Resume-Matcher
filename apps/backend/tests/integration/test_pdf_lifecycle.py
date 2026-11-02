@@ -438,6 +438,24 @@ async def test_detached_worker_failure_is_logged_server_side(
     assert pdf_module._active_renders == 0
 
 
+async def test_cancelled_slot_owner_propagates_and_releases_slot() -> None:
+    """Cancelling the owner must not be swallowed, and the slot still comes back."""
+
+    async def never_finishes() -> bytes:
+        await asyncio.Event().wait()
+        return b""
+
+    pdf_module._active_renders = 1
+    worker = asyncio.create_task(never_finishes())
+    owner = asyncio.create_task(pdf_module._release_slot_after_worker(worker))
+    await asyncio.sleep(0)
+    owner.cancel()
+
+    with pytest.raises(asyncio.CancelledError):
+        await owner
+    assert pdf_module._active_renders == 0
+
+
 async def test_non_timeout_page_close_failure_retires_browser(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,

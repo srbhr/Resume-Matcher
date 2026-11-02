@@ -172,10 +172,11 @@ class QueueManager:
         if task is None:
             return
         task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+        # wait() lets a cancellation of stop() itself propagate, unlike
+        # awaiting the task and swallowing every CancelledError.
+        await asyncio.wait({task})
+        if not task.cancelled():
+            task.result()  # surface a crash that finished before the cancel landed
         logger.info("Tailoring queue worker stopped.")
 
     @asynccontextmanager
