@@ -80,8 +80,8 @@ See [Docker Deployment](../SETUP.md#docker-deployment) for details and the optio
 ## Running the tests
 
 ```bash
-cd apps/backend && uv run pytest     # backend
-cd apps/frontend && npm run test     # frontend (vitest)
+(cd apps/backend && uv run pytest)     # backend
+(cd apps/frontend && npm run test)     # frontend (vitest)
 ```
 
 ## Code Formatting
@@ -89,14 +89,14 @@ cd apps/frontend && npm run test     # frontend (vitest)
 Format only the files you changed. Never run a whole-repo format, which rewrites files you didn't touch.
 
 ```bash
-cd apps/backend && uv run ruff format <files>    # Python (ruff)
-cd apps/frontend && npx oxfmt <files>            # Frontend (oxfmt)
-cd apps/frontend && npm run lint                 # Frontend lint
+(cd apps/backend && uv run ruff format <files>)    # Python (ruff)
+(cd apps/frontend && npx oxfmt <files>)            # Frontend (oxfmt)
+(cd apps/frontend && npm run lint)                 # Frontend lint
 ```
 
 ## Git Hooks
 
-The repo ships a `pre-push` hook that runs the backend tests and a locale-parity check. Activate it once per clone:
+The repo ships a `pre-push` hook that runs backend Ruff checks and tests, locale parity, and frontend Vitest and TypeScript checks when the local Node tools are available. Activate it once per clone:
 
 ```bash
 git config core.hooksPath .githooks
