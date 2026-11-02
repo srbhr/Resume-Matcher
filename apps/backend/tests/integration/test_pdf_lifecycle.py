@@ -438,21 +438,56 @@ async def test_detached_worker_failure_is_logged_server_side(
     assert pdf_module._active_renders == 0
 
 
-async def test_cancelled_slot_owner_propagates_and_releases_slot() -> None:
-    """Cancelling the owner must not be swallowed, and the slot still comes back."""
+async def test_cancelled_slot_owner_keeps_slot_until_worker_exits() -> None:
+    """Cancelling the owner propagates, but the slot stays reserved until the worker exits."""
+    finish = asyncio.Event()
 
-    async def never_finishes() -> bytes:
-        await asyncio.Event().wait()
-        return b""
+    async def worker_body() -> bytes:
+        await finish.wait()
+        return b"%PDF-1.4"
 
     pdf_module._active_renders = 1
-    worker = asyncio.create_task(never_finishes())
+    worker = asyncio.create_task(worker_body())
     owner = asyncio.create_task(pdf_module._release_slot_after_worker(worker))
     await asyncio.sleep(0)
     owner.cancel()
 
     with pytest.raises(asyncio.CancelledError):
         await owner
+    # The worker (a to_thread render in production) keeps running and owns the slot.
+    assert not worker.done()
+    assert pdf_module._active_renders == 1
+
+    finish.set()
+    await worker
+    await asyncio.sleep(0)
+    assert pdf_module._active_renders == 0
+
+
+async def test_failed_worker_after_owner_cancel_is_logged_and_released(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A worker that fails after its owner was cancelled still frees the slot and logs."""
+    finish = asyncio.Event()
+
+    async def worker_body() -> bytes:
+        await finish.wait()
+        raise RuntimeError("synthetic late worker failure")
+
+    pdf_module._active_renders = 1
+    worker = asyncio.create_task(worker_body())
+    owner = asyncio.create_task(pdf_module._release_slot_after_worker(worker))
+    await asyncio.sleep(0)
+    owner.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await owner
+
+    with caplog.at_level(logging.ERROR, logger="app.pdf"):
+        finish.set()
+        await asyncio.wait({worker})
+        await asyncio.sleep(0)
+
+    assert "synthetic late worker failure" in caplog.text
     assert pdf_module._active_renders == 0
 
 

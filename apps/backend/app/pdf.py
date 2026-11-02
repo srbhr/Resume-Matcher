@@ -803,14 +803,31 @@ def _retire_shared_browser(
     return owner
 
 
+def _release_slot_when_worker_exits(worker: asyncio.Task[bytes]) -> None:
+    """Done callback: free a detached worker's slot and keep its failure visible."""
+    if not worker.cancelled() and worker.exception() is not None:
+        logger.error("Detached PDF fallback worker failed", exc_info=worker.exception())
+    _release_render_slot()
+
+
 async def _release_slot_after_worker(worker: asyncio.Task[bytes]) -> None:
     """Retain capacity until a non-cancellable thread worker actually exits."""
+    release_now = True
     try:
-        await worker
+        # shield: cancelling this owner must not cancel the worker task, which
+        # would mark it done while its thread keeps rendering.
+        await asyncio.shield(worker)
+    except asyncio.CancelledError:
+        if not worker.done():
+            # The thread is still running: its exit releases the slot.
+            worker.add_done_callback(_release_slot_when_worker_exits)
+            release_now = False
+        raise
     except Exception:
         logger.exception("Detached PDF fallback worker failed")
     finally:
-        _release_render_slot()
+        if release_now:
+            _release_render_slot()
 
 
 def _transfer_slot_to_worker(worker: asyncio.Task[bytes]) -> None:
