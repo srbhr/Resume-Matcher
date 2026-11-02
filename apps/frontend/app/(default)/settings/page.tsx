@@ -426,7 +426,7 @@ export default function SettingsPage() {
       }
     }
 
-    loadConfig();
+    void loadConfig();
     return () => {
       cancelled = true;
     };
@@ -1368,7 +1368,7 @@ export default function SettingsPage() {
                   checked={enableCoverLetter}
                   onCheckedChange={(checked) => {
                     setEnableCoverLetter(checked);
-                    handleFeatureConfigChange('enable_cover_letter', checked);
+                    void handleFeatureConfigChange('enable_cover_letter', checked);
                   }}
                   label={t('settings.contentGeneration.coverLetter.label')}
                   description={t('settings.contentGeneration.coverLetter.description')}
@@ -1440,7 +1440,7 @@ export default function SettingsPage() {
                   checked={enableOutreach}
                   onCheckedChange={(checked) => {
                     setEnableOutreach(checked);
-                    handleFeatureConfigChange('enable_outreach_message', checked);
+                    void handleFeatureConfigChange('enable_outreach_message', checked);
                   }}
                   label={t('settings.contentGeneration.outreachMessage.label')}
                   description={t('settings.contentGeneration.outreachMessage.description')}
@@ -1512,7 +1512,7 @@ export default function SettingsPage() {
                   checked={enableInterviewPrep}
                   onCheckedChange={(checked) => {
                     setEnableInterviewPrep(checked);
-                    handleFeatureConfigChange('enable_interview_prep', checked);
+                    void handleFeatureConfigChange('enable_interview_prep', checked);
                   }}
                   label={t('settings.contentGeneration.interviewPrep.label')}
                   description={t('settings.contentGeneration.interviewPrep.description')}

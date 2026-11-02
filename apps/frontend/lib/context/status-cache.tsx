@@ -181,7 +181,7 @@ export function StatusCacheProvider({ children }: { children: React.ReactNode })
   // Initial fetch on mount
   useEffect(() => {
     mountedRef.current = true;
-    refreshStatus();
+    void refreshStatus();
 
     return () => {
       mountedRef.current = false;
@@ -224,7 +224,7 @@ export function StatusCacheProvider({ children }: { children: React.ReactNode })
   // Set up periodic LLM health check (every 30 minutes)
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      refreshLlmHealth();
+      void refreshLlmHealth();
     }, LLM_HEALTH_CHECK_INTERVAL);
 
     return () => {

@@ -67,7 +67,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    loadLanguages();
+    void loadLanguages();
   }, []);
 
   const setContentLanguage = useCallback(

@@ -93,7 +93,7 @@ export default function QueuePage() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       setResumesLoading(true);
       try {
         const list = await fetchResumeList(true);
@@ -119,7 +119,7 @@ export default function QueuePage() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       setPromptLoading(true);
       try {
         const config = await fetchPromptConfig();
@@ -218,7 +218,7 @@ export default function QueuePage() {
       return;
     }
     setQueueLoad('loading');
-    loadQueue();
+    void loadQueue();
   }, [loadQueue, resumesLoading, selectedResumeId]);
 
   const hasActiveItems = queueItems.some(
@@ -297,7 +297,7 @@ export default function QueuePage() {
       console.error('Failed to delete queue item', err);
       if (err instanceof QueueItemInProgressError) {
         setActionError(t('queue.errors.deleteInProgress'));
-        loadQueue();
+        void loadQueue();
       } else {
         setActionError(t('queue.errors.deleteFailed'));
       }

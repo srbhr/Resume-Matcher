@@ -182,7 +182,7 @@ export default function ResumeViewerPage() {
       }
     };
 
-    loadResume();
+    void loadResume();
   }, [resumeId, beginResumeLoad, isCurrentResumeLoad]);
 
   // Agent mode: show what the user's coding agent saves (e.g. after Enhance)
@@ -335,7 +335,7 @@ export default function ResumeViewerPage() {
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleTitleSave();
+      void handleTitleSave();
     } else if (e.key === 'Escape') {
       setIsEditingTitle(false);
     }

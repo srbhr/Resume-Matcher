@@ -52,7 +52,7 @@ export function usePagination({
     setIsCalculating(true);
 
     // Wait for fonts to load before measuring
-    document.fonts.ready.then(() => {
+    void document.fonts.ready.then(() => {
       const contentArea = getContentAreaPx(pageSize, margins);
       const pageHeight = contentArea.height;
       const contentHeight = container.scrollHeight;

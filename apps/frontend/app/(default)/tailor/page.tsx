@@ -162,7 +162,7 @@ export default function TailorPage() {
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const rows = await fetchResumeList(true);
         if (cancelled) return;
@@ -213,7 +213,7 @@ export default function TailorPage() {
       }
     };
 
-    loadPromptConfig();
+    void loadPromptConfig();
     return () => {
       cancelled = true;
     };
