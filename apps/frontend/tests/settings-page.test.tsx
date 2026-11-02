@@ -251,7 +251,10 @@ describe('settings page (Swiss sweep)', () => {
     expect(screen.getByText('settings.llmConfiguration.agentNote')).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'settings.llmConfiguration.agentGuideLink' })
-    ).toHaveAttribute('href', expect.stringContaining('SETUP.md#use-resume-matcher-with-a-coding-agent'));
+    ).toHaveAttribute(
+      'href',
+      expect.stringContaining('SETUP.md#use-resume-matcher-with-a-coding-agent')
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
     await waitFor(() =>
