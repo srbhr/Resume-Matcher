@@ -31,11 +31,12 @@ describe('usePagination', () => {
       },
     });
 
+    const measurementRef = { current: element };
     const { result } = renderHook(() =>
       usePagination({
         pageSize: DEFAULT_TEMPLATE_SETTINGS.pageSize,
         margins: DEFAULT_TEMPLATE_SETTINGS.margins,
-        measurementRef: { current: element },
+        measurementRef,
       })
     );
 
