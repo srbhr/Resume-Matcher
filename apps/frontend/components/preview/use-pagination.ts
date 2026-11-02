@@ -24,6 +24,18 @@ interface UsePaginationResult {
   isCalculating: boolean;
 }
 
+/** Page start offsets that match the PDF, or plain page-height breaks if those fail. */
+function pageStarts(container: HTMLElement, contentHeight: number, pageHeight: number): number[] {
+  try {
+    // Break where the PDF does: the templates' data-resume-* hooks become keep zones.
+    return computePageStarts(contentHeight, pageHeight, collectKeepZones(container));
+  } catch (error) {
+    // Never hide content: every page height still gets its own page.
+    console.error('Keep-together page breaks failed; breaking at page height:', error);
+    return computePageStarts(contentHeight, pageHeight, []);
+  }
+}
+
 /**
  * Custom hook for calculating page breaks based on content height.
  * Follows the PDF's break rules (see ./page-breaks.ts): entries stay whole, long
@@ -67,12 +79,7 @@ export function usePagination({
           return;
         }
 
-        // Break where the PDF does: the templates' data-resume-* hooks become keep zones.
-        const breakPoints = computePageStarts(
-          contentHeight,
-          pageHeight,
-          collectKeepZones(container)
-        );
+        const breakPoints = pageStarts(container, contentHeight, pageHeight);
 
         // Convert break points to page objects with start and end
         const newPages: PageBreak[] = breakPoints.map((offset, index) => ({
