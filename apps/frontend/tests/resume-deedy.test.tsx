@@ -164,6 +164,8 @@ describe('ResumeDeedy', () => {
     blank.additional!.awards = ['Excellence Award (2019)', '\t(2014)'];
     rerender(<ResumeDeedy data={blank} />);
     expect(container.querySelectorAll('[class*="awards"] > span')).toHaveLength(0);
+    expect(screen.getByText('Excellence Award (2019)')).toBeInTheDocument();
+    expect(screen.getByText('(2014)')).toBeInTheDocument();
   });
 
   it('numbers publication entries', () => {
