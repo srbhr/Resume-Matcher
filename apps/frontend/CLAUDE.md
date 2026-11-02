@@ -178,7 +178,8 @@ npm run build     # next build  (runs tsc — i18n shape drift fails HERE)
 npm run start
 npm run lint      # oxlint + oxfmt --check (JS/TS files)
 npm run typecheck # tsc --noEmit
-npm run format    # oxfmt (writes all supported files)
+npx oxfmt <files> # format only the files you changed
+npm run format    # oxfmt on EVERY supported file, incl. JSON and Markdown — don't use it for a change
 npm run test      # vitest run (includes the Swiss guard and contrast tests)
 npm run guard     # Swiss drift report; `npm run guard -- <path>` to filter
 npm run guard:update  # lower the guard allowlist (refuses increases)
@@ -192,7 +193,7 @@ Backend must run separately on :8000 (see root CLAUDE.md). Frontend proxies `/ap
 ## Non-Negotiable Frontend Rules
 
 1. All UI MUST follow Swiss International Style (links above). `rounded-none`, 1px ink borders, hard shadows by role, semantic tokens, shared primitives, and a clean `npm run guard -- <path>` on what you touched.
-2. Run `npm run lint` and `npm run format` before committing frontend changes.
+2. Run `npm run lint` before committing frontend changes, and format only the files you changed with `npx oxfmt <files>`. Never run `npm run format` for a change: bare `oxfmt` rewrites every supported file (JSON and Markdown too, which `lint` doesn't even check), so files you never touched end up in your diff.
 3. Any `en.json` key change MUST be mirrored across all 7 locale files (see i18n) or the build breaks.
 4. **Textarea Enter-key pattern** — confirmed in code (e.g. `app/(default)/tailor/page.tsx`): when a textarea sits inside a dialog/form that submits on Enter, stop propagation:
    ```tsx
@@ -208,6 +209,7 @@ Backend must run separately on :8000 (see root CLAUDE.md). Frontend proxies `/ap
 
 ## Key Gotchas
 
+- **Resume templates repeat their markup on purpose:** each template in `components/resume/` carries its own full section rendering, so blocks of it look duplicated across templates. That is by design (owner decision). Don't extract shared components or "deduplicate" them, even when a code-quality tool flags it.
 - **Icons are Phosphor:** import from `@phosphor-icons/react` (`@phosphor-icons/react/dist/ssr` in server components such as `page-header`) at the default `regular` weight; `optimizePackageImports` in `next.config.ts` tree-shakes it, tiptap and dnd-kit, so there is no deep-path import. The guard's `lucide-import` rule flags `lucide-react` everywhere except `components/resume/**`: the printed templates still use `lucide-react` (and keep it in the bundle). Brand marks (AI providers, LinkedIn, GitHub) are `<BrandIcon name="…" />` from `components/ui/brand-icon.tsx`, never Phosphor's logo glyphs.
 - **240s timeout** on AI calls (`apiFetch` default) — matches backend; don't shorten for improve/regenerate flows.
 - **`print/*` pages are server components** that read template settings from `searchParams` and call the backend via internal origin — keep them server-side.

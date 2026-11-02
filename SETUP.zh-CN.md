@@ -520,8 +520,9 @@ npm run start
 # 运行 linter
 npm run lint
 
-# 使用 Oxfmt 格式化
-npm run format
+# 只用 Oxfmt 格式化你改动过的文件。不要运行 `npm run format`：
+# 它会格式化整个项目的所有文件，而不只是你的改动。
+npx oxfmt path/to/changed-file.tsx
 
 # 指定其他端口运行
 npm run dev -- -p 3001

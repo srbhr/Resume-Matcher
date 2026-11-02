@@ -107,7 +107,7 @@ uv run uvicorn app.main:app --reload --port 8000     # dev server on :8000
 uv run app                                           # console script (app.main:main, uses HOST/PORT/RELOAD)
 uv run resume-matcher-mcp                            # MCP server over stdio (see features/mcp-server.md)
 uv run ruff check                                    # lint backend
-uv run ruff format                                   # format backend
+uv run ruff format <files>                           # format only the files you changed (not the whole backend)
 uv run playwright install chromium                   # one-time, required for PDF endpoints
 ```
 Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
