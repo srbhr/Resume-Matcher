@@ -282,6 +282,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             displayName={section.displayName}
             labels={additionalSectionLabels}
             titleClassName={sectionTitleClass}
+			lineBreakMarker={accent ? undefined : '---'}
           />
         );
 
@@ -384,7 +385,14 @@ const AdditionalSection: React.FC<{
   displayName?: string;
   labels?: Partial<AdditionalSectionLabels>;
   titleClassName: string;
-}> = ({ additional, displayName = 'Skills & Awards', labels, titleClassName }) => {
+  lineBreakMarker?: string;
+}> = ({
+  additional,
+  displayName = 'Skills & Awards',
+  labels,
+  titleClassName,
+  lineBreakMarker,
+}) => {
   if (!additional) return null;
 
   const {
@@ -433,7 +441,10 @@ const AdditionalSection: React.FC<{
         {technicalSkills.length > 0 && (
           <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <TagList items={technicalSkills} />
+            <TagList
+  items={technicalSkills}
+  lineBreakMarker={lineBreakMarker}
+/>
           </div>
         )}
         {languages.length > 0 && (

@@ -78,37 +78,66 @@ def _coerce_optional_text(value: Any) -> str | None:
     return text or None
 
 
-def _split_description_lines(value: str) -> list[str]:
+def _split_description_lines(
+    value: str,
+    *,
+    preserve_line_break_marker: bool = False,
+) -> list[str]:
     """Split a description block into clean bullet lines."""
     items: list[str] = []
+
     for raw_line in re.split(r"\r?\n+", value):
-        line = _BULLET_PREFIX_RE.sub("", raw_line.strip())
+        raw = raw_line.strip()
+
+        # Preserve the custom line-break marker when processing technical skills.
+        if preserve_line_break_marker and raw == "---":
+            items.append(raw)
+            continue
+
+        line = _BULLET_PREFIX_RE.sub("", raw)
+
         if line:
             items.append(line)
+
     return items
 
-
-def _coerce_string_list(value: Any) -> list[str]:
+def _coerce_string_list(
+    value: Any,
+    *,
+    preserve_line_break_marker: bool = False,
+) -> list[str]:
     """Coerce nested/string values into a list of strings."""
     if value is None:
         return []
 
     if isinstance(value, str):
-        return _split_description_lines(value)
+        return _split_description_lines(
+            value,
+            preserve_line_break_marker=preserve_line_break_marker,
+        )
 
     if isinstance(value, list):
         items: list[str] = []
+
         for entry in value:
             if isinstance(entry, str):
-                items.extend(_split_description_lines(entry))
+                items.extend(
+                    _split_description_lines(
+                        entry,
+                        preserve_line_break_marker=preserve_line_break_marker,
+                    )
+                )
                 continue
 
             coerced = _coerce_text(entry)
+
             if coerced:
                 items.append(coerced)
+
         return items
 
     coerced = _coerce_text(value)
+
     return [coerced] if coerced else []
 
 
@@ -251,8 +280,15 @@ class AdditionalInfo(BaseModel):
     certificationsTraining: list[str] = Field(default_factory=list)
     awards: list[str] = Field(default_factory=list)
 
+    @field_validator("technicalSkills", mode="before")
+    @classmethod
+    def _normalize_technical_skills(cls, value: Any) -> list[str]:
+        return _coerce_string_list(
+            value,
+            preserve_line_break_marker=True,
+        )
+
     @field_validator(
-        "technicalSkills",
         "languages",
         "certificationsTraining",
         "awards",
@@ -261,8 +297,7 @@ class AdditionalInfo(BaseModel):
     @classmethod
     def _normalize_string_fields(cls, value: Any) -> list[str]:
         return _coerce_string_list(value)
-
-
+        
 # Section Metadata Models for dynamic section management
 class SectionMeta(BaseModel):
     """Metadata for a resume section."""
