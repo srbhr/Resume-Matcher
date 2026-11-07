@@ -30,7 +30,7 @@ Please try to create bug reports that are:
 
 ## Testing
 
-Please test your changes before submitting the PR.
+Please test your changes before submitting the PR. See [Running the tests](#running-the-tests).
 
 ## Good First Issues
 
@@ -51,144 +51,58 @@ Follow these steps to set up the environment and run the application.
    cd Resume-Matcher
    ```
 
-3. Create a Python Virtual Environment:
+3. Follow [SETUP.md](../SETUP.md) to install prerequisites (Python 3.13+, Node.js, [uv](https://docs.astral.sh/uv/)) and configure an LLM provider.
 
-   - Using [virtualenv](https://learnpython.com/blog/how-to-use-virtualenv-python/):
-
-     _Note_: Check how to install virtualenv on your system here [link](https://learnpython.com/blog/how-to-use-virtualenv-python/).
-
-     ```bash
-     virtualenv env
-     ```
-
-   **OR**
-
-   - Create a Python Virtual Environment:
-
-     ```bash
-     python -m venv env
-     ```
-
-4. Activate the Virtual Environment.
-
-   - On Windows.
-
-     ```bash
-     env\Scripts\activate
-     ```
-
-   - On macOS and Linux.
-
-     ```bash
-     source env/bin/activate
-     ```
-
-    **OPTIONAL (For pyenv users)**
-
-   Run the application with pyenv (Refer to this [article](https://realpython.com/intro-to-pyenv/#installing-pyenv))
-
-   - Build dependencies (on ubuntu)
-      ```
-      sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python openssl
-      ```
-      ```
-
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev
-
-      sudo apt-get install python-tk python3-tk tk-dev
-
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-
-      ```
-
-        - pyenv installer
-     ```
-        curl https://pyenv.run | bash
-     ```
-   - Install desired python version
-     ```
-       pyenv install -v 3.11.0
-     ```
-
-   - pyenv with virtual enviroment
-     ```
-        pyenv virtualenv 3.11.0 venv
-     ```
-
-   - Activate virtualenv with pyenv
-     ```
-        pyenv activate venv
-     ```
-
-     5. Install Dependencies:
+4. Install dependencies and run the backend and frontend (separate terminals):
 
    ```bash
-   pip install -r requirements.txt
+   # Backend: FastAPI on :8000
+   cd apps/backend
+   uv sync --extra dev
+   uv run uvicorn app.main:app --reload --port 8000
+
+   # Frontend: Next.js on :3000
+   cd apps/frontend
+   npm install
+   npm run dev
    ```
 
-6. Prepare Data:
-
-   - Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
-   - Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
-
-7. Parse Resumes to JSON:
-
-   ```python
-   python run_first.py
-   ```
-
-8. Run the Application:
-
-   ```python
-   streamlit run streamlit_app.py
-   ```
-
-**Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.
-
-**Additional Note**: The Vector Similarity part is precomputed to optimize performance due to the resource-intensive nature of sentence encoders that require significant GPU and RAM resources. If you are interested in leveraging this feature in a Google Colab environment for free, refer to the upcoming blog (link to be provided) for further guidance.
-
-<br/>
+5. Open <http://localhost:3000>.
 
 ### Docker
 
-1. Build the image and start application
+```bash
+docker compose up -d
+```
 
-   ```bash
-       docker-compose up
-   ```
+See [Docker Deployment](../SETUP.md#docker-deployment) for details and the optional PostgreSQL setup.
 
-2. Open `localhost:80` on your browser
+## Running the tests
 
-<br/>
-
-### Running the Web Application
-
-The full stack Next.js (React and FastAPI) web application allows users to interact with the Resume Matcher tool interactively via a web browser.
-
-To run the full stack web application (frontend client and backend api servers), follow the instructions over on the [webapp README](/webapp/README.md) file.
+```bash
+(cd apps/backend && uv run pytest)     # backend
+(cd apps/frontend && npm run test)     # frontend (vitest)
+```
 
 ## Code Formatting
 
-This project uses [Black](https://black.readthedocs.io/en/stable/) for code formatting. We believe this helps to keep the code base consistent and reduces the cognitive load when reading code.
+Format only the files you changed. Never run a whole-repo format, which rewrites files you didn't touch.
 
-Before submitting your pull request, please make sure your changes are in accordance with the Black style guide. You can format your code by running the following command in your terminal:
-
-```sh
-black .
+```bash
+(cd apps/backend && uv run ruff format <files>)    # Python (ruff)
+(cd apps/frontend && npx oxfmt <files>)            # Frontend (oxfmt)
+(cd apps/frontend && npm run lint)                 # Frontend lint
 ```
 
-## Pre-commit Hooks
+## Git Hooks
 
-We also use [pre-commit](https://pre-commit.com/) to automatically check for common issues before commits are submitted. This includes checks for code formatting with Black.
+The repo ships a `pre-push` hook that runs backend Ruff checks and tests, locale parity, and frontend Vitest and TypeScript checks when the local Node tools are available. Activate it once per clone:
 
-If you haven't already, please install the pre-commit hooks by running the following command in your terminal:
-
-```sh
-pip install pre-commit
-pre-commit install
+```bash
+git config core.hooksPath .githooks
 ```
 
-Now, the pre-commit hooks will automatically run every time you commit your changes. If any of the hooks fail, the commit will be aborted.
+See [`.githooks/README.md`](../.githooks/README.md) for details.
 
 ## Join Us, Contribute!
 
