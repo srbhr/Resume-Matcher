@@ -64,3 +64,16 @@ describe('HighlightedResumeView coverage', () => {
     expect(getByText('Talks')).toBeInTheDocument();
   });
 });
+
+describe('HighlightedResumeView skill rows', () => {
+  it('does not show the "---" row break as a skill', () => {
+    const data = {
+      additional: { technicalSkills: ['Python', '---', 'Lab: PCR, qPCR'] },
+    } as unknown as ResumeData;
+    const { container } = render(<HighlightedResumeView resumeData={data} keywords={new Set()} />);
+
+    expect(container.textContent).toContain('Python');
+    expect(container.textContent).toContain('Lab: PCR, qPCR');
+    expect(container.textContent).not.toContain('---');
+  });
+});

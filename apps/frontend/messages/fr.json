@@ -191,6 +191,7 @@
     },
     "additionalForm": {
       "instructions": "Saisissez les éléments séparés par des sauts de ligne (appuyez sur Entrée pour chaque élément).",
+      "technicalSkillsHint": "Regroupez des compétences sur une ligne, comme « Laboratoire : PCR, qPCR ». Une ligne avec seulement --- commence une nouvelle rangée.",
       "placeholders": {
         "technicalSkills": "React\nTypeScript\nNode.js",
         "languages": "Français\nAnglais",

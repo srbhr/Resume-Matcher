@@ -54,7 +54,11 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.technicalSkills')}
             className="min-h-[120px]"
+            aria-describedby="technicalSkillsHint"
           />
+          <p id="technicalSkillsHint" className="text-xs text-steel">
+            {t('builder.additionalForm.technicalSkillsHint')}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="languages">{t('resume.sections.languages')}</Label>

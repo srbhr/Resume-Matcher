@@ -7,6 +7,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
+import { labeledSkillRows } from '@/lib/utils/skill-groups';
 import { DescriptionList } from './description-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
@@ -378,7 +379,9 @@ const AdditionalSection: React.FC<{
         {displayName}
       </h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
-        {line(mergedLabels.technicalSkills, technicalSkills)}
+        {labeledSkillRows(technicalSkills, mergedLabels.technicalSkills).map((row, index) => (
+          <React.Fragment key={index}>{line(row.label, row.items)}</React.Fragment>
+        ))}
         {line(mergedLabels.languages, languages)}
         {line(mergedLabels.certifications, certificationsTraining)}
         {line(mergedLabels.awards, awards)}

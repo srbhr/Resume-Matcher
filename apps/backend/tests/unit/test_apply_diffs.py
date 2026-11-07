@@ -241,6 +241,40 @@ class TestApplyDiffsReorder:
         assert len(applied) == 1
         assert result["additional"]["technicalSkills"] == reordered
 
+    def test_reorder_keeps_skill_rows_laid_out_with_breaks(self, sample_resume):
+        """A "---" break lays skills out in rows; a reorder would scramble them."""
+        rows = ["Python", "Go", "---", "PCR", "qPCR"]
+        sample_resume["additional"]["technicalSkills"] = list(rows)
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["qPCR", "---", "Go", "PCR", "Python"],
+                reason="Prioritized relevant skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert applied == [] and len(rejected) == 1
+        assert result["additional"]["technicalSkills"] == rows
+
+    def test_reorder_moves_labeled_skill_groups_whole(self, sample_resume):
+        """ "Label: a, b" lines are whole rows, so reordering them stays allowed."""
+        groups = ["Lab: PCR, qPCR", "Data: Python, R"]
+        sample_resume["additional"]["technicalSkills"] = list(groups)
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=list(reversed(groups)),
+                reason="Prioritized relevant skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert result["additional"]["technicalSkills"] == list(reversed(groups))
+
     def test_reorder_with_unverified_items_drops_them_keeps_originals(
         self, sample_resume
     ):

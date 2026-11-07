@@ -8,6 +8,7 @@ import { DescriptionList } from './description-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
+import { SkillPillRows } from './skill-rows';
 import styles from './styles/swiss-two-column.module.css';
 
 interface ResumeTwoColumnProps {
@@ -418,13 +419,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
               <h3 {...RESUME_SECTION_TITLE} className={baseStyles['resume-section-title-sm']}>
                 {headingFallbacks.skills}
               </h3>
-              <div className="flex flex-wrap gap-1">
-                {technicalSkills.map((skill, index) => (
-                  <span key={index} className={baseStyles['resume-skill-pill']}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              <SkillPillRows items={technicalSkills} />
             </div>
           )}
 

@@ -10,6 +10,7 @@ import { formatDateRange } from '@/lib/utils';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
+import { SkillTextRows } from './skill-rows';
 import styles from './styles/vivid.module.css';
 import {
   DynamicResumeSectionVivid,
@@ -166,7 +167,7 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
                 <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
                   {headings.skills}
                 </h3>
-                <p className={baseStyles['resume-text-xs']}>{technicalSkills.join(' • ')}</p>
+                <SkillTextRows items={technicalSkills} className={baseStyles['resume-text-xs']} />
               </div>
             )}
             {languages.length > 0 && (

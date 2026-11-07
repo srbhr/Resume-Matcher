@@ -24,6 +24,9 @@ _TEXT_VALUE_KEYS = (
     "label",
 )
 _BULLET_PREFIX_RE = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s*")
+# A Technical Skills line that starts a new row on the resume (see the
+# frontend's lib/utils/skill-groups.ts). Kept through validation, never shown.
+SKILL_ROW_BREAK = "---"
 
 
 def _extract_text_fragments(
@@ -90,7 +93,7 @@ def _split_description_lines(
         raw = raw_line.strip()
 
         # Preserve the custom line-break marker when processing technical skills.
-        if preserve_line_break_marker and raw == "---":
+        if preserve_line_break_marker and raw == SKILL_ROW_BREAK:
             items.append(raw)
             continue
 
@@ -100,6 +103,7 @@ def _split_description_lines(
             items.append(line)
 
     return items
+
 
 def _coerce_string_list(
     value: Any,
@@ -297,7 +301,8 @@ class AdditionalInfo(BaseModel):
     @classmethod
     def _normalize_string_fields(cls, value: Any) -> list[str]:
         return _coerce_string_list(value)
-        
+
+
 # Section Metadata Models for dynamic section management
 class SectionMeta(BaseModel):
     """Metadata for a resume section."""

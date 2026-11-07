@@ -15,6 +15,7 @@ import { DescriptionList } from './description-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
+import { SkillTextRows } from './skill-rows';
 import styles from './styles/vivid.module.css';
 import { customSectionHasContent } from './dynamic-resume-section';
 
@@ -364,7 +365,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
               <h3 {...RESUME_SECTION_TITLE} className={styles.sectionTitleSm}>
                 {headingFallbacks.skills}
               </h3>
-              <p className={baseStyles['resume-text-xs']}>{technicalSkills.join(' • ')}</p>
+              <SkillTextRows items={technicalSkills} className={baseStyles['resume-text-xs']} />
             </div>
           )}
 

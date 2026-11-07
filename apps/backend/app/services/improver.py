@@ -27,7 +27,7 @@ from app.prompts import (
 )
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeDiffSummary, ResumeFieldDiff
-from app.schemas.models import ImproveDiffResult, ResumeChange
+from app.schemas.models import SKILL_ROW_BREAK, ImproveDiffResult, ResumeChange
 from app.services.parser import has_meaningful_resume_content
 from app.services.text_match import keyword_in_text, normalize_skill_key
 
@@ -478,6 +478,14 @@ def apply_diffs(
 
         elif action == "reorder":
             if not isinstance(actual_value, list) or not isinstance(change.value, list):
+                rejected.append(change)
+                continue
+            if path == "additional.technicalSkills" and SKILL_ROW_BREAK in (
+                s.strip() for s in actual_value if isinstance(s, str)
+            ):
+                # The user laid the skills out in rows with "---" breaks; a
+                # relevance reorder would scatter them and scramble the rows.
+                logger.info("Diff rejected (skills keep their rows): %s", path)
                 rejected.append(change)
                 continue
             orig_set = sorted(s.casefold() for s in actual_value if isinstance(s, str))

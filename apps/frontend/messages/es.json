@@ -191,6 +191,7 @@
     },
     "additionalForm": {
       "instructions": "Introduce elementos separados por saltos de línea (pulsa Enter para cada elemento).",
+      "technicalSkillsHint": "Agrupa habilidades en una línea, como «Laboratorio: PCR, qPCR». Una línea con solo --- empieza una nueva fila.",
       "placeholders": {
         "technicalSkills": "React\nTypeScript\nNode.js",
         "languages": "Español\nInglés",

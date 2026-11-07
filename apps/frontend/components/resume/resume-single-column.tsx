@@ -9,6 +9,7 @@ import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
+import { SkillTagList } from './skill-rows';
 import { TagList } from './tag-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
@@ -282,7 +283,6 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             displayName={section.displayName}
             labels={additionalSectionLabels}
             titleClassName={sectionTitleClass}
-			lineBreakMarker={accent ? undefined : '---'}
           />
         );
 
@@ -385,14 +385,7 @@ const AdditionalSection: React.FC<{
   displayName?: string;
   labels?: Partial<AdditionalSectionLabels>;
   titleClassName: string;
-  lineBreakMarker?: string;
-}> = ({
-  additional,
-  displayName = 'Skills & Awards',
-  labels,
-  titleClassName,
-  lineBreakMarker,
-}) => {
+}> = ({ additional, displayName = 'Skills & Awards', labels, titleClassName }) => {
   if (!additional) return null;
 
   const {
@@ -441,10 +434,7 @@ const AdditionalSection: React.FC<{
         {technicalSkills.length > 0 && (
           <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <TagList
-  items={technicalSkills}
-  lineBreakMarker={lineBreakMarker}
-/>
+            <SkillTagList items={technicalSkills} />
           </div>
         )}
         {languages.length > 0 && (
