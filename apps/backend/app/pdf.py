@@ -383,7 +383,20 @@ async def _launch_browser(playwright: Playwright) -> Browser:
                 "Playwright browser executable is missing, and no system Chrome/Edge "
                 "installation was found. Install Playwright browsers or install Chrome/Edge."
             ) from e
-        return await playwright.chromium.launch(executable_path=fallback_executable)
+        try:
+            return await playwright.chromium.launch(
+                executable_path=fallback_executable, chromium_sandbox=True
+            )
+        except PlaywrightError as error:
+            # Containers often can't start Chromium's sandbox (no user namespaces).
+            # The Docker image's Chromium comes from Debian's security updates, so
+            # it stays patched even without it.
+            logger.warning(
+                "Chromium sandbox unavailable for %s, rendering without it: %s",
+                fallback_executable,
+                str(error).splitlines()[0] if str(error) else type(error).__name__,
+            )
+            return await playwright.chromium.launch(executable_path=fallback_executable)
 
 
 async def _render_page_to_pdf(

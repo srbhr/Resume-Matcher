@@ -33,6 +33,8 @@ class FakeChromium:
         kind = kwargs.get("channel") or (
             "executable" if "executable_path" in kwargs else "bundled"
         )
+        if kind == "executable" and kwargs.get("chromium_sandbox"):
+            kind = "executable+sandbox"
         if kind in self.failures:
             raise self.failures[kind]
         return f"browser:{kind}"
@@ -76,8 +78,35 @@ async def test_launch_keeps_executable_fallback_when_bundled_build_is_missing(
 
     browser = await pdf_module._launch_browser(FakePlaywright(chromium))  # type: ignore[arg-type]
 
+    assert browser == "browser:executable+sandbox"
+    assert chromium.calls[-1] == {
+        "executable_path": "/opt/edge",
+        "chromium_sandbox": True,
+    }
+
+
+async def test_system_chromium_runs_without_sandbox_only_when_it_cannot_start(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Docker uses Debian's patched Chromium; containers often can't start its sandbox."""
+    chromium = FakeChromium(
+        {
+            "chrome": PlaywrightError("Chromium distribution 'chrome' is not found"),
+            "bundled": PlaywrightError("Executable doesn't exist at /ms-playwright"),
+            "executable+sandbox": PlaywrightError("No usable sandbox!"),
+        }
+    )
+    monkeypatch.setattr(
+        pdf_module, "_find_chromium_executable", lambda: "/usr/bin/chromium"
+    )
+
+    browser = await pdf_module._launch_browser(FakePlaywright(chromium))  # type: ignore[arg-type]
+
     assert browser == "browser:executable"
-    assert chromium.calls[-1] == {"executable_path": "/opt/edge"}
+    assert chromium.calls[-2:] == [
+        {"executable_path": "/usr/bin/chromium", "chromium_sandbox": True},
+        {"executable_path": "/usr/bin/chromium"},
+    ]
 
 
 class _RecordingServer:

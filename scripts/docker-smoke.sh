@@ -13,7 +13,7 @@
 #   SMOKE_PORT            host port to start looking from (default 3100; the next
 #                         free port is used if it is taken)
 #   SMOKE_HEALTH_TIMEOUT  seconds to wait for the app to become healthy (default 120)
-#   DEBIAN_MIRROR, DEBIAN_SECURITY_MIRROR, PIP_INDEX_URL, PLAYWRIGHT_DOWNLOAD_HOST
+#   DEBIAN_MIRROR, DEBIAN_SECURITY_MIRROR, PIP_INDEX_URL
 #                         forwarded to the build as --build-arg when set (slow networks)
 #
 # Safe by design: the container gets a throwaway named volume for
@@ -95,7 +95,7 @@ if [ "$BUILD" = 1 ]; then
     echo "==> Building ${TAG} (uses the build cache)"
     BUILD_START=$SECONDS
     BUILD_ARGS=()
-    for var in DEBIAN_MIRROR DEBIAN_SECURITY_MIRROR PIP_INDEX_URL PLAYWRIGHT_DOWNLOAD_HOST; do
+    for var in DEBIAN_MIRROR DEBIAN_SECURITY_MIRROR PIP_INDEX_URL; do
         if [ -n "${!var:-}" ]; then
             BUILD_ARGS+=(--build-arg "${var}=${!var}")
             echo "    (forwarding ${var}=${!var})"
@@ -182,19 +182,43 @@ proxy_health() {
     case "$body" in *healthy*) echo "$body" ;; *) echo "unexpected body: $body"; return 1 ;; esac
 }
 
-pdf_render() {
-    docker exec -i -u appuser "$CONTAINER" python - << 'PY'
+# The browser app/pdf.py picks must carry the CVE-2026-118306 fix (156.0.8078.73).
+pdf_browser() {
+    docker exec -i -u appuser -w /app/backend "$CONTAINER" python - << 'PY'
 import asyncio
 from playwright.async_api import async_playwright
+from app.pdf import _launch_browser
+
+FIXED = (156, 0, 8078, 73)
 
 
 async def main() -> None:
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page()
-        await page.set_content("<h1>Resume Matcher smoke test</h1><p>PDF check</p>")
-        pdf = await page.pdf()
+        browser = await _launch_browser(p)
+        version = browser.version
         await browser.close()
+    found = tuple(int(part) for part in version.split("."))
+    assert found >= FIXED, f"Chromium {version} predates the CVE-2026-118306 fix"
+    print(f"Chromium {version}")
+
+
+asyncio.run(main())
+PY
+}
+
+pdf_render() {
+    docker exec -i -u appuser -w /app/backend "$CONTAINER" python - << 'PY'
+import asyncio
+from app.pdf import close_pdf_renderer, render_resume_pdf
+
+
+async def main() -> None:
+    try:
+        pdf = await render_resume_pdf(
+            "data:text/html,<main class='resume-print'><h1>Smoke test</h1><p>PDF check</p></main>"
+        )
+    finally:
+        await close_pdf_renderer()
     assert pdf.startswith(b"%PDF"), "output is not a PDF"
     assert len(pdf) > 1000, f"PDF too small: {len(pdf)} bytes"
     print(f"PDF rendered, {len(pdf)} bytes")
@@ -202,6 +226,32 @@ async def main() -> None:
 
 asyncio.run(main())
 PY
+}
+
+# A real export: a resume saved with the CLI, rendered through the frontend proxy,
+# the print page and the origin filter (which must block nothing on a normal page).
+resume_export() {
+    local out id pdf size
+    out="$(docker exec -i -w /app/backend "$CONTAINER" python -m app.mcp_server.cli create_master_resume - << 'JSON'
+{"resume_data": {"personalInfo": {"name": "Smoke Test"}, "summary": "Docker smoke test.",
+ "additional": {"technicalSkills": ["Lab: PCR, qPCR", "---", "Python"]}}, "title": "Smoke"}
+JSON
+)" || { echo "could not create a resume: $out"; return 1; }
+    id="$(printf '%s' "$out" | grep -o '"resume_id": *"[^"]*"' | cut -d'"' -f4)"
+    [ -n "$id" ] || { echo "no resume_id in: $out"; return 1; }
+    pdf="$(mktemp)"
+    curl -sf --max-time 120 -o "$pdf" \
+        "http://127.0.0.1:${PORT}/api/v1/resumes/${id}/pdf?template=swiss-single" \
+        || { rm -f "$pdf"; echo "export request failed"; return 1; }
+    size="$(wc -c < "$pdf" | tr -d ' ')"
+    if [ "$(head -c 4 "$pdf")" != "%PDF" ] || [ "$size" -lt 1000 ]; then
+        rm -f "$pdf"; echo "not a PDF (${size} bytes)"; return 1
+    fi
+    rm -f "$pdf"
+    if docker logs "$CONTAINER" 2>&1 | grep -q "Blocked off-origin"; then
+        echo "the origin filter blocked a request on a normal page"; return 1
+    fi
+    echo "resume PDF exported, ${size} bytes"
 }
 
 container_user() {
@@ -239,7 +289,9 @@ if [ "$HEALTHY" = 1 ]; then
     check "frontend serves /" http_200 "http://127.0.0.1:${PORT}/"
     check "frontend serves /dashboard" http_200 "http://127.0.0.1:${PORT}/dashboard"
     check "/api/v1/health through the frontend proxy" proxy_health
-    check "PDF rendering (Playwright Chromium as appuser)" pdf_render
+    check "PDF browser has the CVE-2026-118306 fix" pdf_browser
+    check "PDF rendering through app.pdf (as appuser)" pdf_render
+    check "resume PDF export through the frontend" resume_export
     check "container runs as appuser" container_user
 fi
 

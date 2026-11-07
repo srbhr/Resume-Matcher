@@ -141,7 +141,7 @@ npm run dev
 
 Abre **<http://localhost:3000>** en el navegador.
 
-> **Exportar PDF:** Resume Matcher genera los PDF con Chromium headless. Si el navegador de Playwright no está instalado, el backend recurre a Microsoft Edge o Google Chrome si están instalados (Edge viene con Windows 11). También puedes instalar el Chromium de Playwright desde `apps\backend` con `uv run playwright install chromium`.
+> **Exportar PDF:** Resume Matcher genera los PDF con Chromium headless. Prefiere Google Chrome si está instalado, con el sandbox de Chrome activado, porque Chrome se mantiene actualizado solo. Sin Chrome usa el Chromium de Playwright (instálalo desde `apps\backend` con `uv run playwright install chromium`) y, si no, Microsoft Edge (Edge viene con Windows 11).
 
 > **¿Prefieres Docker?** Instala [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/) y sigue [Despliegue con Docker](#docker-deployment). Para definir variables como `PORT` en PowerShell, usa `$env:PORT="4000"; docker compose up -d`. Para la [configuración opcional de PostgreSQL](#optional-postgresql), ejecuta `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; fuera de Docker, define `DATABASE_URL` en `apps\backend\.env`.
 

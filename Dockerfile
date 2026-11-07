@@ -90,14 +90,19 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     libcairo2 \
     libatspi2.0-0 \
     libgtk-3-0 \
+    # Chromium for PDF export. Debian's build comes with security updates
+    # (bookworm-security; 156.0.8078.79 has the CVE-2026-118306 fix), unlike the
+    # build Playwright pins, so app/pdf.py uses it as the system executable.
+    chromium \
     # CJK fonts for Chinese/Japanese/Korean PDF rendering via Playwright
-    fonts-noto-cjk
+    fonts-noto-cjk \
+    && chromium --version
 
 # ============================================
-# Python dependencies + Chromium (cached across code changes)
+# Python dependencies (cached across code changes)
 # ============================================
 # These layers only depend on pyproject.toml, so editing app code or the frontend
-# never re-downloads dependencies or Chromium.
+# never re-downloads dependencies.
 WORKDIR /app/backend
 COPY apps/backend/pyproject.toml /app/backend/
 
@@ -113,16 +118,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" > /tmp/requirements.txt \
     && pip install -r /tmp/requirements.txt \
     && rm /tmp/requirements.txt
-
-# Chromium for PDF export, installed once into a shared path (root-owned, readable by
-# appuser) so the layer survives code changes. Only the headless shell is installed:
-# app/pdf.py launches headless, which Playwright 1.49+ serves from the headless shell.
-# Optional build arg for a mirror when the default CDN is slow:
-#   docker build --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://<mirror> .
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ARG PLAYWRIGHT_DOWNLOAD_HOST
-RUN python -m playwright install --only-shell chromium \
-    && chmod -R a+rX /ms-playwright
 
 WORKDIR /app
 

@@ -139,7 +139,7 @@ npm run dev
 
 Open **<http://localhost:3000>** in your browser.
 
-> **PDF export:** Resume Matcher renders PDFs with headless Chromium. If Playwright's browser is not installed, the backend falls back to an installed Microsoft Edge or Google Chrome (Edge ships with Windows 11). You can also install Playwright's Chromium from `apps\backend` with `uv run playwright install chromium`.
+> **PDF export:** Resume Matcher renders PDFs with headless Chromium. It prefers an installed Google Chrome, with Chrome's sandbox on, because Chrome keeps itself up to date. Without Chrome it uses Playwright's Chromium (install it from `apps\backend` with `uv run playwright install chromium`), then an installed Microsoft Edge (Edge ships with Windows 11).
 
 > **Prefer Docker?** Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) and follow [Docker Deployment](#docker-deployment). To set variables like `PORT` in PowerShell, use `$env:PORT="4000"; docker compose up -d`. For the [optional PostgreSQL setup](#optional-postgresql), run `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; outside Docker, set `DATABASE_URL` in `apps\backend\.env`.
 
@@ -505,21 +505,19 @@ docker compose watch
 
 Edits under `apps/backend/app` are synced into the running container, which restarts without an image rebuild. Changes to `apps/frontend`, `apps/backend/pyproject.toml`, the `Dockerfile` or `docker/` rebuild the image. Python dependencies and Chromium are cached in their own layers, so a rebuild after a code change does not download them again.
 
-If a build step downloads slowly, point it at a mirror. All four build args are empty by default (no change):
+If a build step downloads slowly, point it at a mirror. All three build args are empty by default (no change):
 
-- `DEBIAN_MIRROR`: if `apt-get` is slow, build with `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (or your local mirror; give its `/debian` URL). Security updates stay on `deb.debian.org` unless you also set `DEBIAN_SECURITY_MIRROR` (a `/debian-security` URL; most mirrors don't carry it).
+- `DEBIAN_MIRROR`: if `apt-get` is slow, build with `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (or your local mirror; give its `/debian` URL). Security updates stay on `deb.debian.org` unless you also set `DEBIAN_SECURITY_MIRROR` (a `/debian-security` URL; most mirrors don't carry it). PDF export uses Debian's Chromium package, which comes from those security updates, so a security mirror must be current.
 - `PIP_INDEX_URL`: if Python package downloads are slow, set it to a PyPI mirror's `/simple` URL (for example `https://pypi.mirrors.ustc.edu.cn/simple`).
-- `PLAYWRIGHT_DOWNLOAD_HOST`: if the Chromium download is slow (Playwright's default CDN can be throttled in some regions), set it to your mirror's URL.
 
 ```bash
 docker build \
   --build-arg DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian \
   --build-arg PIP_INDEX_URL=https://pypi.mirrors.ustc.edu.cn/simple \
-  --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://your-mirror.example.com \
   -t resume-matcher .
 ```
 
-`docker compose build` and `scripts/docker-smoke.sh` pick all four up from environment variables of the same names, e.g. `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian ./scripts/docker-smoke.sh`.
+`docker compose build` and `scripts/docker-smoke.sh` pick all three up from environment variables of the same names, e.g. `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian ./scripts/docker-smoke.sh`.
 
 ### Important Notes
 
