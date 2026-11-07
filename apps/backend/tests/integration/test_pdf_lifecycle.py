@@ -692,3 +692,24 @@ async def test_thread_fallback_inherits_remaining_deadline(
     monkeypatch.setattr(pdf_module, "_render_resume_pdf_sync", worker)
     assert await pdf_module.render_resume_pdf("data:text/html,fallback") == b"%PDF"
     assert deadlines[0] - started < 0.35
+
+
+async def test_thread_fallback_keeps_the_readiness_diagnostic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The threaded fallback (Windows) must not re-tag the worker's readiness timeout."""
+
+    async def unsupported(*args: Any) -> bytes:
+        raise NotImplementedError
+
+    def worker(*args: Any) -> bytes:
+        raise pdf_module._PDFDeadlineExceeded("resume readiness")
+
+    monkeypatch.setattr(pdf_module, "_render_on_shared_browser", unsupported)
+    monkeypatch.setattr(pdf_module, "_render_resume_pdf_sync", worker)
+
+    with pytest.raises(pdf_module.PDFRenderTimeoutError) as exc_info:
+        await pdf_module.render_resume_pdf("data:text/html,other-app")
+
+    assert "FRONTEND_BASE_URL" in str(exc_info.value)
+    assert "simpler resume" not in str(exc_info.value)
