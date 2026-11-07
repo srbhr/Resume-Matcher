@@ -195,6 +195,14 @@ async def test_render_loads_only_the_print_page_origin(
     assert outside.paths == []
 
 
+async def test_an_invalid_frontend_port_is_a_render_error(
+    fresh_renderer: None,
+) -> None:
+    """A FRONTEND_BASE_URL with a port urllib rejects still fails as PDFRenderError."""
+    with pytest.raises(pdf_module.PDFRenderError):
+        await pdf_module.render_resume_pdf("http://127.0.0.1:99999/print/resumes/1")
+
+
 async def _render(url: str) -> bytes:
     try:
         return await pdf_module.render_resume_pdf(url)

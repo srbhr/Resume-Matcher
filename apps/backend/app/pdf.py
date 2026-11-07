@@ -498,10 +498,16 @@ _SOCKET_SCHEMES = {"ws": "http", "wss": "https"}
 
 
 def _url_origin(url: str) -> tuple[str, str | None, int | None]:
-    parts = urlsplit(url)
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        # urllib rejects it (e.g. port 99999), so it matches no origin. A bad
+        # FRONTEND_BASE_URL then fails at navigation, as a PDFRenderError.
+        return "", None, -1
     scheme = parts.scheme.lower()
     scheme = _SOCKET_SCHEMES.get(scheme, scheme)
-    return scheme, parts.hostname, parts.port or _DEFAULT_PORTS.get(scheme)
+    return scheme, parts.hostname, port or _DEFAULT_PORTS.get(scheme)
 
 
 def _same_origin_only(
@@ -552,7 +558,7 @@ def _same_origin_only(
                     target = urljoin(request_url, location)
                     same_origin = _url_origin(target) == allowed
                 except ValueError:
-                    # urllib rejects it (e.g. port 99999 or "http://[::1"): no origin.
+                    # urljoin rejects a malformed host, e.g. "http://[::1".
                     target, same_origin = location, False
                 if not same_origin:
                     logger.warning(
