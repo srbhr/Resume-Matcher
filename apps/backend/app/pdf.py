@@ -501,12 +501,7 @@ def _url_origin(url: str) -> tuple[str, str | None, int | None]:
     parts = urlsplit(url)
     scheme = parts.scheme.lower()
     scheme = _SOCKET_SCHEMES.get(scheme, scheme)
-    try:
-        port = parts.port
-    except ValueError:
-        # A port urlsplit rejects (e.g. 99999) belongs to no origin a page can load.
-        return scheme, None, -1
-    return scheme, parts.hostname, port or _DEFAULT_PORTS.get(scheme)
+    return scheme, parts.hostname, parts.port or _DEFAULT_PORTS.get(scheme)
 
 
 def _same_origin_only(
@@ -553,8 +548,13 @@ def _same_origin_only(
                 return
             location = response.headers.get("location")
             if 300 <= response.status < 400 and location:
-                target = urljoin(request_url, location)
-                if _url_origin(target) != allowed:
+                try:
+                    target = urljoin(request_url, location)
+                    same_origin = _url_origin(target) == allowed
+                except ValueError:
+                    # urllib rejects it (e.g. port 99999 or "http://[::1"): no origin.
+                    target, same_origin = location, False
+                if not same_origin:
                     logger.warning(
                         "Blocked off-origin redirect during PDF render: %s -> %s",
                         shown_url,

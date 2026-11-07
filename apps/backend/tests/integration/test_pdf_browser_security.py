@@ -348,10 +348,14 @@ async def test_request_fetch_is_bounded_by_the_render_deadline() -> None:
     assert route.aborted == ["connectionrefused"]
 
 
-async def test_redirect_to_an_invalid_port_is_aborted() -> None:
-    """urlsplit raises on a port such as 99999; the request must still end."""
+@pytest.mark.parametrize(
+    "location",
+    ["http://127.0.0.1:99999/", "http://[::1", "http://ex\uff03ample.com/"],
+)
+async def test_redirect_to_an_unparseable_location_is_aborted(location: str) -> None:
+    """urllib rejects each of these Locations; the request must still end, not hang."""
     deadline = asyncio.get_running_loop().time() + 2.0
-    route = _FakeRoute(status=302, headers={"location": "http://127.0.0.1:99999/"})
+    route = _FakeRoute(status=302, headers={"location": location})
     handle = pdf_module._same_origin_only(
         "http://127.0.0.1:3000/print/resumes/1", _FakePage(closed=False), deadline
     )
