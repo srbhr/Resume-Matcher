@@ -12,13 +12,14 @@ from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
 from typing import Any, Awaitable, Callable, NoReturn, Optional, TypeVar
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 from playwright.async_api import (
     Browser,
     Page,
     Playwright,
     Route,
+    WebSocketRoute,
     async_playwright,
 )
 from playwright.async_api import (
@@ -468,26 +469,73 @@ async def _render_page_to_pdf(
 
 
 _DEFAULT_PORTS = {"http": 80, "https": 443}
+# A WebSocket belongs to the origin of the page that opens it.
+_SOCKET_SCHEMES = {"ws": "http", "wss": "https"}
 
 
 def _url_origin(url: str) -> tuple[str, str | None, int | None]:
     parts = urlsplit(url)
     scheme = parts.scheme.lower()
+    scheme = _SOCKET_SCHEMES.get(scheme, scheme)
     return scheme, parts.hostname, parts.port or _DEFAULT_PORTS.get(scheme)
 
 
 def _same_origin_only(url: str) -> Callable[[Route], Awaitable[None]]:
-    """Route handler that lets the print page load only from its own origin."""
+    """Route handler that lets the print page load only from its own origin.
+
+    Chromium follows a redirect without asking the route handler again, so each
+    request is fetched here with redirects off: a redirect reaches the page only
+    when it points back to the same origin, and the browser's follow-up request
+    comes through this handler again.
+    """
     allowed = _url_origin(url)
 
     async def handle(route: Route) -> None:
-        if _url_origin(route.request.url) == allowed:
-            await route.continue_()
+        request_url = route.request.url
+        try:
+            if _url_origin(request_url) != allowed:
+                logger.warning(
+                    "Blocked off-origin request during PDF render: %s", request_url
+                )
+                await route.abort()
+                return
+            try:
+                response = await route.fetch(max_redirects=0)
+            except PlaywrightError as error:
+                # Keep the browser's own error so a down frontend still reads
+                # as net::ERR_CONNECTION_REFUSED (see _raise_playwright_error).
+                refused = "ECONNREFUSED" in str(error)
+                await route.abort("connectionrefused" if refused else "failed")
+                return
+            location = response.headers.get("location")
+            if 300 <= response.status < 400 and location:
+                target = urljoin(request_url, location)
+                if _url_origin(target) != allowed:
+                    logger.warning(
+                        "Blocked off-origin redirect during PDF render: %s -> %s",
+                        request_url,
+                        target,
+                    )
+                    await route.abort()
+                    return
+            await route.fulfill(response=response)
+        except PlaywrightError:
+            # The page closed while this request was in flight (render ended).
+            logger.debug("PDF render request ended with its page: %s", request_url)
+
+    return handle
+
+
+def _same_origin_sockets_only(url: str) -> Callable[[WebSocketRoute], Awaitable[None]]:
+    """WebSocket handler: page.route() never sees sockets, so filter them here."""
+    allowed = _url_origin(url)
+
+    async def handle(socket: WebSocketRoute) -> None:
+        if _url_origin(socket.url) == allowed:
+            socket.connect_to_server()
             return
-        logger.warning(
-            "Blocked off-origin request during PDF render: %s", route.request.url
-        )
-        await route.abort()
+        logger.warning("Blocked off-origin WebSocket during PDF render: %s", socket.url)
+        await socket.close()
 
     return handle
 
@@ -511,6 +559,11 @@ async def _render_with_browser(
     try:
         await _await_before_deadline(
             page.route("**/*", _same_origin_only(url)), work_deadline, "request filter"
+        )
+        await _await_before_deadline(
+            page.route_web_socket(lambda _url: True, _same_origin_sockets_only(url)),
+            work_deadline,
+            "request filter",
         )
         return await _render_page_to_pdf(
             page,

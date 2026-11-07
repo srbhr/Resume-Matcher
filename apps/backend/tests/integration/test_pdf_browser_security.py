@@ -81,13 +81,24 @@ async def test_launch_keeps_executable_fallback_when_bundled_build_is_missing(
 class _RecordingServer:
     """Local HTTP server that records every path requested from it."""
 
-    def __init__(self, body: bytes, content_type: str = "text/html") -> None:
+    def __init__(
+        self,
+        body: bytes,
+        content_type: str = "text/html",
+        redirect: str | None = None,
+    ) -> None:
         self.paths: list[str] = []
         recorder = self
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:  # noqa: N802 - http.server API
                 recorder.paths.append(self.path)
+                if redirect and self.path == "/redirect":
+                    self.send_response(302)
+                    self.send_header("Location", redirect)
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
                 payload = body if self.path.startswith("/print") else b""
                 self.send_response(200)
                 self.send_header("Content-Type", content_type)
@@ -150,4 +161,59 @@ async def test_render_loads_only_the_print_page_origin(
     assert pdf.startswith(b"%PDF")
     assert "/print/resumes/1" in app_origin.paths
     assert "/same-origin.png" in app_origin.paths
+    assert outside.paths == []
+
+
+async def _render(url: str) -> bytes:
+    try:
+        return await pdf_module.render_resume_pdf(url)
+    except pdf_module.PDFRenderError as error:
+        if "executable" in str(error).lower() or "installation" in str(error).lower():
+            pytest.skip(f"chromium unavailable: {error}")
+        raise
+
+
+# The page shows the resume only after its probe settles, so the render waits
+# for the redirect or socket attempt instead of racing it.
+_SHOW_RESUME = (
+    "const done = () => document.body.insertAdjacentHTML("
+    "'beforeend', \"<main class='resume-print'>Synthetic resume</main>\");"
+)
+
+
+async def test_redirect_to_another_origin_is_not_followed(
+    fresh_renderer: None,
+) -> None:
+    """A same-origin URL that redirects elsewhere must not reach the other origin."""
+    with _RecordingServer(b"") as outside:
+        page = (
+            "<html><body><img id='probe' src='/redirect'><script>"
+            f"{_SHOW_RESUME}"
+            "const probe = document.getElementById('probe');"
+            "probe.onload = done; probe.onerror = done;"
+            "</script></body></html>"
+        ).encode()
+        leak = f"http://127.0.0.1:{outside.port}/leak"
+        with _RecordingServer(page, redirect=leak) as app_origin:
+            pdf = await _render(f"http://127.0.0.1:{app_origin.port}/print/resumes/1")
+
+    assert pdf.startswith(b"%PDF")
+    assert "/redirect" in app_origin.paths
+    assert outside.paths == []
+
+
+async def test_websocket_to_another_origin_is_blocked(fresh_renderer: None) -> None:
+    """page.route does not see WebSockets; an off-origin socket must not connect."""
+    with _RecordingServer(b"") as outside:
+        page = (
+            "<html><body><script>"
+            f"{_SHOW_RESUME}"
+            f"const socket = new WebSocket('ws://127.0.0.1:{outside.port}/socket');"
+            "socket.onopen = done; socket.onerror = done; socket.onclose = done;"
+            "</script></body></html>"
+        ).encode()
+        with _RecordingServer(page) as app_origin:
+            pdf = await _render(f"http://127.0.0.1:{app_origin.port}/print/resumes/1")
+
+    assert pdf.startswith(b"%PDF")
     assert outside.paths == []
