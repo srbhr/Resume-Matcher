@@ -7,6 +7,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
+import { groupSkills, isPlainSkillList } from '@/lib/utils/skill-groups';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
@@ -53,7 +54,8 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
-  const technicalSkills = cleanItems(additional?.technicalSkills);
+  // "Label: a, b" lines and "---" breaks lay the skills out in rows (see groupSkills).
+  const skillRows = groupSkills(additional?.technicalSkills ?? []);
   const languages = cleanItems(additional?.languages);
   const certificationsTraining = cleanItems(additional?.certificationsTraining);
   const awards = cleanItems(additional?.awards);
@@ -161,12 +163,23 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
         // Same order as the ATS round trip reads: skills, languages, certifications, awards.
         return (
           <React.Fragment key={section.id}>
-            {technicalSkills.length > 0 && (
+            {skillRows.length > 0 && (
               <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
                 <h3 {...RESUME_SECTION_TITLE} className={titleClass}>
                   {headings.skills}
                 </h3>
-                <p className={baseStyles['resume-text-xs']}>{technicalSkills.join(' • ')}</p>
+                {isPlainSkillList(skillRows) ? (
+                  <p className={baseStyles['resume-text-xs']}>{skillRows[0].items.join(' • ')}</p>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    {skillRows.map((row, index) => (
+                      <p key={index} {...resumeItem()} className={baseStyles['resume-text-xs']}>
+                        {row.label && <span className="font-bold">{row.label}: </span>}
+                        {row.items.join(' • ')}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {languages.length > 0 && (

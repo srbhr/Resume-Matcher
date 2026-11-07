@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo } from 'react';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { segmentTextByKeywords, type KeywordList } from '@/lib/utils/keyword-matcher';
+import { isSkillRowBreak } from '@/lib/utils/skill-groups';
 import { useTranslations } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -49,7 +50,8 @@ function HighlightedResume({
   // builder) never render in the preview (issue #763).
   const visibleTechnicalSkills =
     resumeData.additional?.technicalSkills?.filter(
-      (item): item is string => typeof item === 'string' && item.trim() !== ''
+      (item): item is string =>
+        typeof item === 'string' && item.trim() !== '' && !isSkillRowBreak(item)
     ) ?? [];
   const visibleLanguages =
     resumeData.additional?.languages?.filter(

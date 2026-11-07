@@ -24,6 +24,75 @@ _TEXT_VALUE_KEYS = (
     "label",
 )
 _BULLET_PREFIX_RE = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s*")
+# A Technical Skills line that starts a new row on the resume (see the
+# frontend's lib/utils/skill-groups.ts). Kept through validation, never shown.
+SKILL_ROW_BREAK = "---"
+# A "Label: a, b" skills line. Same pattern as LABELED_LINE in the frontend's
+# lib/utils/skill-groups.ts; keep the two in sync.
+_SKILL_LABEL_RE = re.compile(r"^([^,:：，、]{1,40})(?::(?:\s+(.*))?|：\s*(.*))$")
+
+
+def _skill_line_kind(item: Any) -> str:
+    """Classify a skills line: "break", "bare" label, "label" with skills, or "skill"."""
+    line = item.strip() if isinstance(item, str) else ""
+    if line == SKILL_ROW_BREAK:
+        return "break"
+    match = _SKILL_LABEL_RE.match(line)
+    if match and match.group(1).strip():
+        return "label" if (match.group(2) or match.group(3) or "").strip() else "bare"
+    return "skill"
+
+
+def _split_skill_items(text: str) -> list[str]:
+    """Split on commas outside brackets, like splitSkills in the frontend parser."""
+    items: list[str] = []
+    depth = 0
+    start = 0
+    for index, char in enumerate(text):
+        if char in "([（":
+            depth += 1
+        elif char in ")]）" and depth > 0:
+            depth -= 1
+        elif char in ",，、" and depth == 0:
+            items.append(text[start:index])
+            start = index + 1
+    items.append(text[start:])
+    return [item.strip() for item in items if item.strip()]
+
+
+def skill_names(items: list[Any]) -> set[str]:
+    """Casefolded skill names in a skills list, counting each skill inside a
+    "Label: a, b" line, so a skill already in a group is not added again."""
+    names: set[str] = set()
+    for item in items:
+        line = item.strip() if isinstance(item, str) else ""
+        if not line or line == SKILL_ROW_BREAK:
+            continue
+        names.add(line.casefold())
+        match = _SKILL_LABEL_RE.match(line)
+        if match and match.group(1).strip():
+            rest = match.group(2) or match.group(3) or ""
+            names.update(skill.casefold() for skill in _split_skill_items(rest))
+    return names
+
+
+def has_skill_row_layout(items: list[Any]) -> bool:
+    """True when position carries meaning: a "---" break, or a bare "Label:" that
+    owns the lines below it. Reordering such a list would move skills between
+    rows; self-contained "Label: a, b" lines can move freely."""
+    return any(_skill_line_kind(item) in ("break", "bare") for item in items)
+
+
+def skills_end_in_open_label(items: list[Any]) -> bool:
+    """True when a skill appended at the end would join a bare label's group."""
+    open_label = False
+    for item in items:
+        kind = _skill_line_kind(item)
+        if kind in ("break", "label"):
+            open_label = False
+        elif kind == "bare":
+            open_label = True
+    return open_label
 
 
 def _extract_text_fragments(
@@ -78,37 +147,67 @@ def _coerce_optional_text(value: Any) -> str | None:
     return text or None
 
 
-def _split_description_lines(value: str) -> list[str]:
+def _split_description_lines(
+    value: str,
+    *,
+    preserve_line_break_marker: bool = False,
+) -> list[str]:
     """Split a description block into clean bullet lines."""
     items: list[str] = []
+
     for raw_line in re.split(r"\r?\n+", value):
-        line = _BULLET_PREFIX_RE.sub("", raw_line.strip())
+        raw = raw_line.strip()
+
+        # Preserve the custom line-break marker when processing technical skills.
+        if preserve_line_break_marker and raw == SKILL_ROW_BREAK:
+            items.append(raw)
+            continue
+
+        line = _BULLET_PREFIX_RE.sub("", raw)
+
         if line:
             items.append(line)
+
     return items
 
 
-def _coerce_string_list(value: Any) -> list[str]:
+def _coerce_string_list(
+    value: Any,
+    *,
+    preserve_line_break_marker: bool = False,
+) -> list[str]:
     """Coerce nested/string values into a list of strings."""
     if value is None:
         return []
 
     if isinstance(value, str):
-        return _split_description_lines(value)
+        return _split_description_lines(
+            value,
+            preserve_line_break_marker=preserve_line_break_marker,
+        )
 
     if isinstance(value, list):
         items: list[str] = []
+
         for entry in value:
             if isinstance(entry, str):
-                items.extend(_split_description_lines(entry))
+                items.extend(
+                    _split_description_lines(
+                        entry,
+                        preserve_line_break_marker=preserve_line_break_marker,
+                    )
+                )
                 continue
 
             coerced = _coerce_text(entry)
+
             if coerced:
                 items.append(coerced)
+
         return items
 
     coerced = _coerce_text(value)
+
     return [coerced] if coerced else []
 
 
@@ -251,8 +350,15 @@ class AdditionalInfo(BaseModel):
     certificationsTraining: list[str] = Field(default_factory=list)
     awards: list[str] = Field(default_factory=list)
 
+    @field_validator("technicalSkills", mode="before")
+    @classmethod
+    def _normalize_technical_skills(cls, value: Any) -> list[str]:
+        return _coerce_string_list(
+            value,
+            preserve_line_break_marker=True,
+        )
+
     @field_validator(
-        "technicalSkills",
         "languages",
         "certificationsTraining",
         "awards",

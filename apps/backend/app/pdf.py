@@ -411,7 +411,7 @@ async def _render_page_to_pdf(
             url,
         )
         raise PDFRenderError(
-            f"The resume print page failed to load (HTTP {response.status}). "
+            f"The print page failed to load (HTTP {response.status}). "
             "Check that FRONTEND_BASE_URL points at the running Resume Matcher frontend."
         )
     ready = await _await_before_deadline(
@@ -963,11 +963,12 @@ async def render_resume_pdf(
     except _PDFDeadlineExceeded as error:
         logger.warning("PDF rendering timed out during %s for %s", error.stage, url)
         if error.stage == "resume readiness":
-            # The page loaded but never showed the resume: the URL most likely
-            # reaches another app, so a simpler resume would not help.
+            # The page loaded but never showed its content (a resume or a cover
+            # letter): the URL most likely reaches another app, so a simpler
+            # document would not help.
             raise PDFRenderTimeoutError(
                 "PDF rendering timed out: the print page loaded but never showed "
-                "the resume. Check that FRONTEND_BASE_URL points at the running "
+                "its content. Check that FRONTEND_BASE_URL points at the running "
                 "Resume Matcher frontend."
             ) from error
         raise PDFRenderTimeoutError(

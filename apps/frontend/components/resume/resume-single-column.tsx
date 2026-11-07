@@ -7,6 +7,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
+import { groupSkills, isPlainSkillList } from '@/lib/utils/skill-groups';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
 import { TagList } from './tag-list';
@@ -396,9 +397,8 @@ const AdditionalSection: React.FC<{
 
   // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
   // builder) never render in the resume or PDF (issue #763).
-  const technicalSkills = rawTechnicalSkills.filter(
-    (item): item is string => typeof item === 'string' && item.trim() !== ''
-  );
+  // "Label: a, b" lines and "---" breaks lay the skills out in rows (see groupSkills).
+  const skillRows = groupSkills(rawTechnicalSkills);
   const languages = rawLanguages.filter(
     (item): item is string => typeof item === 'string' && item.trim() !== ''
   );
@@ -417,7 +417,7 @@ const AdditionalSection: React.FC<{
   };
 
   const hasContent =
-    technicalSkills.length > 0 ||
+    skillRows.length > 0 ||
     languages.length > 0 ||
     certificationsTraining.length > 0 ||
     awards.length > 0;
@@ -430,12 +430,22 @@ const AdditionalSection: React.FC<{
         {displayName}
       </h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
-        {technicalSkills.length > 0 && (
-          <div {...resumeItem()} className="flex items-baseline">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <TagList items={technicalSkills} />
+        {/* One page-break unit per skill row; only the first carries the label. */}
+        {skillRows.map((row, index) => (
+          <div key={index} {...resumeItem()} className="flex items-baseline">
+            <span className="font-bold w-32 shrink-0">
+              {index === 0 ? mergedLabels.technicalSkills : null}
+            </span>
+            {row.label ? (
+              <span className="min-w-0">
+                <span className="font-bold">{row.label}: </span>
+                <TagList items={row.items} />
+              </span>
+            ) : (
+              <TagList items={row.items} />
+            )}
           </div>
-        )}
+        ))}
         {languages.length > 0 && (
           <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>

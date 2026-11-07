@@ -191,6 +191,7 @@
     },
     "additionalForm": {
       "instructions": "Insira os itens separados por novas linhas (pressione Enter para cada item).",
+      "technicalSkillsHint": "Agrupe habilidades em uma linha, como “Laboratório: PCR, qPCR”. Uma linha só com --- inicia uma nova fileira.",
       "placeholders": {
         "technicalSkills": "React\nTypeScript\nNode.js",
         "languages": "Inglês\nEspanhol",

@@ -15,6 +15,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
+import { labeledSkillRows } from '@/lib/utils/skill-groups';
 import { DescriptionList } from './description-list';
 import { SafeHtml } from './safe-html';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
@@ -336,7 +337,10 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
     ) : null;
 
   const skillGroups = [
-    { label: groupLabels.technicalSkills, items: technicalSkills, inline: true },
+    ...labeledSkillRows(technicalSkills, groupLabels.technicalSkills).map((row) => ({
+      ...row,
+      inline: true,
+    })),
     { label: groupLabels.languages, items: languages, inline: true },
     { label: groupLabels.certifications, items: certificationsTraining, inline: false },
   ].filter((group) => group.items.length > 0);
@@ -346,9 +350,9 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
       <section {...RESUME_SECTION} key={`${section.id}-skills`} className={styles.section}>
         {sectionTitle(headings.skills)}
         <div className={styles.entries}>
-          {skillGroups.map((group) => (
-            <div key={group.label} {...resumeItem()} className={baseStyles['resume-item']}>
-              <p className={styles.text}>{group.label}</p>
+          {skillGroups.map((group, index) => (
+            <div key={index} {...resumeItem()} className={baseStyles['resume-item']}>
+              {group.label && <p className={styles.text}>{group.label}</p>}
               {group.inline ? dotList(group.items) : lineList(group.items)}
             </div>
           ))}

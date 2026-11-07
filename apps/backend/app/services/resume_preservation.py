@@ -9,6 +9,12 @@ from decimal import Decimal, InvalidOperation
 from difflib import SequenceMatcher
 from typing import Any
 
+from app.schemas.models import (
+    SKILL_ROW_BREAK,
+    has_skill_row_layout,
+    skills_end_in_open_label,
+)
+
 GROUNDING_REVIEW_CODE = "GROUNDING_REVIEW_REQUIRED"
 _GROUNDING_REVIEW_THRESHOLD = 0.45
 
@@ -464,6 +470,22 @@ def _merge_additional(source: Any, candidate: Any) -> dict[str, list[str]]:
                     preserved_candidate_items.append(item)
                     remaining_source_items[key] -= 1
             candidate_items = preserved_candidate_items
+        elif has_skill_row_layout(source_items):
+            # The user laid the skills out in rows ("---" breaks or bare "Label:"
+            # lines). Keep their order so an AI rewrite cannot move skills between
+            # rows; new skills go last, in a row of their own after a bare label.
+            remaining_source_items = Counter(_normalized(item) for item in source_items)
+            added_items: list[str] = []
+            for item in candidate_items:
+                key = _normalized(item)
+                if remaining_source_items[key] > 0:
+                    remaining_source_items[key] -= 1
+                else:
+                    added_items.append(item)
+            if added_items and skills_end_in_open_label(source_items):
+                added_items.insert(0, SKILL_ROW_BREAK)
+            result[field] = [*source_items, *added_items]
+            continue
         remaining_candidate_items = Counter(
             _normalized(item) for item in candidate_items
         )

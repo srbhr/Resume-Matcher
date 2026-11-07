@@ -191,6 +191,7 @@
     },
     "additionalForm": {
       "instructions": "各項目を改行で区切って入力してください（1行につき1項目）。",
+      "technicalSkillsHint": "「ラボ：PCR、qPCR」のように1行に書くと、スキルをグループにできます。--- だけの行で次の段に移ります。",
       "placeholders": {
         "technicalSkills": "React\nTypeScript\nNode.js",
         "languages": "日本語\n英語",

@@ -27,7 +27,14 @@ from app.prompts import (
 )
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeDiffSummary, ResumeFieldDiff
-from app.schemas.models import ImproveDiffResult, ResumeChange
+from app.schemas.models import (
+    SKILL_ROW_BREAK,
+    ImproveDiffResult,
+    ResumeChange,
+    has_skill_row_layout,
+    skill_names,
+    skills_end_in_open_label,
+)
 from app.services.parser import has_meaningful_resume_content
 from app.services.text_match import keyword_in_text, normalize_skill_key
 
@@ -480,6 +487,32 @@ def apply_diffs(
             if not isinstance(actual_value, list) or not isinstance(change.value, list):
                 rejected.append(change)
                 continue
+            if path == "additional.technicalSkills" and has_skill_row_layout(
+                actual_value
+            ):
+                # The user laid the skills out in rows ("---" breaks or bare
+                # "Label:" lines); a relevance reorder would move skills between
+                # rows. Keep the order and only add verified new skills after it.
+                existing = skill_names(actual_value)
+                added: list[str] = []
+                for item in change.value:
+                    skill = item.strip() if isinstance(item, str) else ""
+                    if (
+                        skill
+                        and skill.casefold() not in existing
+                        and normalize_skill_key(skill) in allowed_skill_keys
+                    ):
+                        added.append(skill)
+                        existing.add(skill.casefold())
+                if not added:
+                    logger.info("Diff rejected (skills keep their rows): %s", path)
+                    rejected.append(change)
+                    continue
+                if skills_end_in_open_label(actual_value):
+                    actual_value.append(SKILL_ROW_BREAK)
+                actual_value.extend(added)
+                applied.append(change)
+                continue
             orig_set = sorted(s.casefold() for s in actual_value if isinstance(s, str))
             new_set = sorted(s.casefold() for s in change.value if isinstance(s, str))
             reordered: list[str] = []
@@ -563,10 +596,9 @@ def apply_diffs(
                 rejected.append(change)
                 continue
             new_skill = change.value.strip()
-            existing = {
-                item.casefold() for item in actual_value if isinstance(item, str)
-            }
-            if new_skill.casefold() in existing:
+            # Count skills inside "Label: a, b" lines too, so a grouped skill
+            # is not added a second time.
+            if new_skill.casefold() in skill_names(actual_value):
                 logger.info("Diff rejected (duplicate skill): %s", new_skill)
                 rejected.append(change)
                 continue
@@ -576,6 +608,8 @@ def apply_diffs(
                 )
                 rejected.append(change)
                 continue
+            if skills_end_in_open_label(actual_value):
+                actual_value.append(SKILL_ROW_BREAK)
             actual_value.append(new_skill)
             applied.append(change)
 

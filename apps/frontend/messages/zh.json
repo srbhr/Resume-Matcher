@@ -191,6 +191,7 @@
     },
     "additionalForm": {
       "instructions": "每行输入一条内容（按 Enter 换行）。",
+      "technicalSkillsHint": "像“实验室：PCR、qPCR”这样写在一行，即可将技能分组。只有 --- 的一行会另起一行。",
       "placeholders": {
         "technicalSkills": "React\nTypeScript\nNode.js",
         "languages": "中文\n英语",

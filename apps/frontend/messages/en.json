@@ -191,6 +191,7 @@
     },
     "additionalForm": {
       "instructions": "Enter items separated by new lines (press Enter for each item).",
+      "technicalSkillsHint": "Group skills on one line, like “Lab: PCR, qPCR”. A line with only --- starts a new row.",
       "placeholders": {
         "technicalSkills": "React\nTypeScript\nNode.js",
         "languages": "English\nSpanish",
