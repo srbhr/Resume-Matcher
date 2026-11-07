@@ -17,6 +17,10 @@ be launched.
 """
 
 import socket
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import AsyncMock
 
 import pytest
@@ -62,6 +66,32 @@ def _refused_url():
     port = sock.getsockname()[1]
     sock.close()
     return f"http://127.0.0.1:{port}/"
+
+
+@contextmanager
+def _not_found_server() -> Iterator[str]:
+    """Serve 404 for every path, like another app on the frontend's port."""
+
+    class NotFound(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            body = b"<html><head><title>Other app</title></head><body>404</body></html>"
+            self.send_response(404)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args: object) -> None:
+            del args
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), NotFound)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/print/resumes/abc"
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 async def _render_or_skip(url, **kwargs):
@@ -323,3 +353,19 @@ class TestRenderResumePdfErrors:
         assert type(exc_info.value) is PDFRenderError
         assert "could not load the resume" in str(exc_info.value)
         assert "executable" not in str(exc_info.value).lower()
+
+    async def test_error_status_from_the_print_url_fails_fast(self) -> None:
+        """A 404 or 500 at the print URL fails at once with its status.
+
+        Another app on the frontend's port answers 404, and a crashed print page
+        answers 500. Neither page ever shows the resume, so waiting for it only
+        ended in a misleading "timed out, try a simpler resume" after the full
+        render deadline. Asserting the exact type catches a wait that ignores
+        the status: it would raise PDFRenderTimeoutError instead.
+        """
+        with _not_found_server() as url:
+            with pytest.raises(PDFRenderError) as exc_info:
+                await _render_or_skip(url)
+        assert type(exc_info.value) is PDFRenderError
+        assert "HTTP 404" in str(exc_info.value)
+        assert "127.0.0.1" not in str(exc_info.value)
