@@ -4,22 +4,22 @@ version = "1.4.0"
 description = "Resume Matcher Backend API"
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi==0.143.0",
+    "fastapi==0.162.0",
     "uvicorn==0.54.0",
-    "python-multipart==0.0.32",
-    "pydantic==2.14.0",
-    "pydantic-settings==2.15.0",
+    "python-multipart==0.0.33",
+    "pydantic==2.14.2",
+    "pydantic-settings==2.16.2",
     "tinydb==4.9.0",
-    "sqlalchemy[asyncio]==2.1.4",
+    "sqlalchemy[asyncio]==2.1.8",
     "aiosqlite==0.22.1",
-    "psycopg[binary]==3.3.6",
+    "psycopg[binary]==3.3.8",
     "cryptography==50.0.2",
     "httpx==0.28.1",
     "PyJWT[crypto]==2.15.1",
-    "litellm==1.104.2",
-    "markitdown[docx,pdf]==0.1.8",
+    "litellm==1.108.0",
+    "markitdown[docx,pdf]==0.1.9",
     "pdfminer.six==20260107",
-    "playwright==1.63.0",
+    "playwright==1.64.1",
     "python-docx==1.2.0",
     "python-dotenv==1.2.4",
     "mcp==2.3.0",
@@ -32,15 +32,15 @@ resume-matcher = "app.mcp_server.cli:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "httpx>=0.28.0",
-    "respx>=0.21.1",
-    "ruff>=0.9.0",
+    "pytest==9.2.0",
+    "pytest-asyncio==1.4.1.post1",
+    "httpx==0.28.1",
+    "respx==0.23.1",
+    "ruff==0.17.3",
 ]
 e2e-monitor = [
-    "pypdf>=4.0.0",  # PDF text probe for the non-blank render check
-    "httpx>=0.28.0",
+    "pypdf==6.21.4",  # PDF text probe for the non-blank render check
+    "httpx==0.28.1",
 ]
 
 [build-system]
@@ -85,6 +85,8 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
+# pytest-asyncio 1.x warns until this is set; "function" is its current default.
+asyncio_default_fixture_loop_scope = "function"
 addopts = [
     "--strict-markers",
     "-v",
