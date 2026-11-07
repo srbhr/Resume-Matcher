@@ -38,7 +38,7 @@ Antes de começar, confira se você tem o seguinte instalado no seu sistema:
 
 | Ferramenta | Versão mínima | Como verificar | Instalação |
 |------------|---------------|----------------|------------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
+| **Python** | 3.14+ | `python --version` | [python.org](https://python.org) |
 | **Node.js** | 24.22.1 (fixada em `.nvmrc`; `nvm use`) | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Vem com o Node.js |
 | **uv** | Mais recente | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
@@ -102,7 +102,7 @@ Instale as ferramentas de [Pré-requisitos](#prerequisites) com o `winget` (já 
 
 ```powershell
 winget install --id Git.Git -e
-winget install --id Python.Python.3.13 -e
+winget install --id Python.Python.3.14 -e
 winget install --id OpenJS.NodeJS.LTS -e
 winget install --id astral-sh.uv -e
 ```
@@ -145,7 +145,7 @@ npm run dev
 
 Abra **<http://localhost:3000>** no navegador.
 
-> **Exportação de PDF:** o Resume Matcher gera PDFs com o Chromium headless. Se o navegador do Playwright não estiver instalado, o backend usa como alternativa o Microsoft Edge ou o Google Chrome instalado (o Edge já vem no Windows 11). Você também pode instalar o Chromium do Playwright a partir de `apps\backend` com `uv run playwright install chromium`.
+> **Exportação de PDF:** o Resume Matcher gera PDFs com o Chromium headless. Ele prefere o Google Chrome instalado, com o sandbox do Chrome ativado, porque o Chrome se mantém atualizado sozinho. Sem o Chrome, usa o Chromium do Playwright (instale-o a partir de `apps\backend` com `uv run playwright install chromium`) e, depois, o Microsoft Edge (o Edge já vem no Windows 11).
 
 > **Prefere Docker?** Instale o [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/) e siga [Deploy com Docker](#docker-deployment). Para definir variáveis como `PORT` no PowerShell, use `$env:PORT="4000"; docker compose up -d`. Para a [configuração opcional do PostgreSQL](#optional-postgresql), rode `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; fora do Docker, defina `DATABASE_URL` em `apps\backend\.env`.
 
@@ -533,23 +533,21 @@ Para iterar rápido, use o Compose watch (Docker Compose 2.22 ou mais recente):
 docker compose watch
 ```
 
-As edições em `apps/backend/app` são sincronizadas com o contêiner em execução, que reinicia sem rebuild da imagem. Mudanças em `apps/frontend`, `apps/backend/pyproject.toml`, no `Dockerfile` ou em `docker/` reconstroem a imagem. As dependências Python e o Chromium ficam em camadas próprias no cache, então um rebuild depois de uma mudança de código não baixa tudo de novo.
+As edições em `apps/backend/app` são sincronizadas com o contêiner em execução, que reinicia sem rebuild da imagem. Mudanças em `apps/frontend`, `apps/backend/pyproject.toml`, `apps/backend/requirements-lock.txt`, no `Dockerfile` ou em `docker/` reconstroem a imagem. As dependências Python e o Chromium ficam em camadas próprias no cache, então um rebuild depois de uma mudança de código não baixa tudo de novo.
 
-Se alguma etapa do build baixar devagar, aponte-a para um mirror. Os quatro build args são vazios por padrão (sem alteração):
+Se alguma etapa do build baixar devagar, aponte-a para um mirror. Os três build args são vazios por padrão (sem alteração):
 
-- `DEBIAN_MIRROR`: se o `apt-get` estiver lento, gere com `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (ou o seu mirror local; informe a URL `/debian` dele). As atualizações de segurança continuam em `deb.debian.org`, a menos que você defina também `DEBIAN_SECURITY_MIRROR` (uma URL `/debian-security`; a maioria dos mirrors não a oferece).
+- `DEBIAN_MIRROR`: se o `apt-get` estiver lento, gere com `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian` (ou o seu mirror local; informe a URL `/debian` dele). As atualizações de segurança continuam em `deb.debian.org`, a menos que você defina também `DEBIAN_SECURITY_MIRROR` (uma URL `/debian-security`; a maioria dos mirrors não a oferece). A exportação de PDF usa o pacote Chromium do Debian, que vem dessas atualizações de segurança, então um mirror de segurança precisa estar atualizado.
 - `PIP_INDEX_URL`: se o download dos pacotes Python estiver lento, defina-a com a URL `/simple` de um mirror do PyPI (por exemplo `https://pypi.mirrors.ustc.edu.cn/simple`).
-- `PLAYWRIGHT_DOWNLOAD_HOST`: se o download do Chromium estiver lento (a CDN padrão do Playwright pode sofrer limitação em algumas regiões), defina-a com a URL do seu mirror.
 
 ```bash
 docker build \
   --build-arg DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian \
   --build-arg PIP_INDEX_URL=https://pypi.mirrors.ustc.edu.cn/simple \
-  --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://your-mirror.example.com \
   -t resume-matcher .
 ```
 
-`docker compose build` e `scripts/docker-smoke.sh` leem os quatro a partir de variáveis de ambiente de mesmo nome, por exemplo `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian ./scripts/docker-smoke.sh`.
+`docker compose build` e `scripts/docker-smoke.sh` leem os três a partir de variáveis de ambiente de mesmo nome, por exemplo `DEBIAN_MIRROR=https://mirrors.edge.kernel.org/debian ./scripts/docker-smoke.sh`.
 
 ### Observações importantes
 

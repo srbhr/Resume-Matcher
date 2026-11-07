@@ -5,18 +5,22 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import sys
 import threading
 import time
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
-from typing import Any, Awaitable, NoReturn, Optional, TypeVar
+from typing import Any, Awaitable, Callable, NoReturn, Optional, TypeVar
+from urllib.parse import urljoin, urlsplit
 
 from playwright.async_api import (
     Browser,
     Page,
     Playwright,
+    Route,
+    WebSocketRoute,
     async_playwright,
 )
 from playwright.async_api import (
@@ -358,6 +362,17 @@ def _find_chromium_executable() -> Optional[str]:
 
 
 async def _launch_browser(playwright: Playwright) -> Browser:
+    # Prefer the installed, auto-updated Chrome with its sandbox on: Playwright's
+    # pinned Chromium can lag Chrome's security fixes and runs unsandboxed by
+    # default (CVE-2026-118306). Without system Chrome (e.g. Docker), or where its
+    # sandbox cannot start, fall back to the pinned build.
+    try:
+        return await playwright.chromium.launch(channel="chrome", chromium_sandbox=True)
+    except PlaywrightError as error:
+        logger.info(
+            "System Chrome unavailable for PDF rendering, using Playwright's Chromium: %s",
+            str(error).splitlines()[0] if str(error) else type(error).__name__,
+        )
     try:
         return await playwright.chromium.launch()
     except PlaywrightError as e:
@@ -369,7 +384,20 @@ async def _launch_browser(playwright: Playwright) -> Browser:
                 "Playwright browser executable is missing, and no system Chrome/Edge "
                 "installation was found. Install Playwright browsers or install Chrome/Edge."
             ) from e
-        return await playwright.chromium.launch(executable_path=fallback_executable)
+        try:
+            return await playwright.chromium.launch(
+                executable_path=fallback_executable, chromium_sandbox=True
+            )
+        except PlaywrightError as error:
+            # Containers often can't start Chromium's sandbox (no user namespaces).
+            # The Docker image's Chromium comes from Debian's security updates, so
+            # it stays patched even without it.
+            logger.warning(
+                "Chromium sandbox unavailable for %s, rendering without it: %s",
+                fallback_executable,
+                str(error).splitlines()[0] if str(error) else type(error).__name__,
+            )
+            return await playwright.chromium.launch(executable_path=fallback_executable)
 
 
 async def _render_page_to_pdf(
@@ -408,7 +436,7 @@ async def _render_page_to_pdf(
             "Print page returned HTTP %d for %s; check that FRONTEND_BASE_URL "
             "points at the running Resume Matcher frontend",
             response.status,
-            url,
+            _redact_draft_token(url),
         )
         raise PDFRenderError(
             f"The print page failed to load (HTTP {response.status}). "
@@ -431,7 +459,9 @@ async def _render_page_to_pdf(
             "resume readiness",
         )
         if isinstance(print_error, str):
-            logger.warning("Print page reported %r for %s", print_error, url)
+            logger.warning(
+                "Print page reported %r for %s", print_error, _redact_draft_token(url)
+            )
             raise PDFRenderError("The print page could not load the resume.")
     # Bound the fonts wait too — plain page.evaluate has no timeout, so a stuck
     # font load could otherwise hang the render past _NAV_TIMEOUT_MS.
@@ -454,6 +484,128 @@ async def _render_page_to_pdf(
     )
 
 
+_DEFAULT_PORTS = {"http": 80, "https": 443}
+_DRAFT_TOKEN_RE = re.compile(r"([?&]draft=)[^&#\s\"']*")
+
+
+def _redact_draft_token(text: str) -> str:
+    """Hide a page-fit draft token: it can fetch the unsaved resume it names."""
+    return _DRAFT_TOKEN_RE.sub(r"\1<redacted>", text)
+
+
+# A WebSocket belongs to the origin of the page that opens it.
+_SOCKET_SCHEMES = {"ws": "http", "wss": "https"}
+
+
+def _url_origin(url: str) -> tuple[str, str | None, int | None]:
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        # urllib rejects it (e.g. port 99999), so it matches no origin. A bad
+        # FRONTEND_BASE_URL then fails at navigation, as a PDFRenderError.
+        return "", None, -1
+    scheme = parts.scheme.lower()
+    scheme = _SOCKET_SCHEMES.get(scheme, scheme)
+    return scheme, parts.hostname, port or _DEFAULT_PORTS.get(scheme)
+
+
+def _same_origin_only(
+    url: str, page: Page, deadline: float
+) -> Callable[[Route], Awaitable[None]]:
+    """Route handler that lets the print page load only from its own origin.
+
+    Chromium follows a redirect without asking the route handler again, so each
+    request is fetched here with redirects off: a redirect reaches the page only
+    when it points back to the same origin, and the browser's follow-up request
+    comes through this handler again. Each fetch ends by the render deadline.
+    """
+    allowed = _url_origin(url)
+
+    async def handle(route: Route) -> None:
+        request_url = route.request.url
+        shown_url = _redact_draft_token(request_url)
+        try:
+            if _url_origin(request_url) != allowed:
+                logger.warning(
+                    "Blocked off-origin request during PDF render: %s", shown_url
+                )
+                await route.abort()
+                return
+            try:
+                response = await route.fetch(
+                    max_redirects=0, timeout=_stage_timeout_ms(deadline)
+                )
+            except PlaywrightError as error:
+                if not page.is_closed():
+                    logger.warning(
+                        "PDF render request failed for %s: %s",
+                        shown_url,
+                        _redact_draft_token(
+                            str(error).splitlines()[0]
+                            if str(error)
+                            else type(error).__name__
+                        ),
+                    )
+                # Keep the browser's own error so a down frontend still reads
+                # as net::ERR_CONNECTION_REFUSED (see _raise_playwright_error).
+                refused = "ECONNREFUSED" in str(error)
+                await route.abort("connectionrefused" if refused else "failed")
+                return
+            location = response.headers.get("location")
+            if 300 <= response.status < 400 and location:
+                try:
+                    target = urljoin(request_url, location)
+                    same_origin = _url_origin(target) == allowed
+                except ValueError:
+                    # urljoin rejects a malformed host, e.g. "http://[::1".
+                    target, same_origin = location, False
+                if not same_origin:
+                    logger.warning(
+                        "Blocked off-origin redirect during PDF render: %s -> %s",
+                        shown_url,
+                        _redact_draft_token(target),
+                    )
+                    await route.abort()
+                    return
+            await route.fulfill(response=response)
+        except PlaywrightError as error:
+            if page.is_closed():
+                # The render ended while this request was in flight.
+                logger.debug("PDF render request ended with its page: %s", shown_url)
+            else:
+                logger.warning(
+                    "PDF render request failed for %s: %s",
+                    shown_url,
+                    _redact_draft_token(str(error)),
+                )
+
+    return handle
+
+
+def _close_all_sockets(url: str) -> Callable[[WebSocketRoute], Awaitable[None]]:
+    """WebSocket handler: page.route() never sees sockets, so close them all here.
+
+    Print pages open no sockets. A same-origin one could not connect anyway: the
+    route handler serves the page itself, and Chrome's Local Network Access check
+    then refuses its loopback sockets (net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS).
+    """
+    page_origin = _url_origin(url)
+
+    async def handle(socket: WebSocketRoute) -> None:
+        shown_url = _redact_draft_token(socket.url)
+        if _url_origin(socket.url) == page_origin:
+            # e.g. the Next.js dev server's hot-reload socket.
+            logger.debug("Closed WebSocket during PDF render: %s", shown_url)
+        else:
+            logger.warning(
+                "Blocked off-origin WebSocket during PDF render: %s", shown_url
+            )
+        await socket.close()
+
+    return handle
+
+
 async def _render_with_browser(
     browser: Browser,
     url: str,
@@ -471,6 +623,16 @@ async def _render_with_browser(
     )
     render_error: BaseException | None = None
     try:
+        await _await_before_deadline(
+            page.route("**/*", _same_origin_only(url, page, work_deadline)),
+            work_deadline,
+            "request filter",
+        )
+        await _await_before_deadline(
+            page.route_web_socket(lambda _url: True, _close_all_sockets(url)),
+            work_deadline,
+            "request filter",
+        )
         return await _render_page_to_pdf(
             page,
             url,
@@ -615,7 +777,7 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     if "net::ERR_CONNECTION_REFUSED" in error_msg:
         raise PDFRenderError(
             f"Cannot connect to frontend for PDF generation. "
-            f"Attempted URL: {url}. "
+            f"Attempted URL: {_redact_draft_token(url)}. "
             f"Please ensure: 1) The frontend is running, "
             f"2) The FRONTEND_BASE_URL environment variable in the backend .env file "
             f"matches the URL where your frontend is accessible."
@@ -624,7 +786,11 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     # and a full call log. Log it server-side; return a generic message to the
     # client (CLAUDE.md rule 5 — and it stops the verbose trace from overflowing
     # the client error modal, #811).
-    logger.error("PDF rendering failed for %s: %s", url, error_msg)
+    logger.error(
+        "PDF rendering failed for %s: %s",
+        _redact_draft_token(url),
+        _redact_draft_token(error_msg),
+    )
     raise PDFRenderError(
         "PDF rendering failed. Please try again, or try a simpler resume or a "
         "different template."
@@ -961,7 +1127,11 @@ async def render_resume_pdf(
 
         raise PDFRenderError("PDF renderer failed to initialize.")
     except _PDFDeadlineExceeded as error:
-        logger.warning("PDF rendering timed out during %s for %s", error.stage, url)
+        logger.warning(
+            "PDF rendering timed out during %s for %s",
+            error.stage,
+            _redact_draft_token(url),
+        )
         if error.stage == "resume readiness":
             # The page loaded but never showed its content (a resume or a cover
             # letter): the URL most likely reaches another app, so a simpler

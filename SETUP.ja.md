@@ -36,7 +36,7 @@
 
 | ツール | 最低バージョン | 確認方法 | インストール |
 |------|----------------|----------|--------------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
+| **Python** | 3.14+ | `python --version` | [python.org](https://python.org) |
 | **Node.js** | 24+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Node.js に同梱 |
 | **uv** | 最新 | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
@@ -98,7 +98,7 @@ npm run dev                  # 開発サーバを起動
 
 ```powershell
 winget install --id Git.Git -e
-winget install --id Python.Python.3.13 -e
+winget install --id Python.Python.3.14 -e
 winget install --id OpenJS.NodeJS.LTS -e
 winget install --id astral-sh.uv -e
 ```
@@ -141,7 +141,7 @@ npm run dev
 
 ブラウザで **<http://localhost:3000>** を開きます。
 
-> **PDF エクスポート:** Resume Matcher はヘッドレス Chromium で PDF を生成します。Playwright のブラウザがインストールされていない場合、バックエンドはインストール済みの Microsoft Edge または Google Chrome にフォールバックします（Edge は Windows 11 に標準搭載です）。`apps\backend` で `uv run playwright install chromium` を実行して、Playwright の Chromium をインストールすることもできます。
+> **PDF エクスポート:** Resume Matcher はヘッドレス Chromium で PDF を生成します。Chrome は自動で最新に保たれるため、インストール済みの Google Chrome を Chrome のサンドボックスを有効にして優先的に使います。Chrome がない場合は Playwright の Chromium（`apps\backend` で `uv run playwright install chromium` を実行してインストール）を、それもなければ Microsoft Edge を使います（Edge は Windows 11 に標準搭載です）。
 
 > **Docker を使いたい場合:** [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) をインストールし、[Docker デプロイ](#docker-deployment) に従ってください。PowerShell で `PORT` などの変数を設定するには、`$env:PORT="4000"; docker compose up -d` を使います。[オプションの PostgreSQL 構成](#optional-postgresql) では、`$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d` を実行します。Docker を使わない場合は、`apps\backend\.env` に `DATABASE_URL` を設定します。
 

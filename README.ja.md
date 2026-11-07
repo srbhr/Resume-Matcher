@@ -225,7 +225,7 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 | ツール | バージョン | インストール |
 |--------|------------|--------------|
-| Python | 3.13+ | [python.org](https://python.org) |
+| Python | 3.14+ | [python.org](https://python.org) |
 | Node.js | 24+ | [nodejs.org](https://nodejs.org) |
 | uv | 最新 | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
@@ -279,7 +279,7 @@ docker run srbhr/resume-matcher:latest
 
 | コンポーネント | 技術 |
 |----------------|------|
-| バックエンド | FastAPI、Python 3.13+、LiteLLM |
+| バックエンド | FastAPI、Python 3.14+、LiteLLM |
 | フロントエンド | Next.js 15、React 19、TypeScript |
 | データベース | TinyDB（JSON ファイル保存） |
 | スタイリング | Tailwind CSS 4、Swiss International Style |

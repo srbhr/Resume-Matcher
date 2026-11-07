@@ -36,7 +36,7 @@
 
 | 工具 | 最低版本 | 如何检查 | 安装 |
 |------|----------|----------|------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
+| **Python** | 3.14+ | `python --version` | [python.org](https://python.org) |
 | **Node.js** | 24+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | 随 Node.js 一起安装 |
 | **uv** | 最新 | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
@@ -98,7 +98,7 @@ npm run dev                  # 启动开发服务器
 
 ```powershell
 winget install --id Git.Git -e
-winget install --id Python.Python.3.13 -e
+winget install --id Python.Python.3.14 -e
 winget install --id OpenJS.NodeJS.LTS -e
 winget install --id astral-sh.uv -e
 ```
@@ -141,7 +141,7 @@ npm run dev
 
 在浏览器中打开 **<http://localhost:3000>**。
 
-> **PDF 导出：** Resume Matcher 使用无头 Chromium 渲染 PDF。如果未安装 Playwright 的浏览器，后端会回退到已安装的 Microsoft Edge 或 Google Chrome（Windows 11 自带 Edge）。你也可以在 `apps\backend` 中运行 `uv run playwright install chromium` 来安装 Playwright 的 Chromium。
+> **PDF 导出：** Resume Matcher 使用无头 Chromium 渲染 PDF。由于 Chrome 会自动保持最新，后端优先使用已安装的 Google Chrome，并开启 Chrome 的沙箱。没有 Chrome 时使用 Playwright 的 Chromium（在 `apps\backend` 中运行 `uv run playwright install chromium` 安装），再没有则使用 Microsoft Edge（Windows 11 自带 Edge）。
 
 > **更喜欢 Docker？** 请安装 [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)，并按照 [Docker 部署](#docker-deployment) 操作。要在 PowerShell 中设置 `PORT` 之类的变量，请使用 `$env:PORT="4000"; docker compose up -d`。对于 [可选的 PostgreSQL 配置](#optional-postgresql)，运行 `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`；在 Docker 之外，请在 `apps\backend\.env` 中设置 `DATABASE_URL`。
 

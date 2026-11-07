@@ -9,7 +9,6 @@ services:
         - DEBIAN_MIRROR=${DEBIAN_MIRROR:-}
         - DEBIAN_SECURITY_MIRROR=${DEBIAN_SECURITY_MIRROR:-}
         - PIP_INDEX_URL=${PIP_INDEX_URL:-}
-        - PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST:-}
     container_name: resume-matcher
     ports:
       # Reachable from this machine only. To open it from a phone or another computer,
@@ -70,6 +69,8 @@ services:
             - .next/
         - action: rebuild
           path: ./apps/backend/pyproject.toml
+        - action: rebuild
+          path: ./apps/backend/requirements-lock.txt
         - action: rebuild
           path: ./Dockerfile
         - action: rebuild

@@ -36,7 +36,7 @@ Antes de empezar, asegúrate de tener lo siguiente instalado en tu sistema:
 
 | Herramienta | Versión mínima | Cómo comprobarlo | Instalación |
 |------------|-----------------|------------------|-------------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
+| **Python** | 3.14+ | `python --version` | [python.org](https://python.org) |
 | **Node.js** | 24+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Viene con Node.js |
 | **uv** | Última | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
@@ -98,7 +98,7 @@ Instala las herramientas de [Requisitos previos](#prerequisites) con `winget` (i
 
 ```powershell
 winget install --id Git.Git -e
-winget install --id Python.Python.3.13 -e
+winget install --id Python.Python.3.14 -e
 winget install --id OpenJS.NodeJS.LTS -e
 winget install --id astral-sh.uv -e
 ```
@@ -141,7 +141,7 @@ npm run dev
 
 Abre **<http://localhost:3000>** en el navegador.
 
-> **Exportar PDF:** Resume Matcher genera los PDF con Chromium headless. Si el navegador de Playwright no está instalado, el backend recurre a Microsoft Edge o Google Chrome si están instalados (Edge viene con Windows 11). También puedes instalar el Chromium de Playwright desde `apps\backend` con `uv run playwright install chromium`.
+> **Exportar PDF:** Resume Matcher genera los PDF con Chromium headless. Prefiere Google Chrome si está instalado, con el sandbox de Chrome activado, porque Chrome se mantiene actualizado solo. Sin Chrome usa el Chromium de Playwright (instálalo desde `apps\backend` con `uv run playwright install chromium`) y, si no, Microsoft Edge (Edge viene con Windows 11).
 
 > **¿Prefieres Docker?** Instala [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/) y sigue [Despliegue con Docker](#docker-deployment). Para definir variables como `PORT` en PowerShell, usa `$env:PORT="4000"; docker compose up -d`. Para la [configuración opcional de PostgreSQL](#optional-postgresql), ejecuta `$env:POSTGRES_PASSWORD=[guid]::NewGuid().ToString('N'); docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`; fuera de Docker, define `DATABASE_URL` en `apps\backend\.env`.
 

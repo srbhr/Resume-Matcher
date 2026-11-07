@@ -188,14 +188,12 @@ else
     status "Data directory exists: $DATA_DIR"
 fi
 
-# Check for Playwright browsers
-info "Checking Playwright browsers..."
-if [ -d "${PLAYWRIGHT_BROWSERS_PATH:-/nonexistent}" ] || [ -d "/root/.cache/ms-playwright" ] || [ -d "/home/appuser/.cache/ms-playwright" ]; then
-    status "Playwright browsers found"
+# Check for Chromium (Debian's package, installed at build time; app/pdf.py uses it)
+info "Checking Chromium for PDF export..."
+if command -v chromium > /dev/null 2>&1; then
+    status "$(chromium --version 2> /dev/null || echo 'Chromium') found"
 else
-    # Chromium is installed into the image at build time. The container runs as appuser and
-    # PLAYWRIGHT_BROWSERS_PATH (/ms-playwright) is root-owned, so a runtime install cannot succeed.
-    error "Playwright Chromium is missing from this image — PDF export will not work."
+    error "Chromium is missing from this image — PDF export will not work."
     error "Rebuild the image (e.g. 'docker compose build --no-cache') to install it."
 fi
 

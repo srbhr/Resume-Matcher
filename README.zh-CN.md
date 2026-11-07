@@ -225,7 +225,7 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 | 工具 | 版本 | 安装 |
 |------|------|------|
-| Python | 3.13+ | [python.org](https://python.org) |
+| Python | 3.14+ | [python.org](https://python.org) |
 | Node.js | 24+ | [nodejs.org](https://nodejs.org) |
 | uv | 最新版 | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
@@ -279,7 +279,7 @@ docker run srbhr/resume-matcher:latest
 
 | 组件 | 技术 |
 |------|------|
-| 后端 | FastAPI、Python 3.13+、LiteLLM |
+| 后端 | FastAPI、Python 3.14+、LiteLLM |
 | 前端 | Next.js 15、React 19、TypeScript |
 | 数据库 | TinyDB（JSON 文件存储） |
 | 样式 | Tailwind CSS 4、Swiss International Style |
