@@ -96,6 +96,7 @@ from app.services.improver import (
     verify_skill_target_plan,
 )
 from app.services.interview_prep import generate_interview_prep
+from app.services.jd_metadata import filter_metadata_keywords
 from app.services.keyword_forcing import force_keywords, keyword_placements
 from app.services.page_fit import page_limit, render_drafts, resume_print_url
 from app.services.parser import (
@@ -3003,13 +3004,18 @@ async def generate_interview_prep_endpoint(
 
 
 def _cached_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
-    """Job keywords cached at tailoring time, or None when missing or stale."""
+    """Job keywords cached at tailoring time, or None when missing or stale.
+
+    Re-filtered on read: rows cached before ``filter_metadata_keywords`` existed
+    still carry posting-header terms (需求专业, 职位类别, 薪资…), and those would
+    otherwise count against every resume scored from the old cache.
+    """
     keywords = job.get("job_keywords")
     if not keywords or job.get("job_keywords_hash") != _hash_job_content(
         job.get("content", "")
     ):
         return None
-    return keywords
+    return filter_metadata_keywords(keywords, job.get("content", ""))
 
 
 def _scorable_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
