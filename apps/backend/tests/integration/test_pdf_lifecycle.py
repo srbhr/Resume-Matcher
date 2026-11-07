@@ -41,6 +41,9 @@ class ControlledPage:
         if self.gate is not None:
             await self.gate.wait()
 
+    async def route(self, *args: Any, **kwargs: Any) -> None:
+        del args, kwargs
+
     async def goto(self, *args: Any, **kwargs: Any) -> None:
         del args, kwargs
         await self._stage()

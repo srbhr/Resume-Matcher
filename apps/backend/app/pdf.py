@@ -11,12 +11,14 @@ import time
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
-from typing import Any, Awaitable, NoReturn, Optional, TypeVar
+from typing import Any, Awaitable, Callable, NoReturn, Optional, TypeVar
+from urllib.parse import urlsplit
 
 from playwright.async_api import (
     Browser,
     Page,
     Playwright,
+    Route,
     async_playwright,
 )
 from playwright.async_api import (
@@ -358,6 +360,17 @@ def _find_chromium_executable() -> Optional[str]:
 
 
 async def _launch_browser(playwright: Playwright) -> Browser:
+    # Prefer the installed, auto-updated Chrome with its sandbox on: Playwright's
+    # pinned Chromium can lag Chrome's security fixes and runs unsandboxed by
+    # default (CVE-2026-118306). Without system Chrome (e.g. Docker), or where its
+    # sandbox cannot start, fall back to the pinned build.
+    try:
+        return await playwright.chromium.launch(channel="chrome", chromium_sandbox=True)
+    except PlaywrightError as error:
+        logger.info(
+            "System Chrome unavailable for PDF rendering, using Playwright's Chromium: %s",
+            str(error).splitlines()[0] if str(error) else type(error).__name__,
+        )
     try:
         return await playwright.chromium.launch()
     except PlaywrightError as e:
@@ -454,6 +467,31 @@ async def _render_page_to_pdf(
     )
 
 
+_DEFAULT_PORTS = {"http": 80, "https": 443}
+
+
+def _url_origin(url: str) -> tuple[str, str | None, int | None]:
+    parts = urlsplit(url)
+    scheme = parts.scheme.lower()
+    return scheme, parts.hostname, parts.port or _DEFAULT_PORTS.get(scheme)
+
+
+def _same_origin_only(url: str) -> Callable[[Route], Awaitable[None]]:
+    """Route handler that lets the print page load only from its own origin."""
+    allowed = _url_origin(url)
+
+    async def handle(route: Route) -> None:
+        if _url_origin(route.request.url) == allowed:
+            await route.continue_()
+            return
+        logger.warning(
+            "Blocked off-origin request during PDF render: %s", route.request.url
+        )
+        await route.abort()
+
+    return handle
+
+
 async def _render_with_browser(
     browser: Browser,
     url: str,
@@ -471,6 +509,9 @@ async def _render_with_browser(
     )
     render_error: BaseException | None = None
     try:
+        await _await_before_deadline(
+            page.route("**/*", _same_origin_only(url)), work_deadline, "request filter"
+        )
         return await _render_page_to_pdf(
             page,
             url,
