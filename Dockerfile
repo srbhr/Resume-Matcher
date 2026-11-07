@@ -96,7 +96,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     chromium \
     # CJK fonts for Chinese/Japanese/Korean PDF rendering via Playwright
     fonts-noto-cjk \
-    && chromium --version
+    && chromium --version \
+    # Fail the build if the security mirror served a Chromium without the fix.
+    && chromium_version="$(dpkg-query -W -f='${Version}' chromium)" \
+    && if ! dpkg --compare-versions "$chromium_version" ge 156.0.8078.73; then \
+        echo "chromium $chromium_version lacks the CVE-2026-118306 fix (156.0.8078.73)" >&2; \
+        exit 1; \
+    fi
 
 # ============================================
 # Python dependencies (cached across code changes)

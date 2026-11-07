@@ -210,6 +210,13 @@ _SHOW_RESUME = (
     "const done = () => document.body.insertAdjacentHTML("
     "'beforeend', \"<main class='resume-print'>Synthetic resume</main>\");"
 )
+_REDIRECT_PROBE = (
+    "<html><body><img id='probe' src='/redirect'><script>"
+    f"{_SHOW_RESUME}"
+    "const probe = document.getElementById('probe');"
+    "probe.onload = done; probe.onerror = done;"
+    "</script></body></html>"
+).encode()
 
 
 async def test_redirect_to_another_origin_is_not_followed(
@@ -217,20 +224,22 @@ async def test_redirect_to_another_origin_is_not_followed(
 ) -> None:
     """A same-origin URL that redirects elsewhere must not reach the other origin."""
     with _RecordingServer(b"") as outside:
-        page = (
-            "<html><body><img id='probe' src='/redirect'><script>"
-            f"{_SHOW_RESUME}"
-            "const probe = document.getElementById('probe');"
-            "probe.onload = done; probe.onerror = done;"
-            "</script></body></html>"
-        ).encode()
         leak = f"http://127.0.0.1:{outside.port}/leak"
-        with _RecordingServer(page, redirect=leak) as app_origin:
+        with _RecordingServer(_REDIRECT_PROBE, redirect=leak) as app_origin:
             pdf = await _render(f"http://127.0.0.1:{app_origin.port}/print/resumes/1")
 
     assert pdf.startswith(b"%PDF")
     assert "/redirect" in app_origin.paths
     assert outside.paths == []
+
+
+async def test_redirect_within_the_origin_is_followed(fresh_renderer: None) -> None:
+    """A same-origin redirect, such as a trailing-slash fix, still loads."""
+    with _RecordingServer(_REDIRECT_PROBE, redirect="/landed") as app_origin:
+        pdf = await _render(f"http://127.0.0.1:{app_origin.port}/print/resumes/1")
+
+    assert pdf.startswith(b"%PDF")
+    assert "/landed" in app_origin.paths
 
 
 async def test_websocket_to_another_origin_is_blocked(fresh_renderer: None) -> None:
@@ -257,9 +266,16 @@ class _FakeRequest:
 class _FakeRoute:
     """Route double: its fetch fails or returns a response, and records calls."""
 
-    def __init__(self, fetch_error: Exception | None = None) -> None:
+    def __init__(
+        self,
+        fetch_error: Exception | None = None,
+        status: int = 200,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         self.request = _FakeRequest()
         self.fetch_error = fetch_error
+        self.status = status
+        self.headers = headers or {}
         self.fetch_kwargs: dict[str, Any] = {}
         self.aborted: list[str | None] = []
 
@@ -267,7 +283,7 @@ class _FakeRoute:
         self.fetch_kwargs = kwargs
         if self.fetch_error is not None:
             raise self.fetch_error
-        return type("Response", (), {"status": 200, "headers": {}})()
+        return type("Response", (), {"status": self.status, "headers": self.headers})()
 
     async def abort(self, error_code: str | None = None) -> None:
         self.aborted.append(error_code)
@@ -330,6 +346,55 @@ async def test_request_fetch_is_bounded_by_the_render_deadline() -> None:
     assert route.fetch_kwargs["max_redirects"] == 0
     assert 1 <= route.fetch_kwargs["timeout"] <= 2000
     assert route.aborted == ["connectionrefused"]
+
+
+async def test_redirect_to_an_invalid_port_is_aborted() -> None:
+    """urlsplit raises on a port such as 99999; the request must still end."""
+    deadline = asyncio.get_running_loop().time() + 2.0
+    route = _FakeRoute(status=302, headers={"location": "http://127.0.0.1:99999/"})
+    handle = pdf_module._same_origin_only(
+        "http://127.0.0.1:3000/print/resumes/1", _FakePage(closed=False), deadline
+    )
+
+    await handle(route)  # type: ignore[arg-type]
+
+    assert route.aborted == [None]
+
+
+class _FakeSocket:
+    def __init__(self, url: str) -> None:
+        self.url = url
+        self.connected = False
+        self.closed = False
+
+    def connect_to_server(self) -> None:
+        self.connected = True
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+@pytest.mark.parametrize(
+    ("socket_url", "level"),
+    [
+        ("ws://127.0.0.1:3000/_next/webpack-hmr", logging.DEBUG),
+        ("ws://127.0.0.1:9999/socket", logging.WARNING),
+    ],
+)
+async def test_every_websocket_is_closed(
+    caplog: pytest.LogCaptureFixture, socket_url: str, level: int
+) -> None:
+    """Print pages open no sockets, so none connects, whatever its origin."""
+    socket = _FakeSocket(socket_url)
+    handle = pdf_module._close_all_sockets("http://127.0.0.1:3000/print/resumes/1")
+
+    with caplog.at_level(logging.DEBUG, logger="app.pdf"):
+        await handle(socket)  # type: ignore[arg-type]
+
+    assert socket.closed and not socket.connected
+    assert [r.levelno for r in caplog.records if "WebSocket" in r.getMessage()] == [
+        level
+    ]
 
 
 @pytest.mark.parametrize(

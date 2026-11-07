@@ -1,4 +1,5 @@
-"""requirements-lock.txt, what the Docker image installs, must match pyproject's pins."""
+"""The pin files must match pyproject: requirements-lock.txt, which the Docker image
+installs, and requirements.txt, a plain list of the direct dependencies."""
 
 import re
 import tomllib
@@ -52,4 +53,16 @@ def test_every_locked_package_has_a_hash() -> None:
     unhashed = [e.split()[0] for e in entries if "--hash=sha256:" not in e]
     assert entries and unhashed == [], (
         f"entries without hashes: {unhashed}; {REGENERATE}"
+    )
+
+
+def test_requirements_txt_lists_the_pyproject_dependencies() -> None:
+    project = tomllib.loads((BACKEND / "pyproject.toml").read_text())["project"]
+    listed = [
+        line.strip()
+        for line in (BACKEND / "requirements.txt").read_text().splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    assert sorted(listed) == sorted(project["dependencies"]), (
+        "update requirements.txt to match pyproject.toml's dependencies"
     )

@@ -501,7 +501,12 @@ def _url_origin(url: str) -> tuple[str, str | None, int | None]:
     parts = urlsplit(url)
     scheme = parts.scheme.lower()
     scheme = _SOCKET_SCHEMES.get(scheme, scheme)
-    return scheme, parts.hostname, parts.port or _DEFAULT_PORTS.get(scheme)
+    try:
+        port = parts.port
+    except ValueError:
+        # A port urlsplit rejects (e.g. 99999) belongs to no origin a page can load.
+        return scheme, None, -1
+    return scheme, parts.hostname, port or _DEFAULT_PORTS.get(scheme)
 
 
 def _same_origin_only(
@@ -572,18 +577,24 @@ def _same_origin_only(
     return handle
 
 
-def _same_origin_sockets_only(url: str) -> Callable[[WebSocketRoute], Awaitable[None]]:
-    """WebSocket handler: page.route() never sees sockets, so filter them here."""
-    allowed = _url_origin(url)
+def _close_all_sockets(url: str) -> Callable[[WebSocketRoute], Awaitable[None]]:
+    """WebSocket handler: page.route() never sees sockets, so close them all here.
+
+    Print pages open no sockets. A same-origin one could not connect anyway: the
+    route handler serves the page itself, and Chrome's Local Network Access check
+    then refuses its loopback sockets (net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS).
+    """
+    page_origin = _url_origin(url)
 
     async def handle(socket: WebSocketRoute) -> None:
-        if _url_origin(socket.url) == allowed:
-            socket.connect_to_server()
-            return
-        logger.warning(
-            "Blocked off-origin WebSocket during PDF render: %s",
-            _redact_draft_token(socket.url),
-        )
+        shown_url = _redact_draft_token(socket.url)
+        if _url_origin(socket.url) == page_origin:
+            # e.g. the Next.js dev server's hot-reload socket.
+            logger.debug("Closed WebSocket during PDF render: %s", shown_url)
+        else:
+            logger.warning(
+                "Blocked off-origin WebSocket during PDF render: %s", shown_url
+            )
         await socket.close()
 
     return handle
@@ -612,7 +623,7 @@ async def _render_with_browser(
             "request filter",
         )
         await _await_before_deadline(
-            page.route_web_socket(lambda _url: True, _same_origin_sockets_only(url)),
+            page.route_web_socket(lambda _url: True, _close_all_sockets(url)),
             work_deadline,
             "request filter",
         )
