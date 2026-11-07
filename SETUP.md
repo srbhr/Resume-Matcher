@@ -36,7 +36,7 @@ Before you begin, make sure you have the following installed on your system:
 
 | Tool | Minimum Version | How to Check | Installation |
 |------|-----------------|--------------|--------------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
+| **Python** | 3.14+ | `python --version` | [python.org](https://python.org) |
 | **Node.js** | 24.22.1 (pinned in `.nvmrc`; `nvm use`) | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Comes with Node.js |
 | **uv** | Latest | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
@@ -96,7 +96,7 @@ Install the tools from [Prerequisites](#prerequisites) with `winget` (built into
 
 ```powershell
 winget install --id Git.Git -e
-winget install --id Python.Python.3.13 -e
+winget install --id Python.Python.3.14 -e
 winget install --id OpenJS.NodeJS.LTS -e
 winget install --id astral-sh.uv -e
 ```

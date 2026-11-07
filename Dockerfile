@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/app/frontend/.next/cache \
 # ============================================
 # Stage 2: Final Image
 # ============================================
-FROM python:3.13-slim-bookworm
+FROM python:3.14-slim-bookworm
 
 # Set environment variables
 # PIP_NO_CACHE_DIR is deliberately not set: the pip steps below use a BuildKit cache

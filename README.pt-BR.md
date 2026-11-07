@@ -239,7 +239,7 @@ Para instruções detalhadas de instalação, veja **[SETUP.pt-BR.md](SETUP.pt-B
 
 | Ferramenta | Versão | Instalação |
 |------|---------|--------------|
-| Python | 3.13+ | [python.org](https://python.org) |
+| Python | 3.14+ | [python.org](https://python.org) |
 | Node.js | 24.22.1 (fixada em `.nvmrc`) | [nodejs.org](https://nodejs.org) |
 | uv | Mais recente | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
@@ -314,7 +314,7 @@ Endpoints:
 
 | Componente | Tecnologia |
 |-----------|------------|
-| Backend | FastAPI, Python 3.13+, LiteLLM |
+| Backend | FastAPI, Python 3.14+, LiteLLM |
 | Frontend | Next.js 16, React 19, TypeScript |
 | Banco de dados | SQLite por padrão, PostgreSQL opcional (SQLAlchemy 2.0) |
 | Estilização | Tailwind CSS 4, Swiss International Style |

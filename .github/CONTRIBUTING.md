@@ -51,7 +51,7 @@ Follow these steps to set up the environment and run the application.
    cd Resume-Matcher
    ```
 
-3. Follow [SETUP.md](../SETUP.md) to install prerequisites (Python 3.13+, Node.js, [uv](https://docs.astral.sh/uv/)) and configure an LLM provider.
+3. Follow [SETUP.md](../SETUP.md) to install prerequisites (Python 3.14+, Node.js, [uv](https://docs.astral.sh/uv/)) and configure an LLM provider.
 
 4. Install dependencies and run the backend and frontend (separate terminals):
 

@@ -227,7 +227,7 @@ Para instrucciones detalladas de configuración, consulta **[SETUP.es.md](SETUP.
 
 | Herramienta | Versión | Instalación |
 |------------|---------|-------------|
-| Python | 3.13+ | [python.org](https://python.org) |
+| Python | 3.14+ | [python.org](https://python.org) |
 | Node.js | 24+ | [nodejs.org](https://nodejs.org) |
 | uv | Última | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
@@ -281,7 +281,7 @@ docker run srbhr/resume-matcher:latest
 
 | Componente | Tecnología |
 |-----------|------------|
-| Backend | FastAPI, Python 3.13+, LiteLLM |
+| Backend | FastAPI, Python 3.14+, LiteLLM |
 | Frontend | Next.js 15, React 19, TypeScript |
 | Base de datos | TinyDB (almacenamiento en archivo JSON) |
 | Estilos | Tailwind CSS 4, Swiss International Style |

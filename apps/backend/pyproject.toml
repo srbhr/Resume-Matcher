@@ -2,7 +2,7 @@
 name = "rm-backend"
 version = "1.4.0"
 description = "Resume Matcher Backend API"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "fastapi==0.143.0",
     "uvicorn==0.54.0",
@@ -51,6 +51,8 @@ build-backend = "hatchling.build"
 packages = ["app"]
 
 [tool.ruff]
+# Code runs on Python 3.14. The ruff target stays py313 so the formatter keeps
+# `except (A, B):`; py314 rewrites it to PEP 758's bare `except A, B:` repo-wide.
 target-version = "py313"
 line-length = 88
 
