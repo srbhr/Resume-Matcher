@@ -188,6 +188,10 @@ async def _await_before_deadline(
     remaining = deadline - asyncio.get_running_loop().time()
     try:
         return await asyncio.wait_for(awaitable, timeout=max(0.0, remaining))
+    except _PDFDeadlineExceeded:
+        # Already tagged by the inner stage that ran out (e.g. the threaded
+        # worker's "resume readiness"); it is a TimeoutError, so keep it as is.
+        raise
     except (TimeoutError, PlaywrightTimeoutError) as error:
         raise _PDFDeadlineExceeded(stage) from error
 
@@ -386,7 +390,7 @@ async def _render_page_to_pdf(
     if work_deadline is None:
         work_deadline = asyncio.get_running_loop().time() + (_NAV_TIMEOUT_MS / 1000)
 
-    await _await_before_deadline(
+    response = await _await_before_deadline(
         page.goto(
             url,
             wait_until="load",
@@ -395,6 +399,21 @@ async def _render_page_to_pdf(
         work_deadline,
         "navigation",
     )
+    # goto does not raise on an HTTP error, and an error page never shows the
+    # resume, so waiting for it would only end in a misleading timeout. A 404
+    # usually means another app holds the frontend's port (e.g. Next.js moved
+    # to 3001 because 3000 was taken); a 500 means the print page crashed.
+    if response is not None and not response.ok:
+        logger.warning(
+            "Print page returned HTTP %d for %s; check that FRONTEND_BASE_URL "
+            "points at the running Resume Matcher frontend",
+            response.status,
+            url,
+        )
+        raise PDFRenderError(
+            f"The resume print page failed to load (HTTP {response.status}). "
+            "Check that FRONTEND_BASE_URL points at the running Resume Matcher frontend."
+        )
     ready = await _await_before_deadline(
         page.wait_for_selector(
             selector,
@@ -943,6 +962,14 @@ async def render_resume_pdf(
         raise PDFRenderError("PDF renderer failed to initialize.")
     except _PDFDeadlineExceeded as error:
         logger.warning("PDF rendering timed out during %s for %s", error.stage, url)
+        if error.stage == "resume readiness":
+            # The page loaded but never showed the resume: the URL most likely
+            # reaches another app, so a simpler resume would not help.
+            raise PDFRenderTimeoutError(
+                "PDF rendering timed out: the print page loaded but never showed "
+                "the resume. Check that FRONTEND_BASE_URL points at the running "
+                "Resume Matcher frontend."
+            ) from error
         raise PDFRenderTimeoutError(
             "PDF rendering timed out. Please try again, or try a simpler resume."
         ) from error
