@@ -182,6 +182,27 @@ async def test_playwright_stage_timeout_has_explicit_timeout_outcome(
     assert page.closed.is_set()
 
 
+async def test_readiness_timeout_points_at_the_frontend_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A page that loads but never shows the resume is a wrong URL, not a big resume."""
+
+    class NeverReadyPage(ControlledPage):
+        async def wait_for_selector(self, *args: Any, **kwargs: Any) -> None:
+            del args, kwargs
+            await asyncio.Event().wait()
+
+    page = NeverReadyPage()
+    monkeypatch.setattr(pdf_module, "_browser", ControlledBrowser(lambda: page))
+
+    with pytest.raises(pdf_module.PDFRenderTimeoutError) as exc_info:
+        await pdf_module.render_resume_pdf("data:text/html,other-app")
+
+    assert "FRONTEND_BASE_URL" in str(exc_info.value)
+    assert "simpler resume" not in str(exc_info.value)
+    assert page.closed.is_set()
+
+
 async def test_zero_queue_admission_rejects_fifth_render(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
