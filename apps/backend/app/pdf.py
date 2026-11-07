@@ -480,13 +480,15 @@ def _url_origin(url: str) -> tuple[str, str | None, int | None]:
     return scheme, parts.hostname, parts.port or _DEFAULT_PORTS.get(scheme)
 
 
-def _same_origin_only(url: str) -> Callable[[Route], Awaitable[None]]:
+def _same_origin_only(
+    url: str, page: Page, deadline: float
+) -> Callable[[Route], Awaitable[None]]:
     """Route handler that lets the print page load only from its own origin.
 
     Chromium follows a redirect without asking the route handler again, so each
     request is fetched here with redirects off: a redirect reaches the page only
     when it points back to the same origin, and the browser's follow-up request
-    comes through this handler again.
+    comes through this handler again. Each fetch ends by the render deadline.
     """
     allowed = _url_origin(url)
 
@@ -500,7 +502,9 @@ def _same_origin_only(url: str) -> Callable[[Route], Awaitable[None]]:
                 await route.abort()
                 return
             try:
-                response = await route.fetch(max_redirects=0)
+                response = await route.fetch(
+                    max_redirects=0, timeout=_stage_timeout_ms(deadline)
+                )
             except PlaywrightError as error:
                 # Keep the browser's own error so a down frontend still reads
                 # as net::ERR_CONNECTION_REFUSED (see _raise_playwright_error).
@@ -519,9 +523,14 @@ def _same_origin_only(url: str) -> Callable[[Route], Awaitable[None]]:
                     await route.abort()
                     return
             await route.fulfill(response=response)
-        except PlaywrightError:
-            # The page closed while this request was in flight (render ended).
-            logger.debug("PDF render request ended with its page: %s", request_url)
+        except PlaywrightError as error:
+            if page.is_closed():
+                # The render ended while this request was in flight.
+                logger.debug("PDF render request ended with its page: %s", request_url)
+            else:
+                logger.warning(
+                    "PDF render request failed for %s: %s", request_url, error
+                )
 
     return handle
 
@@ -558,7 +567,9 @@ async def _render_with_browser(
     render_error: BaseException | None = None
     try:
         await _await_before_deadline(
-            page.route("**/*", _same_origin_only(url)), work_deadline, "request filter"
+            page.route("**/*", _same_origin_only(url, page, work_deadline)),
+            work_deadline,
+            "request filter",
         )
         await _await_before_deadline(
             page.route_web_socket(lambda _url: True, _same_origin_sockets_only(url)),

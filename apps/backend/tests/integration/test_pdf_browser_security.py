@@ -8,6 +8,8 @@ print page may only load resources from the origin being rendered.
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import threading
 from collections.abc import AsyncIterator, Iterator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -217,3 +219,71 @@ async def test_websocket_to_another_origin_is_blocked(fresh_renderer: None) -> N
 
     assert pdf.startswith(b"%PDF")
     assert outside.paths == []
+
+
+class _FakeRequest:
+    url = "http://127.0.0.1:3000/_next/static/chunk.js"
+
+
+class _FakeRoute:
+    """Route double: its fetch fails or returns a response, and records calls."""
+
+    def __init__(self, fetch_error: Exception | None = None) -> None:
+        self.request = _FakeRequest()
+        self.fetch_error = fetch_error
+        self.fetch_kwargs: dict[str, Any] = {}
+        self.aborted: list[str | None] = []
+
+    async def fetch(self, **kwargs: Any) -> Any:
+        self.fetch_kwargs = kwargs
+        if self.fetch_error is not None:
+            raise self.fetch_error
+        return type("Response", (), {"status": 200, "headers": {}})()
+
+    async def abort(self, error_code: str | None = None) -> None:
+        self.aborted.append(error_code)
+
+    async def fulfill(self, **kwargs: Any) -> None:
+        raise PlaywrightError("fulfill failed")
+
+
+class _FakePage:
+    def __init__(self, closed: bool) -> None:
+        self.closed = closed
+
+    def is_closed(self) -> bool:
+        return self.closed
+
+
+async def test_request_fetch_is_bounded_by_the_render_deadline() -> None:
+    deadline = asyncio.get_running_loop().time() + 2.0
+    route = _FakeRoute(
+        fetch_error=PlaywrightError("connect ECONNREFUSED 127.0.0.1:3000")
+    )
+    handle = pdf_module._same_origin_only(
+        "http://127.0.0.1:3000/print/resumes/1", _FakePage(closed=False), deadline
+    )
+
+    await handle(route)  # type: ignore[arg-type]
+
+    assert route.fetch_kwargs["max_redirects"] == 0
+    assert 1 <= route.fetch_kwargs["timeout"] <= 2000
+    assert route.aborted == ["connectionrefused"]
+
+
+@pytest.mark.parametrize(
+    ("closed", "level"), [(False, logging.WARNING), (True, logging.DEBUG)]
+)
+async def test_request_failure_is_logged_unless_the_page_closed(
+    caplog: pytest.LogCaptureFixture, closed: bool, level: int
+) -> None:
+    deadline = asyncio.get_running_loop().time() + 2.0
+    handle = pdf_module._same_origin_only(
+        "http://127.0.0.1:3000/print/resumes/1", _FakePage(closed=closed), deadline
+    )
+
+    with caplog.at_level(logging.DEBUG, logger="app.pdf"):
+        await handle(_FakeRoute())  # type: ignore[arg-type]
+
+    records = [r for r in caplog.records if "chunk.js" in r.getMessage()]
+    assert [r.levelno for r in records] == [level]
