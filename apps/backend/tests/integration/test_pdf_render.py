@@ -69,13 +69,15 @@ def _refused_url():
 
 
 @contextmanager
-def _not_found_server() -> Iterator[str]:
-    """Serve 404 for every path, like another app on the frontend's port."""
+def _error_server(status: int) -> Iterator[str]:
+    """Answer every path with ``status``: 404 like another app, 500 like a crash."""
 
-    class NotFound(BaseHTTPRequestHandler):
+    class ErrorPage(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
-            body = b"<html><head><title>Other app</title></head><body>404</body></html>"
-            self.send_response(404)
+            body = (
+                b"<html><head><title>Other app</title></head><body>error</body></html>"
+            )
+            self.send_response(status)
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
@@ -84,7 +86,7 @@ def _not_found_server() -> Iterator[str]:
         def log_message(self, *args: object) -> None:
             del args
 
-    server = ThreadingHTTPServer(("127.0.0.1", 0), NotFound)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), ErrorPage)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -354,7 +356,10 @@ class TestRenderResumePdfErrors:
         assert "could not load the resume" in str(exc_info.value)
         assert "executable" not in str(exc_info.value).lower()
 
-    async def test_error_status_from_the_print_url_fails_fast(self) -> None:
+    @pytest.mark.parametrize("status", [404, 500])
+    async def test_error_status_from_the_print_url_fails_fast(
+        self, status: int
+    ) -> None:
         """A 404 or 500 at the print URL fails at once with its status.
 
         Another app on the frontend's port answers 404, and a crashed print page
@@ -363,9 +368,9 @@ class TestRenderResumePdfErrors:
         render deadline. Asserting the exact type catches a wait that ignores
         the status: it would raise PDFRenderTimeoutError instead.
         """
-        with _not_found_server() as url:
+        with _error_server(status) as url:
             with pytest.raises(PDFRenderError) as exc_info:
                 await _render_or_skip(url)
         assert type(exc_info.value) is PDFRenderError
-        assert "HTTP 404" in str(exc_info.value)
+        assert f"HTTP {status}" in str(exc_info.value)
         assert "127.0.0.1" not in str(exc_info.value)

@@ -188,6 +188,10 @@ async def _await_before_deadline(
     remaining = deadline - asyncio.get_running_loop().time()
     try:
         return await asyncio.wait_for(awaitable, timeout=max(0.0, remaining))
+    except _PDFDeadlineExceeded:
+        # Already tagged by the inner stage that ran out (e.g. the threaded
+        # worker's "resume readiness"); it is a TimeoutError, so keep it as is.
+        raise
     except (TimeoutError, PlaywrightTimeoutError) as error:
         raise _PDFDeadlineExceeded(stage) from error
 
