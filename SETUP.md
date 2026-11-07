@@ -503,7 +503,7 @@ For quick iteration, use Compose watch (Docker Compose 2.22 or newer):
 docker compose watch
 ```
 
-Edits under `apps/backend/app` are synced into the running container, which restarts without an image rebuild. Changes to `apps/frontend`, `apps/backend/pyproject.toml`, the `Dockerfile` or `docker/` rebuild the image. Python dependencies and Chromium are cached in their own layers, so a rebuild after a code change does not download them again.
+Edits under `apps/backend/app` are synced into the running container, which restarts without an image rebuild. Changes to `apps/frontend`, `apps/backend/pyproject.toml`, `apps/backend/requirements-lock.txt`, the `Dockerfile` or `docker/` rebuild the image. Python dependencies and Chromium are cached in their own layers, so a rebuild after a code change does not download them again.
 
 If a build step downloads slowly, point it at a mirror. All three build args are empty by default (no change):
 
