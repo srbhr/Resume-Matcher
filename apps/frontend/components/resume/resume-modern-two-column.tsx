@@ -7,12 +7,12 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
+import { groupSkills, isPlainSkillList } from '@/lib/utils/skill-groups';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
-import { SkillPillRows } from './skill-rows';
 import styles from './styles/modern-two-column.module.css';
 
 interface ResumeModernTwoColumnProps {
@@ -45,10 +45,8 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
 
   // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
   // builder) never render in the resume or PDF (issue #763).
-  const technicalSkills =
-    additional?.technicalSkills?.filter(
-      (item): item is string => typeof item === 'string' && item.trim() !== ''
-    ) ?? [];
+  // "Label: a, b" lines and "---" breaks lay the skills out in rows (see groupSkills).
+  const skillRows = groupSkills(additional?.technicalSkills ?? []);
   const languages =
     additional?.languages?.filter(
       (item): item is string => typeof item === 'string' && item.trim() !== ''
@@ -382,7 +380,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
           )}
 
           {/* Skills Section */}
-          {isSectionVisible('additional') && technicalSkills.length > 0 && (
+          {isSectionVisible('additional') && skillRows.length > 0 && (
             <div {...RESUME_SECTION} className={baseStyles['resume-section']}>
               <h3
                 {...RESUME_SECTION_TITLE}
@@ -390,7 +388,34 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
               >
                 {headingFallbacks.skills}
               </h3>
-              <SkillPillRows items={technicalSkills} />
+              {isPlainSkillList(skillRows) ? (
+                <div className="flex flex-wrap gap-1">
+                  {skillRows[0].items.map((skill, index) => (
+                    <span key={index} className={baseStyles['resume-skill-pill']}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {skillRows.map((row, rowIndex) => (
+                    <div key={rowIndex} {...resumeItem()}>
+                      {row.label && (
+                        <p className={`${baseStyles['resume-text-xs']} font-bold mb-0.5`}>
+                          {row.label}:
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {row.items.map((skill, index) => (
+                          <span key={index} className={baseStyles['resume-skill-pill']}>
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

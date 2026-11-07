@@ -41,6 +41,13 @@ describe.each(TEMPLATE_OPTIONS.map((option) => option.id))('%s skill groups', (t
     expect(container.textContent).not.toContain('---');
   });
 
+  it('shows every skill', () => {
+    const { container } = render(<Resume resumeData={data} template={template} />);
+    for (const skill of ['PCR', 'qPCR', 'RT-PCR', 'Python', 'Excel', 'Power Query', 'Lab safety']) {
+      expect(container.textContent).toContain(skill);
+    }
+  });
+
   it('puts each group on its own row, label first', () => {
     const { container } = render(<Resume resumeData={data} template={template} />);
 
@@ -56,4 +63,25 @@ describe.each(TEMPLATE_OPTIONS.map((option) => option.id))('%s skill groups', (t
     expect(unlabeled.textContent).not.toContain('Lab safety');
     expect(unlabeled.textContent).not.toContain('Python');
   });
+
+  it('keeps each group whole as its own page-break unit', () => {
+    const { container } = render(<Resume resumeData={data} template={template} />);
+
+    const unit = rowOf(container, 'Molecular Biology:', 'RT-PCR').closest('[data-resume-item]');
+    expect(unit).not.toBeNull();
+    expect(unit?.textContent).not.toContain('Bioinformatics');
+  });
+
+  it.each([[['---']], [['Tools:', '---']]])(
+    'renders a list of only %j like no skills at all',
+    (technicalSkills) => {
+      const withMarkers = render(
+        <Resume resumeData={{ ...data, additional: { technicalSkills } }} template={template} />
+      ).container.innerHTML;
+      const without = render(
+        <Resume resumeData={{ ...data, additional: { technicalSkills: [] } }} template={template} />
+      ).container.innerHTML;
+      expect(withMarkers).toBe(without);
+    }
+  );
 });

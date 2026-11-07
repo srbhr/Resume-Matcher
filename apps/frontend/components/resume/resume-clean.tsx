@@ -357,9 +357,10 @@ const AdditionalSection: React.FC<{
     certifications: labels?.certifications ?? 'Certifications:',
     awards: labels?.awards ?? 'Awards:',
   };
+  const skillRows = labeledSkillRows(technicalSkills, mergedLabels.technicalSkills);
 
   const hasContent =
-    technicalSkills.length > 0 ||
+    skillRows.length > 0 ||
     languages.length > 0 ||
     certificationsTraining.length > 0 ||
     awards.length > 0;
@@ -379,7 +380,7 @@ const AdditionalSection: React.FC<{
         {displayName}
       </h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
-        {labeledSkillRows(technicalSkills, mergedLabels.technicalSkills).map((row, index) => (
+        {skillRows.map((row, index) => (
           <React.Fragment key={index}>{line(row.label, row.items)}</React.Fragment>
         ))}
         {line(mergedLabels.languages, languages)}

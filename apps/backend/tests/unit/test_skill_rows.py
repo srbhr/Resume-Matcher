@@ -1,6 +1,8 @@
 """Technical Skills keep their "---" row breaks through validation and AI edits."""
 
-from app.schemas.models import SKILL_ROW_BREAK, AdditionalInfo
+import pytest
+
+from app.schemas.models import SKILL_ROW_BREAK, AdditionalInfo, has_skill_row_layout
 from app.services.resume_preservation import (
     finalize_ai_resume,
     validate_confirmed_resume,
@@ -56,3 +58,35 @@ def test_ai_rewrite_still_reorders_skills_without_breaks() -> None:
         _resume(["Python", "Go"]), _resume(["Kubernetes", "Go", "Python"])
     )
     assert finalized["additional"]["technicalSkills"] == ["Kubernetes", "Go", "Python"]
+
+
+# Same strings as tests/skill-groups.test.ts: the backend mirrors that parser.
+@pytest.mark.parametrize(
+    ("skills", "expected"),
+    [
+        (["Python", "---", "Go"], True),
+        (["Languages:", "Python", "Go", "Tools:", "Git"], True),
+        (["实验室：", "PCR"], True),
+        (["Microbiology: ", "Aseptic culture"], True),
+        (["Lab: PCR, qPCR", "Data: Python, R"], False),
+        (["ISO 9001:2015", "https://example.com", "A, B: C", ": nothing"], False),
+        (["Python", "Go"], False),
+    ],
+)
+def test_row_layout_detection(skills: list[str], expected: bool) -> None:
+    assert has_skill_row_layout(skills) is expected
+
+
+def test_ai_rewrite_keeps_skills_under_their_bare_labels() -> None:
+    """A bare label owns the lines below it, so a reorder would move skills under
+    the wrong label; a new skill must not join the last label's group either."""
+    rows = ["Languages:", "Python", "Go", "Tools:", "Git"]
+    candidate = ["Languages:", "Python", "Tools:", "Git", "Go", "Kubernetes"]
+
+    finalized = finalize_ai_resume(_resume(rows), _resume(candidate))
+
+    assert finalized["additional"]["technicalSkills"] == [
+        *rows,
+        SKILL_ROW_BREAK,
+        "Kubernetes",
+    ]

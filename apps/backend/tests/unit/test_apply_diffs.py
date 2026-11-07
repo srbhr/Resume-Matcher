@@ -258,6 +258,78 @@ class TestApplyDiffsReorder:
         assert applied == [] and len(rejected) == 1
         assert result["additional"]["technicalSkills"] == rows
 
+    @pytest.mark.parametrize(
+        "rows",
+        [
+            ["Languages:", "Python", "Go", "Tools:", "Git"],
+            ["语言：", "Python", "Go", "工具：", "Git"],
+        ],
+    )
+    def test_reorder_keeps_skills_under_bare_labels(self, sample_resume, rows):
+        """A bare label owns the lines below it; a reorder would relabel skills."""
+        sample_resume["additional"]["technicalSkills"] = list(rows)
+        moved = [rows[0], rows[1], rows[3], rows[4], rows[2]]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=moved,
+                reason="Prioritized relevant skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert applied == [] and len(rejected) == 1
+        assert result["additional"]["technicalSkills"] == rows
+
+    def test_reorder_of_skill_rows_still_adds_verified_skills(self, sample_resume):
+        """Rows keep their order, but verified skills folded into the reorder land
+        in a new row after them instead of being dropped with it."""
+        rows = ["Languages:", "Python", "Tools:", "Git"]
+        sample_resume["additional"]["technicalSkills"] = list(rows)
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Kubernetes", "Tools:", "Git", "Languages:", "Python", "Go"],
+                reason="Prioritized relevant skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume, changes, allowed_skill_targets=["Kubernetes"]
+        )
+        assert len(applied) == 1
+        assert result["additional"]["technicalSkills"] == [
+            *rows,
+            "---",
+            "Kubernetes",
+        ]
+
+    def test_add_skill_does_not_join_the_last_bare_label(self, sample_resume):
+        sample_resume["additional"]["technicalSkills"] = ["Tools:", "Git"]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value=skill,
+                reason="test",
+            )
+            for skill in ("Kubernetes", "Terraform")
+        ]
+        result, applied, _ = apply_diffs(
+            sample_resume, changes, allowed_skill_targets=["Kubernetes", "Terraform"]
+        )
+        assert len(applied) == 2
+        assert result["additional"]["technicalSkills"] == [
+            "Tools:",
+            "Git",
+            "---",
+            "Kubernetes",
+            "Terraform",
+        ]
+
     def test_reorder_moves_labeled_skill_groups_whole(self, sample_resume):
         """ "Label: a, b" lines are whole rows, so reordering them stays allowed."""
         groups = ["Lab: PCR, qPCR", "Data: Python, R"]

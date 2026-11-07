@@ -27,6 +27,39 @@ _BULLET_PREFIX_RE = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s*")
 # A Technical Skills line that starts a new row on the resume (see the
 # frontend's lib/utils/skill-groups.ts). Kept through validation, never shown.
 SKILL_ROW_BREAK = "---"
+# A "Label: a, b" skills line. Same pattern as LABELED_LINE in the frontend's
+# lib/utils/skill-groups.ts; keep the two in sync.
+_SKILL_LABEL_RE = re.compile(r"^([^,:：，、]{1,40})(?::(?:\s+(.*))?|：\s*(.*))$")
+
+
+def _skill_line_kind(item: Any) -> str:
+    """Classify a skills line: "break", "bare" label, "label" with skills, or "skill"."""
+    line = item.strip() if isinstance(item, str) else ""
+    if line == SKILL_ROW_BREAK:
+        return "break"
+    match = _SKILL_LABEL_RE.match(line)
+    if match and match.group(1).strip():
+        return "label" if (match.group(2) or match.group(3) or "").strip() else "bare"
+    return "skill"
+
+
+def has_skill_row_layout(items: list[Any]) -> bool:
+    """True when position carries meaning: a "---" break, or a bare "Label:" that
+    owns the lines below it. Reordering such a list would move skills between
+    rows; self-contained "Label: a, b" lines can move freely."""
+    return any(_skill_line_kind(item) in ("break", "bare") for item in items)
+
+
+def skills_end_in_open_label(items: list[Any]) -> bool:
+    """True when a skill appended at the end would join a bare label's group."""
+    open_label = False
+    for item in items:
+        kind = _skill_line_kind(item)
+        if kind in ("break", "label"):
+            open_label = False
+        elif kind == "bare":
+            open_label = True
+    return open_label
 
 
 def _extract_text_fragments(

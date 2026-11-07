@@ -78,6 +78,14 @@ describe('groupSkills', () => {
     expect(groupSkills(skills)).toEqual([{ items: skills }]);
   });
 
+  it('lets bare labels own the lines below them (same strings as test_skill_rows.py)', () => {
+    expect(groupSkills(['Languages:', 'Python', 'Go', 'Tools:', 'Git'])).toEqual([
+      { label: 'Languages', items: ['Python', 'Go'] },
+      { label: 'Tools', items: ['Git'] },
+    ]);
+    expect(groupSkills(['实验室：', 'PCR'])).toEqual([{ label: '实验室', items: ['PCR'] }]);
+  });
+
   it('drops a label that never gets any skills', () => {
     expect(groupSkills(['Empty:', 'Tools: Git'])).toEqual([{ label: 'Tools', items: ['Git'] }]);
   });
