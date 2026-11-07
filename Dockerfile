@@ -101,10 +101,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # ============================================
 # Python dependencies (cached across code changes)
 # ============================================
-# These layers only depend on pyproject.toml, so editing app code or the frontend
-# never re-downloads dependencies.
+# These layers only depend on pyproject.toml and requirements-lock.txt, so editing app
+# code or the frontend never re-downloads dependencies.
 WORKDIR /app/backend
-COPY apps/backend/pyproject.toml /app/backend/
+COPY apps/backend/pyproject.toml apps/backend/requirements-lock.txt /app/backend/
 
 # Optional Python package index mirror for slow networks, e.g.
 #   docker build --build-arg PIP_INDEX_URL=https://pypi.mirrors.ustc.edu.cn/simple .
@@ -112,12 +112,12 @@ COPY apps/backend/pyproject.toml /app/backend/
 # installs below use it when set and the default PyPI otherwise.
 ARG PIP_INDEX_URL
 
-# Install the dependency list from pyproject.toml (read with tomllib so it never
-# drifts), without the package itself. The package is installed after the code copy.
+# Install the full dependency set, every package pinned and hash-checked:
+# requirements-lock.txt is generated from pyproject.toml with a 3-day release-age
+# cutoff (command in its header), and tests/unit/test_requirements_lock.py keeps it in
+# step with pyproject's pins. The package itself is installed after the code copy.
 RUN --mount=type=cache,target=/root/.cache/pip \
-    python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" > /tmp/requirements.txt \
-    && pip install -r /tmp/requirements.txt \
-    && rm /tmp/requirements.txt
+    pip install --require-hashes --no-deps -r requirements-lock.txt
 
 WORKDIR /app
 
