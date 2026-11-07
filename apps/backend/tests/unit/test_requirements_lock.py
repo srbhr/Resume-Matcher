@@ -33,6 +33,19 @@ def test_lock_pins_every_dependency_at_its_pyproject_version() -> None:
         )
 
 
+def test_lock_pins_the_build_backend_at_its_pyproject_version() -> None:
+    """The image installs the package with --no-build-isolation from the lock's hatchling."""
+    (requirement,) = tomllib.loads((BACKEND / "pyproject.toml").read_text())[
+        "build-system"
+    ]["requires"]
+    match = re.match(r"^([A-Za-z0-9_.-]+)==([^;\s]+)$", requirement)
+    assert match, f"build-system requires {requirement!r}, not an exact pin"
+    locked = re.search(
+        rf"^{re.escape(match.group(1))}==([^\s;\\]+)", _lock_text(), re.M
+    )
+    assert locked and locked.group(1) == match.group(2), f"{requirement}: {REGENERATE}"
+
+
 def test_every_locked_package_has_a_hash() -> None:
     # Each entry is "name==version \" followed by its "--hash=sha256:..." lines.
     entries = re.split(r"^(?=[A-Za-z0-9_.-]+==)", _lock_text(), flags=re.M)[1:]

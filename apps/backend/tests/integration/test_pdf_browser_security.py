@@ -284,6 +284,38 @@ class _FakePage:
         return self.closed
 
 
+def test_logged_urls_hide_the_draft_token() -> None:
+    url = "http://127.0.0.1:3000/print/resumes/1?template=clean&draft=0123abcd&lang=en"
+    assert pdf_module._redact_draft_token(url) == (
+        "http://127.0.0.1:3000/print/resumes/1?template=clean&draft=<redacted>&lang=en"
+    )
+    assert (
+        pdf_module._redact_draft_token("http://h/print?draft=abc")
+        == "http://h/print?draft=<redacted>"
+    )
+
+
+async def test_a_failed_fetch_is_logged_without_the_draft_token(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    deadline = asyncio.get_running_loop().time() + 2.0
+    route = _FakeRoute(fetch_error=PlaywrightError("Timeout 1999ms exceeded"))
+    route.request.url = "http://127.0.0.1:3000/print/resumes/1?draft=0123abcd"
+    handle = pdf_module._same_origin_only(
+        "http://127.0.0.1:3000/print/resumes/1?draft=0123abcd",
+        _FakePage(closed=False),
+        deadline,
+    )
+
+    with caplog.at_level(logging.DEBUG, logger="app.pdf"):
+        await handle(route)  # type: ignore[arg-type]
+
+    messages = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
+    assert any("draft=<redacted>" in m and "Timeout" in m for m in messages)
+    assert not any("0123abcd" in r.getMessage() for r in caplog.records)
+    assert route.aborted == ["failed"]
+
+
 async def test_request_fetch_is_bounded_by_the_render_deadline() -> None:
     deadline = asyncio.get_running_loop().time() + 2.0
     route = _FakeRoute(

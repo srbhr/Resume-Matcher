@@ -209,6 +209,28 @@ async def test_readiness_timeout_points_at_the_frontend_url(
     assert page.closed.is_set()
 
 
+async def test_timeout_log_hides_the_draft_token(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A page-fit draft token in the print URL can fetch unsaved resume data."""
+
+    class NeverReadyPage(ControlledPage):
+        async def wait_for_selector(self, *args: Any, **kwargs: Any) -> None:
+            del args, kwargs
+            await asyncio.Event().wait()
+
+    monkeypatch.setattr(pdf_module, "_browser", ControlledBrowser(NeverReadyPage))
+
+    with caplog.at_level(logging.WARNING, logger="app.pdf"):
+        with pytest.raises(pdf_module.PDFRenderTimeoutError):
+            await pdf_module.render_resume_pdf(
+                "http://127.0.0.1:3000/print/resumes/1?draft=0123abcd"
+            )
+
+    assert any("draft=<redacted>" in r.getMessage() for r in caplog.records)
+    assert not any("0123abcd" in r.getMessage() for r in caplog.records)
+
+
 async def test_zero_queue_admission_rejects_fifth_render(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

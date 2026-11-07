@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import sys
 import threading
 import time
@@ -435,7 +436,7 @@ async def _render_page_to_pdf(
             "Print page returned HTTP %d for %s; check that FRONTEND_BASE_URL "
             "points at the running Resume Matcher frontend",
             response.status,
-            url,
+            _redact_draft_token(url),
         )
         raise PDFRenderError(
             f"The print page failed to load (HTTP {response.status}). "
@@ -458,7 +459,9 @@ async def _render_page_to_pdf(
             "resume readiness",
         )
         if isinstance(print_error, str):
-            logger.warning("Print page reported %r for %s", print_error, url)
+            logger.warning(
+                "Print page reported %r for %s", print_error, _redact_draft_token(url)
+            )
             raise PDFRenderError("The print page could not load the resume.")
     # Bound the fonts wait too — plain page.evaluate has no timeout, so a stuck
     # font load could otherwise hang the render past _NAV_TIMEOUT_MS.
@@ -482,6 +485,14 @@ async def _render_page_to_pdf(
 
 
 _DEFAULT_PORTS = {"http": 80, "https": 443}
+_DRAFT_TOKEN_RE = re.compile(r"([?&]draft=)[^&#\s\"']*")
+
+
+def _redact_draft_token(text: str) -> str:
+    """Hide a page-fit draft token: it can fetch the unsaved resume it names."""
+    return _DRAFT_TOKEN_RE.sub(r"\1<redacted>", text)
+
+
 # A WebSocket belongs to the origin of the page that opens it.
 _SOCKET_SCHEMES = {"ws": "http", "wss": "https"}
 
@@ -507,10 +518,11 @@ def _same_origin_only(
 
     async def handle(route: Route) -> None:
         request_url = route.request.url
+        shown_url = _redact_draft_token(request_url)
         try:
             if _url_origin(request_url) != allowed:
                 logger.warning(
-                    "Blocked off-origin request during PDF render: %s", request_url
+                    "Blocked off-origin request during PDF render: %s", shown_url
                 )
                 await route.abort()
                 return
@@ -519,6 +531,16 @@ def _same_origin_only(
                     max_redirects=0, timeout=_stage_timeout_ms(deadline)
                 )
             except PlaywrightError as error:
+                if not page.is_closed():
+                    logger.warning(
+                        "PDF render request failed for %s: %s",
+                        shown_url,
+                        _redact_draft_token(
+                            str(error).splitlines()[0]
+                            if str(error)
+                            else type(error).__name__
+                        ),
+                    )
                 # Keep the browser's own error so a down frontend still reads
                 # as net::ERR_CONNECTION_REFUSED (see _raise_playwright_error).
                 refused = "ECONNREFUSED" in str(error)
@@ -530,8 +552,8 @@ def _same_origin_only(
                 if _url_origin(target) != allowed:
                     logger.warning(
                         "Blocked off-origin redirect during PDF render: %s -> %s",
-                        request_url,
-                        target,
+                        shown_url,
+                        _redact_draft_token(target),
                     )
                     await route.abort()
                     return
@@ -539,10 +561,12 @@ def _same_origin_only(
         except PlaywrightError as error:
             if page.is_closed():
                 # The render ended while this request was in flight.
-                logger.debug("PDF render request ended with its page: %s", request_url)
+                logger.debug("PDF render request ended with its page: %s", shown_url)
             else:
                 logger.warning(
-                    "PDF render request failed for %s: %s", request_url, error
+                    "PDF render request failed for %s: %s",
+                    shown_url,
+                    _redact_draft_token(str(error)),
                 )
 
     return handle
@@ -556,7 +580,10 @@ def _same_origin_sockets_only(url: str) -> Callable[[WebSocketRoute], Awaitable[
         if _url_origin(socket.url) == allowed:
             socket.connect_to_server()
             return
-        logger.warning("Blocked off-origin WebSocket during PDF render: %s", socket.url)
+        logger.warning(
+            "Blocked off-origin WebSocket during PDF render: %s",
+            _redact_draft_token(socket.url),
+        )
         await socket.close()
 
     return handle
@@ -733,7 +760,7 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     if "net::ERR_CONNECTION_REFUSED" in error_msg:
         raise PDFRenderError(
             f"Cannot connect to frontend for PDF generation. "
-            f"Attempted URL: {url}. "
+            f"Attempted URL: {_redact_draft_token(url)}. "
             f"Please ensure: 1) The frontend is running, "
             f"2) The FRONTEND_BASE_URL environment variable in the backend .env file "
             f"matches the URL where your frontend is accessible."
@@ -742,7 +769,11 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     # and a full call log. Log it server-side; return a generic message to the
     # client (CLAUDE.md rule 5 — and it stops the verbose trace from overflowing
     # the client error modal, #811).
-    logger.error("PDF rendering failed for %s: %s", url, error_msg)
+    logger.error(
+        "PDF rendering failed for %s: %s",
+        _redact_draft_token(url),
+        _redact_draft_token(error_msg),
+    )
     raise PDFRenderError(
         "PDF rendering failed. Please try again, or try a simpler resume or a "
         "different template."
@@ -1079,7 +1110,11 @@ async def render_resume_pdf(
 
         raise PDFRenderError("PDF renderer failed to initialize.")
     except _PDFDeadlineExceeded as error:
-        logger.warning("PDF rendering timed out during %s for %s", error.stage, url)
+        logger.warning(
+            "PDF rendering timed out during %s for %s",
+            error.stage,
+            _redact_draft_token(url),
+        )
         if error.stage == "resume readiness":
             # The page loaded but never showed its content (a resume or a cover
             # letter): the URL most likely reaches another app, so a simpler

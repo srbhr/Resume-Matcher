@@ -112,12 +112,14 @@ COPY apps/backend/pyproject.toml apps/backend/requirements-lock.txt /app/backend
 # installs below use it when set and the default PyPI otherwise.
 ARG PIP_INDEX_URL
 
-# Install the full dependency set, every package pinned and hash-checked:
+# Install the full dependency set, every package pinned and hash-checked, including the
+# build backend (hatchling) so the package install below needs nothing unpinned:
 # requirements-lock.txt is generated from pyproject.toml with a 3-day release-age
 # cutoff (command in its header), and tests/unit/test_requirements_lock.py keeps it in
-# step with pyproject's pins. The package itself is installed after the code copy.
+# step with pyproject's pins. pip check fails the build if the lock misses a package.
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --require-hashes --no-deps -r requirements-lock.txt
+    pip install --require-hashes --no-deps -r requirements-lock.txt \
+    && pip check
 
 WORKDIR /app
 
@@ -131,9 +133,11 @@ COPY apps/backend/app /app/backend/app
 
 WORKDIR /app/backend
 
-# Install the backend package itself (dependencies are already installed above)
+# Install the backend package itself with the pinned hatchling installed above (no
+# isolated build env, so pip downloads no build tools), then check the whole set again.
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-deps .
+    pip install --no-deps --no-build-isolation . \
+    && pip check
 
 # ============================================
 # Frontend Setup
