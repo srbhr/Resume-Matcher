@@ -9,6 +9,8 @@ from decimal import Decimal, InvalidOperation
 from difflib import SequenceMatcher
 from typing import Any
 
+from app.schemas.models import SKILL_ROW_BREAK
+
 GROUNDING_REVIEW_CODE = "GROUNDING_REVIEW_REQUIRED"
 _GROUNDING_REVIEW_THRESHOLD = 0.45
 
@@ -464,6 +466,19 @@ def _merge_additional(source: Any, candidate: Any) -> dict[str, list[str]]:
                     preserved_candidate_items.append(item)
                     remaining_source_items[key] -= 1
             candidate_items = preserved_candidate_items
+        elif SKILL_ROW_BREAK in (item.strip() for item in source_items):
+            # The user laid the skills out in rows with "---" breaks. Keep their
+            # order so an AI rewrite cannot scramble the rows; new skills go last.
+            remaining_source_items = Counter(_normalized(item) for item in source_items)
+            added_items: list[str] = []
+            for item in candidate_items:
+                key = _normalized(item)
+                if remaining_source_items[key] > 0:
+                    remaining_source_items[key] -= 1
+                else:
+                    added_items.append(item)
+            result[field] = [*source_items, *added_items]
+            continue
         remaining_candidate_items = Counter(
             _normalized(item) for item in candidate_items
         )
