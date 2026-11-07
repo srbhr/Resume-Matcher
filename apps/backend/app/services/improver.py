@@ -32,6 +32,7 @@ from app.schemas.models import (
     ImproveDiffResult,
     ResumeChange,
     has_skill_row_layout,
+    skill_names,
     skills_end_in_open_label,
 )
 from app.services.parser import has_meaningful_resume_content
@@ -492,7 +493,7 @@ def apply_diffs(
                 # The user laid the skills out in rows ("---" breaks or bare
                 # "Label:" lines); a relevance reorder would move skills between
                 # rows. Keep the order and only add verified new skills after it.
-                existing = {s.casefold() for s in actual_value if isinstance(s, str)}
+                existing = skill_names(actual_value)
                 added: list[str] = []
                 for item in change.value:
                     skill = item.strip() if isinstance(item, str) else ""
@@ -595,10 +596,9 @@ def apply_diffs(
                 rejected.append(change)
                 continue
             new_skill = change.value.strip()
-            existing = {
-                item.casefold() for item in actual_value if isinstance(item, str)
-            }
-            if new_skill.casefold() in existing:
+            # Count skills inside "Label: a, b" lines too, so a grouped skill
+            # is not added a second time.
+            if new_skill.casefold() in skill_names(actual_value):
                 logger.info("Diff rejected (duplicate skill): %s", new_skill)
                 rejected.append(change)
                 continue

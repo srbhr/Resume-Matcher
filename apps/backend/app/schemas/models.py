@@ -43,6 +43,39 @@ def _skill_line_kind(item: Any) -> str:
     return "skill"
 
 
+def _split_skill_items(text: str) -> list[str]:
+    """Split on commas outside brackets, like splitSkills in the frontend parser."""
+    items: list[str] = []
+    depth = 0
+    start = 0
+    for index, char in enumerate(text):
+        if char in "([（":
+            depth += 1
+        elif char in ")]）" and depth > 0:
+            depth -= 1
+        elif char in ",，、" and depth == 0:
+            items.append(text[start:index])
+            start = index + 1
+    items.append(text[start:])
+    return [item.strip() for item in items if item.strip()]
+
+
+def skill_names(items: list[Any]) -> set[str]:
+    """Casefolded skill names in a skills list, counting each skill inside a
+    "Label: a, b" line, so a skill already in a group is not added again."""
+    names: set[str] = set()
+    for item in items:
+        line = item.strip() if isinstance(item, str) else ""
+        if not line or line == SKILL_ROW_BREAK:
+            continue
+        names.add(line.casefold())
+        match = _SKILL_LABEL_RE.match(line)
+        if match and match.group(1).strip():
+            rest = match.group(2) or match.group(3) or ""
+            names.update(skill.casefold() for skill in _split_skill_items(rest))
+    return names
+
+
 def has_skill_row_layout(items: list[Any]) -> bool:
     """True when position carries meaning: a "---" break, or a bare "Label:" that
     owns the lines below it. Reordering such a list would move skills between

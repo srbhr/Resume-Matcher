@@ -306,6 +306,35 @@ class TestApplyDiffsReorder:
             "Kubernetes",
         ]
 
+    def test_skills_inside_labeled_lines_are_not_added_again(self, sample_resume):
+        """ "SQL" already sits in "Data: SQL, Python"; only Kubernetes is new."""
+        rows = ["Data: SQL, Python", "---", "Git"]
+        sample_resume["additional"]["technicalSkills"] = list(rows)
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["sql", "Kubernetes", "Git", "---", "Data: SQL, Python"],
+                reason="Prioritized relevant skills",
+            ),
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="Python",
+                reason="test",
+            ),
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=["SQL", "Kubernetes", "Python"],
+        )
+        assert result["additional"]["technicalSkills"] == [*rows, "Kubernetes"]
+        assert [c.action for c in applied] == ["reorder"]
+        assert [c.action for c in rejected] == ["add_skill"]
+
     def test_add_skill_does_not_join_the_last_bare_label(self, sample_resume):
         sample_resume["additional"]["technicalSkills"] = ["Tools:", "Git"]
         changes = [
