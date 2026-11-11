@@ -6,12 +6,11 @@ import logging
 import re
 import threading
 from collections.abc import Callable
-from typing import Any, Literal
+from functools import cache
+from types import ModuleType
+from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlsplit, urlunsplit
 
-import litellm
-from litellm import Router
-from litellm.router import RetryPolicy
 from pydantic import BaseModel, field_validator
 
 from app.ai_budget import remaining_timeout
@@ -29,6 +28,9 @@ from app.config import (
 from app.crypto import keyed_digest
 from app.host_guard import LOOPBACK_HOSTS
 
+if TYPE_CHECKING:
+    from litellm import Router
+
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
 
@@ -39,17 +41,36 @@ def _configure_litellm_logging() -> None:
         logging.getLogger(logger_name).setLevel(numeric_level)
 
 
-_configure_litellm_logging()
+@cache
+def _litellm() -> ModuleType:
+    """Import and configure LiteLLM on first use.
 
-# Let LiteLLM drop provider-unsupported params (reasoning_effort, non-default
-# temperature, etc.) instead of raising UnsupportedParamsError. This replaces
-# the hardcoded per-model compatibility branches this module used to carry.
-litellm.drop_params = True
+    The import takes about 1 s and 160 MB, and agent mode (the CLI and MCP
+    tools) never calls a model, so nothing imports it at module load.
+    """
+    import litellm
 
-# Let LiteLLM auto-drop `thinking_blocks` from assistant messages when required
-# for a given turn (e.g., tool-call turns missing the blocks). Defensive; no
-# current code path sends thinking, but future-proofs the Router.
-litellm.modify_params = True
+    # After the import, so LiteLLM's own logger setup can't override it.
+    _configure_litellm_logging()
+
+    # Let LiteLLM drop provider-unsupported params (reasoning_effort, non-default
+    # temperature, etc.) instead of raising UnsupportedParamsError. This replaces
+    # the hardcoded per-model compatibility branches this module used to carry.
+    litellm.drop_params = True
+
+    # Let LiteLLM auto-drop `thinking_blocks` from assistant messages when required
+    # for a given turn (e.g., tool-call turns missing the blocks). Defensive; no
+    # current code path sends thinking, but future-proofs the Router.
+    litellm.modify_params = True
+    return litellm
+
+
+def __getattr__(name: str) -> Any:
+    """Serve ``app.llm.litellm`` (as tests patch it) without importing it eagerly."""
+    if name == "litellm":
+        return _litellm()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 #: The user's coding agent does the AI work through the CLI or MCP tools; the
 #: app itself makes no model calls.
@@ -472,7 +493,7 @@ async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -
         return await chatgpt_acompletion(config.model, **kwargs)
     try:
         return await transport.acompletion(**kwargs)
-    except litellm.BadRequestError as e:
+    except _litellm().BadRequestError as e:
         if "max_tokens" not in kwargs or not _is_max_tokens_unsupported(e):
             raise
         logging.warning(
@@ -1006,33 +1027,40 @@ _router_config_key: str = ""
 _router_lock = threading.Lock()
 
 
-class _PolicyRouter(Router):
-    """Apply the complete app retry policy with the installed LiteLLM Router.
+@cache
+def _policy_router_class() -> type["Router"]:
+    """Define the Router subclass on first use; subclassing imports LiteLLM."""
+    litellm = _litellm()
 
-    LiteLLM 1.86.2's retry-policy dispatcher does not classify
-    ``InternalServerError`` even though ``RetryPolicy`` exposes the matching
-    field. Its ``None`` result falls back to the Router-wide retry count.
-    Keep that compatibility correction confined to the omitted exception.
-    LiteLLM 1.103+ dispatches it natively with the same count of 2, so the
-    override is now a version-independent guard rather than a correction.
-    """
+    class _PolicyRouter(litellm.Router):
+        """Apply the complete app retry policy with the installed LiteLLM Router.
 
-    async def make_call(
-        self,
-        original_function: Any,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
-        try:
-            return await super().make_call(original_function, *args, **kwargs)
-        except litellm.InternalServerError as error:
-            # Verified against pinned LiteLLM 1.86.2: the outer
-            # async_function_with_retries awaits self.make_call(), then reads
-            # e.num_retries in its except block before consulting retry policy.
-            # Base make_call performs one provider invocation, not the retry
-            # loop, so this override is observed before another attempt.
-            error.num_retries = 2
-            raise
+        LiteLLM 1.86.2's retry-policy dispatcher does not classify
+        ``InternalServerError`` even though ``RetryPolicy`` exposes the matching
+        field. Its ``None`` result falls back to the Router-wide retry count.
+        Keep that compatibility correction confined to the omitted exception.
+        LiteLLM 1.103+ dispatches it natively with the same count of 2, so the
+        override is now a version-independent guard rather than a correction.
+        """
+
+        async def make_call(
+            self,
+            original_function: Any,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
+            try:
+                return await super().make_call(original_function, *args, **kwargs)
+            except litellm.InternalServerError as error:
+                # Verified against pinned LiteLLM 1.86.2: the outer
+                # async_function_with_retries awaits self.make_call(), then reads
+                # e.num_retries in its except block before consulting retry policy.
+                # Base make_call performs one provider invocation, not the retry
+                # loop, so this override is observed before another attempt.
+                error.num_retries = 2
+                raise
+
+    return _PolicyRouter
 
 
 def _config_fingerprint(config: LLMConfig) -> str:
@@ -1062,7 +1090,9 @@ def _build_router(config: LLMConfig) -> Router:
     if api_version:
         litellm_params["api_version"] = api_version
 
-    return _PolicyRouter(
+    from litellm.router import RetryPolicy
+
+    return _policy_router_class()(
         model_list=[
             {
                 "model_name": "primary",
@@ -1217,7 +1247,7 @@ async def check_llm_health(
             kwargs["api_version"] = api_version
         _apply_reasoning_effort(config, kwargs, config.reasoning_effort, 64)
 
-        response = await _route_acompletion(config, litellm, **kwargs)
+        response = await _route_acompletion(config, _litellm(), **kwargs)
         content = _extract_choice_text(response.choices[0])
         if not content:
             # LLM-003: Empty response (even after reasoning_content / thinking
@@ -1383,7 +1413,7 @@ def _supports_json_mode(model_name: str) -> bool:
         return True
 
     try:
-        info = litellm.get_model_info(model=model_name)
+        info = _litellm().get_model_info(model=model_name)
         supported_params = info.get("supported_openai_params", [])
         return "response_format" in supported_params
     except Exception:
@@ -1453,7 +1483,7 @@ def get_safe_max_tokens(
     safe_requested = max(1, requested)
 
     try:
-        info = litellm.get_model_info(model=model_name)
+        info = _litellm().get_model_info(model=model_name)
         model_limit = info.get("max_output_tokens") or info.get("max_tokens")
         if model_limit and isinstance(model_limit, int) and model_limit > 0:
             safe = min(safe_requested, model_limit)
@@ -1575,7 +1605,7 @@ def _supports_temperature(
         return True
 
     try:
-        info = litellm.get_model_info(model=model_name)
+        info = _litellm().get_model_info(model=model_name)
         supported_params = info.get("supported_openai_params", [])
         if "temperature" not in supported_params:
             return False
@@ -1589,7 +1619,7 @@ def _supports_temperature(
 
     # LiteLLM's model map flags models that removed sampling parameters (e.g.
     # Claude Opus 5.5), even where get_model_info() still lists temperature.
-    registry_entry = litellm.model_cost.get(info.get("key"), {})
+    registry_entry = _litellm().model_cost.get(info.get("key"), {})
     if registry_entry.get("supports_sampling_params") is False:
         return False
 
@@ -2024,7 +2054,7 @@ async def complete_json(
                 continue
             raise
 
-        except litellm.BadRequestError as e:
+        except _litellm().BadRequestError as e:
             # JSON-012b: some OpenAI-compatible servers (e.g. LM Studio) report
             # response_format support via the registry but reject
             # {"type": "json_object"} with a 400 (issue #857). The Router does
