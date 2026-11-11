@@ -53,7 +53,8 @@ def test_building_the_router_loads_and_configures_litellm() -> None:
         "import sys\n"
         "from app.llm import LLMConfig, _build_router\n"
         "_build_router(LLMConfig(provider='openai', model='gpt-4o', api_key='synthetic'))\n"
+        "loaded = 'litellm' in sys.modules\n"
         "import litellm\n"
-        "print('litellm' in sys.modules, litellm.drop_params, litellm.modify_params)"
+        "print(loaded, litellm.drop_params, litellm.modify_params)"
     )
     assert _run(code) == "True True True"
