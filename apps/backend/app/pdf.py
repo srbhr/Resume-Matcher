@@ -102,6 +102,9 @@ _PDF_RENDER_TIMEOUT_SECONDS = _bounded_env_float(
 _PDF_CLEANUP_RESERVE_SECONDS = _bounded_env_float(
     "PDF_CLEANUP_RESERVE_SECONDS", 5.0, 0.1, 30.0
 )
+# Close the shared browser after this long without an export. An idle Chromium
+# holds hundreds of MB; relaunching it costs about a second on the next export.
+_PDF_BROWSER_IDLE_SECONDS = 300.0
 
 
 class PDFRenderError(Exception):
@@ -132,6 +135,7 @@ _subprocess_supported = True
 _admission_lock = threading.Lock()
 _active_renders = 0
 _background_owners: set[asyncio.Task[None]] = set()
+_idle_close: asyncio.TimerHandle | None = None
 
 
 @dataclass
@@ -809,7 +813,10 @@ def _loop_supports_subprocess() -> bool:
 
 async def close_pdf_renderer() -> None:
     """Retire cached ownership and give active teardown a bounded drain window."""
-    global _playwright
+    global _playwright, _idle_close
+    if _idle_close is not None:
+        _idle_close.cancel()
+        _idle_close = None
     await _init_lock.acquire()
     try:
         if _browser is not None:
@@ -988,6 +995,28 @@ def _retire_shared_browser(
     return owner
 
 
+def _restart_idle_countdown() -> None:
+    """Retire the shared browser if no export uses it for the idle period."""
+    global _idle_close
+    if _idle_close is not None:
+        _idle_close.cancel()
+    _idle_close = asyncio.get_running_loop().call_later(
+        _PDF_BROWSER_IDLE_SECONDS, _retire_idle_browser
+    )
+
+
+def _retire_idle_browser() -> None:
+    """Idle-countdown callback: retire the browser unless an export holds it."""
+    global _idle_close
+    _idle_close = None
+    # An export still using or launching the browser restarts the countdown
+    # when it finishes.
+    if _browser is None or _browser in _browser_users or _init_lock.locked():
+        return
+    logger.info("Closing the idle PDF browser")
+    _retire_shared_browser(_browser)
+
+
 def _release_slot_when_worker_exits(worker: asyncio.Task[bytes]) -> None:
     """Done callback: free a detached worker's slot and keep its failure visible."""
     if not worker.cancelled() and worker.exception() is not None:
@@ -1031,31 +1060,34 @@ async def _render_on_shared_browser(
     total_deadline: float,
 ) -> bytes:
     """Render once, retrying only when the owned browser disconnected."""
-    browser = await _replace_disconnected_browser(work_deadline, total_deadline)
-    for attempt in range(2):
-        try:
-            users = _acquire_browser_user(browser)
+    try:
+        browser = await _replace_disconnected_browser(work_deadline, total_deadline)
+        for attempt in range(2):
             try:
-                return await _render_with_browser(
-                    browser,
-                    url,
-                    selector,
-                    pdf_format,
-                    pdf_margins,
-                    work_deadline,
-                    total_deadline,
-                )
-            finally:
-                _release_browser_user(browser, users)
-        except PlaywrightError:
-            if attempt == 0 and not _browser_is_connected(browser):
-                browser = await _replace_disconnected_browser(
-                    work_deadline,
-                    total_deadline,
-                )
-                continue
-            raise
-    raise PDFRenderError("PDF renderer failed to recover.")
+                users = _acquire_browser_user(browser)
+                try:
+                    return await _render_with_browser(
+                        browser,
+                        url,
+                        selector,
+                        pdf_format,
+                        pdf_margins,
+                        work_deadline,
+                        total_deadline,
+                    )
+                finally:
+                    _release_browser_user(browser, users)
+            except PlaywrightError:
+                if attempt == 0 and not _browser_is_connected(browser):
+                    browser = await _replace_disconnected_browser(
+                        work_deadline,
+                        total_deadline,
+                    )
+                    continue
+                raise
+        raise PDFRenderError("PDF renderer failed to recover.")
+    finally:
+        _restart_idle_countdown()
 
 
 async def render_resume_pdf(
