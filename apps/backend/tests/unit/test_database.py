@@ -6,10 +6,12 @@ master-resume assignment, the jobs ``metadata_json`` round-trip, applications,
 and stats are verified end-to-end on the storage.
 """
 
+import re
 from pathlib import Path
 
 import pytest
 import sqlalchemy.exc
+from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from app.database import Database
@@ -39,6 +41,60 @@ class TestResumeCrud:
         await db.create_resume(content="a")
         await db.create_resume(content="b")
         assert len(await db.list_resumes()) == 2
+
+    async def test_list_resumes_never_loads_the_large_columns(self, db):
+        # The dashboard lists every resume on each load; content, parsed data and
+        # generated documents grow with each tailored resume and aren't shown.
+        await db.create_resume(content="# Resume", processed_data={"summary": "x"})
+        statements: list[str] = []
+
+        def capture(conn, cursor, statement, params, context, executemany) -> None:
+            statements.append(statement)
+
+        engine = db._async_engine.sync_engine
+        event.listen(engine, "before_cursor_execute", capture)
+        try:
+            await db.list_resumes()
+        finally:
+            event.remove(engine, "before_cursor_execute", capture)
+
+        selects = [s for s in statements if re.search(r"\bFROM resumes\b", s)]
+        assert len(selects) == 1
+        selected = re.search(r"SELECT\s+(.*?)\s+FROM", selects[0], re.S).group(1)
+        columns = {part.strip().split(".")[-1] for part in selected.split(",")}
+        assert columns.isdisjoint(
+            {
+                "content",
+                "processed_data",
+                "cover_letter",
+                "outreach_message",
+                "interview_prep",
+                "original_markdown",
+            }
+        ), columns
+
+    async def test_list_resumes_returns_the_summary_fields(self, db):
+        created = await db.create_resume(
+            content="# Resume",
+            filename="r.pdf",
+            is_master=True,
+            processing_status="ready",
+            title="Backend",
+            template_settings={"template": "swiss"},
+        )
+        [row] = await db.list_resumes()
+        assert row == {
+            "resume_id": created["resume_id"],
+            "filename": "r.pdf",
+            "is_master": True,
+            "is_default_master": created["is_default_master"],
+            "parent_id": None,
+            "processing_status": "ready",
+            "title": "Backend",
+            "template_settings": {"template": "swiss"},
+            "created_at": created["created_at"],
+            "updated_at": created["updated_at"],
+        }
 
     async def test_update_resume_changes_field_and_timestamp(self, db):
         created = await db.create_resume(content="x")
