@@ -8,6 +8,7 @@ and stats are verified end-to-end on the storage.
 
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 import sqlalchemy.exc
@@ -42,13 +43,22 @@ class TestResumeCrud:
         await db.create_resume(content="b")
         assert len(await db.list_resumes()) == 2
 
-    async def test_list_resumes_never_loads_the_large_columns(self, db):
+    async def test_list_resumes_never_loads_the_large_columns(
+        self, db: Database
+    ) -> None:
         # The dashboard lists every resume on each load; content, parsed data and
         # generated documents grow with each tailored resume and aren't shown.
         await db.create_resume(content="# Resume", processed_data={"summary": "x"})
         statements: list[str] = []
 
-        def capture(conn, cursor, statement, params, context, executemany) -> None:
+        def capture(
+            conn: Any,
+            cursor: Any,
+            statement: str,
+            params: Any,
+            context: Any,
+            executemany: bool,
+        ) -> None:
             statements.append(statement)
 
         engine = db._async_engine.sync_engine
@@ -73,7 +83,7 @@ class TestResumeCrud:
             }
         ), columns
 
-    async def test_list_resumes_returns_the_summary_fields(self, db):
+    async def test_list_resumes_returns_the_summary_fields(self, db: Database) -> None:
         created = await db.create_resume(
             content="# Resume",
             filename="r.pdf",
