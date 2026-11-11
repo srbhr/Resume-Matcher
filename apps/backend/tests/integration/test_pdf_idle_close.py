@@ -92,13 +92,41 @@ async def test_browser_stays_open_while_an_export_outlasts_the_idle_period(
     try:
         await asyncio.wait_for(started.wait(), 5)
         await asyncio.sleep(IDLE_SECONDS * 3)
-        assert pdf._browser is browser and browser.is_connected(), (
-            "The idle countdown retired a browser an export was using"
-        )
+        kept = pdf._browser is browser and browser.is_connected()
     finally:
+        # Collect the export on every path, so a failure reports its real error.
         finish.set()
-    assert (await slow_export).startswith(b"%PDF")
+        [outcome] = await asyncio.gather(slow_export, return_exceptions=True)
+    assert kept, "The idle countdown retired a browser an export was using"
+    assert isinstance(outcome, bytes) and outcome.startswith(b"%PDF"), outcome
 
     # The finished export restarts the countdown.
     await _wait_past_idle()
     assert pdf._browser is None and not browser.is_connected()
+
+
+async def test_closing_an_idle_browser_does_not_take_an_export_slot(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(pdf, "_PDF_MAX_CONCURRENCY", 1)
+    await _export()  # Starts the idle countdown.
+    browser = pdf._browser
+    assert browser is not None
+    closing = asyncio.Event()
+    release_close = asyncio.Event()
+    original_close = browser.close
+
+    async def slow_close(*args: Any, **kwargs: Any) -> None:
+        closing.set()
+        await release_close.wait()
+        await original_close(*args, **kwargs)
+
+    monkeypatch.setattr(browser, "close", slow_close)
+    try:
+        await asyncio.wait_for(closing.wait(), IDLE_SECONDS * 10)
+        # The only slot is free: nothing is exporting while the idle browser closes.
+        assert (await _export()).startswith(b"%PDF")
+    finally:
+        release_close.set()
+        await _settle()
+    assert not browser.is_connected()

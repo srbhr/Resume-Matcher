@@ -103,7 +103,7 @@ _PDF_CLEANUP_RESERVE_SECONDS = _bounded_env_float(
     "PDF_CLEANUP_RESERVE_SECONDS", 5.0, 0.1, 30.0
 )
 # Close the shared browser after this long without an export. An idle Chromium
-# holds hundreds of MB; relaunching it costs about a second on the next export.
+# holds hundreds of MB; relaunching it adds about 0.4 s to the next export.
 _PDF_BROWSER_IDLE_SECONDS = 300.0
 
 
@@ -1014,7 +1014,9 @@ def _retire_idle_browser() -> None:
     if _browser is None or _browser in _browser_users or _init_lock.locked():
         return
     logger.info("Closing the idle PDF browser")
-    _retire_shared_browser(_browser)
+    # No export owns this teardown, so it must not take an export's slot. A
+    # failed teardown still reserves one, through quarantine.
+    _retire_shared_browser(_browser, retain_slot=False)
 
 
 def _release_slot_when_worker_exits(worker: asyncio.Task[bytes]) -> None:
