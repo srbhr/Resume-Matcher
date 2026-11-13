@@ -240,7 +240,7 @@ Para instruções detalhadas de instalação, veja **[SETUP.pt-BR.md](SETUP.pt-B
 | Ferramenta | Versão | Instalação |
 |------|---------|--------------|
 | Python | 3.14+ | [python.org](https://python.org) |
-| Node.js | 24.22.1 (fixada em `.nvmrc`) | [nodejs.org](https://nodejs.org) |
+| Node.js | 26.13.1 (fixada em `.nvmrc`) | [nodejs.org](https://nodejs.org) |
 | uv | Mais recente | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### Início rápido

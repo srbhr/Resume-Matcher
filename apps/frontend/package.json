@@ -3,7 +3,7 @@
   "version": "1.4.0",
   "private": true,
   "engines": {
-    "node": "24.22.1"
+    "node": "26.13.1"
   },
   "scripts": {
     "dev": "next dev --turbopack -H 127.0.0.1",
@@ -43,7 +43,7 @@
     "@tailwindcss/postcss": "4.3.4",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.2.1",
