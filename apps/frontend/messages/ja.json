@@ -1474,6 +1474,19 @@
       "loadFailed": "この応募を読み込めませんでした。",
       "editResume": "履歴書を編集"
     },
+    "followUp": {
+      "due": "フォローアップ",
+      "title": "フォローアップ",
+      "description": "応募からの日数：{days}",
+      "agentHint": "エージェントモードでは、コーディングエージェントにフォローアップメールの作成を依頼してください。",
+      "draft": "フォローアップメールを作成",
+      "drafting": "作成中…",
+      "failed": "フォローアップメールを作成できませんでした。",
+      "draftLabel": "フォローアップメール",
+      "copy": "コピー",
+      "copied": "コピーしました！",
+      "moveToNoResponse": "返信なしに移動"
+    },
     "bulk": {
       "selected": "{count} 件選択中",
       "moveTo": "移動先…",

@@ -1474,6 +1474,19 @@
       "loadFailed": "Could not load this application.",
       "editResume": "Edit resume"
     },
+    "followUp": {
+      "due": "Follow up",
+      "title": "Follow-up",
+      "description": "Days since applying: {days}",
+      "agentHint": "In agent mode, ask your coding agent to write the follow-up email.",
+      "draft": "Draft follow-up email",
+      "drafting": "Drafting…",
+      "failed": "Could not draft a follow-up email.",
+      "draftLabel": "Follow-up email",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "moveToNoResponse": "Move to No Response"
+    },
     "bulk": {
       "selected": "{count} selected",
       "moveTo": "Move to…",

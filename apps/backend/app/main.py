@@ -23,6 +23,7 @@ from app.database import DatabaseBusyError, db
 from app.host_guard import HostGuardMiddleware
 from app.pdf import close_pdf_renderer
 from app.routers import (
+    applications_ai_router,
     applications_router,
     ats_router,
     chatgpt_callback_router,
@@ -151,6 +152,7 @@ app.include_router(resumes_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(enrichment_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
+app.include_router(applications_ai_router, prefix="/api/v1")
 app.include_router(resume_wizard_router, prefix="/api/v1")
 app.include_router(ats_router, prefix="/api/v1")
 app.include_router(chatgpt_router, prefix="/api/v1")

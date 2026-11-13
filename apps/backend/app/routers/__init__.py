@@ -1,5 +1,6 @@
 """API routers."""
 
+from app.routers.applications import ai_router as applications_ai_router
 from app.routers.applications import router as applications_router
 from app.routers.ats import router as ats_router
 from app.routers.chatgpt import callback_router as chatgpt_callback_router
@@ -19,6 +20,7 @@ __all__ = [
     "health_router",
     "enrichment_router",
     "applications_router",
+    "applications_ai_router",
     "resume_wizard_router",
     "ats_router",
     "chatgpt_router",
