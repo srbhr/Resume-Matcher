@@ -161,7 +161,13 @@ export function CardDetailModal({
                   key={detail.application_id}
                   application={detail}
                   onMoved={() => {
-                    setDetail((current) => current && { ...current, status: 'no_response' });
+                    // The modal may show another card by the time the move finishes.
+                    const movedId = detail.application_id;
+                    setDetail((current) =>
+                      current?.application_id === movedId
+                        ? { ...current, status: 'no_response' }
+                        : current
+                    );
                     onUpdated();
                   }}
                 />

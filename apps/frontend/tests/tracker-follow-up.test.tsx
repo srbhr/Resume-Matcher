@@ -31,9 +31,11 @@ vi.mock('@/lib/api/tracker', async (importOriginal) => ({
   updateApplication: vi.fn(),
   draftFollowUp: vi.fn(),
 }));
-const statusCache = vi.hoisted(() => ({ agentMode: false }));
+const statusCache = vi.hoisted(() => ({ agentMode: false, loaded: true }));
 vi.mock('@/lib/context/status-cache', () => ({
-  useOptionalStatusCache: () => ({ status: { agent_mode: statusCache.agentMode } }),
+  useOptionalStatusCache: () => ({
+    status: statusCache.loaded ? { agent_mode: statusCache.agentMode } : null,
+  }),
 }));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -126,6 +128,7 @@ describe('CardDetailModal follow-up', () => {
 
   beforeEach(() => {
     statusCache.agentMode = false;
+    statusCache.loaded = true;
     vi.mocked(draftFollowUp).mockReset();
     vi.mocked(updateApplication).mockReset();
     onUpdated.mockReset();
@@ -182,5 +185,41 @@ describe('CardDetailModal follow-up', () => {
     expect(
       screen.queryByRole('button', { name: 'tracker.followUp.moveToNoResponse' })
     ).not.toBeInTheDocument();
+  });
+
+  it('keeps drafting disabled until the mode is known', async () => {
+    statusCache.loaded = false;
+    await openModal(detail());
+
+    expect(screen.getByRole('button', { name: 'tracker.followUp.draft' })).toBeDisabled();
+  });
+
+  it('a move that finishes after switching cards leaves the new card alone', async () => {
+    let finishMove: (value: Application) => void = () => {};
+    vi.mocked(updateApplication).mockReturnValue(
+      new Promise((resolve) => {
+        finishMove = resolve;
+      })
+    );
+    vi.mocked(getApplicationDetail).mockImplementation(async (id: string) =>
+      id === 'a1' ? detail() : detail({ application_id: 'a2', company: 'Globex' })
+    );
+    const { rerender } = render(
+      <CardDetailModal applicationId="a1" open onOpenChange={vi.fn()} onUpdated={onUpdated} />
+    );
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'tracker.followUp.moveToNoResponse' })
+    );
+
+    rerender(
+      <CardDetailModal applicationId="a2" open onOpenChange={vi.fn()} onUpdated={onUpdated} />
+    );
+    await screen.findByText('Globex');
+    finishMove(card({ status: 'no_response' }));
+
+    await vi.waitFor(() => expect(onUpdated).toHaveBeenCalled());
+    expect(
+      screen.getByRole('button', { name: 'tracker.followUp.moveToNoResponse' })
+    ).toBeInTheDocument();
   });
 });

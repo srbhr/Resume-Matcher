@@ -21,7 +21,9 @@ interface FollowUpPanelProps {
 export function FollowUpPanel({ application, onMoved }: FollowUpPanelProps) {
   const { t } = useTranslations();
   // Agent mode makes no model calls; the user's coding agent writes the email.
-  const agentMode = Boolean(useOptionalStatusCache()?.status?.agent_mode);
+  // Until the status loads the mode is unknown, so drafting stays disabled.
+  const status = useOptionalStatusCache()?.status ?? null;
+  const agentMode = Boolean(status?.agent_mode);
   const [draft, setDraft] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
   const [draftFailed, setDraftFailed] = useState(false);
@@ -87,7 +89,13 @@ export function FollowUpPanel({ application, onMoved }: FollowUpPanelProps) {
       {agentMode ? (
         <p className="font-mono text-xs text-steel">{t('tracker.followUp.agentHint')}</p>
       ) : (
-        <Button type="button" size="sm" variant="outline" onClick={handleDraft} disabled={drafting}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleDraft}
+          disabled={drafting || status === null}
+        >
           {drafting ? (
             <>
               <SpinnerGap aria-hidden="true" className="animate-spin" />
