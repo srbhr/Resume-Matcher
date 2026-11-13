@@ -20,7 +20,8 @@
 .mainColumn {
   display: flex;
   flex-direction: column;
-  gap: var(--section-gap);
+  /* The section gap twice: sections here have no margin (see below). */
+  gap: calc(var(--section-gap) * 2);
   padding-right: 0.875rem;
   border-right: 2px solid var(--resume-accent-primary);
   min-width: 0;
@@ -31,13 +32,21 @@
 .sidebarColumn {
   display: flex;
   flex-direction: column;
-  gap: var(--section-gap);
+  /* The section gap twice: sections here have no margin (see below). */
+  gap: calc(var(--section-gap) * 2);
   padding-left: 0.75rem;
   /* Prevent sidebar content from overflowing */
   overflow: hidden;
   /* Ensure minimum width for dates */
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* Sections are spaced by the column gap, not their margin: Chromium mis-paginates a
+   flex column whose items have margins (see .resume-items in _base.module.css). */
+.grid > .mainColumn > *,
+.grid > .sidebarColumn > * {
+  margin-bottom: 0;
 }
 
 /* Section titles with accent color underline */
