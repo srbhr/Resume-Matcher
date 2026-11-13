@@ -641,7 +641,8 @@ async def test_explicit_parse_boundary_failure_retires_owned_attempt(
     assert response.status_code == expected, response.text
     records = await isolated_db.list_resumes()
     assert len(records) == 1 and records[0]["processing_status"] == "failed"
-    assert records[0]["processed_data"] is None
+    record = await isolated_db.get_resume(records[0]["resume_id"])
+    assert record is not None and record["processed_data"] is None
 
 
 @pytest.mark.parametrize("failure", ["deadline", "prompt"])

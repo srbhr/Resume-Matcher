@@ -656,10 +656,27 @@ class Database:
             return True
 
     async def list_resumes(self) -> list[dict[str, Any]]:
-        """List all resumes."""
+        """List all resumes as summaries, without content or generated documents.
+
+        The dashboard lists every resume on each load, and those columns grow
+        with every tailored resume. Use ``get_resume`` for a full row.
+        """
         async with self._session() as session:
-            result = await session.execute(select(Resume).order_by(Resume.created_at))
-            return [self._resume_to_dict(row) for row in result.scalars().all()]
+            result = await session.execute(
+                select(
+                    Resume.resume_id,
+                    Resume.filename,
+                    Resume.is_master,
+                    Resume.is_default_master,
+                    Resume.parent_id,
+                    Resume.processing_status,
+                    Resume.title,
+                    Resume.template_settings,
+                    Resume.created_at,
+                    Resume.updated_at,
+                ).order_by(Resume.created_at)
+            )
+            return [dict(row._mapping) for row in result]
 
     async def set_default_master_resume(self, resume_id: str) -> bool:
         """Make an existing master the default; False if missing or not a master."""
