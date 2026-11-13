@@ -31,10 +31,14 @@ vi.mock('@/lib/api/tracker', async (importOriginal) => ({
   updateApplication: vi.fn(),
   draftFollowUp: vi.fn(),
 }));
-const statusCache = vi.hoisted(() => ({ agentMode: false, loaded: true }));
+const statusCache = vi.hoisted(() => ({
+  agentMode: false,
+  state: 'loaded' as 'loaded' | 'loading' | 'failed',
+}));
 vi.mock('@/lib/context/status-cache', () => ({
   useOptionalStatusCache: () => ({
-    status: statusCache.loaded ? { agent_mode: statusCache.agentMode } : null,
+    status: statusCache.state === 'loaded' ? { agent_mode: statusCache.agentMode } : null,
+    isLoading: statusCache.state === 'loading',
   }),
 }));
 
@@ -128,7 +132,7 @@ describe('CardDetailModal follow-up', () => {
 
   beforeEach(() => {
     statusCache.agentMode = false;
-    statusCache.loaded = true;
+    statusCache.state = 'loaded';
     vi.mocked(draftFollowUp).mockReset();
     vi.mocked(updateApplication).mockReset();
     onUpdated.mockReset();
@@ -188,7 +192,7 @@ describe('CardDetailModal follow-up', () => {
   });
 
   it('keeps drafting disabled until the mode is known', async () => {
-    statusCache.loaded = false;
+    statusCache.state = 'loading';
     await openModal(detail());
 
     expect(screen.getByRole('button', { name: 'tracker.followUp.draft' })).toBeDisabled();
@@ -221,5 +225,39 @@ describe('CardDetailModal follow-up', () => {
     expect(
       screen.getByRole('button', { name: 'tracker.followUp.moveToNoResponse' })
     ).toBeInTheDocument();
+  });
+
+  it('lets the user draft if the status request failed', async () => {
+    statusCache.state = 'failed';
+    await openModal(detail());
+
+    expect(screen.getByRole('button', { name: 'tracker.followUp.draft' })).toBeEnabled();
+  });
+
+  it('shows progress while moving, then a generic message if the move fails', async () => {
+    let failMove: (error: Error) => void = () => {};
+    vi.mocked(updateApplication).mockReturnValue(
+      new Promise((_resolve, reject) => {
+        failMove = reject;
+      })
+    );
+    await openModal(detail());
+
+    fireEvent.click(screen.getByRole('button', { name: 'tracker.followUp.moveToNoResponse' }));
+    expect(await screen.findByRole('button', { name: 'tracker.followUp.moving' })).toBeDisabled();
+    failMove(new Error('provider said sk-secret-123'));
+
+    expect(await screen.findByText('tracker.errors.moveFailed')).toBeInTheDocument();
+    expect(onUpdated).not.toHaveBeenCalled();
+    expect(screen.queryByText(/sk-secret/)).not.toBeInTheDocument();
+  });
+
+  it('offers a draft but no move for a card already in No Response', async () => {
+    await openModal(detail({ status: 'no_response' }));
+
+    expect(screen.getByRole('button', { name: 'tracker.followUp.draft' })).toBeEnabled();
+    expect(
+      screen.queryByRole('button', { name: 'tracker.followUp.moveToNoResponse' })
+    ).not.toBeInTheDocument();
   });
 });

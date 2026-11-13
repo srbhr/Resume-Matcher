@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from httpx import ASGITransport, AsyncClient, Response
 
 from app.ai_budget import AIOperationDeadlineExceeded
@@ -39,7 +40,7 @@ async def _seed(
 
 async def _post(application_id: str) -> Response:
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://localhost"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         return await client.post(f"/api/v1/applications/{application_id}/follow-up")
 
@@ -65,7 +66,7 @@ async def test_drafts_from_the_cards_job_resume_and_applied_date(
 
 async def test_unknown_applied_date_passes_no_day_count(isolated_db: Any) -> None:
     card = await _seed(isolated_db)
-    # create_application stamps a moved-past-saved card; clear it explicitly.
+    # _seed always sets an applied date; clear it to model an unknown one.
     await isolated_db.update_application(card["application_id"], {"applied_at": None})
     with patch(GENERATOR, new_callable=AsyncMock, return_value=DRAFT) as generate:
         response = await _post(card["application_id"])
@@ -148,3 +149,36 @@ async def test_ai_timeout_is_504(isolated_db: Any) -> None:
         response = await _post(card["application_id"])
 
     assert response.status_code == 504
+
+
+async def test_failure_log_redacts_the_providers_secret(
+    isolated_db: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    card = await _seed(isolated_db)
+    with patch(
+        GENERATOR,
+        new_callable=AsyncMock,
+        side_effect=RuntimeError(
+            "provider said: key sk-secret-1234567890abcdef rejected"
+        ),
+    ):
+        response = await _post(card["application_id"])
+
+    assert response.status_code == 500
+    logged = [
+        r.getMessage() for r in caplog.records if r.name == "app.routers.applications"
+    ]
+    assert logged, "the failure was not logged"
+    assert not any("sk-secret" in message for message in logged), logged
+
+
+async def test_card_no_longer_waiting_on_a_reply_is_400(isolated_db: Any) -> None:
+    card = await _seed(isolated_db)
+    await isolated_db.update_application(
+        card["application_id"], {"status": "interview"}
+    )
+    with patch(GENERATOR, new_callable=AsyncMock) as generate:
+        response = await _post(card["application_id"])
+
+    assert response.status_code == 400
+    generate.assert_not_awaited()

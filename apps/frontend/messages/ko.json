@@ -1485,7 +1485,8 @@
       "draftLabel": "후속 이메일",
       "copy": "복사",
       "copied": "복사됨!",
-      "moveToNoResponse": "응답 없음으로 이동"
+      "moveToNoResponse": "응답 없음으로 이동",
+      "moving": "이동 중…"
     },
     "bulk": {
       "selected": "{count}개 선택됨",

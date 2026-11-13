@@ -153,6 +153,7 @@ async def generate_follow_up_email(
 
     ``days_since_applied`` is left out of the prompt when the applied date is unknown.
     """
+    validate_source_size(job_description, MAX_JOB_CHARACTERS)
     context = [
         f"Company: {company or 'not stated'}",
         f"Role: {role or 'not stated'}",

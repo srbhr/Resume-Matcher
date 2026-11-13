@@ -1485,7 +1485,8 @@
       "draftLabel": "フォローアップメール",
       "copy": "コピー",
       "copied": "コピーしました！",
-      "moveToNoResponse": "返信なしに移動"
+      "moveToNoResponse": "返信なしに移動",
+      "moving": "移動中…"
     },
     "bulk": {
       "selected": "{count} 件選択中",

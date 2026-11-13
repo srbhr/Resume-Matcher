@@ -1485,7 +1485,8 @@
       "draftLabel": "E-mail de relance",
       "copy": "Copier",
       "copied": "Copié !",
-      "moveToNoResponse": "Déplacer vers Sans réponse"
+      "moveToNoResponse": "Déplacer vers Sans réponse",
+      "moving": "Déplacement…"
     },
     "bulk": {
       "selected": "{count} sélectionné(s)",

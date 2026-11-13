@@ -1485,7 +1485,8 @@
       "draftLabel": "Follow-up email",
       "copy": "Copy",
       "copied": "Copied!",
-      "moveToNoResponse": "Move to No Response"
+      "moveToNoResponse": "Move to No Response",
+      "moving": "Moving…"
     },
     "bulk": {
       "selected": "{count} selected",

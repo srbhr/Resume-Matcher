@@ -21,9 +21,11 @@ interface FollowUpPanelProps {
 export function FollowUpPanel({ application, onMoved }: FollowUpPanelProps) {
   const { t } = useTranslations();
   // Agent mode makes no model calls; the user's coding agent writes the email.
-  // Until the status loads the mode is unknown, so drafting stays disabled.
-  const status = useOptionalStatusCache()?.status ?? null;
-  const agentMode = Boolean(status?.agent_mode);
+  // While the first status load runs the mode is unknown, so drafting waits.
+  // If that load fails, drafting is allowed; agent mode then fails generically.
+  const statusCache = useOptionalStatusCache();
+  const agentMode = Boolean(statusCache?.status?.agent_mode);
+  const modeLoading = !statusCache?.status && Boolean(statusCache?.isLoading);
   const [draft, setDraft] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
   const [draftFailed, setDraftFailed] = useState(false);
@@ -94,7 +96,7 @@ export function FollowUpPanel({ application, onMoved }: FollowUpPanelProps) {
           size="sm"
           variant="outline"
           onClick={handleDraft}
-          disabled={drafting || status === null}
+          disabled={drafting || modeLoading}
         >
           {drafting ? (
             <>
@@ -133,7 +135,14 @@ export function FollowUpPanel({ application, onMoved }: FollowUpPanelProps) {
       {application.status === 'applied' && (
         <div className="space-y-2">
           <Button type="button" size="sm" variant="ghost" onClick={handleMove} disabled={moving}>
-            {t('tracker.followUp.moveToNoResponse')}
+            {moving ? (
+              <>
+                <SpinnerGap aria-hidden="true" className="animate-spin" />
+                {t('tracker.followUp.moving')}
+              </>
+            ) : (
+              t('tracker.followUp.moveToNoResponse')
+            )}
           </Button>
           {moveFailed && <Alert tone="error">{t('tracker.errors.moveFailed')}</Alert>}
         </div>

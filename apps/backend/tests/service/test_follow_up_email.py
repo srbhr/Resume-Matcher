@@ -3,6 +3,9 @@
 import json
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
+from app.ai_limits import MAX_JOB_CHARACTERS
 from app.services.cover_letter import generate_follow_up_email
 
 RESUME = {
@@ -48,3 +51,26 @@ async def test_unknown_applied_date_is_left_out_of_the_prompt() -> None:
 
     assert "Applied:" not in prompt
     assert "Company: ACME" in prompt
+
+
+async def test_oversized_job_description_is_rejected_before_the_model() -> None:
+    with patch(
+        "app.services.cover_letter.complete", new_callable=AsyncMock
+    ) as complete:
+        with pytest.raises(ValueError):
+            await generate_follow_up_email(
+                RESUME,
+                "x" * (MAX_JOB_CHARACTERS + 1),
+                company=None,
+                role=None,
+                days_since_applied=None,
+            )
+    complete.assert_not_awaited()
+
+
+async def test_prompt_localizes_the_fixed_parts_and_never_invents_a_name() -> None:
+    _, prompt = await _draft(days_since_applied=3)
+
+    assert '"Subject: "' not in prompt and '"Hello,"' not in prompt
+    assert "Subject line label and greeting in Spanish" in prompt
+    assert "If the resume has no name, end without one" in prompt

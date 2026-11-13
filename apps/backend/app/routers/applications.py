@@ -10,6 +10,7 @@ from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
 from app.ai_limits import MAX_JOB_CHARACTERS, PromptSizeError, require_source_size
 from app.config_cache import get_content_language
 from app.database import DatabaseBusyError, db
+from app.llm import _scrub_secrets
 from app.schemas import (
     APPLICATION_STATUS_ORDER,
     ApplicationActionResponse,
@@ -213,6 +214,10 @@ async def bulk_delete_applications(request: BulkDelete) -> ApplicationActionResp
     )
 
 
+# Statuses whose cards can still get a follow-up, matching the tracker UI.
+_AWAITING_REPLY = ("applied", "no_response")
+
+
 def _days_since(iso_timestamp: str | None, now: datetime) -> int | None:
     """Whole days from ``iso_timestamp`` to ``now``; None if missing or unreadable."""
     if not iso_timestamp:
@@ -235,6 +240,11 @@ async def draft_follow_up(application_id: str) -> GenerateContentResponse:
     application = await db.get_application(application_id)
     if application is None:
         raise HTTPException(status_code=404, detail="Application not found")
+    if application["status"] not in _AWAITING_REPLY:
+        raise HTTPException(
+            status_code=400,
+            detail="Follow-ups are for applications still waiting on a reply.",
+        )
     job = await db.get_job(application["job_id"])
     if job is None or not job.get("content"):
         raise HTTPException(
@@ -263,7 +273,7 @@ async def draft_follow_up(application_id: str) -> GenerateContentResponse:
     except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
         raise
     except Exception as e:
-        logger.error("Follow-up email draft failed: %s", e)
+        logger.error("Follow-up email draft failed: %s", _scrub_secrets(str(e)))
         raise HTTPException(
             status_code=500,
             detail="Failed to draft a follow-up email. Please try again.",

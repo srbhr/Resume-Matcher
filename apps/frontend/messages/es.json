@@ -1485,7 +1485,8 @@
       "draftLabel": "Correo de seguimiento",
       "copy": "Copiar",
       "copied": "¡Copiado!",
-      "moveToNoResponse": "Mover a Sin respuesta"
+      "moveToNoResponse": "Mover a Sin respuesta",
+      "moving": "Moviendo…"
     },
     "bulk": {
       "selected": "{count} seleccionadas",
