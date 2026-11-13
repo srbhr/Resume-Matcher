@@ -1230,6 +1230,7 @@
     "pageBreak": "페이지 나누기",
     "pageCountSingular": "{count}페이지",
     "pageCountPlural": "{count}페이지",
+    "pageOfTotal": "{page} / {total} 페이지",
     "zoomIn": "확대",
     "zoomOut": "축소"
   },

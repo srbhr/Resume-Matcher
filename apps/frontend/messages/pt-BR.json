@@ -1230,6 +1230,7 @@
     "pageBreak": "Quebra de Página",
     "pageCountSingular": "{count} página",
     "pageCountPlural": "{count} páginas",
+    "pageOfTotal": "Página {page} de {total}",
     "zoomIn": "Ampliar",
     "zoomOut": "Reduzir"
   },

@@ -1230,6 +1230,7 @@
     "pageBreak": "改ページ",
     "pageCountSingular": "{count} ページ",
     "pageCountPlural": "{count} ページ",
+    "pageOfTotal": "{page} / {total} ページ",
     "zoomIn": "拡大",
     "zoomOut": "縮小"
   },

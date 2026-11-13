@@ -1230,6 +1230,7 @@
     "pageBreak": "Salto de página",
     "pageCountSingular": "{count} página",
     "pageCountPlural": "{count} páginas",
+    "pageOfTotal": "Página {page} de {total}",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar"
   },

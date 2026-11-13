@@ -1230,6 +1230,7 @@
     "pageBreak": "分页符",
     "pageCountSingular": "{count} 页",
     "pageCountPlural": "{count} 页",
+    "pageOfTotal": "第 {page} 页，共 {total} 页",
     "zoomIn": "放大",
     "zoomOut": "缩小"
   },
