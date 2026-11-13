@@ -10,7 +10,6 @@ from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
 from app.ai_limits import MAX_JOB_CHARACTERS, PromptSizeError, require_source_size
 from app.config_cache import get_content_language
 from app.database import DatabaseBusyError, db
-from app.llm import _scrub_secrets
 from app.schemas import (
     APPLICATION_STATUS_ORDER,
     ApplicationActionResponse,
@@ -273,7 +272,7 @@ async def draft_follow_up(application_id: str) -> GenerateContentResponse:
     except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
         raise
     except Exception as e:
-        logger.error("Follow-up email draft failed: %s", _scrub_secrets(str(e)))
+        logger.error("Follow-up email draft failed: %s", e)
         raise HTTPException(
             status_code=500,
             detail="Failed to draft a follow-up email. Please try again.",
