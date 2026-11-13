@@ -8,7 +8,11 @@ launches a new one.
 from __future__ import annotations
 
 import asyncio
+import os
+import subprocess
+import sys
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -130,3 +134,48 @@ async def test_closing_an_idle_browser_does_not_take_an_export_slot(
         release_close.set()
         await _settle()
     assert not browser.is_connected()
+
+
+async def test_a_stuck_idle_close_holds_a_slot_until_it_finishes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A teardown that overruns the cleanup reserve takes a slot, as stale-browser
+    # retirement does, so hung closes stay bounded by the export slots.
+    await _export()  # Starts the idle countdown.
+    browser = pdf._browser
+    assert browser is not None
+    closing = asyncio.Event()
+    release_close = asyncio.Event()
+    original_close = browser.close
+
+    async def stuck_close(*args: Any, **kwargs: Any) -> None:
+        closing.set()
+        await release_close.wait()
+        await original_close(*args, **kwargs)
+
+    monkeypatch.setattr(browser, "close", stuck_close)
+    try:
+        await asyncio.wait_for(closing.wait(), IDLE_SECONDS * 10)
+        await asyncio.sleep(pdf._PDF_CLEANUP_RESERVE_SECONDS * 3)
+        assert pdf._active_renders == 1, "A stuck idle close held no slot"
+    finally:
+        release_close.set()
+        await _settle()
+    assert pdf._active_renders == 0
+    assert not browser.is_connected()
+
+
+def test_idle_period_is_configurable_from_the_environment() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from app import pdf; print(pdf._PDF_BROWSER_IDLE_SECONDS)",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).resolve().parents[2],
+        env={**os.environ, "PDF_BROWSER_IDLE_SECONDS": "60"},
+        check=True,
+    )
+    assert result.stdout.strip() == "60.0"

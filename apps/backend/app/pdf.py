@@ -104,7 +104,9 @@ _PDF_CLEANUP_RESERVE_SECONDS = _bounded_env_float(
 )
 # Close the shared browser after this long without an export. An idle Chromium
 # holds hundreds of MB; relaunching it adds about 0.4 s to the next export.
-_PDF_BROWSER_IDLE_SECONDS = 300.0
+_PDF_BROWSER_IDLE_SECONDS = _bounded_env_float(
+    "PDF_BROWSER_IDLE_SECONDS", 300.0, 10.0, 86400.0
+)
 
 
 class PDFRenderError(Exception):
@@ -1014,9 +1016,23 @@ def _retire_idle_browser() -> None:
     if _browser is None or _browser in _browser_users or _init_lock.locked():
         return
     logger.info("Closing the idle PDF browser")
-    # No export owns this teardown, so it must not take an export's slot. A
-    # failed teardown still reserves one, through quarantine.
-    _retire_shared_browser(_browser, retain_slot=False)
+    # No export owns this teardown, so a normal close takes no export slot. One
+    # that overruns the cleanup reserve takes a slot until it ends, as stale-browser
+    # retirement does, so hung closes stay bounded. A failed teardown keeps one
+    # through quarantine.
+    owner = _retire_shared_browser(_browser, retain_slot=False)
+    if owner is not None:
+        asyncio.get_running_loop().call_later(
+            _PDF_CLEANUP_RESERVE_SECONDS, _hold_slot_while_unfinished, owner
+        )
+
+
+def _hold_slot_while_unfinished(owner: asyncio.Task[None]) -> None:
+    """Hold a render slot for a teardown still running past its reserve."""
+    if owner.done():
+        return
+    _retain_render_slot_for_cleanup()
+    owner.add_done_callback(lambda _done: _release_render_slot())
 
 
 def _release_slot_when_worker_exits(worker: asyncio.Task[bytes]) -> None:
