@@ -21,8 +21,8 @@ from app.pdf import _launch_browser
 REPO_ROOT = Path(__file__).resolve().parents[4]
 GLOBALS_CSS = REPO_ROOT / "apps/frontend/app/(default)/css/globals.css"
 
-SUMMARY = (
-    "Biotechnologist with research and lab experience across molecular biology. " * 9
+SUMMARY_SENTENCE = (
+    "Biotechnologist with research and lab experience across molecular biology. "
 )
 LONG_BULLET = (
     "Translated and localized dialogue from English into Portuguese, keeping the "
@@ -42,8 +42,9 @@ def _page_break_css() -> str:
 def _entry(index: int, bullets: int) -> str:
     # Mirrors DescriptionList: each <li> is a flex row of a marker and the text.
     items = "".join(
-        f'<li style="display:flex"><span>&bull;&nbsp;</span><span>{LONG_BULLET}</span></li>'
-        for _ in range(bullets)
+        f'<li style="display:flex"><span>&bull;&nbsp;</span>'
+        f"<span>Bullet {index}.{n} {LONG_BULLET}</span></li>"
+        for n in range(1, bullets + 1)
     )
     return (
         f'<div data-resume-item="split">'
@@ -52,7 +53,7 @@ def _entry(index: int, bullets: int) -> str:
     )
 
 
-def _resume_html(entries: list[int]) -> str:
+def _resume_html(entries: list[int], summary_repeats: int = 9) -> str:
     experience = "".join(_entry(i + 1, n) for i, n in enumerate(entries))
     return f"""<!doctype html><html><head><style>
       body {{ font: 11pt serif; margin: 0; }}
@@ -61,7 +62,7 @@ def _resume_html(entries: list[int]) -> str:
     </style></head><body>
       <h1>Synthetic Person</h1>
       <section data-resume-section>
-        <h2 data-resume-section-title>SUMMARY</h2><p>{SUMMARY}</p>
+        <h2 data-resume-section-title>SUMMARY</h2><p>{SUMMARY_SENTENCE * summary_repeats}</p>
       </section>
       <section data-resume-section>
         <h2 data-resume-section-title>EXPERIENCE</h2>
@@ -101,13 +102,17 @@ async def test_consecutive_long_entries_do_not_push_experience_to_the_next_page(
     assert "Entry 1" in pages[0]
 
 
-async def test_a_long_entry_still_splits_only_between_bullets() -> None:
-    pages = await _pdf_pages(_resume_html([5, 4, 5, 4, 5, 4, 5, 4, 5, 4]))
+async def test_an_entry_too_tall_for_the_page_splits_between_bullets() -> None:
+    # A long summary leaves too little room on page 1 for this 10-bullet entry,
+    # so it must split: whole-entry pagination would move it all to page 2.
+    pages = await _pdf_pages(_resume_html([10], summary_repeats=65))
 
-    # Every entry's header shares a page with at least its first bullet.
-    for index in range(1, 11):
-        header_page = next(
-            i for i, text in enumerate(pages) if f"Entry {index}" in text
-        )
-        after_header = pages[header_page].split(f"Entry {index}", 1)[1]
-        assert "Translated" in after_header, f"Entry {index}'s header was left alone"
+    def page_of(text: str) -> int:
+        return next(i for i, page in enumerate(pages) if text in page)
+
+    bullet_pages = [page_of(f"Bullet 1.{n} ") for n in range(1, 11)]
+    assert page_of("Entry 1") == 0, "the entry was moved whole to page 2"
+    assert bullet_pages[-1] > 0, "the entry did not split"
+    # The header keeps its first two bullets, and the last two stay together.
+    assert bullet_pages[0] == bullet_pages[1] == 0
+    assert bullet_pages[-1] == bullet_pages[-2]
