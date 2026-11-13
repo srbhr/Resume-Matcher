@@ -165,7 +165,14 @@ async def test_a_stuck_idle_close_holds_a_slot_until_it_finishes(
     assert not browser.is_connected()
 
 
-def test_idle_period_is_configurable_from_the_environment() -> None:
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("60", "60.0"), ("5", "300.0"), ("86401", "300.0"), ("soon", "300.0")],
+)
+def test_idle_period_reads_the_environment_within_bounds(
+    raw: str, expected: str
+) -> None:
+    # 10 s to 86,400 s; anything else falls back to the 300 s default.
     result = subprocess.run(
         [
             sys.executable,
@@ -175,7 +182,7 @@ def test_idle_period_is_configurable_from_the_environment() -> None:
         capture_output=True,
         text=True,
         cwd=Path(__file__).resolve().parents[2],
-        env={**os.environ, "PDF_BROWSER_IDLE_SECONDS": "60"},
+        env={**os.environ, "PDF_BROWSER_IDLE_SECONDS": raw},
         check=True,
     )
-    assert result.stdout.strip() == "60.0"
+    assert result.stdout.strip() == expected
