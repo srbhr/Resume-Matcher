@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useReducedMotion } from 'motion/react';
 import { DotsSixVertical, Stack } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useTranslations } from '@/lib/i18n';
 import { formatDate } from '@/lib/format-date';
 import type { Application } from '@/lib/api/tracker';
+import { isFollowUpDue } from '@/lib/tracker-follow-up';
 
 /** The house control focus ring, offset against the white card. */
 const FOCUS_RING =
@@ -31,6 +33,8 @@ export function ApplicationCard({
 }: ApplicationCardProps) {
   const { t, locale } = useTranslations();
   const reducedMotion = useReducedMotion();
+  // Read once: re-rendering must not change the output, and days are coarse.
+  const [now] = useState(() => new Date());
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: application.application_id,
     transition: reducedMotion ? null : { duration: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
@@ -73,6 +77,11 @@ export function ApplicationCard({
               <p className="mt-1 font-mono text-xs uppercase tracking-wide text-steel tabular-nums">
                 {formatDate(application.applied_at, locale)}
               </p>
+            )}
+            {isFollowUpDue(application, now) && (
+              <StatusIndicator tone="warning" live={false} className="mt-1 flex">
+                {t('tracker.followUp.due')}
+              </StatusIndicator>
             )}
             {sharedResume && (
               <span className="mt-1 inline-flex items-center gap-1 border border-ink bg-paper px-1 font-mono text-xs uppercase text-ink-soft">

@@ -1230,6 +1230,7 @@
     "pageBreak": "Quebra de Página",
     "pageCountSingular": "{count} página",
     "pageCountPlural": "{count} páginas",
+    "pageOfTotal": "Página {page} de {total}",
     "zoomIn": "Ampliar",
     "zoomOut": "Reduzir"
   },
@@ -1473,6 +1474,20 @@
       "resumeUnavailable": "O currículo enviado não está mais disponível.",
       "loadFailed": "Não foi possível carregar esta candidatura.",
       "editResume": "Editar currículo"
+    },
+    "followUp": {
+      "due": "Fazer follow-up",
+      "title": "Follow-up",
+      "description": "Dias desde o envio: {days}",
+      "agentHint": "No modo agente, peça ao seu agente de código para escrever o e-mail de follow-up.",
+      "draft": "Redigir e-mail de follow-up",
+      "drafting": "Redigindo…",
+      "failed": "Não foi possível redigir o e-mail de follow-up.",
+      "draftLabel": "E-mail de follow-up",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "moveToNoResponse": "Mover para Sem resposta",
+      "moving": "Movendo…"
     },
     "bulk": {
       "selected": "{count} selecionada(s)",

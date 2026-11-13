@@ -1230,6 +1230,7 @@
     "pageBreak": "Saut de page",
     "pageCountSingular": "{count} page",
     "pageCountPlural": "{count} pages",
+    "pageOfTotal": "Page {page} sur {total}",
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière"
   },
@@ -1473,6 +1474,20 @@
       "resumeUnavailable": "Le CV soumis n'est plus disponible.",
       "loadFailed": "Impossible de charger cette candidature.",
       "editResume": "Modifier le CV"
+    },
+    "followUp": {
+      "due": "À relancer",
+      "title": "Relance",
+      "description": "Jours depuis la candidature : {days}",
+      "agentHint": "En mode agent, demandez à votre agent de code de rédiger l’e-mail de relance.",
+      "draft": "Rédiger un e-mail de relance",
+      "drafting": "Rédaction…",
+      "failed": "Impossible de rédiger l’e-mail de relance.",
+      "draftLabel": "E-mail de relance",
+      "copy": "Copier",
+      "copied": "Copié !",
+      "moveToNoResponse": "Déplacer vers Sans réponse",
+      "moving": "Déplacement…"
     },
     "bulk": {
       "selected": "{count} sélectionné(s)",

@@ -10,6 +10,7 @@ from app.llm import complete
 from app.prompts import get_language_name
 from app.prompts.templates import (
     COVER_LETTER_PROMPT,
+    FOLLOW_UP_EMAIL_PROMPT,
     GENERATE_TITLE_PROMPT,
     OUTREACH_MESSAGE_PROMPT,
 )
@@ -136,6 +137,40 @@ async def generate_outreach_message(
         max_tokens=1024,
     )
 
+    return result.strip()
+
+
+async def generate_follow_up_email(
+    resume_data: dict[str, Any],
+    job_description: str,
+    *,
+    company: str | None,
+    role: str | None,
+    days_since_applied: int | None,
+    language: str = "en",
+) -> str:
+    """Draft a follow-up email for an application that has had no reply.
+
+    ``days_since_applied`` is left out of the prompt when the applied date is unknown.
+    """
+    validate_source_size(job_description, MAX_JOB_CHARACTERS)
+    context = [
+        f"Company: {company or 'not stated'}",
+        f"Role: {role or 'not stated'}",
+    ]
+    if days_since_applied is not None:
+        context.append(f"Applied: {days_since_applied} days ago")
+    prompt = FOLLOW_UP_EMAIL_PROMPT.format(
+        application_context="\n".join(context),
+        job_description=job_description,
+        resume_data=json.dumps(resume_data),
+        output_language=get_language_name(language),
+    )
+    result = await complete(
+        prompt=prompt,
+        system_prompt="You are a career coach. Write brief, courteous follow-up emails for job applications.",
+        max_tokens=1024,
+    )
     return result.strip()
 
 

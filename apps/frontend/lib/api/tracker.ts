@@ -132,6 +132,13 @@ export async function updateApplication(
   return asJson<Application>(res, 'Failed to update application');
 }
 
+// Draft a follow-up email from the card's job, resume and applied date (not saved).
+export async function draftFollowUp(id: string): Promise<string> {
+  const res = await apiPost(`/applications/${id}/follow-up`, {});
+  const data = await asJson<{ content: string }>(res, 'Failed to draft a follow-up email');
+  return data.content;
+}
+
 // Move many cards to one column.
 export async function bulkUpdateStatus(
   applicationIds: string[],

@@ -27,6 +27,7 @@ from app.config import (
 )
 from app.crypto import keyed_digest
 from app.host_guard import LOOPBACK_HOSTS
+from app.redaction import redact_credentials
 
 if TYPE_CHECKING:
     from litellm import Router
@@ -741,21 +742,6 @@ def _to_code_block(content: str | None, language: str = "text") -> str:
 # visible, which is enough to identify the provider and correlate with the
 # user's stored key. We redact any remaining key-like run before we surface
 # the message to the client via ``error_detail``.
-_SECRET_PATTERNS: tuple[re.Pattern[str], ...] = (
-    # sk-<anything-non-whitespace>, covering both plain and already-masked
-    # tokens (e.g., ``sk-ant-a****...7QAA``). Minimum length of 12 avoids
-    # matching harmless substrings like ``sk-foo``.
-    re.compile(r"sk-[A-Za-z0-9_\-*.]{12,}"),
-    # Google AI Studio.
-    re.compile(r"AIza[0-9A-Za-z_\-]{10,}"),
-    # Generic Bearer tokens in an Authorization header line.
-    re.compile(r"(?i)(Bearer\s+)[^\s\"']+"),
-    # Azure sends its key in a bare ``api-key:`` header and the value is a plain
-    # 32-84 char alphanumeric, so it matches none of the patterns above. M-08.
-    re.compile(r"(?i)(api[-_]?key[\"'\s:=]+)[^\s\"',}]+"),
-)
-
-
 def _scrub_secrets(text: str) -> str:
     """Redact API-key-like substrings before the text leaves the server.
 
@@ -764,12 +750,7 @@ def _scrub_secrets(text: str) -> str:
     can't be used by a Settings-page viewer to identify which provider /
     key variant is configured.
     """
-    if not text:
-        return text
-    redacted = text
-    for pattern in _SECRET_PATTERNS:
-        redacted = pattern.sub("<redacted>", redacted)
-    return redacted
+    return redact_credentials(text)
 
 
 _PROVIDER_KEY_MAP: dict[str, str] = {

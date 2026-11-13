@@ -1230,6 +1230,7 @@
     "pageBreak": "페이지 나누기",
     "pageCountSingular": "{count}페이지",
     "pageCountPlural": "{count}페이지",
+    "pageOfTotal": "{page} / {total} 페이지",
     "zoomIn": "확대",
     "zoomOut": "축소"
   },
@@ -1473,6 +1474,20 @@
       "resumeUnavailable": "지원에 사용한 이력서를 더 이상 사용할 수 없습니다.",
       "loadFailed": "이 지원 정보를 불러올 수 없습니다.",
       "editResume": "이력서 편집"
+    },
+    "followUp": {
+      "due": "후속 연락",
+      "title": "후속 연락",
+      "description": "지원 후 경과일: {days}",
+      "agentHint": "에이전트 모드에서는 코딩 에이전트에게 후속 이메일 작성을 요청하세요.",
+      "draft": "후속 이메일 작성",
+      "drafting": "작성 중…",
+      "failed": "후속 이메일을 작성할 수 없습니다.",
+      "draftLabel": "후속 이메일",
+      "copy": "복사",
+      "copied": "복사됨!",
+      "moveToNoResponse": "응답 없음으로 이동",
+      "moving": "이동 중…"
     },
     "bulk": {
       "selected": "{count}개 선택됨",

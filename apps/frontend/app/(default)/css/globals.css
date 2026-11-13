@@ -170,7 +170,13 @@
   break-inside: auto;
 }
 
-[data-resume-item='split'] :not(ul, ol, li) {
+/* Only the header rows (before the list) avoid a break after them. Bullet
+   contents, wrappers holding the list, and rows after it must not: Chromium
+   carries break-after from a last child up to its parent, so "avoid" would
+   escape the entry and chain long entries into one unbreakable block, pushing
+   a whole section to the next page. */
+[data-resume-item='split']
+  :not(ul, ol, li, li *, :has(ul, ol), :is(ul, ol) ~ *, :is(ul, ol) ~ * *) {
   break-after: avoid;
 }
 

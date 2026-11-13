@@ -459,6 +459,35 @@ Guidelines:
 
 Output plain text only. No JSON, no markdown formatting."""
 
+FOLLOW_UP_EMAIL_PROMPT = """Write a short follow-up email about a job application that has had no reply yet.
+
+IMPORTANT: Write in {output_language}.
+
+Application:
+{application_context}
+
+Job Description:
+{job_description}
+
+Candidate Resume (JSON):
+{resume_data}
+
+Guidelines:
+- Write the Subject line label and greeting in {output_language}, like everything else
+- First line: the word for "Subject" in {output_language}, a colon, and a short subject naming the role
+- Body: 60-120 words
+- Open with a neutral greeting, or greet the hiring contact by name if the job description names one
+- Restate interest in the role, naming the role and company when they are given
+- One sentence on the strongest match between the resume and the job description, with a concrete result if the resume has one
+- Close politely and without pressure: ask whether there is an update on the timeline, or anything else they need
+- Sign off with the candidate's name from the resume. If the resume has no name, end without one
+- Use only facts from the resume and the job description. Do NOT invent contacts, conversations, interviews, dates or metrics
+- Do NOT include placeholder brackets
+- Do NOT use phrases like "excited about" or "passionate about"
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+
+Output plain text only. No JSON, no markdown formatting."""
+
 INTERVIEW_PREP_PROMPT = """Generate structured interview preparation for this tailored resume and job.
 
 IMPORTANT: Write in {output_language}.

@@ -9,4 +9,10 @@ import os
 # LITELLM_LOCAL_MODEL_COST_MAP=False to opt back into the live registry.
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
+# Redact API keys from every log record (server, CLI, MCP and scripts alike):
+# provider errors can echo the key, and routes log exception text.
+from app.redaction import install_log_redaction  # noqa: E402
+
+install_log_redaction()
+
 __version__ = "1.4.0"

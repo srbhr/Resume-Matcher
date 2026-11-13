@@ -1230,6 +1230,7 @@
     "pageBreak": "Salto de página",
     "pageCountSingular": "{count} página",
     "pageCountPlural": "{count} páginas",
+    "pageOfTotal": "Página {page} de {total}",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar"
   },
@@ -1473,6 +1474,20 @@
       "resumeUnavailable": "El currículum enviado ya no está disponible.",
       "loadFailed": "No se pudo cargar esta candidatura.",
       "editResume": "Editar currículum"
+    },
+    "followUp": {
+      "due": "Hacer seguimiento",
+      "title": "Seguimiento",
+      "description": "Días desde el envío: {days}",
+      "agentHint": "En modo agente, pide a tu agente de código que escriba el correo de seguimiento.",
+      "draft": "Redactar correo de seguimiento",
+      "drafting": "Redactando…",
+      "failed": "No se pudo redactar el correo de seguimiento.",
+      "draftLabel": "Correo de seguimiento",
+      "copy": "Copiar",
+      "copied": "¡Copiado!",
+      "moveToNoResponse": "Mover a Sin respuesta",
+      "moving": "Moviendo…"
     },
     "bulk": {
       "selected": "{count} seleccionadas",

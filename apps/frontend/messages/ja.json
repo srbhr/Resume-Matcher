@@ -1230,6 +1230,7 @@
     "pageBreak": "改ページ",
     "pageCountSingular": "{count} ページ",
     "pageCountPlural": "{count} ページ",
+    "pageOfTotal": "{page} / {total} ページ",
     "zoomIn": "拡大",
     "zoomOut": "縮小"
   },
@@ -1473,6 +1474,20 @@
       "resumeUnavailable": "応募した履歴書は利用できなくなりました。",
       "loadFailed": "この応募を読み込めませんでした。",
       "editResume": "履歴書を編集"
+    },
+    "followUp": {
+      "due": "フォローアップ",
+      "title": "フォローアップ",
+      "description": "応募からの日数：{days}",
+      "agentHint": "エージェントモードでは、コーディングエージェントにフォローアップメールの作成を依頼してください。",
+      "draft": "フォローアップメールを作成",
+      "drafting": "作成中…",
+      "failed": "フォローアップメールを作成できませんでした。",
+      "draftLabel": "フォローアップメール",
+      "copy": "コピー",
+      "copied": "コピーしました！",
+      "moveToNoResponse": "返信なしに移動",
+      "moving": "移動中…"
     },
     "bulk": {
       "selected": "{count} 件選択中",

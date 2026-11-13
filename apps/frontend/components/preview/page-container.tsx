@@ -3,6 +3,7 @@
 import React from 'react';
 import { type PageSize, type MarginSettings } from '@/lib/types/template-settings';
 import { PAGE_DIMENSIONS, mmToPx } from '@/lib/constants/page-dimensions';
+import { useTranslations } from '@/lib/i18n';
 
 interface PageContainerProps {
   pageSize: PageSize;
@@ -33,6 +34,7 @@ export function PageContainer({
   contentOffset = 0,
   contentEnd,
 }: PageContainerProps) {
+  const { t } = useTranslations();
   const pageDims = PAGE_DIMENSIONS[pageSize];
   const pageWidthPx = mmToPx(pageDims.width);
   const pageHeightPx = mmToPx(pageDims.height);
@@ -110,7 +112,7 @@ export function PageContainer({
           className="absolute bottom-2 right-3 font-mono text-xs text-steel uppercase tracking-wider tabular-nums"
           style={{ transform: `scale(${1 / scale})`, transformOrigin: 'bottom right' }}
         >
-          Page {pageNumber} of {totalPages}
+          {t('preview.pageOfTotal', { page: pageNumber, total: totalPages })}
         </div>
       </div>
     </div>

@@ -1,10 +1,14 @@
 """Kanban application-tracker endpoints."""
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
+from app.ai_limits import MAX_JOB_CHARACTERS, PromptSizeError, require_source_size
+from app.config_cache import get_content_language
 from app.database import DatabaseBusyError, db
 from app.schemas import (
     APPLICATION_STATUS_ORDER,
@@ -15,13 +19,21 @@ from app.schemas import (
     ApplicationUpdate,
     BulkDelete,
     BulkStatusUpdate,
+    GenerateContentResponse,
     ManualApplicationCreate,
 )
+from app.services.cover_letter import generate_follow_up_email
 from app.services.improver import extract_job_keywords
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/applications", tags=["Application Tracker"])
+# Model-backed card actions share the AI operation budget: 504 on timeout and
+# 422 on oversized input, like the other AI endpoints. Card CRUD stays on the
+# plain router.
+ai_router = APIRouter(
+    route_class=AIOperationRoute, prefix="/applications", tags=["Application Tracker"]
+)
 
 
 def _group_by_status(
@@ -198,6 +210,75 @@ async def bulk_delete_applications(request: BulkDelete) -> ApplicationActionResp
         )
     return ApplicationActionResponse(
         message=f"Deleted {deleted} application(s)", affected=deleted
+    )
+
+
+# Statuses whose cards can still get a follow-up, matching the tracker UI.
+_AWAITING_REPLY = ("applied", "no_response")
+
+
+def _days_since(iso_timestamp: str | None, now: datetime) -> int | None:
+    """Whole days from ``iso_timestamp`` to ``now``; None if missing or unreadable."""
+    if not iso_timestamp:
+        return None
+    try:
+        then = datetime.fromisoformat(iso_timestamp)
+    except ValueError:
+        return None
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=timezone.utc)
+    return max(0, (now - then).days)
+
+
+@ai_router.post("/{application_id}/follow-up", response_model=GenerateContentResponse)
+async def draft_follow_up(application_id: str) -> GenerateContentResponse:
+    """Draft a follow-up email from the card's job, resume and applied date.
+
+    The draft is returned for the user to edit and copy; nothing is saved.
+    """
+    application = await db.get_application(application_id)
+    if application is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    if application["status"] not in _AWAITING_REPLY:
+        raise HTTPException(
+            status_code=400,
+            detail="Follow-ups are for applications still waiting on a reply.",
+        )
+    job = await db.get_job(application["job_id"])
+    if job is None or not job.get("content"):
+        raise HTTPException(
+            status_code=400, detail="This application has no job description."
+        )
+    resume = await db.get_resume(application["resume_id"])
+    resume_data = resume.get("processed_data") if resume else None
+    if not resume_data:
+        raise HTTPException(
+            status_code=400, detail="This application's resume is unavailable."
+        )
+    require_source_size(job["content"], MAX_JOB_CHARACTERS)
+    require_source_size(resume_data)
+
+    try:
+        content = await generate_follow_up_email(
+            resume_data,
+            job["content"],
+            company=application.get("company"),
+            role=application.get("role"),
+            days_since_applied=_days_since(
+                application.get("applied_at"), datetime.now(timezone.utc)
+            ),
+            language=get_content_language(),
+        )
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        raise
+    except Exception as e:
+        logger.error("Follow-up email draft failed: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to draft a follow-up email. Please try again.",
+        )
+    return GenerateContentResponse(
+        content=content, message="Follow-up email drafted successfully"
     )
 
 

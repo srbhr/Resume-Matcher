@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { StatusIndicator } from '@/components/ui/status-indicator';
+import { FollowUpPanel } from '@/components/tracker/follow-up-panel';
 import { useTranslations } from '@/lib/i18n';
 import { formatDate } from '@/lib/format-date';
 import { getApplicationDetail, updateApplication, type ApplicationDetail } from '@/lib/api/tracker';
@@ -154,6 +155,23 @@ export function CardDetailModal({
                   </Button>
                 </div>
               </div>
+
+              {(detail.status === 'applied' || detail.status === 'no_response') && (
+                <FollowUpPanel
+                  key={detail.application_id}
+                  application={detail}
+                  onMoved={() => {
+                    // The modal may show another card by the time the move finishes.
+                    const movedId = detail.application_id;
+                    setDetail((current) =>
+                      current?.application_id === movedId
+                        ? { ...current, status: 'no_response' }
+                        : current
+                    );
+                    onUpdated();
+                  }}
+                />
+              )}
 
               {!resumeAvailable && (
                 <Alert tone="warning">{t('tracker.modal.resumeUnavailable')}</Alert>
