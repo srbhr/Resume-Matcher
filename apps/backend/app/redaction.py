@@ -44,7 +44,12 @@ def _redact_value(value: Any) -> Any:
         return redact_credentials(value)
     if value is None or isinstance(value, (bool, int, float)):
         return value
-    text = str(value)
+    try:
+        text = str(value)
+    except Exception:
+        # Formatting may use repr(); if the record still shows a credential,
+        # _redact_message flattens it.
+        return value
     redacted = redact_credentials(text)
     return value if redacted == text else redacted
 

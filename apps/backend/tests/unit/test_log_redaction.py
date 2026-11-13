@@ -126,3 +126,24 @@ def test_a_key_split_between_template_and_argument_is_redacted(
 
     assert "request failed" in stream.getvalue()
     assert "azureKey0123456789abcdef" not in stream.getvalue()
+
+
+class _ReprOnly:
+    """Formats with %r, but str() raises."""
+
+    def __repr__(self) -> str:
+        return f"<Client api_key={KEY}>"
+
+    def __str__(self) -> str:
+        raise RuntimeError("no str for this object")
+
+
+def test_an_argument_whose_str_raises_is_still_logged_and_redacted(
+    log_output: tuple[logging.Logger, io.StringIO],
+) -> None:
+    logger, stream = log_output
+
+    logger.error("Provider client: %r", _ReprOnly())
+
+    assert "Provider client: <Client" in stream.getvalue()
+    assert KEY not in stream.getvalue()
