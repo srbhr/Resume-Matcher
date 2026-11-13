@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextContainer
-from playwright.async_api import async_playwright
+from playwright.async_api import Page, async_playwright
 
 from app.pdf import _launch_browser
 
@@ -171,7 +171,7 @@ def _box_resume_html(
 
     def section(title: str, body: str) -> str:
         return (
-            f'<div class="resume-section" data-resume-section>'
+            f'<div class="resume-section" data-resume-section id="{title.lower()}">'
             f'<h3 class="resume-section-title" data-resume-section-title '
             f'style="height:20px;margin:0">{title}</h3>{body}</div>'
         )
@@ -202,12 +202,29 @@ def _box_resume_html(
     )
 
 
+PAGE_END = (297 - 20) * 96 / 25.4  # A4 minus the 10mm top and bottom margins, in px
+
+
+async def _bottoms(page: Page, selector: str) -> list[float]:
+    return await page.evaluate(
+        "s => [...document.querySelectorAll(s)]"
+        ".map(e => e.getBoundingClientRect().bottom + scrollY)",
+        selector,
+    )
+
+
 async def _summary_heights_that_push_experience(
-    summary_heights: range, **layout: object
+    summary_heights: range, *, crossing: str, **layout: object
 ) -> list[int]:
-    """Summary heights at which EXPERIENCE does not start on page 1."""
+    """Summary heights at which EXPERIENCE does not start on page 1.
+
+    The sweep must move the bottom of an element matching ``crossing`` past the
+    page end, or it tests nothing; that is asserted, so a layout change that
+    shifts the boxes fails here instead of passing vacuously.
+    """
     playwright = await async_playwright().start()
     pushed = []
+    ends: list[list[float]] = []
     try:
         try:
             browser = await _launch_browser(playwright)
@@ -216,8 +233,11 @@ async def _summary_heights_that_push_experience(
                 pytest.skip(f"chromium unavailable: {error}")
             raise
         page = await browser.new_page()
+        await page.emulate_media(media="print")
         for height in summary_heights:
             await page.set_content(_box_resume_html(summary_height=height, **layout))
+            if height in (summary_heights[0], summary_heights[-1]):
+                ends.append(await _bottoms(page, crossing))
             pdf = await page.pdf(format="A4", margin={"top": "10mm", "bottom": "10mm"})
             first = next(extract_pages(io.BytesIO(pdf)))
             text = "".join(
@@ -228,6 +248,9 @@ async def _summary_heights_that_push_experience(
         await browser.close()
     finally:
         await playwright.stop()
+    assert any(first <= PAGE_END <= last for first, last in zip(*ends)), (
+        f"no {crossing} ends at the page end within summary heights {summary_heights}"
+    )
     return pushed
 
 
@@ -247,7 +270,11 @@ async def test_an_entry_margin_at_the_page_end_does_not_push_the_section(
 ) -> None:
     # An entry that may split ends near the bottom of page 1.
     pushed = await _summary_heights_that_push_experience(
-        SWEEP_ENTRY[entry_list], entries=8, split=True, entry_list=entry_list
+        SWEEP_ENTRY[entry_list],
+        crossing="#experience [data-resume-item]",
+        entries=8,
+        split=True,
+        entry_list=entry_list,
     )
     assert pushed == [], f"Experience moved to page 2 at summary heights {pushed}"
 
@@ -256,7 +283,11 @@ async def test_an_entry_margin_at_the_page_end_does_not_push_the_section_two_col
     None
 ):
     pushed = await _summary_heights_that_push_experience(
-        range(124, 150), entries=8, split=True, columns=TWO_COLUMN_TEMPLATES[0]
+        range(124, 150),
+        crossing="#experience [data-resume-item]",
+        entries=8,
+        split=True,
+        columns=TWO_COLUMN_TEMPLATES[0],
     )
     assert pushed == [], f"Experience moved to page 2 at summary heights {pushed}"
 
@@ -267,6 +298,10 @@ async def test_a_section_margin_at_the_page_end_does_not_push_the_section(
 ) -> None:
     # The whole Experience section ends near the bottom of page 1.
     pushed = await _summary_heights_that_push_experience(
-        range(528, 562), entries=3, split=False, columns=columns
+        range(528, 562),
+        crossing="#experience",
+        entries=3,
+        split=False,
+        columns=columns,
     )
     assert pushed == [], f"Experience moved to page 2 at summary heights {pushed}"
