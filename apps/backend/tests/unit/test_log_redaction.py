@@ -10,6 +10,7 @@ import logging
 from collections.abc import Iterator
 
 import pytest
+from uvicorn.logging import AccessFormatter
 
 import app  # noqa: F401  (installs the redaction)
 
@@ -85,3 +86,43 @@ def test_ordinary_messages_are_unchanged(
     logger.info("Rendered %d pages for %s", 3, "resume-1")
 
     assert stream.getvalue() == "test.log_redaction Rendered 3 pages for resume-1\n"
+
+
+def _access_record(path: str) -> logging.LogRecord:
+    # Uvicorn logs each request with these five arguments; AccessFormatter unpacks them.
+    return logging.getLogger("uvicorn.access").makeRecord(
+        "uvicorn.access",
+        logging.INFO,
+        __file__,
+        1,
+        '%s - "%s %s HTTP/%s" %d',
+        ("127.0.0.1:5000", "GET", path, "1.1", 200),
+        None,
+    )
+
+
+def test_uvicorn_access_logs_still_format() -> None:
+    formatter = AccessFormatter('%(client_addr)s - "%(request_line)s" %(status_code)s')
+
+    line = formatter.format(_access_record("/api/v1/health"))
+
+    assert line == '127.0.0.1:5000 - "GET /api/v1/health HTTP/1.1" 200 OK'
+
+
+def test_a_key_in_an_access_log_path_is_redacted_and_the_line_still_formats() -> None:
+    formatter = AccessFormatter('%(client_addr)s - "%(request_line)s" %(status_code)s')
+
+    line = formatter.format(_access_record(f"/api/v1/status?api_key={KEY}"))
+
+    assert line == '127.0.0.1:5000 - "GET /api/v1/status?<redacted> HTTP/1.1" 200 OK'
+
+
+def test_a_key_split_between_template_and_argument_is_redacted(
+    log_output: tuple[logging.Logger, io.StringIO],
+) -> None:
+    logger, stream = log_output
+
+    logger.warning("request failed: api-key: %s", "azureKey0123456789abcdef")
+
+    assert "request failed" in stream.getvalue()
+    assert "azureKey0123456789abcdef" not in stream.getvalue()

@@ -9,6 +9,7 @@ log. LiteLLM filters a few library loggers (httpx, uvicorn), not the app's own.
 import logging
 import re
 import traceback
+from collections.abc import Mapping
 from typing import Any
 
 CREDENTIAL_PATTERNS: tuple[re.Pattern[str], ...] = (
@@ -37,6 +38,48 @@ def redact_credentials(text: str) -> str:
     return text
 
 
+def _redact_value(value: Any) -> Any:
+    """A log argument with credentials redacted; untouched if it has none."""
+    if isinstance(value, str):
+        return redact_credentials(value)
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    text = str(value)
+    redacted = redact_credentials(text)
+    return value if redacted == text else redacted
+
+
+def _redact_message(record: logging.LogRecord) -> None:
+    """Redact the record's message, keeping its arguments' shape when possible.
+
+    Some formatters read ``record.args`` directly (uvicorn's AccessFormatter
+    unpacks its five request fields), so a record with no credential is left
+    alone, and one with a credential has its template and each argument redacted
+    in place. Only a credential split between the template and an argument
+    ("api-key: %s") flattens the record into one redacted string.
+    """
+    try:
+        message = record.getMessage()
+    except Exception:
+        # A malformed format string: leave it for logging's own error report.
+        return
+    if redact_credentials(message) == message:
+        return
+    if isinstance(record.msg, str):
+        record.msg = redact_credentials(record.msg)
+    if isinstance(record.args, tuple):
+        record.args = tuple(_redact_value(value) for value in record.args)
+    elif isinstance(record.args, Mapping):
+        record.args = {key: _redact_value(value) for key, value in record.args.items()}
+    try:
+        rebuilt = record.getMessage()
+    except Exception:
+        rebuilt = None
+    if rebuilt is None or redact_credentials(rebuilt) != rebuilt:
+        record.msg = redact_credentials(message)
+        record.args = None
+
+
 def install_log_redaction() -> None:
     """Redact the message, traceback and stack of every log record. Idempotent."""
     previous = logging.getLogRecordFactory()
@@ -45,13 +88,7 @@ def install_log_redaction() -> None:
 
     def make_record(*args: Any, **kwargs: Any) -> logging.LogRecord:
         record = previous(*args, **kwargs)
-        try:
-            message = record.getMessage()
-        except Exception:
-            # A malformed format string: leave it for logging's own error report.
-            return record
-        record.msg = redact_credentials(message)
-        record.args = None
+        _redact_message(record)
         if record.exc_info and record.exc_info[1] is not None:
             # Formatters reuse a preset exc_text instead of formatting the traceback.
             record.exc_text = redact_credentials(
