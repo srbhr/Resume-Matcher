@@ -229,7 +229,8 @@
 .resume-items {
   display: flex;
   flex-direction: column;
-  gap: var(--item-gap);
+  /* The item gap twice: entries here have no margin (see .resume-items > .resume-item). */
+  gap: calc(var(--item-gap) * 2);
 }
 
 /* Individual item within a section */
@@ -239,6 +240,13 @@
 }
 
 .resume-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Chromium mis-paginates a flex column whose items have margins: when an entry's
+   bottom margin crosses the page end, it moves the whole section to the next page,
+   leaving a blank gap. So entries in a list are spaced by the list's gap instead. */
+.resume-items > .resume-item {
   margin-bottom: 0;
 }
 

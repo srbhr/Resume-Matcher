@@ -121,7 +121,14 @@
 .entries {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--item-gap) * 2);
+  /* Three item gaps: the two it had, plus the margin entries no longer have (see below). */
+  gap: calc(var(--item-gap) * 3);
+}
+
+/* Entries are spaced by the gap, not their margin: Chromium mis-paginates a flex
+   column whose items have margins (see .resume-items in _base.module.css). */
+.entries > [data-resume-item] {
+  margin-bottom: 0;
 }
 
 .entryHeading {
