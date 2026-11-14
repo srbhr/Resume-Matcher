@@ -3,6 +3,7 @@
 import { CheckCircle, Info, Warning, WarningCircle, X } from '@phosphor-icons/react';
 import { Toaster as SonnerToaster, toast } from 'sonner';
 import { useTranslations } from '@/lib/i18n';
+import { buttonClass } from './button';
 
 /**
  * Non-blocking notifications. Call `toast.success(message)` (or `.error`,
@@ -30,10 +31,15 @@ const CLASS_NAMES = {
   error: '[&_[data-icon]]:text-destructive',
   warning: '[&_[data-icon]]:text-warning-text',
   info: '[&_[data-icon]]:text-primary',
-  closeButton:
-    'order-last -m-1 inline-flex shrink-0 items-center justify-center p-1 text-steel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-  actionButton:
-    'shrink-0 self-center border border-ink bg-primary px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider text-white shadow-sw-sm hover:bg-primary-hover',
+  // Both buttons come from the Button primitive, so they keep its focus ring, hit
+  // area and press-in. The close button is the Dialog's (ghost, icon-sm); the
+  // negative margin keeps a one-line toast as tall as its text.
+  closeButton: buttonClass({
+    variant: 'ghost',
+    size: 'icon-sm',
+    className: 'order-last -my-1.5 -mr-2 shrink-0',
+  }),
+  actionButton: buttonClass({ size: 'sm', className: 'shrink-0 self-center' }),
 };
 
 const ICONS = {

@@ -55,6 +55,31 @@ describe('Toaster', () => {
     expect(element.querySelector('[data-icon] svg')).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('gives every button in a toast the Swiss control focus ring', async () => {
+    render(<Toaster />);
+    act(() => {
+      toast('File removed', { action: { label: 'Undo', onClick: () => {} } });
+    });
+    await screen.findByText('File removed');
+
+    const close = screen.getByRole('button', { name: 'common.dismissNotification' });
+    const action = screen.getByRole('button', { name: 'Undo' });
+    for (const button of [close, action]) {
+      // CLAUDE.md "Focus": controls ring-2 ring-primary ring-offset-2 ring-offset-canvas.
+      expect(button).toHaveClass(
+        'focus-visible:outline-none',
+        'focus-visible:ring-2',
+        'focus-visible:ring-primary',
+        'focus-visible:ring-offset-2',
+        'focus-visible:ring-offset-canvas'
+      );
+    }
+    // The close button matches the Dialog's: a ghost icon button with a 44px hit area.
+    expect(close).toHaveClass('h-8', 'w-8', 'before:absolute');
+    // The action button presses in on hover like every other Button.
+    expect(action).toHaveClass('shadow-sw-sm', 'hover:translate-x-px', 'hover:shadow-none');
+  });
+
   it('labels the region and the close button in the UI language, and closes on click', async () => {
     render(<Toaster />);
     act(() => {
