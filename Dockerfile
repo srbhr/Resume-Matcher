@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Build Frontend
 # ============================================
-FROM node:24.22.1-bookworm AS frontend-builder
+FROM node:26.13.1-bookworm AS frontend-builder
 
 # Build argument for API URL (allows customization at build time)
 # Default routes requests through Next.js rewrites on the same origin.
@@ -72,6 +72,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    # The Node.js binary copied from the frontend builder needs it (Node 26+)
+    libatomic1 \
     # Playwright dependencies
     libnss3 \
     libnspr4 \
@@ -131,6 +133,8 @@ WORKDIR /app
 
 # Copy Node.js runtime from frontend builder for reproducible runtime behavior.
 COPY --from=frontend-builder /usr/local/bin/node /usr/local/bin/node
+# Fail the build, not the container start, if a shared library Node needs is missing.
+RUN node --version
 
 # ============================================
 # Backend Setup

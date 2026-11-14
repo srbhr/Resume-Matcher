@@ -39,7 +39,7 @@ Antes de começar, confira se você tem o seguinte instalado no seu sistema:
 | Ferramenta | Versão mínima | Como verificar | Instalação |
 |------------|---------------|----------------|------------|
 | **Python** | 3.14+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 24.22.1 (fixada em `.nvmrc`; `nvm use`) | `node --version` | [nodejs.org](https://nodejs.org) |
+| **Node.js** | 26.13.1 (fixada em `.nvmrc`; `nvm use`) | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Vem com o Node.js |
 | **uv** | Mais recente | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | **Git** | Qualquer | `git --version` | [git-scm.com](https://git-scm.com) |
