@@ -727,6 +727,22 @@ def _extract_choice_primary_text(choice: Any) -> str | None:
     return None
 
 
+def _output_budget_exhausted(response: Any) -> bool:
+    """Return True when the provider stopped because ``max_tokens`` ran out.
+
+    LiteLLM reports every provider's length stop (Anthropic's
+    ``stop_reason: "max_tokens"``) as ``finish_reason == "length"``.
+    """
+    return _safe_get(response.choices[0], "finish_reason") == "length"
+
+
+def _reasoning_tokens(response: Any) -> int:
+    """Return the reasoning tokens a response spent, or 0 when not reported."""
+    details = _safe_get(_safe_get(response, "usage"), "completion_tokens_details")
+    count = _safe_get(details, "reasoning_tokens")
+    return count if isinstance(count, int) else 0
+
+
 def _to_code_block(content: str | None, language: str = "text") -> str:
     """Wrap content in a markdown code block for client display."""
     text = (content or "").strip()
@@ -1900,6 +1916,7 @@ async def complete_json(
         _supports_json_mode(model_name) or _openai_compatible_supports_json_mode(config)
     )
     json_mode_failed = False
+    thinking_exhausted_budget = False
 
     for attempt in range(retries + 1):
         try:
@@ -1936,6 +1953,15 @@ async def complete_json(
                 and reasoning_effort in ("low", "medium", "high")
             ):
                 reasoning_effort = "minimal"
+            # Claude models that think by default (Sonnet 5 and later) run
+            # adaptive thinking at high effort when no effort is sent, and the
+            # thinking spends the same max_tokens as the answer. A large resume
+            # diff can use the whole budget thinking and return no text, so
+            # retrying unchanged fails the same way. After thinking exhausted
+            # the budget, retry at low effort: LiteLLM sends it as
+            # output_config.effort on adaptive-thinking models.
+            if thinking_exhausted_budget and config.provider == "anthropic":
+                reasoning_effort = "low"
             # HY3-Free on OpenCode Zen otherwise spends much of its output
             # allocation in ``reasoning_content`` and truncates large resume
             # JSON. LiteLLM filters unknown top-level parameters, so use its
@@ -1957,6 +1983,16 @@ async def complete_json(
             # consumed its budget on reasoning but produced no final answer,
             # treat it as an empty completion and retry with the full budget.
             content = _extract_choice_primary_text(response.choices[0])
+
+            # A response cut at max_tokens holds no answer or a partial one.
+            # Report the cause rather than "empty" or "no JSON found".
+            if _output_budget_exhausted(response):
+                thinking_exhausted_budget = _reasoning_tokens(response) > 0
+                raise ValueError(
+                    f"Output token budget ({max_tokens}) exhausted before the "
+                    f"JSON answer completed (reasoning tokens: "
+                    f"{_reasoning_tokens(response)})"
+                )
 
             if not content:
                 raise ValueError("Empty response from LLM")
