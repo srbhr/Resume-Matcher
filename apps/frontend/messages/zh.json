@@ -22,6 +22,8 @@
     "finish": "完成",
     "optional": "可选",
     "close": "关闭",
+    "notifications": "通知",
+    "dismissNotification": "关闭通知",
     "ok": "确定",
     "search": "搜索",
     "filter": "筛选",

@@ -20,6 +20,7 @@ import { StatusIndicator } from '@/components/ui/status-indicator';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Alert } from '@/components/ui/alert';
 import { ConfirmDialog, type ConfirmDialogProps } from '@/components/ui/confirm-dialog';
+import { toast } from '@/components/ui/toaster';
 import {
   DownloadSimple,
   FloppyDisk,
@@ -1300,7 +1301,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       const userName = resumeData.personalInfo?.name?.trim() || null;
       const filename = buildResumeFilename(userName, company, resumeId, 'resume');
       downloadBlobAsFile(blob, filename);
-      showNotification(t('builder.alerts.downloadSuccess'), 'success');
+      toast.success(t('builder.alerts.downloadSuccess'));
     } catch (error) {
       console.error('Failed to download resume:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {

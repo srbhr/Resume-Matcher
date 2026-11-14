@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusIndicator } from '@/components/ui/status-indicator';
+import { toast } from '@/components/ui/toaster';
 import { DefaultBadge } from '@/components/common/default-badge';
 import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
 import { PaginatedPreview } from '@/components/preview';
@@ -73,7 +74,6 @@ export default function ResumeViewerPage() {
   const [showSetDefaultSuccessDialog, setShowSetDefaultSuccessDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteSuccessDialog, setShowDeleteSuccessDialog] = useState(false);
-  const [showDownloadSuccessDialog, setShowDownloadSuccessDialog] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [renameError, setRenameError] = useState<string | null>(null);
@@ -125,7 +125,6 @@ export default function ResumeViewerPage() {
     setDeleteError(null);
     setShowDeleteDialog(false);
     setShowDeleteSuccessDialog(false);
-    setShowDownloadSuccessDialog(false);
     setShowSetDefaultSuccessDialog(false);
     setIsSettingDefault(false);
     setSetDefaultError(null);
@@ -380,7 +379,7 @@ export default function ResumeViewerPage() {
       const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
       downloadBlobAsFile(blob, filename);
       if (!isCurrentDownload(token)) return;
-      setShowDownloadSuccessDialog(true);
+      toast.success(t('builder.alerts.downloadSuccess'));
     } catch (err) {
       if (!isCurrentDownload(token)) return;
       console.error('Failed to download resume:', err);
@@ -424,10 +423,6 @@ export default function ResumeViewerPage() {
   const handleDeleteSuccessConfirm = () => {
     setShowDeleteSuccessDialog(false);
     router.push('/dashboard');
-  };
-
-  const handleDownloadSuccessConfirm = () => {
-    setShowDownloadSuccessDialog(false);
   };
 
   // Delete-related dialogs, shared by the failed-processing error branch and the
@@ -730,17 +725,6 @@ export default function ResumeViewerPage() {
         description={t('resumeViewer.setDefaultSuccess')}
         confirmLabel={t('common.ok')}
         onConfirm={() => setShowSetDefaultSuccessDialog(false)}
-        variant="success"
-        showCancelButton={false}
-      />
-
-      <ConfirmDialog
-        open={showDownloadSuccessDialog}
-        onOpenChange={setShowDownloadSuccessDialog}
-        title={t('common.success')}
-        description={t('builder.alerts.downloadSuccess')}
-        confirmLabel={t('common.ok')}
-        onConfirm={handleDownloadSuccessConfirm}
         variant="success"
         showCancelButton={false}
       />

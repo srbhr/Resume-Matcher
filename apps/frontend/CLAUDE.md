@@ -36,6 +36,7 @@ components/
   ui/                # primitives: button (+ buttonClass), input, textarea, label,
                      #   dialog, confirm-dialog, link-dialog, dropdown, card,
                      #   retro-tabs, toggle-switch, segmented-control, alert,
+                     #   toaster (+ lazy-toaster: sonner toasts, Swiss-styled),
                      #   brand-icon (monochrome brand marks), status-indicator,
                      #   panel-header, empty-state, page-frame, page-header,
                      #   rich-text-editor (Tiptap), rich-text-toolbar
@@ -156,7 +157,7 @@ Conventions:
 - **Spacing:** 4px scale: `1, 2, 3, 4, 6, 8, 12, 16`. No `5, 7, 9, 10, 11, 14`, no half-steps outside `components/ui/**`.
 - **Selection is ink, blue is action:** a selected segment, tab or switch is `bg-ink text-white`.
 - **Clickable tile highlight (owner decision, round 2):** a dashboard tile highlights on hover and keyboard focus with a full `bg-primary` fill and white text, and **no ink outline**. Keyboard focus keeps the fill and adds a 2px inset white ring (`focus-visible:ring-2 ring-inset ring-white`). It replaces the earlier white-lift tile treatment.
-- **Use the primitives** in `components/ui/**` and don't restyle them at call sites. A `<Link>` that looks like a button takes `buttonClass({ variant, size })`, never a `<Button>` inside a `<Link>`. Pages use `PageFrame` (`width`: `narrow` = `max-w-4xl` for single-column form pages, `default` = `max-w-[86rem]`, `wide` = `max-w-[104rem]`) + `PageHeader` (builder and tracker use a compact single-row header on purpose); alerts are `Alert`; persistent status is `StatusIndicator` (`SpinnerGap` only for work in flight); panels open with `PanelHeader`; empty lists use `EmptyState`. Dates go through `formatDate(value, locale)`.
+- **Use the primitives** in `components/ui/**` and don't restyle them at call sites. A `<Link>` that looks like a button takes `buttonClass({ variant, size })`, never a `<Button>` inside a `<Link>`. Pages use `PageFrame` (`width`: `narrow` = `max-w-4xl` for single-column form pages, `default` = `max-w-[86rem]`, `wide` = `max-w-[104rem]`) + `PageHeader` (builder and tracker use a compact single-row header on purpose); alerts are `Alert`; an outcome the user doesn't act on ("Resume downloaded") is a toast: `toast.success(…)` imported from `components/ui/toaster`, never from `sonner` (it runs unstyled, so the wrapper's classes are its whole look). Choices and retryable errors stay `ConfirmDialog`; persistent status is `StatusIndicator` (`SpinnerGap` only for work in flight); panels open with `PanelHeader`; empty lists use `EmptyState`. Dates go through `formatDate(value, locale)`.
 - **Focus:** controls `focus-visible:ring-2 ring-primary ring-offset-2 ring-offset-canvas`; fields `focus-visible:border-primary ring-1 ring-primary`. Never a bare `focus:`.
 - **Legacy names:** don't use the shadcn-era `bg-background`, `steel-grey`, `paper-tint`, `muted-foreground`, `secondary`, `muted`; the guard's `legacy-token` rule flags them (renames are in the pack's anti-patterns).
 

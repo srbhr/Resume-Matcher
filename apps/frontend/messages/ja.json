@@ -22,6 +22,8 @@
     "finish": "完了",
     "optional": "任意",
     "close": "閉じる",
+    "notifications": "通知",
+    "dismissNotification": "通知を閉じる",
     "ok": "OK",
     "search": "検索",
     "filter": "フィルター",
