@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ResumeViewerPage from '@/app/(default)/resumes/[id]/page';
+import { Toaster, toast } from '@/components/ui/toaster';
 import {
   deleteResume,
   downloadResumePdf,
@@ -71,7 +72,12 @@ describe('resume viewer operation errors', () => {
   ])('shows a retryable download error for %s', async (failure) => {
     mockedDownload.mockRejectedValue(failure);
     vi.mocked(openUrlInNewTab).mockReturnValue(false);
-    render(<ResumeViewerPage />);
+    render(
+      <>
+        <ResumeViewerPage />
+        <Toaster />
+      </>
+    );
 
     const downloadButton = await screen.findByRole('button', {
       name: 'resumeViewer.downloadResume',
@@ -89,8 +95,11 @@ describe('resume viewer operation errors', () => {
     mockedDownload.mockResolvedValue(new Blob(['pdf']));
     await act(async () => screen.getByRole('button', { name: 'common.retry' }).click());
     expect(mockedDownload).toHaveBeenCalledTimes(2);
-    expect(await screen.findByText('common.success')).toBeInTheDocument();
-    expect(screen.queryByText('resumeViewer.downloadFailedTitle')).not.toBeInTheDocument();
+    // #1091: success is a toast, not a dialog the user has to dismiss.
+    expect(await screen.findByText('builder.alerts.downloadSuccess')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText('common.success')).not.toBeInTheDocument();
+    act(() => toast.dismiss());
   });
 
   it('retains the edited title and offers retry after rename failure', async () => {

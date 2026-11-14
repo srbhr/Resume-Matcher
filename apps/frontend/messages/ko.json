@@ -22,6 +22,8 @@
     "finish": "완료",
     "optional": "선택 사항",
     "close": "닫기",
+    "notifications": "알림",
+    "dismissNotification": "알림 닫기",
     "ok": "확인",
     "search": "검색",
     "filter": "필터",

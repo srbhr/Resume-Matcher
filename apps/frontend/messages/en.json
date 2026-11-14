@@ -22,6 +22,8 @@
     "finish": "Finish",
     "optional": "Optional",
     "close": "Close",
+    "notifications": "Notifications",
+    "dismissNotification": "Dismiss notification",
     "ok": "OK",
     "search": "Search",
     "filter": "Filter",

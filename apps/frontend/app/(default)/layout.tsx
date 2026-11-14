@@ -5,6 +5,7 @@ import { LocalizedErrorBoundary } from '@/components/common/error-boundary';
 import { MotionProvider } from '@/components/common/motion-provider';
 import { EffectsProvider } from '@/lib/context/effects-context';
 import { BlockDissolveProvider } from '@/components/effects/block-dissolve-provider';
+import { LazyToaster } from '@/components/ui/lazy-toaster';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
             </MotionProvider>
           </LocalizedErrorBoundary>
         </ResumePreviewProvider>
+        <LazyToaster />
       </LanguageProvider>
     </StatusCacheProvider>
   );

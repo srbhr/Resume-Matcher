@@ -229,3 +229,13 @@
     transform: none;
   }
 }
+
+/* Toasts (components/ui/toaster.tsx). Sonner's runtime stylesheet is unlayered,
+   so it beats Tailwind utilities, and it gives a focused toast a blurred shadow.
+   This keeps the hard toast shadow and adds the Swiss focus ring instead; the
+   extra attribute out-ranks sonner's selector wherever its stylesheet lands. */
+[data-sonner-toaster] [data-sonner-toast]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: var(--shadow-sw-default);
+}

@@ -264,29 +264,33 @@ TWO_COLUMN_TEMPLATES = [
 ]
 
 
+@pytest.mark.parametrize("split", [True, False], ids=["split", "whole"])
 @pytest.mark.parametrize("entry_list", ["resume-items", "entries"])
 async def test_an_entry_margin_at_the_page_end_does_not_push_the_section(
-    entry_list: str,
+    entry_list: str, split: bool
 ) -> None:
-    # An entry that may split ends near the bottom of page 1.
+    # An entry ends near the bottom of page 1. "whole" is one that can't split, as
+    # an entry with fewer than 4 bullets can't (#1094: every job had 3 or fewer);
+    # it is a single box of the same height as the split entry.
     pushed = await _summary_heights_that_push_experience(
         SWEEP_ENTRY[entry_list],
         crossing="#experience [data-resume-item]",
         entries=8,
-        split=True,
+        split=split,
         entry_list=entry_list,
     )
     assert pushed == [], f"Experience moved to page 2 at summary heights {pushed}"
 
 
-async def test_an_entry_margin_at_the_page_end_does_not_push_the_section_two_column() -> (
-    None
-):
+@pytest.mark.parametrize("split", [True, False], ids=["split", "whole"])
+async def test_an_entry_margin_at_the_page_end_does_not_push_the_section_two_column(
+    split: bool,
+) -> None:
     pushed = await _summary_heights_that_push_experience(
         range(124, 150),
         crossing="#experience [data-resume-item]",
         entries=8,
-        split=True,
+        split=split,
         columns=TWO_COLUMN_TEMPLATES[0],
     )
     assert pushed == [], f"Experience moved to page 2 at summary heights {pushed}"
