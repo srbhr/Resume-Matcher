@@ -8,7 +8,8 @@ import { useTranslations } from '@/lib/i18n';
  * Non-blocking notifications. Call `toast.success(message)` (or `.error`,
  * `.warning`, `.info`) from anywhere under the `(default)` layout, which mounts
  * one `<Toaster />` (through `LazyToaster`). Import `toast` from here, not from
- * `sonner`, so every toast gets the Swiss styling below.
+ * `sonner`, so toasts keep one home. The styling lives on the mounted Toaster, so
+ * it applies to every toast; never mount sonner's own `<Toaster />` beside it.
  *
  * Use a toast for an outcome the user doesn't have to act on ("Resume
  * downloaded"). Keep `ConfirmDialog` for choices and for errors that offer a retry.

@@ -269,8 +269,9 @@ TWO_COLUMN_TEMPLATES = [
 async def test_an_entry_margin_at_the_page_end_does_not_push_the_section(
     entry_list: str, split: bool
 ) -> None:
-    # An entry ends near the bottom of page 1. "whole" is an entry with fewer than
-    # 4 bullets, which never splits (#1094: every job had 3 bullets or fewer).
+    # An entry ends near the bottom of page 1. "whole" is one that can't split, as
+    # an entry with fewer than 4 bullets can't (#1094: every job had 3 or fewer);
+    # it is a single box of the same height as the split entry.
     pushed = await _summary_heights_that_push_experience(
         SWEEP_ENTRY[entry_list],
         crossing="#experience [data-resume-item]",
