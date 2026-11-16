@@ -16,7 +16,7 @@ dependencies = [
     "cryptography==50.0.2",
     "httpx==0.28.1",
     "PyJWT[crypto]==2.15.1",
-    "litellm==1.108.0",
+    "litellm==1.109.1",
     "markitdown[docx,pdf]==0.1.9",
     "pdfminer.six==20260107",
     "playwright==1.64.1",
