@@ -1788,3 +1788,112 @@ class TestMaxTokensRejectionFallback:
         assert result == "Hello"
         assert router.acompletion.await_count == 2
         assert router.acompletion.call_args.kwargs["max_completion_tokens"] == 2048
+
+
+def _budget_response(
+    text: str | None, finish_reason: str, reasoning_tokens: int
+) -> MagicMock:
+    choice = MagicMock()
+    choice.message.content = text
+    choice.finish_reason = finish_reason
+    response = MagicMock()
+    response.choices = [choice]
+    response.usage = SimpleNamespace(
+        completion_tokens_details=SimpleNamespace(reasoning_tokens=reasoning_tokens)
+    )
+    return response
+
+
+class TestOutputBudgetExhausted:
+    """A response cut at max_tokens is retried with the cause named, and an
+    Anthropic model whose thinking used the budget retries at low effort."""
+
+    @staticmethod
+    def _router(*responses: MagicMock) -> MagicMock:
+        router = MagicMock()
+        router.acompletion = AsyncMock(side_effect=list(responses))
+        return router
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_anthropic_thinking_exhaustion_retries_at_low_effort(
+        self, mock_get_router, _mock_temp, _mock_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(provider="anthropic", model="claude-sonnet-5", api_key="k")
+        router = self._router(
+            _budget_response(None, "length", 8192),
+            _budget_response('{"ok": true}', "stop", 0),
+        )
+        mock_get_router.return_value = (router, config)
+
+        result = await complete_json(
+            prompt="Diff", max_tokens=8192, schema_type="keywords"
+        )
+
+        assert result == {"ok": True}
+        first, second = (call.kwargs for call in router.acompletion.call_args_list)
+        assert "reasoning_effort" not in first
+        assert second["reasoning_effort"] == "low"
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_truncated_answer_reports_exhausted_budget(
+        self, mock_get_router, _mock_temp, _mock_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(provider="anthropic", model="claude-sonnet-5", api_key="k")
+        truncated = '{"changes": [{"path": "summary"'
+        router = self._router(*[_budget_response(truncated, "length", 6141)] * 3)
+        mock_get_router.return_value = (router, config)
+
+        with pytest.raises(ValueError, match=r"Output token budget \(8192\) exhausted"):
+            await complete_json(prompt="Diff", max_tokens=8192, schema_type="keywords")
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_effort_unchanged_when_no_thinking_was_reported(
+        self, mock_get_router, _mock_temp, _mock_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(provider="anthropic", model="claude-haiku-4-5", api_key="k")
+        router = self._router(
+            _budget_response('{"a": ', "length", 0),
+            _budget_response('{"ok": true}', "stop", 0),
+        )
+        mock_get_router.return_value = (router, config)
+
+        await complete_json(prompt="Diff", max_tokens=8192, schema_type="keywords")
+
+        assert "reasoning_effort" not in router.acompletion.call_args_list[1].kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_other_providers_keep_their_effort(
+        self, mock_get_router, _mock_temp, _mock_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(
+            provider="openai", model="gpt-5", api_key="k", reasoning_effort="high"
+        )
+        router = self._router(
+            _budget_response(None, "length", 8192),
+            _budget_response('{"ok": true}', "stop", 0),
+        )
+        mock_get_router.return_value = (router, config)
+
+        await complete_json(prompt="Diff", max_tokens=8192, schema_type="keywords")
+
+        assert router.acompletion.call_args_list[1].kwargs["reasoning_effort"] == "high"
