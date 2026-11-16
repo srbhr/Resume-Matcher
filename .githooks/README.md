@@ -21,6 +21,11 @@ keeps `main`/`dev` green without touching contributor PRs.
    and the local vitest binary are present (git hooks may run without nvm's
    `node` on `PATH`); otherwise skipped with a warning. A full `tsc`/`next build`
    is intentionally not run here.
+4. **Actions lockfile** — `gh actions-lock --verify-local` checks that every
+   action in `.github/workflows/` is pinned in `.github/workflows/actions.lock`.
+   Offline, no token. Skipped with a warning when the `gh` extension isn't
+   installed (`gh extension install github/gh-actions-lock`). After editing a
+   workflow, run `gh actions-lock` and commit the updated lockfile.
 
 All checks always run, so you see **all** failures at once.
 
@@ -50,5 +55,6 @@ git config --unset core.hooksPath   # disable the hooks entirely
 ```bash
 cd apps/backend && uv run pytest          # backend suite
 python3 scripts/check_locale_parity.py    # locale parity (from repo root)
+gh actions-lock --verify-local            # actions lockfile (from repo root)
 cd apps/frontend && npm run test          # frontend suite (vitest)
 ```
