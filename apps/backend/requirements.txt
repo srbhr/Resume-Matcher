@@ -10,7 +10,7 @@ psycopg[binary]==3.3.8
 cryptography==50.0.2
 httpx==0.28.1
 PyJWT[crypto]==2.15.1
-litellm==1.108.0
+litellm==1.108.7
 markitdown[docx,pdf]==0.1.9
 pdfminer.six==20260107
 python-docx==1.2.0
