@@ -1,5 +1,6 @@
 """Integration tests for resume CRUD endpoints."""
 
+import copy
 import json
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -7,9 +8,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.database import ResumeNotFoundError
+from app.database import Database, ResumeNotFoundError
 from app.main import app
 from app.schemas import InterviewPrepData
+from app.schemas.models import DEFAULT_SECTION_META
 
 SAMPLE_INTERVIEW_PREP = {
     "role_fit_analysis": ["Backend API experience maps to the role."],
@@ -558,3 +560,71 @@ class TestUploadResume:
         assert "Could not extract text from the uploaded file" in resp.json()["detail"]
         mock_db.create_resume_atomic_master.assert_not_called()
         mock_parse_resume_to_json.assert_not_called()
+
+
+def _publications() -> dict[str, Any]:
+    return {"sectionType": "itemList", "items": [{"id": 1, "title": "A paper"}]}
+
+
+class TestCustomSectionMeta:
+    """Custom sections stored without usable section metadata (#1012)."""
+
+    async def test_fetch_adds_meta_for_a_parsed_custom_section(
+        self, client: AsyncClient, isolated_db: Database
+    ) -> None:
+        # Parsed uploads store customSections and no sectionMeta.
+        resume = await isolated_db.create_resume(
+            content="cv",
+            processed_data={
+                "personalInfo": {"name": "Ada"},
+                "customSections": {"publications": _publications()},
+            },
+            processing_status="ready",
+        )
+
+        async with client:
+            resp = await client.get(
+                "/api/v1/resumes", params={"resume_id": resume["resume_id"]}
+            )
+
+        assert resp.status_code == 200
+        meta = resp.json()["data"]["processed_resume"]["sectionMeta"]
+        custom = [m for m in meta if not m["isDefault"]]
+        assert [(m["key"], m["displayName"], m["sectionType"]) for m in custom] == [
+            ("publications", "Publications", "itemList")
+        ]
+
+    async def test_patch_without_is_default_saves_a_custom_section(
+        self, client: AsyncClient, isolated_db: Database
+    ) -> None:
+        resume = await isolated_db.create_resume(
+            content="cv",
+            processed_data={"personalInfo": {"name": "Ada"}},
+            processing_status="ready",
+        )
+        publications_meta = {
+            "id": "publications",
+            "key": "publications",
+            "displayName": "Publications",
+            "sectionType": "itemList",
+            "isVisible": True,
+            "order": 6,
+        }
+        body = {
+            "personalInfo": {"name": "Ada"},
+            "customSections": {"publications": _publications()},
+            "sectionMeta": copy.deepcopy(DEFAULT_SECTION_META) + [publications_meta],
+        }
+
+        async with client:
+            resp = await client.patch(
+                f"/api/v1/resumes/{resume['resume_id']}", json=body
+            )
+
+        assert resp.status_code == 200
+        stored = await isolated_db.get_resume(resume["resume_id"])
+        assert stored is not None
+        returned = resp.json()["data"]["processed_resume"]["sectionMeta"]
+        for meta in (returned, stored["processed_data"]["sectionMeta"]):
+            flags = [m["isDefault"] for m in meta if m["key"] == "publications"]
+            assert flags == [False]
