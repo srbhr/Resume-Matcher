@@ -10,6 +10,8 @@
 #   3. frontend test suite        (vitest — runs when Node is available, else skipped)
 #   4. frontend typecheck         (tsc --noEmit — catches test fixtures that
 #                                  `next build` never sees)
+#   5. actions lockfile           (gh actions-lock --verify-local — every
+#                                  workflow action is pinned in actions.lock)
 #
 # Activate once per clone:   git config core.hooksPath .githooks
 # Bypass intentionally:      git push --no-verify     (e.g. docs-only / WIP branch)
@@ -82,6 +84,20 @@ if command -v node >/dev/null 2>&1 && [ -x "$TSC" ]; then
   fi
 else
   echo "  ⚠ node or tsc not available — skipping frontend typecheck" >&2
+fi
+
+# 5) Actions lockfile — once a workflow is in .github/workflows/actions.lock,
+#    every action it uses must be pinned there, so a workflow edited without
+#    relocking fails its next run. Offline check; needs the gh extension
+#    (gh extension install github/gh-actions-lock).
+if command -v gh >/dev/null 2>&1 && gh actions-lock --version >/dev/null 2>&1; then
+  echo "▶ actions  : gh actions-lock --verify-local"
+  if ! ( cd "$REPO_ROOT" && gh actions-lock --verify-local ); then
+    echo "  ✗ actions.lock is out of sync — run: gh actions-lock" >&2
+    status=1
+  fi
+else
+  echo "  ⚠ gh actions-lock not installed — skipping actions lockfile check" >&2
 fi
 
 printf '─────────────────────────────────────────────────────────\n'
