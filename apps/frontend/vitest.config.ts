@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
@@ -15,6 +15,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    // Playwright specs; they run only by hand (`npm run test:e2e`).
+    exclude: [...configDefaults.exclude, 'e2e/**'],
     // The first test in a builder spec pays the cold import of resume-builder,
     // which takes about 5s on slower machines (Windows); the 5s default then
     // times it out and the rest of the file fails after it.

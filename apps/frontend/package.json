@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "format": "oxfmt",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "guard": "node scripts/swiss-guard.mjs",
     "guard:update": "node scripts/swiss-guard.mjs --update",
     "report:first-load": "node scripts/first-load-report.mjs"
@@ -41,6 +42,7 @@
     "tailwind-merge": "3.7.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "4.3.4",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
