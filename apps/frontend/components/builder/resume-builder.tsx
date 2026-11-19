@@ -45,7 +45,6 @@ import {
   generateCoverLetter,
   generateOutreachMessage,
   generateInterviewPrep,
-  fetchJobDescription,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
 import { AtsCheckView } from './ats-check-view';
@@ -54,6 +53,7 @@ import { AtsScorePanel } from './ats-score-panel';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useResumeFormatting } from '@/hooks/use-resume-formatting';
+import { useJobContext } from '@/hooks/use-job-context';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
@@ -97,7 +97,6 @@ type TabId =
   | 'jd-match'
   | 'ats-check'
   | 'writing';
-type JobContextStatus = 'idle' | 'loading' | 'available' | 'missing';
 
 const TAB_IDS: TabId[] = [
   'resume',
@@ -275,13 +274,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const agentCheckRunningRef = useRef(false);
   const dismissedAgentVersionRef = useRef<string | null>(null);
 
-  // JD comparison state
-  const [jobDescription, setJobDescription] = useState<string | null>(null);
-  // The job's saved keywords (null when it has none) and company, for JD Match.
-  const [jobKeywords, setJobKeywords] = useState<string[] | null>(null);
-  const [jobCompany, setJobCompany] = useState<string | null>(null);
-  const [jobForcedKeywords, setJobForcedKeywords] = useState<string[]>([]);
-  const [jobContextStatus, setJobContextStatus] = useState<JobContextStatus>('idle');
+  // The job this resume was tailored to, for JD Match and the ATS check.
+  const { jobDescription, jobKeywords, jobCompany, jobForcedKeywords, jobContextStatus } =
+    useJobContext(resumeId, isTailoredResume, agentMode);
 
   // AI Regenerate wizard
   const regenerateWizard = useRegenerateWizard({
@@ -549,44 +544,6 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     // server baseline is available; failed or abandoned loads retain it.
     if (resumeId && loadingState === 'loaded') clearResumeWizardCompletion(resumeId);
   }, [resumeId, loadingState]);
-
-  // Fetch job description when we have a tailored resume
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadJobDescription = async () => {
-      if (isTailoredResume && resumeId) {
-        setJobDescription(null);
-        setJobContextStatus('loading');
-        try {
-          const data = await fetchJobDescription(resumeId);
-          if (!cancelled) {
-            setJobDescription(data.content);
-            setJobKeywords(data.keywords);
-            setJobCompany(data.company);
-            setJobForcedKeywords(data.forced_keywords ?? []);
-            setJobContextStatus('available');
-          }
-        } catch (err) {
-          // JD might not be available for older resumes
-          if (!cancelled) {
-            console.warn('Could not fetch job description:', err);
-            setJobDescription(null);
-            setJobContextStatus('missing');
-          }
-        }
-      } else {
-        // Clear job description when switching to non-tailored resume
-        setJobDescription(null);
-        setJobContextStatus('idle');
-      }
-    };
-
-    void loadJobDescription();
-    return () => {
-      cancelled = true;
-    };
-  }, [isTailoredResume, resumeId]);
 
   const handleUpdate = useCallback(
     (newData: ResumeData) => {
@@ -1087,18 +1044,6 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   };
 
   useAgentRefresh(agentMode && loadingState === 'loaded', () => checkForAgentChanges());
-  // The agent can add keywords to this resume's job (set_job_keywords) while the page is open.
-  useAgentRefresh(
-    agentMode && jobContextStatus === 'available' && jobKeywords === null,
-    async () => {
-      if (!resumeId) return;
-      const data = await fetchJobDescription(resumeId);
-      if (data.keywords) {
-        setJobKeywords(data.keywords);
-        setJobCompany(data.company);
-      }
-    }
-  );
 
   const handleKeepMyEdits = () => {
     if (!agentUpdate) return;
