@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from app.ai_budget import operation_budget
 from app.ai_limits import PromptSizeError
 from app.config import settings
-from app.database import DatabaseBusyError, db
+from app.database import DatabaseBusyError, db, set_reset_guard
 
 logger = logging.getLogger(__name__)
 
@@ -334,3 +334,7 @@ _FINAL_WRITE_BACKOFF_SECONDS = 0.25
 
 # Global singleton instance
 queue_manager = QueueManager()
+
+# A database reset stops the worker first, so an item mid-LLM can't save into the
+# cleared tables. Looked up at reset time, so a swapped `queue_manager` is used.
+set_reset_guard(lambda: queue_manager.paused())

@@ -15,7 +15,12 @@ import logging
 import shutil
 import sqlite3
 from collections.abc import AsyncIterator, Callable, Iterator
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import (
+    AbstractAsyncContextManager,
+    asynccontextmanager,
+    contextmanager,
+    nullcontext,
+)
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -80,6 +85,17 @@ class MasterResumeLimitError(Exception):
 _PG_BUSY_SQLSTATES = frozenset({"55P03", "40001", "40P01"})
 _PG_WRITE_LOCK = text("SELECT pg_advisory_xact_lock(:ns, hashtext(current_schema()))")
 WRITE_LOCK_TIMEOUT_MS = 5000
+
+# What must stop while reset_database clears the document tables. The tailoring
+# queue registers itself here (services/queue_worker.py); a hook, because that
+# module imports this one.
+_reset_guard: Callable[[], AbstractAsyncContextManager[None]] | None = None
+
+
+def set_reset_guard(guard: Callable[[], AbstractAsyncContextManager[None]]) -> None:
+    """Run ``guard()`` around every database reset (one guard; the last one wins)."""
+    global _reset_guard
+    _reset_guard = guard
 
 
 @contextmanager
@@ -1539,10 +1555,8 @@ class Database:
         The tailoring worker is stopped while the tables are cleared, so an item
         that is mid-LLM cannot save a job or resume into them afterwards.
         """
-        # Imported here because the worker module imports this one.
-        from app.services.queue_worker import queue_manager
-
-        async with queue_manager.paused():
+        guard = _reset_guard() if _reset_guard is not None else nullcontext()
+        async with guard:
             async with self._write_session() as session:
                 await session.execute(delete(QueueItem))
                 await session.execute(delete(TailoringPreview))
