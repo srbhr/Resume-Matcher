@@ -52,6 +52,7 @@ from app.schemas import (
     ResumeFetchData,
     ResumeFetchResponse,
     ResumeListResponse,
+    ResumePhotoResponse,
     ResumeSummary,
     ResumeUploadResponse,
     SetDefaultMasterResponse,
@@ -86,6 +87,12 @@ from app.services.refiner import (
     _extract_all_text,
     analyze_keyword_gaps,
     job_keyword_terms,
+)
+from app.services.resume_photo import (
+    MAX_PHOTO_BYTES,
+    PhotoTooLargeError,
+    UnsupportedPhotoError,
+    normalize_photo,
 )
 from app.services.resume_preservation import (
     finalize_ai_resume,
@@ -218,18 +225,18 @@ def _validate_upload_type(file: UploadFile) -> None:
         )
 
 
-async def _read_upload_content(file: UploadFile) -> bytes:
-    """Read at most one byte beyond the raw upload limit in bounded chunks."""
+async def _read_upload_content(file: UploadFile, limit: int = MAX_FILE_SIZE) -> bytes:
+    """Read at most one byte beyond ``limit`` in bounded chunks."""
     content = bytearray()
-    while len(content) <= MAX_FILE_SIZE:
-        read_size = min(UPLOAD_READ_CHUNK_SIZE, MAX_FILE_SIZE - len(content) + 1)
+    while len(content) <= limit:
+        read_size = min(UPLOAD_READ_CHUNK_SIZE, limit - len(content) + 1)
         chunk = await file.read(read_size)
         if not chunk:
             return bytes(content)
         content.extend(chunk)
     raise HTTPException(
         status_code=413,
-        detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+        detail=f"File too large. Maximum size: {limit // (1024 * 1024)}MB",
     )
 
 
@@ -594,6 +601,51 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             template_settings=resume.get("template_settings"),
         ),
     )
+
+
+@router.get("/{resume_id}/photo", response_model=ResumePhotoResponse)
+async def get_resume_photo(resume_id: str) -> ResumePhotoResponse:
+    """The resume's photo (a JPEG data URL), or null when it has none."""
+    try:
+        return ResumePhotoResponse(photo=await db.get_resume_photo(resume_id))
+    except ResumeNotFoundError as e:
+        raise HTTPException(status_code=404, detail="Resume not found") from e
+
+
+@router.put("/{resume_id}/photo", response_model=ResumePhotoResponse)
+async def upload_resume_photo(
+    resume_id: str, file: UploadFile = File(...)
+) -> ResumePhotoResponse:
+    """Store a JPEG, PNG or WebP photo for photo CVs, cropped to 35:45."""
+    content = await _read_upload_content(file, limit=MAX_PHOTO_BYTES)
+    try:
+        # Decoding and resizing take a moment; keep them off the event loop.
+        photo = await asyncio.to_thread(normalize_photo, content)
+    except PhotoTooLargeError as e:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size: {MAX_PHOTO_BYTES // (1024 * 1024)}MB",
+        ) from e
+    except UnsupportedPhotoError as e:
+        logger.info("Rejected resume photo for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=422, detail="Upload a JPEG, PNG or WebP photo."
+        ) from e
+    try:
+        await db.set_resume_photo(resume_id, photo)
+    except ResumeNotFoundError as e:
+        raise HTTPException(status_code=404, detail="Resume not found") from e
+    return ResumePhotoResponse(photo=photo)
+
+
+@router.delete("/{resume_id}/photo", response_model=ResumePhotoResponse)
+async def delete_resume_photo(resume_id: str) -> ResumePhotoResponse:
+    """Remove the resume's photo. Removing it again is not an error."""
+    try:
+        await db.set_resume_photo(resume_id, None)
+    except ResumeNotFoundError as e:
+        raise HTTPException(status_code=404, detail="Resume not found") from e
+    return ResumePhotoResponse(photo=None)
 
 
 @router.get("/list", response_model=ResumeListResponse)
@@ -1496,6 +1548,8 @@ async def duplicate_resume(resume_id: str) -> DuplicateResumeResponse:
         "processing_status": "ready",
         "title": _copy_title(source),
         "template_settings": copy.deepcopy(source.get("template_settings")),
+        # The copy's own photo, not the master's a tailored copy would inherit.
+        "photo": await db.get_resume_photo(resume_id),
     }
     try:
         if source.get("is_master", False):

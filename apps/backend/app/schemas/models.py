@@ -616,6 +616,12 @@ class ResumeFetchResponse(BaseModel):
     data: ResumeFetchData
 
 
+class ResumePhotoResponse(BaseModel):
+    """A resume's photo: a JPEG data URL, or None when it has none."""
+
+    photo: str | None = None
+
+
 class ResumeSummary(BaseModel):
     """Summary details for listing resumes."""
 

@@ -197,3 +197,14 @@ async def test_startup_deletes_improvements_left_by_deleted_resumes(
     assert await database.get_improvement_by_tailored_resume("gone") is None
     kept = await database.get_improvement_by_tailored_resume("t")
     assert kept is not None and kept["request_id"] == "r1"
+
+
+async def test_startup_adds_the_photo_column_to_an_existing_schema(
+    make_db: Callable[[str | None], Database],
+) -> None:
+    # Revision 3 on Postgres: the pre-versioning resumes table has no photo column.
+    database = make_db(create_pre_versioning_schema([]))
+
+    await database.set_resume_photo("t", "data:image/jpeg;base64,x")
+
+    assert await database.get_resume_photo("t") == "data:image/jpeg;base64,x"

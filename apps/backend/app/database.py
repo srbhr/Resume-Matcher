@@ -356,6 +356,7 @@ class Database:
         interview_prep: str | None = None,
         is_default_master: bool = False,
         template_settings: dict[str, Any] | None = None,
+        photo: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -376,6 +377,7 @@ class Database:
             title=title,
             original_markdown=original_markdown,
             template_settings=template_settings,
+            photo=photo,
         )
         async with self._write_session() as session:
             session.add(row)
@@ -401,6 +403,7 @@ class Database:
         title: str | None = None,
         interview_prep: str | None = None,
         template_settings: dict[str, Any] | None = None,
+        photo: str | None = None,
         *,
         take_over_stuck_default: bool = True,
         replay_if: Callable[[dict[str, Any]], bool] | None = None,
@@ -463,6 +466,7 @@ class Database:
                 title=title,
                 original_markdown=original_markdown,
                 template_settings=template_settings,
+                photo=photo,
             )
             session.add(row)
             await session.commit()
@@ -517,6 +521,45 @@ class Database:
             row.updated_at = _now()
             await session.commit()
             return self._resume_to_dict(row)
+
+    async def get_resume_photo(self, resume_id: str) -> str | None:
+        """The resume's photo data URL, or None when it has none.
+
+        Raises:
+            ResumeNotFoundError: If the resume doesn't exist.
+        """
+        async with self._session() as session:
+            result = await session.execute(
+                select(Resume.resume_id, Resume.photo).where(
+                    Resume.resume_id == resume_id
+                )
+            )
+            row = result.first()
+            if row is None:
+                raise ResumeNotFoundError(resume_id)
+            return row.photo
+
+    async def set_resume_photo(self, resume_id: str, photo: str | None) -> None:
+        """Store (or with None, remove) the resume's photo.
+
+        Raises:
+            ResumeNotFoundError: If the resume doesn't exist.
+        """
+        async with self._write_session() as session:
+            row = await session.get(Resume, resume_id)
+            if row is None:
+                raise ResumeNotFoundError(resume_id)
+            row.photo = photo
+            row.updated_at = _now()
+            await session.commit()
+
+    @staticmethod
+    async def _source_photo(session: AsyncSession, source_id: str) -> str | None:
+        """The photo a resume made from ``source_id`` starts with: the source's."""
+        result = await session.execute(
+            select(Resume.photo).where(Resume.resume_id == source_id)
+        )
+        return result.scalar_one_or_none()
 
     async def save_template_settings(
         self, resume_id: str, settings: dict[str, Any]
@@ -1004,6 +1047,7 @@ class Database:
                 )
             await self._validate_preview_inputs(session, preview)
             row = self._new_resume(**resume_fields)
+            row.photo = await self._source_photo(session, preview.source_id)
             result = copy.deepcopy(response_data)
             result.update(
                 resume_id=row.resume_id,
@@ -1048,6 +1092,8 @@ class Database:
         """Commit a direct tailoring result and its required relation together."""
         row = self._new_resume(**resume_fields)
         async with self._write_session() as session:
+            if "photo" not in resume_fields:
+                row.photo = await self._source_photo(session, original_resume_id)
             session.add(row)
             await session.flush()
             session.add(

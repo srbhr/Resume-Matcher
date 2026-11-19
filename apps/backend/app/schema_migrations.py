@@ -11,7 +11,8 @@ Revision 1 is the baseline: the idempotent startup logic every earlier release
 ran (create missing tables, add the columns older releases lacked, move to the
 single-default-master index). A database written by any earlier release, or a
 new one, runs it once and is then at version 1. Revision 2 deletes the improvement
-rows earlier releases left behind when they deleted a tailored resume.
+rows earlier releases left behind when they deleted a tailored resume. Revision 3
+adds ``resumes.photo``.
 
 Adding a revision:
 - add the next number to ``MIGRATIONS`` and raise ``SCHEMA_VERSION`` to it;
@@ -47,7 +48,7 @@ from app.models import Base, Improvement, Resume
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Advisory-lock namespace for startup ("RM" + 1, beside the writer lock's "RM").
 PG_INIT_LOCK_NAMESPACE = 0x524D + 1
@@ -168,9 +169,15 @@ def _delete_orphan_improvements(conn: Connection, _schema: str | None) -> None:
         logger.info("Deleted %d improvement rows left by deleted resumes", deleted)
 
 
+def _add_resume_photo(conn: Connection, schema: str | None) -> None:
+    """Revision 3: ``resumes.photo``, an optional photo for photo CVs."""
+    _add_missing_column(conn, Resume.__table__.c.photo, schema)
+
+
 MIGRATIONS: dict[int, Callable[[Connection, str | None], None]] = {
     1: _baseline,
     2: _delete_orphan_improvements,
+    3: _add_resume_photo,
 }
 
 

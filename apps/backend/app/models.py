@@ -67,6 +67,10 @@ class Resume(Base):
     # The resume's formatting (template, margins, fonts...); None until the user
     # formats it in the builder, which means the default template.
     template_settings: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # The resume's photo as a JPEG data URL (services/resume_photo.py); None for
+    # no photo. Kept out of processed_data, which goes into LLM prompts, and out
+    # of Database._resume_to_dict, which MCP tools and the CLI print.
+    photo: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
     updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
 

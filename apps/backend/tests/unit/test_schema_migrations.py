@@ -160,6 +160,32 @@ async def test_revision_2_deletes_improvements_left_by_deleted_resumes(
     )
 
 
+async def test_revision_3_adds_the_photo_column_and_keeps_every_row(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "v2.db"
+    db = Database(db_path=path)
+    resume = await db.create_resume(content="# A", is_master=True)
+    await db.close()
+    engine = make_sync_engine(path)
+    try:
+        with engine.begin() as conn:
+            conn.exec_driver_sql("ALTER TABLE resumes DROP COLUMN photo")
+            conn.exec_driver_sql("UPDATE schema_version SET version = 2")
+
+        assert migrate(engine) == SCHEMA_VERSION
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(conn).get_columns("resumes")}
+    finally:
+        engine.dispose()
+    assert "photo" in columns
+
+    db = Database(db_path=path)
+    await db.set_resume_photo(resume["resume_id"], "data:image/jpeg;base64,x")
+    assert await db.get_resume_photo(resume["resume_id"]) == "data:image/jpeg;base64,x"
+    await db.close()
+
+
 async def test_a_newer_database_is_refused_and_left_untouched(tmp_path: Path) -> None:
     path = tmp_path / "newer.db"
     engine = make_sync_engine(path)

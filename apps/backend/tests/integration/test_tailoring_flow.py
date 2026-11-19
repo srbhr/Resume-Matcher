@@ -241,3 +241,47 @@ async def test_a_hostile_diff_cannot_rename_the_candidate_or_drop_date_months(
     assert result["summary"] == new_summary
     assert result["personalInfo"] == source["personalInfo"]
     assert result["workExperience"][0]["years"] == "Jan 2021 - Present"
+
+
+async def test_both_tailoring_paths_give_the_new_resume_its_masters_photo(
+    isolated_db: Any, source: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services.queue_worker import QueueManager
+
+    tailoring_llm(source, monkeypatch)
+    master_id, job_id = await seed(isolated_db, source)
+    await isolated_db.set_resume_photo(master_id, "data:image/jpeg;base64,master")
+
+    async with client() as http:
+        preview = (
+            await http.post(
+                "/api/v1/resumes/improve/preview",
+                json={"resume_id": master_id, "job_id": job_id},
+            )
+        ).json()["data"]
+        confirm = await http.post(
+            "/api/v1/resumes/improve/confirm",
+            json={
+                "resume_id": master_id,
+                "job_id": job_id,
+                "preview_id": preview["preview_id"],
+                "improved_data": preview["resume_preview"],
+                "improvements": preview["improvements"],
+            },
+        )
+    assert confirm.status_code == 200, confirm.text
+    await isolated_db.create_queue_item(
+        "q1", master_id, JOB_DESCRIPTION, rate_limit_seconds=0
+    )
+    await QueueManager().drain()
+    item = await isolated_db.get_queue_item("q1")
+    assert item["status"] == "completed", item["error"]
+
+    for tailored_id in (
+        confirm.json()["data"]["resume_id"],
+        item["tailored_resume_id"],
+    ):
+        assert (
+            await isolated_db.get_resume_photo(tailored_id)
+            == "data:image/jpeg;base64,master"
+        )
