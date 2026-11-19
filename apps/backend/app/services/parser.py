@@ -1056,6 +1056,7 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
         max_tokens=get_safe_max_tokens(model_name, config=config),
         retries=3,
         response_validator=_validate_parsed_resume,
+        operation="parse_resume",
     )
 
     # Patch dates: restore months the LLM may have dropped

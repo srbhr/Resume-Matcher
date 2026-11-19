@@ -153,6 +153,7 @@ async def score_bullets(
             max_tokens=4096,
             schema_type="bullet_scores",
             response_validator=_make_validator(paths),
+            operation="score_bullets",
         )
     except (AIOperationDeadlineExceeded, PromptSizeError):
         raise

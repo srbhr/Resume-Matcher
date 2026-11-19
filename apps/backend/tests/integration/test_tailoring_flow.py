@@ -21,25 +21,24 @@ from app.schemas.models import ResumeData
 
 JOB_DESCRIPTION = "Senior Backend Engineer at TechCorp: Python, FastAPI, Docker, AWS."
 
-# Which prompt a request belongs to, by a phrase from that prompt. A follow-up
-# replaces this with an explicit operation label passed to complete_json, so the
-# fake stops depending on prompt wording.
-KEYWORDS = "Extract job requirements as JSON"
-SKILL_PLAN = "Build a concise skill target plan"
-DIFF = "output a JSON object with targeted changes"
-CRITIQUE = "You are a strict resume reviewer"
+# Which step a request belongs to: the operation label its complete_json call
+# carries (llm.current_operation), so editing a prompt can't misroute the fake.
+KEYWORDS = "job_keywords"
+SKILL_PLAN = "skill_target_plan"
+DIFF = "resume_diff"
+CRITIQUE = "writing_critique"
 
 
 class FakeLLM:
-    """Scripted LiteLLM Router: replies by prompt kind and records every request."""
+    """Scripted LiteLLM Router: replies by operation label and records every request."""
 
     def __init__(self, replies: dict[str, Callable[[], dict[str, Any]]]) -> None:
         self.replies = replies
         self.calls: list[str] = []
 
     async def acompletion(self, **kwargs: Any) -> Any:
-        text = " ".join(str(m["content"]) for m in kwargs.get("messages", []))
-        kind = next((k for k in self.replies if k in text), "unscripted")
+        operation = llm.current_operation()
+        kind = operation if operation in self.replies else "unscripted"
         self.calls.append(kind)
         reply = self.replies[kind]() if kind in self.replies else {}
         message = SimpleNamespace(content=json.dumps(reply), reasoning_content=None)

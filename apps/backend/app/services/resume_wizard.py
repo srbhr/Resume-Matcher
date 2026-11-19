@@ -429,7 +429,9 @@ async def run_ai_turn(
         resume_json=resume_json,
         answer_text=prompt_answer,
     )
-    result = await complete_json(prompt, max_tokens=8192, schema_type="resume")
+    result = await complete_json(
+        prompt, max_tokens=8192, schema_type="resume", operation="resume_wizard_turn"
+    )
     try:
         envelope = _ResumeWizardAIEnvelope.model_validate(result)
     except ValidationError as error:

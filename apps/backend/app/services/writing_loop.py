@@ -98,6 +98,7 @@ async def critique_writing(
         ),
         schema_type="diff",
         response_validator=_validate_critique,
+        operation="writing_critique",
     )
     return {
         item["path"]: item
@@ -142,6 +143,7 @@ async def rewrite_writing(
         max_tokens=get_safe_max_tokens(get_model_name(config), config=config),
         schema_type="diff",
         response_validator=_validate_rewrite,
+        operation="writing_rewrite",
     )
     return ImproveDiffResult.model_validate(_validate_rewrite(result)).changes
 

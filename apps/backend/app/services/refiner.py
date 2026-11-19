@@ -689,6 +689,7 @@ async def inject_keywords(
             ),
             max_tokens=8192,
             response_validator=validate_writer_result,
+            operation="keyword_injection",
         )
 
         # LLM-014: Validate the result maintains required structure

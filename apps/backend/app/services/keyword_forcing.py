@@ -69,6 +69,7 @@ async def _propose(
         max_tokens=get_safe_max_tokens(get_model_name(config), config=config),
         schema_type="diff",
         response_validator=_validate_placement,
+        operation="keyword_placement",
     )
     return ImproveDiffResult.model_validate(_validate_placement(result)).changes
 

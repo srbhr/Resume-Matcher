@@ -795,6 +795,7 @@ async def generate_resume_diffs(
         max_tokens=get_safe_max_tokens(model_name, config=config),
         schema_type="diff",
         response_validator=_validate_diff_result,
+        operation="resume_diff",
     )
 
     return ImproveDiffResult.model_validate(_validate_diff_result(result))
@@ -818,6 +819,7 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
         system_prompt="You are an expert job description analyzer.",
         schema_type="keywords",
         response_validator=_validate_keyword_result,
+        operation="job_keywords",
     )
     return _validate_keyword_result(result)
 
@@ -1057,6 +1059,7 @@ async def generate_skill_target_plan(
         max_tokens=2048,
         schema_type="diff",
         response_validator=_validate_skill_plan_result,
+        operation="skill_target_plan",
     )
     return _validate_skill_plan_result(result)
 
@@ -1152,6 +1155,7 @@ async def improve_resume(
         system_prompt="You are an expert resume editor. Output only valid JSON.",
         max_tokens=8192,
         response_validator=_validate_resume_result,
+        operation="improve_resume",
     )
     return _validate_resume_result(result)
 

@@ -188,6 +188,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
                 max_tokens=8192,
                 schema_type="enrichment",
                 response_validator=_validate_analysis_result,
+                operation="enrichment_analyze",
             ),
             timeout=remaining_timeout(),
         )
@@ -303,6 +304,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                     max_tokens=8192,
                     schema_type="enrichment",
                     response_validator=_validate_analysis_result,
+                    operation="enrichment_analyze",
                 ),
                 timeout=remaining_timeout(),
             )
@@ -395,6 +397,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                 prompt,
                 schema_type="diff",
                 response_validator=_validate_enhancement_result,
+                operation="enrichment_enhance",
             )
             result = _validate_enhancement_result(result)
             additional_bullets = result["additional_bullets"]
@@ -567,6 +570,7 @@ async def _regenerate_experience_or_project(
         max_tokens=4096,
         schema_type="diff",
         response_validator=_validate_regenerated_item_result,
+        operation="regenerate_item",
     )
     result = _validate_regenerated_item_result(result)
     new_bullets = result["new_bullets"]
@@ -603,6 +607,7 @@ async def _regenerate_skills(
         max_tokens=2048,
         schema_type="diff",
         response_validator=_validate_regenerated_skills_result,
+        operation="regenerate_skills",
     )
     result = _validate_regenerated_skills_result(result)
     new_skills = result["new_skills"]

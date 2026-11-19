@@ -137,6 +137,7 @@ async def generate_interview_prep(
         ),
         max_tokens=max_tokens,
         schema_type="interview_prep",
+        operation="interview_prep",
     )
 
     return InterviewPrepData.model_validate(result)

@@ -6,6 +6,7 @@ import logging
 import re
 import threading
 from collections.abc import Callable
+from contextvars import ContextVar
 from functools import cache
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, Literal
@@ -1850,7 +1851,45 @@ def _extract_json(content: str, _depth: int = 0) -> str:
     raise ValueError(f"No JSON found in response (response length: {len(original)})")
 
 
+# What the current complete_json call is for ("job_keywords", "resume_diff", ...).
+# It never leaves the process: test fakes read it to pick a reply without
+# matching prompt text, which changes whenever a prompt is edited.
+_operation: ContextVar[str | None] = ContextVar("llm_operation", default=None)
+
+
+def current_operation() -> str | None:
+    """The ``operation`` label of the complete_json call in progress, if any."""
+    return _operation.get()
+
+
 async def complete_json(
+    prompt: str,
+    system_prompt: str | None = None,
+    config: LLMConfig | None = None,
+    max_tokens: int = 4096,
+    retries: int = 2,
+    schema_type: str = "resume",
+    response_validator: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+    operation: str | None = None,
+) -> dict[str, Any]:
+    """Make a completion request expecting JSON response; ``operation`` names it
+    for ``current_operation()`` while it runs. See ``_complete_json``."""
+    token = _operation.set(operation)
+    try:
+        return await _complete_json(
+            prompt,
+            system_prompt=system_prompt,
+            config=config,
+            max_tokens=max_tokens,
+            retries=retries,
+            schema_type=schema_type,
+            response_validator=response_validator,
+        )
+    finally:
+        _operation.reset(token)
+
+
+async def _complete_json(
     prompt: str,
     system_prompt: str | None = None,
     config: LLMConfig | None = None,
