@@ -72,13 +72,17 @@ import {
 } from '@/lib/utils/resume-draft-storage';
 import { nextSaveDelay } from '@/lib/builder/save-schedule';
 import {
+  experienceRegenerateItems,
+  projectRegenerateItems,
+  skillsRegenerateItem,
+} from '@/lib/builder/regenerate-items';
+import {
   agentVersionOf,
   trackOwnWrite,
   type AgentPart,
   type OwnWrites,
   type ServerResume,
 } from '@/lib/builder/agent-sync';
-import type { RegenerateItemInput } from '@/lib/api/enrichment';
 import { AgentPromptDialog, type AgentTask } from '@/components/agent/agent-prompt-dialog';
 import { useAgentRefresh } from '@/hooks/use-agent-refresh';
 import { clearResumeWizardCompletion } from '@/lib/utils/resume-wizard-storage';
@@ -335,38 +339,22 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   );
 
   // Build regenerate items from canonical resume data so apply checks match the saved snapshot.
-  const experienceItemsForRegenerate: RegenerateItemInput[] = useMemo(() => {
-    return (canonicalResumeDataForPreview.workExperience || []).map((exp, idx) => ({
-      item_id: `exp_${idx}`,
-      item_type: 'experience' as const,
-      title: exp.title ?? '',
-      subtitle: exp.company || undefined,
-      current_content: Array.isArray(exp.description) ? exp.description : [],
-    }));
-  }, [canonicalResumeDataForPreview.workExperience]);
-
-  const projectItemsForRegenerate: RegenerateItemInput[] = useMemo(() => {
-    return (canonicalResumeDataForPreview.personalProjects || []).map((proj, idx) => ({
-      item_id: `proj_${idx}`,
-      item_type: 'project' as const,
-      title: proj.name ?? '',
-      subtitle: proj.role || undefined,
-      current_content: Array.isArray(proj.description) ? proj.description : [],
-    }));
-  }, [canonicalResumeDataForPreview.personalProjects]);
-
-  const skillsItemForRegenerate: RegenerateItemInput | null = useMemo(() => {
-    const skills = canonicalResumeDataForPreview.additional?.technicalSkills;
-    if (skills && skills.length > 0) {
-      return {
-        item_id: 'skills',
-        item_type: 'skills' as const,
-        title: t('builder.regenerate.selectDialog.skills'),
-        current_content: skills,
-      };
-    }
-    return null;
-  }, [canonicalResumeDataForPreview.additional?.technicalSkills, t]);
+  const experienceItemsForRegenerate = useMemo(
+    () => experienceRegenerateItems(canonicalResumeDataForPreview.workExperience),
+    [canonicalResumeDataForPreview.workExperience]
+  );
+  const projectItemsForRegenerate = useMemo(
+    () => projectRegenerateItems(canonicalResumeDataForPreview.personalProjects),
+    [canonicalResumeDataForPreview.personalProjects]
+  );
+  const skillsItemForRegenerate = useMemo(
+    () =>
+      skillsRegenerateItem(
+        canonicalResumeDataForPreview.additional?.technicalSkills,
+        t('builder.regenerate.selectDialog.skills')
+      ),
+    [canonicalResumeDataForPreview.additional?.technicalSkills, t]
+  );
   const localizedResumeDataForPreview = useMemo(
     () => withLocalizedDefaultSections(canonicalResumeDataForPreview, t),
     [canonicalResumeDataForPreview, t]
