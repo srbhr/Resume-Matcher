@@ -54,10 +54,43 @@ def source(sample_resume: dict[str, Any]) -> dict[str, Any]:
 
 
 def tailoring_llm(
-    source: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    source: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    hostile: bool = False,
 ) -> tuple[FakeLLM, str]:
-    """A fake LLM whose diff appends one sentence to the summary."""
+    """A fake LLM whose diff appends one sentence to the summary.
+
+    With ``hostile``, the same diff also renames the candidate and drops the
+    month from the first job's dates: edits the pipeline must never keep.
+    """
     new_summary = source["summary"] + " Builds FastAPI services on AWS."
+    changes: list[dict[str, Any]] = [
+        {
+            "path": "summary",
+            "action": "replace",
+            "original": source["summary"],
+            "value": new_summary,
+            "reason": "Names the JD's stack.",
+        }
+    ]
+    if hostile:
+        changes += [
+            {
+                "path": "personalInfo.name",
+                "action": "replace",
+                "original": source["personalInfo"]["name"],
+                "value": "Someone Else",
+                "reason": "hostile",
+            },
+            {
+                "path": "workExperience[0].years",
+                "action": "replace",
+                "original": source["workExperience"][0]["years"],
+                "value": "2021 - Present",
+                "reason": "hostile",
+            },
+        ]
     fake = FakeLLM(
         {
             KEYWORDS: lambda: {
@@ -68,17 +101,7 @@ def tailoring_llm(
                 "keywords": ["AWS"],
             },
             SKILL_PLAN: lambda: {"target_skills": [], "strategy_notes": ""},
-            DIFF: lambda: {
-                "changes": [
-                    {
-                        "path": "summary",
-                        "action": "replace",
-                        "original": source["summary"],
-                        "value": new_summary,
-                        "reason": "Names the JD's stack.",
-                    }
-                ]
-            },
+            DIFF: lambda: {"changes": copy.deepcopy(changes)},
             CRITIQUE: lambda: {"findings": []},
         }
     )
@@ -90,21 +113,29 @@ def tailoring_llm(
     return fake, new_summary
 
 
+async def seed(db: Any, source: dict[str, Any]) -> tuple[str, str]:
+    """A ready default master and one stored job; returns their IDs."""
+    master = await db.create_resume_atomic_master(
+        content=json.dumps(source), processed_data=source, processing_status="ready"
+    )
+    job = await db.create_job(JOB_DESCRIPTION)
+    return master["resume_id"], job["job_id"]
+
+
+def client() -> AsyncClient:
+    return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+
+
 async def test_preview_applies_the_llm_diff_through_the_real_pipeline(
     isolated_db: Any, source: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     fake, new_summary = tailoring_llm(source, monkeypatch)
-    master = await isolated_db.create_resume_atomic_master(
-        content=json.dumps(source), processed_data=source, processing_status="ready"
-    )
-    job = await isolated_db.create_job(JOB_DESCRIPTION)
+    master_id, job_id = await seed(isolated_db, source)
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
+    async with client() as http:
+        response = await http.post(
             "/api/v1/resumes/improve/preview",
-            json={"resume_id": master["resume_id"], "job_id": job["job_id"]},
+            json={"resume_id": master_id, "job_id": job_id},
         )
 
     assert response.status_code == 200, response.text
@@ -116,4 +147,96 @@ async def test_preview_applies_the_llm_diff_through_the_real_pipeline(
     assert "unscripted" not in fake.calls
     # Preview persists nothing but the confirm handshake.
     assert (await isolated_db.get_stats())["total_resumes"] == 1
-    assert (await isolated_db.get_job(job["job_id"])).get("preview_hash")
+    assert (await isolated_db.get_job(job_id)).get("preview_hash")
+
+
+async def test_confirm_persists_the_previewed_resume_and_its_job_link(
+    isolated_db: Any, source: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, new_summary = tailoring_llm(source, monkeypatch)
+    master_id, job_id = await seed(isolated_db, source)
+
+    async with client() as http:
+        preview = (
+            await http.post(
+                "/api/v1/resumes/improve/preview",
+                json={"resume_id": master_id, "job_id": job_id},
+            )
+        ).json()["data"]
+        confirm = await http.post(
+            "/api/v1/resumes/improve/confirm",
+            json={
+                "resume_id": master_id,
+                "job_id": job_id,
+                "preview_id": preview["preview_id"],
+                "improved_data": preview["resume_preview"],
+                "improvements": preview["improvements"],
+            },
+        )
+
+    assert confirm.status_code == 200, confirm.text
+    tailored_id = confirm.json()["data"]["resume_id"]
+    stored = await isolated_db.get_resume(tailored_id)
+    assert stored["parent_id"] == master_id
+    assert stored["is_master"] is False
+    assert stored["processed_data"]["summary"] == new_summary
+    link = await isolated_db.get_improvement_by_tailored_resume(tailored_id)
+    assert link["job_id"] == job_id and link["original_resume_id"] == master_id
+
+
+async def test_queue_worker_tailors_through_the_same_pipeline(
+    isolated_db: Any, source: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services.queue_worker import QueueManager
+
+    _, new_summary = tailoring_llm(source, monkeypatch)
+    master_id, _ = await seed(isolated_db, source)
+    await isolated_db.create_queue_item(
+        "q1", master_id, JOB_DESCRIPTION, rate_limit_seconds=0
+    )
+
+    await QueueManager().drain()
+
+    item = await isolated_db.get_queue_item("q1")
+    assert item["status"] == "completed", item["error"]
+    stored = await isolated_db.get_resume(item["tailored_resume_id"])
+    assert stored["parent_id"] == master_id
+    assert stored["processed_data"]["summary"] == new_summary
+
+
+async def tailor_via_preview(db: Any, source: dict[str, Any]) -> dict[str, Any]:
+    master_id, job_id = await seed(db, source)
+    async with client() as http:
+        response = await http.post(
+            "/api/v1/resumes/improve/preview",
+            json={"resume_id": master_id, "job_id": job_id},
+        )
+    assert response.status_code == 200, response.text
+    return response.json()["data"]["resume_preview"]
+
+
+async def tailor_via_queue(db: Any, source: dict[str, Any]) -> dict[str, Any]:
+    from app.services.queue_worker import QueueManager
+
+    master_id, _ = await seed(db, source)
+    await db.create_queue_item("q1", master_id, JOB_DESCRIPTION, rate_limit_seconds=0)
+    await QueueManager().drain()
+    item = await db.get_queue_item("q1")
+    assert item["status"] == "completed", item["error"]
+    return (await db.get_resume(item["tailored_resume_id"]))["processed_data"]
+
+
+@pytest.mark.parametrize("tailor", [tailor_via_preview, tailor_via_queue])
+async def test_a_hostile_diff_cannot_rename_the_candidate_or_drop_date_months(
+    tailor: Callable[..., Any],
+    isolated_db: Any,
+    source: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, new_summary = tailoring_llm(source, monkeypatch, hostile=True)
+
+    result = await tailor(isolated_db, source)
+
+    assert result["summary"] == new_summary
+    assert result["personalInfo"] == source["personalInfo"]
+    assert result["workExperience"][0]["years"] == "Jan 2021 - Present"
