@@ -1,9 +1,4 @@
 import * as React from 'react';
-import {
-  BackgroundEffect,
-  type BackgroundEffectKind,
-} from '@/components/effects/background-effect';
-import type { EffectIntensity } from '@/components/effects/gl-canvas';
 import { cn } from '@/lib/utils';
 
 export type PageFrameWidth = 'narrow' | 'default' | 'wide';
@@ -15,22 +10,15 @@ const WIDTH: Record<PageFrameWidth, string> = {
   wide: 'max-w-[104rem]',
 };
 
-/**
- * The house page frame: background effect on canvas (grey pixel beams unless `effect` says
- * otherwise; `effectIntensity` is `idle` or `active`), 1px ink frame, 8px hard shadow. Server-safe.
- */
+/** The house page frame: Canvas page, 1px ink frame, 8px hard shadow. Server-safe. */
 export function PageFrame({
   width = 'default',
   height = 'auto',
-  effect = 'beams',
-  effectIntensity = 'idle',
   className,
   children,
 }: {
   width?: PageFrameWidth;
   height?: PageFrameHeight;
-  effect?: BackgroundEffectKind;
-  effectIntensity?: EffectIntensity;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -41,7 +29,6 @@ export function PageFrame({
         height === 'screen' ? 'h-dvh overflow-hidden' : 'min-h-screen'
       )}
     >
-      <BackgroundEffect effect={effect} intensity={effectIntensity} />
       <div
         className={cn(
           'flex w-full flex-col border border-ink bg-canvas shadow-sw-lg',

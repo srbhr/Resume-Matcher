@@ -51,11 +51,10 @@ describe('Hero entrance', () => {
     expect(follow).not.toHaveClass('bg-primary');
   });
 
-  it('sits on plain Canvas, ready for the background effect behind its frame', () => {
+  it('sits on plain Canvas', () => {
     const { container } = render(<Hero />);
     expect(container.firstChild).toHaveClass('relative', 'isolate', 'bg-canvas');
     expect(container.firstChild).not.toHaveClass('bg-blueprint');
-    expect(container.querySelector('canvas')).toBeNull();
   });
 
   it('keeps the xl shadow, which only the home hero frame carries', () => {

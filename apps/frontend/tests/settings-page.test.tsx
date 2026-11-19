@@ -3,7 +3,6 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsPage from '@/app/(default)/settings/page';
 import { FeaturePromptsError } from '@/lib/api/config';
-import { EffectsProvider, useEffectsEnabled } from '@/lib/context/effects-context';
 
 const api = vi.hoisted(() => ({
   fetchLlmConfig: vi.fn(),
@@ -40,8 +39,6 @@ const systemStatus = {
 };
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t, locale: 'en' }) }));
-// The background effect is covered in background-effect.test.tsx; jsdom has no canvas.
-vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('@/lib/context/status-cache', () => ({
   useStatusCache: () => ({
     status: currentStatus,
@@ -140,7 +137,6 @@ describe('settings page (Swiss sweep)', () => {
       'settings.llmConfigurationTitle',
       'settings.contentGeneration.title',
       'settings.languageTitle',
-      'settings.display.title',
       'settings.dangerZone',
       'community.aboutTitle',
     ]);
@@ -815,33 +811,5 @@ describe('settings page (accessibility)', () => {
       expect(icon?.tagName.toLowerCase(), heading.textContent ?? '').toBe('svg');
       expect(icon).toHaveClass('w-4', 'h-4');
     }
-  });
-
-  it('switches background effects on and off, and remembers the choice', async () => {
-    localStorage.removeItem('resume_matcher_effects');
-    function Seen() {
-      return <p data-testid="effects">{String(useEffectsEnabled())}</p>;
-    }
-    render(
-      <EffectsProvider>
-        <SettingsPage />
-        <Seen />
-      </EffectsProvider>
-    );
-    await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
-
-    const toggle = screen.getByRole('switch', { name: /settings\.display\.backgroundEffects/ });
-    expect(toggle).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByText('settings.display.backgroundEffectsDescription')).toBeInTheDocument();
-
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getByTestId('effects')).toHaveTextContent('false');
-    expect(localStorage.getItem('resume_matcher_effects')).toBe('false');
-
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByTestId('effects')).toHaveTextContent('true');
-    expect(localStorage.getItem('resume_matcher_effects')).toBe('true');
   });
 });

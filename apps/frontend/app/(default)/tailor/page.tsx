@@ -577,12 +577,7 @@ export default function TailorPage() {
     keywords.filter((k) => !forcedKeywords.includes(k) && !keywordInText(k, previewText));
 
   return (
-    <PageFrame
-      width="narrow"
-      effect="bitrate"
-      effectIntensity={isLoading ? 'active' : 'idle'}
-      className="my-auto"
-    >
+    <PageFrame width="narrow" className="my-auto">
       <PageHeader className="p-6 md:p-6">
         <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
         <PageHeader.Title>{t('tailor.heroTitle')}</PageHeader.Title>

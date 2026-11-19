@@ -4,7 +4,7 @@ import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
 
 describe('PageFrame + PageHeader', () => {
-  it('frames the page on a plain Canvas base, ready for the background effect', () => {
+  it('frames the page on a plain Canvas base', () => {
     const { container } = render(
       <PageFrame width="wide">
         <p>content</p>

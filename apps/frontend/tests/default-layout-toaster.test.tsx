@@ -15,10 +15,6 @@ vi.mock('@/lib/context/status-cache', () => ({ StatusCacheProvider: passthrough 
 vi.mock('@/lib/context/language-context', () => ({ LanguageProvider: passthrough }));
 vi.mock('@/components/common/error-boundary', () => ({ LocalizedErrorBoundary: passthrough }));
 vi.mock('@/components/common/motion-provider', () => ({ MotionProvider: passthrough }));
-vi.mock('@/lib/context/effects-context', () => ({ EffectsProvider: passthrough }));
-vi.mock('@/components/effects/block-dissolve-provider', () => ({
-  BlockDissolveProvider: passthrough,
-}));
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));
 // The App Router's next/dynamic, as in lazy-toaster.test.tsx.
 vi.mock('next/dynamic', async () => await import('next/dist/api/app-dynamic'));

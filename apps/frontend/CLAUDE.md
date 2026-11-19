@@ -22,7 +22,7 @@ App Router under `app/`. A `(default)` route group wraps the main app in provide
 | `/print/resumes/[id]` | `app/print/resumes/[id]/page.tsx` | **Server** | Print-only resume render for PDF (reads `searchParams` for template settings + `lang`) |
 | `/print/cover-letter/[id]` | `app/print/cover-letter/[id]/page.tsx` | **Server** | Print-only cover-letter render for PDF |
 
-`app/layout.tsx` (root) wires fonts (Space Grotesk for the label face, Noto Sans SC/KR/JP as CJK fallbacks for resume content), the `theme-color` viewport meta (`lib/theme-color.ts`, kept equal to Canvas by a test) and global CSS. `app/(default)/layout.tsx` nests providers: `StatusCacheProvider` → `LanguageProvider` → `ResumePreviewProvider` → `LocalizedErrorBoundary` → `MotionProvider` → `EffectsProvider` (whether the page background effect is on: default on, stored in localStorage, toggled in Settings; outside the provider effects are off, so `print/*` never shows one).
+`app/layout.tsx` (root) wires fonts (Space Grotesk for the label face, Noto Sans SC/KR/JP as CJK fallbacks for resume content), the `theme-color` viewport meta (`lib/theme-color.ts`, kept equal to Canvas by a test) and global CSS. `app/(default)/layout.tsx` nests providers: `StatusCacheProvider` → `LanguageProvider` → `ResumePreviewProvider` → `LocalizedErrorBoundary` → `MotionProvider`; `LazyToaster` mounts inside `LanguageProvider`, beside `ResumePreviewProvider`.
 
 > Most pages are `'use client'`. The `print/*` pages are intentionally server components and fetch from the backend directly via `API_BASE` + `lib/i18n/server.ts` (`translate`). Do not add `'use client'` to them.
 
@@ -51,16 +51,13 @@ components/
   preview/           # paginated A4/Letter preview (use-pagination.ts)
   home/              # hero, swiss-grid
   settings/          # chatgpt-connection, community, subscription-risk-dialog
-  effects/           # background-effect (client wrapper, renders nothing when off),
-                     #   dither-field (the canvas pixel-beams background)
   common/            # error-boundary, resume_previewer_context, motion-provider,
                      #   motion-features, presence (FadePresence/FadeItem),
                      #   llm-setup-alert, default-badge
 lib/
   api/               # backend client (see Data Flow)
   i18n/              # translation engine (see i18n)
-  context/           # status-cache, language-context, effects-context
-  effects/           # beams.ts (pure frame maths for the pixel-beams background)
+  context/           # status-cache, language-context
   motion.ts          # EASE_OUT_EXPO, DURATION, SPRING (the motion vocabulary)
   format-date.ts     # formatDate(value, locale) — the one date formatter
   theme-color.ts     # THEME_COLOR (= Canvas)
@@ -230,7 +227,7 @@ Specs (`tests/`):
 - **lib/utils** — `keyword-matcher.test.ts`, `section-helpers.test.ts`, `html-sanitizer.test.ts` (XSS whitelist), `download-utils.test.ts`.
 - **lib/api** — `api-client.test.ts` (URL resolution, timeout/AbortError; `fetch` stubbed).
 - **components** — `diff-preview-modal.test.tsx`, `regenerate-wizard.test.tsx`, plus behaviour specs for the shared primitives: `dialog`, `dropdown`, `segmented-control`, `toggle-tabs`, `button`, `card`, `alert-status`, `panel-empty`, `page-frame`, `presence`, `reduced-motion`.
-- **effects and icons** — `beams.test.ts` (pure frame maths), `dither-field.test.tsx` (canvas loop against a fake 2D context: reduced motion, hidden tab, off-screen), `effects-context.test.tsx` (default on, storage, off outside the provider), `background-effect.test.tsx`, `brand-icon.test.tsx` (every mark is single-colour `currentColor`), `builder-brand-marks.test.tsx` (the outreach preview shows LinkedIn and the project form GitHub as brand marks).
+- **icons** — `brand-icon.test.tsx` (every mark is single-colour `currentColor`), `builder-brand-marks.test.tsx` (the outreach preview shows LinkedIn and the project form GitHub as brand marks).
 - **Swiss design** — `swiss-guard.test.ts` (the count ratchet over `tests/swiss-guard.allowlist.json`), `swiss-guard-rules.test.ts` (every rule flags what it should and allows what it should), `swiss-contrast.test.ts` (parses the `--sw-*` hex from `globals.css` and asserts WCAG 2.2 AA for every text and text-on-fill pairing, 3:1 for meaningful graphics, and that `THEME_COLOR` equals Canvas), `swiss-shadows.test.ts` (parses the `--shadow-sw-*` tokens: exactly six, none blurred or spread, the five floating/pressing roles solid `#000000`, and `nested` pinned to `4px 4px 0px 0px rgb(0 0 0 / 0.15)`). Changing a token so a pairing falls below its threshold, or turning a shadow soft, fails the test.
 
 Pure logic (i18n, utils, api) is tested directly with stubbed `fetch`/`t`; component specs render via Testing Library. The locale-parity spec mirrors `scripts/check_locale_parity.py` (which the pre-push hook also runs without Node). The local `pre-push` gate runs this vitest suite too when Node is available — `git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md).

@@ -3,18 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { CommunityLinks } from '@/components/common/community-links';
-import { BackgroundEffect } from '@/components/effects/background-effect';
 import { buttonClass } from '@/components/ui/button';
-import { useBlockDissolveNavigate } from '@/lib/effects/use-block-dissolve-navigate';
 import { useTranslations } from '@/lib/i18n';
 
 export default function Hero() {
   const { t } = useTranslations();
-  const dashboardLink = useBlockDissolveNavigate();
 
   return (
     <section className="relative isolate h-screen w-full bg-canvas p-4 md:p-12 lg:p-24">
-      <BackgroundEffect />
       <div className="flex h-full w-full flex-col items-center justify-center border border-ink text-primary bg-canvas shadow-sw-xl">
         <h1 className="hero-enter mb-12 text-center font-mono text-6xl font-bold uppercase leading-none tracking-tighter md:text-8xl lg:text-9xl selection:bg-primary selection:text-white">
           {t('home.brandLine1')}
@@ -39,13 +35,7 @@ export default function Hero() {
           >
             {t('home.docs')}
           </a>
-          <Link
-            href="/dashboard"
-            className={buttonClass({ size: 'lg' })}
-            onClick={dashboardLink.onClick}
-            onMouseEnter={dashboardLink.prepare}
-            onFocus={dashboardLink.prepare}
-          >
+          <Link href="/dashboard" className={buttonClass({ size: 'lg' })}>
             {t('home.launchApp')}
           </Link>
         </div>

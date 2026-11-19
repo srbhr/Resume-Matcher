@@ -71,7 +71,6 @@ import {
   Clock,
   SlidersHorizontal,
   Globe,
-  Monitor,
   Trash,
   Warning,
   ArrowSquareOut,
@@ -83,7 +82,6 @@ import { ATTACHMENT_DRAFT_STORAGE_PREFIX } from '@/lib/utils/attachment-draft-st
 import { RESUME_DRAFT_STORAGE_PREFIX, safeStorage } from '@/lib/utils/resume-draft-storage';
 import type { SupportedLanguage } from '@/lib/api/config';
 import type { Locale } from '@/i18n/config';
-import { useEffectsEnabled, useSetEffectsEnabled } from '@/lib/context/effects-context';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
@@ -250,10 +248,6 @@ export default function SettingsPage() {
     supportedLanguages,
     isLoading: languageLoading,
   } = useLanguage();
-
-  // Display settings (client-only, like the UI language)
-  const effectsEnabled = useEffectsEnabled();
-  const setEffectsEnabled = useSetEffectsEnabled();
 
   // Translations
   const { t } = useTranslations();
@@ -1593,23 +1587,6 @@ export default function SettingsPage() {
                 onChange={(lang) => setContentLanguage(lang as SupportedLanguage)}
               />
             </div>
-          </section>
-
-          {/* Display Settings Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-2 border-b border-panel-hover pb-2">
-              <Monitor className="w-4 h-4" />
-              <h2 className="font-serif text-xl font-bold text-ink text-balance">
-                {t('settings.display.title')}
-              </h2>
-            </div>
-
-            <ToggleSwitch
-              checked={effectsEnabled}
-              onCheckedChange={setEffectsEnabled}
-              label={t('settings.display.backgroundEffects')}
-              description={t('settings.display.backgroundEffectsDescription')}
-            />
           </section>
 
           {/* Danger Zone */}
