@@ -605,12 +605,17 @@ class TestLegacyKeyMigration:
 
     async def test_migration_noop_without_legacy(self, keys_env):
         import app.config as config_module
-        from app.config_store import migrate_legacy_keys
+        from app.config_store import get_api_keys_from_config, migrate_legacy_keys
 
         # No config.json at all → no-op, no crash.
         if config_module.CONFIG_FILE_PATH.exists():
             config_module.CONFIG_FILE_PATH.unlink()
+        before = get_api_keys_from_config()
         migrate_legacy_keys()
+
+        # Nothing written: no config file appears and the key store is untouched.
+        assert not config_module.CONFIG_FILE_PATH.exists()
+        assert get_api_keys_from_config() == before
 
 
 class TestRequiresBaseUrlValidation:
