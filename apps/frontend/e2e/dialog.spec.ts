@@ -61,10 +61,15 @@ const STUBS: Record<string, unknown> = {
 };
 
 /** Answer every /api/v1 call in the browser; note any the stubs don't cover. */
-async function stubApi(page: Page) {
+async function stubApi(page: Page, resume: unknown = RESUME) {
+  const resumes = STUBS['/resumes'] as { data: Record<string, unknown> };
+  const stubs = {
+    ...STUBS,
+    '/resumes': { ...resumes, data: { ...resumes.data, processed_resume: resume } },
+  };
   await page.route('**/api/v1/**', (route) => {
     const path = new URL(route.request().url()).pathname.replace(/^\/api\/v1/, '');
-    if (path in STUBS) return route.fulfill({ json: STUBS[path] });
+    if (path in stubs) return route.fulfill({ json: stubs[path as keyof typeof stubs] });
     test.info().annotations.push({ type: 'unstubbed', description: path });
     return route.fulfill({ status: 404, json: { detail: 'not stubbed' } });
   });
@@ -222,5 +227,35 @@ test.describe('dialog contract: a forced choice', () => {
     await dialog.getByRole('button', { name: en.builder.draftRecovery.useServer }).click();
     await expect(dialog).toBeHidden();
     await expect(page.getByLabel(en.resume.personalInfo.name)).toHaveValue('Ada Lovelace');
+  });
+});
+
+test.describe('dialog contract: focus a close handler sends to the page', () => {
+  test('the link dialog hands focus back to the editor', async ({ page }) => {
+    await stubApi(page, {
+      ...RESUME,
+      workExperience: [
+        { id: 1, title: 'Engineer', company: 'Acme', years: '2020', description: ['Built things'] },
+      ],
+    });
+    await page.goto('/builder?id=res-1');
+    const editor = page.locator('[contenteditable="true"]', { hasText: 'Built things' });
+    await editor.click();
+    await page.getByRole('button', { name: 'Link', exact: true }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Add link' });
+    await expect(dialog).toBeVisible();
+    await dialog.getByLabel('Display text').fill('docs');
+    await dialog.getByLabel('URL').fill('example.com');
+    await dialog.getByRole('button', { name: 'Add link' }).click();
+
+    await expect(dialog).toBeHidden();
+    // The handler focuses the editor as the dialog closes. A modal makes the page
+    // inert, so that only works once the dialog is really closed.
+    await expect(editor).toBeFocused();
+    await expect(editor.getByRole('link', { name: 'docs' })).toHaveAttribute(
+      'href',
+      'https://example.com'
+    );
   });
 });
