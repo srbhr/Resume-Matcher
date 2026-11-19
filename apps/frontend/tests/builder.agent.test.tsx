@@ -77,6 +77,9 @@ function serveBackend({ agentMode = true } = {}) {
     http.patch(`${API}/resumes/:id/cover-letter`, async ({ request }) => {
       calls.patchCoverLetter += 1;
       backend.coverLetter = ((await request.json()) as { content: string }).content;
+      if (backend.patchDelayMs) {
+        await new Promise((resolve) => setTimeout(resolve, backend.patchDelayMs));
+      }
       return HttpResponse.json({ request_id: 'req', data: {} });
     }),
     http.get(`${API}/resumes/:id/pdf`, () => {
@@ -332,6 +335,31 @@ describe('builder in agent mode, when the agent saves', () => {
     expect(calls.patchCoverLetter).toBe(0);
     expect(backend.coverLetter).toBe('Agent letter');
     expect(screen.getByText(en.builder.agentUpdate.conflictTitle)).toBeInTheDocument();
+  });
+
+  it('does not mistake its own cover letter save for the agent while the save is in flight', async () => {
+    // The server stores the letter at once, but the response arrives late.
+    backend.coverLetter = 'Saved letter';
+    backend.patchDelayMs = 6_000;
+    route.search = 'id=res-1&tab=cover-letter';
+    await openBuilder();
+    fireEvent.change(screen.getByDisplayValue('Saved letter'), {
+      target: { value: 'My letter' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+    await settle();
+    expect(calls.patchCoverLetter).toBe(1);
+    expect(backend.coverLetter).toBe('My letter');
+
+    await nextAgentCheck(); // runs while the PATCH is still pending
+    expect(screen.queryByText(en.builder.agentUpdate.conflictTitle)).toBeNull();
+    await advance(10_000);
+    await nextAgentCheck();
+
+    expect(screen.queryByText(en.builder.agentUpdate.conflictTitle)).toBeNull();
+    expect(screen.queryByText(en.builder.agentUpdate.applied)).toBeNull();
+    expect(screen.getByDisplayValue('My letter')).toBeInTheDocument();
+    expect(calls.patchCoverLetter).toBe(1);
   });
 
   it('keeps the resume form mounted when the agent changed only the cover letter', async () => {
