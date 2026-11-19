@@ -627,6 +627,31 @@ describe('builder attachment save ordering', () => {
     }
   );
 
+  it.each(['cover-letter', 'outreach'] as const)(
+    '%s: an edit back to the old text during generation is saved before Back',
+    async (tab) => {
+      // Generation writes its text to the server, so the editor's text is
+      // unsaved again even though it matches what the page first loaded.
+      documents.a = { cover_letter: 'SERVER', outreach_message: 'SERVER' };
+      const generated = generateLater(tab);
+      route.search = `id=a&tab=${tab}`;
+      renderBuilder();
+      const editor = await screen.findByDisplayValue('SERVER');
+      await regenerate(tab);
+      await waitFor(() => expect(generations).toBe(1));
+      fireEvent.change(editor, { target: { value: 'DRAFT' } });
+      fireEvent.change(editor, { target: { value: 'SERVER' } });
+      await act(async () => generated.resolve('GENERATED'));
+      expect(screen.getByRole('textbox')).toHaveValue('SERVER');
+      expect(documents.a[field(tab)]).toBe('GENERATED');
+
+      fireEvent.click(screen.getByRole('button', { name: en.nav.backToDashboard }));
+
+      await waitFor(() => expect(router.push).toHaveBeenCalledWith('/dashboard'));
+      expect(documents.a[field(tab)]).toBe('SERVER');
+    }
+  );
+
   it('retains a matching restored attachment backup when replacement storage writes fail', async () => {
     localStorage.setItem(
       'resume_builder_attachment_draft:a',
