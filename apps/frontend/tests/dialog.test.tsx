@@ -12,11 +12,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-/** A click on the layer around the panel: where a real pointer lands outside it. */
+/**
+ * A click on the backdrop: the browser targets the dialog itself, at a point outside its
+ * box (jsdom's boxes are all zero, so any negative point is outside).
+ */
 function clickOutside() {
-  const layer = screen.getByRole('dialog').parentElement as HTMLElement;
-  fireEvent.pointerDown(layer);
-  fireEvent.click(layer);
+  const dialog = screen.getByRole('dialog');
+  fireEvent.pointerDown(dialog, { clientX: -1, clientY: -1 });
+  fireEvent.click(dialog, { clientX: -1, clientY: -1 });
 }
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));

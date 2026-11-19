@@ -120,21 +120,24 @@ const focusableIn = (root: HTMLElement): HTMLElement[] =>
   );
 
 /**
- * The layer AnimatePresence keeps mounted while the dialog exits. The exiting
- * subtree still has live handlers (a second click on a confirm button would
- * fire it again), so once it is no longer present it is inert and click-through.
+ * The dialog element itself, mounted while AnimatePresence plays its exit. By then it
+ * is closed (no longer modal), but its subtree still has live handlers (a second click
+ * on a confirm button would fire it again), so it is inert and click-through.
  */
-const DialogLayer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isPresent = useIsPresent();
-  return (
-    <div
-      className={cn('fixed inset-0 z-50', !isPresent && 'pointer-events-none')}
-      inert={!isPresent}
-    >
-      {children}
-    </div>
-  );
-};
+const DialogPanel = React.forwardRef<HTMLDialogElement, React.ComponentProps<typeof m.dialog>>(
+  ({ className, ...props }, ref) => {
+    const isPresent = useIsPresent();
+    return (
+      <m.dialog
+        ref={ref}
+        className={cn(className, !isPresent && 'pointer-events-none')}
+        inert={!isPresent}
+        {...props}
+      />
+    );
+  }
+);
+DialogPanel.displayName = 'DialogPanel';
 
 // Open dialogs, bottom to top. Escape closes only the top one, and the body scroll lock
 // is released only when the last one closes.
@@ -144,6 +147,14 @@ let bodyLocks = 0;
 // which would make the dialog underneath the new top before its own listener runs.
 const handledEscapes = new WeakSet<Event>();
 
+/** Whether a pointer event lands outside the element's box: on its ::backdrop. */
+const isOutside = (e: React.MouseEvent<HTMLElement>) => {
+  const box = e.currentTarget.getBoundingClientRect();
+  return (
+    e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom
+  );
+};
+
 interface DialogContentProps {
   children: React.ReactNode;
   className?: string;
@@ -152,6 +163,11 @@ interface DialogContentProps {
   initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
+/**
+ * A native modal `<dialog>`: the browser puts it in the top layer and makes the page
+ * behind it inert. React still owns whether it is open: Escape and outside clicks go
+ * through `onOpenChange`, never the browser's own close.
+ */
 const DialogContent: React.FC<DialogContentProps> = ({
   children,
   className,
@@ -160,8 +176,13 @@ const DialogContent: React.FC<DialogContentProps> = ({
 }) => {
   const { open, onOpenChange, dismissible, titleId } = useDialogContext();
   const { t } = useTranslations();
-  const panelRef = React.useRef<HTMLDivElement>(null);
+  const panelRef = React.useRef<HTMLDialogElement>(null);
   const pressStartedOutside = React.useRef(false);
+  // Read by the native `close` listener, which can fire after a render.
+  const openRef = React.useRef(open);
+  React.useEffect(() => {
+    openRef.current = open;
+  }, [open]);
   const idRef = React.useRef(Symbol('dialog'));
   // Reduced motion: the panel only fades, it does not scale (spec §7).
   const reducedMotion = useReducedMotion();
@@ -184,13 +205,12 @@ const DialogContent: React.FC<DialogContentProps> = ({
 
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (
-        e.key === 'Escape' &&
-        open &&
-        dismissible &&
-        openDialogs[openDialogs.length - 1] === idRef.current &&
-        !handledEscapes.has(e)
-      ) {
+      if (e.key !== 'Escape' || !open || openDialogs[openDialogs.length - 1] !== idRef.current) {
+        return;
+      }
+      // The browser's own Escape would close the dialog behind React's back.
+      e.preventDefault();
+      if (dismissible && !handledEscapes.has(e)) {
         handledEscapes.add(e);
         onOpenChange(false);
       }
@@ -199,25 +219,31 @@ const DialogContent: React.FC<DialogContentProps> = ({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [open, dismissible, onOpenChange]);
 
-  // Focus contract: move focus in on open, give it back to the opener on close.
-  // Don't use autoFocus inside a dialog: React applies it before this effect runs,
-  // so the opener is never recorded. The first focusable element gets focus anyway.
+  // Open and focus contract: record the opener, open as a modal, move focus in; on close,
+  // close the element and give focus back to the opener. Don't use autoFocus inside a
+  // dialog: React applies it before this effect runs, so the opener is never recorded.
   // On close, the opener only gets focus back if nothing else claimed it (a close
   // handler may have focused something on purpose, e.g. the editor behind a link dialog).
   React.useEffect(() => {
     if (!open) return;
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const panel = panelRef.current;
-    if (panel && !panel.contains(document.activeElement)) {
+    const focusWasInside = Boolean(panel?.contains(document.activeElement));
+    // Guarded: development StrictMode runs this effect twice, and showModal() throws on an
+    // open dialog.
+    if (panel && !panel.open) panel.showModal();
+    if (panel && !focusWasInside) {
       (initialFocusRef?.current ?? focusableIn(panel)[0] ?? panel).focus();
     }
     return () => {
+      // Close first: while it is modal, the page behind (the opener too) can't take focus.
+      if (panel?.open) panel.close();
       const active = document.activeElement;
       if (!active || active === document.body || panel?.contains(active)) opener?.focus();
     };
   }, [open, initialFocusRef]);
 
-  const trapTab = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const trapTab = (e: React.KeyboardEvent<HTMLDialogElement>) => {
     if (e.key !== 'Tab' || !panelRef.current) return;
     const items = focusableIn(panelRef.current);
     if (items.length === 0) {
@@ -242,75 +268,77 @@ const DialogContent: React.FC<DialogContentProps> = ({
   return createPortal(
     <AnimatePresence>
       {open && (
-        <DialogLayer key="dialog">
-          <m.div
-            className="fixed inset-0 bg-overlay"
-            aria-hidden="true"
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: 1,
-              transition: { duration: DURATION.surface, ease: EASE_OUT_EXPO },
-            }}
-            exit={{ opacity: 0, transition: { duration: DURATION.exit, ease: EASE_OUT_EXPO } }}
-          />
-          {/* This layer covers the overlay, so it is what an outside click hits. A press
-              that starts in the panel (selecting text) and ends out here doesn't count. */}
-          <div
-            className="fixed inset-0 flex items-center justify-center p-4"
-            onPointerDown={(e) => {
-              pressStartedOutside.current = e.target === e.currentTarget;
-            }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget && pressStartedOutside.current && dismissible) {
-                onOpenChange(false);
-              }
-            }}
-          >
-            <m.div
-              ref={panelRef}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby={titleId}
-              tabIndex={-1}
-              onKeyDown={trapTab}
-              onClick={(e) => e.stopPropagation()}
-              initial={{ opacity: 0, scale: panelScale }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                transition: {
-                  opacity: { duration: DURATION.surface, ease: EASE_OUT_EXPO },
-                  scale: SPRING,
-                },
-              }}
-              exit={{
-                opacity: 0,
-                scale: panelScale,
-                transition: { duration: DURATION.exit, ease: EASE_OUT_EXPO },
-              }}
-              className={cn(
-                'relative flex max-h-[90vh] w-full flex-col overflow-hidden',
-                'rounded-none border border-ink bg-white shadow-sw-lg outline-none',
-                SIZE_CLASS[size],
-                className
-              )}
+        <DialogPanel
+          key="dialog"
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          onKeyDown={trapTab}
+          onCancel={(e) => e.preventDefault()}
+          onClose={() => {
+            // Closed by the browser while React still has it open (a browser may let a
+            // repeated Escape through a prevented cancel): honour the forced choice.
+            const panel = panelRef.current;
+            if (!openRef.current || !panel || panel.open) return;
+            if (dismissible) onOpenChange(false);
+            else panel.showModal();
+          }}
+          onPointerDown={(e) => {
+            pressStartedOutside.current = e.target === e.currentTarget && isOutside(e);
+          }}
+          onClick={(e) => {
+            // A click on the backdrop targets the dialog itself, outside its box. A press
+            // that starts in the panel (selecting text) and ends out there doesn't count.
+            if (
+              e.target === e.currentTarget &&
+              isOutside(e) &&
+              pressStartedOutside.current &&
+              dismissible
+            ) {
+              onOpenChange(false);
+            }
+            e.stopPropagation();
+          }}
+          initial={{ opacity: 0, scale: panelScale }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            transition: {
+              opacity: { duration: DURATION.surface, ease: EASE_OUT_EXPO },
+              scale: SPRING,
+            },
+          }}
+          exit={{
+            opacity: 0,
+            scale: panelScale,
+            transition: { duration: DURATION.exit, ease: EASE_OUT_EXPO },
+          }}
+          className={cn(
+            // Shown while it exits too, when it is no longer open: hence an explicit
+            // display, fixed centring and z-index instead of the modal defaults.
+            'fixed inset-0 z-50 m-auto flex h-fit max-h-[90vh] w-[calc(100%-2rem)] flex-col overflow-hidden p-0',
+            'rounded-none border border-ink bg-white text-inherit shadow-sw-lg outline-none',
+            'backdrop:bg-overlay',
+            SIZE_CLASS[size],
+            className
+          )}
+        >
+          {children}
+          {dismissible && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="absolute right-4 top-5"
+              onClick={() => onOpenChange(false)}
+              aria-label={t('common.close')}
+              title={t('common.close')}
             >
-              {children}
-              {dismissible && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="absolute right-4 top-5"
-                  onClick={() => onOpenChange(false)}
-                  aria-label={t('common.close')}
-                  title={t('common.close')}
-                >
-                  <X aria-hidden="true" />
-                </Button>
-              )}
-            </m.div>
-          </div>
-        </DialogLayer>
+              <X aria-hidden="true" />
+            </Button>
+          )}
+        </DialogPanel>
       )}
     </AnimatePresence>,
     document.body
