@@ -89,6 +89,21 @@ describe('QuestionCard', () => {
     expect(onContinue).toHaveBeenCalledTimes(1);
   });
 
+  // Enter that confirms an IME candidate (Chinese, Japanese, Korean input) must only
+  // finish the word. Chrome/Firefox flag isComposing; Safari reports keyCode 229.
+  it.each([
+    { key: 'Enter', isComposing: true },
+    { key: 'Enter', keyCode: 229 },
+  ])('does not continue on an Enter that confirms an IME candidate (%o)', (init) => {
+    const onContinue = vi.fn();
+    render(<QuestionCard step="question" {...baseProps} onContinue={onContinue} answer="東京" />);
+    fireEvent.keyDown(screen.getByRole('textbox'), init);
+    expect(onContinue).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' });
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
   it('shows the ready hint on a question step only when isComplete', () => {
     const { rerender } = render(<QuestionCard step="question" {...baseProps} isComplete={false} />);
     expect(screen.queryByText('resumeWizard.readyHint')).not.toBeInTheDocument();

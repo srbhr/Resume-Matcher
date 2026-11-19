@@ -40,6 +40,7 @@ import { isSameResumeData } from '@/lib/utils/resume-draft-storage';
 import { useAgentRefresh } from '@/hooks/use-agent-refresh';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
+import { isImeComposing } from '@/lib/utils/keyboard';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
 import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
 
@@ -333,6 +334,7 @@ export default function ResumeViewerPage() {
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isImeComposing(e)) return;
     if (e.key === 'Enter') {
       void handleTitleSave();
     } else if (e.key === 'Escape') {

@@ -206,6 +206,20 @@ it('keeps the current resume title when an old rename settles after identity cha
   expect(mockedRename).toHaveBeenCalledWith('resume-123', 'Old A renamed');
 });
 
+it.each([
+  { key: 'Enter', isComposing: true },
+  { key: 'Enter', keyCode: 229 },
+])('keeps renaming on an Enter that confirms an IME candidate (%o)', async (init) => {
+  render(<ResumeViewerPage />);
+  await screen.findByRole('heading', { level: 1, name: 'Original title' });
+  fireEvent.click(screen.getByRole('button', { name: 'resumeViewer.renameTitle' }));
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '履歴書' } });
+  await act(async () => fireEvent.keyDown(screen.getByRole('textbox'), init));
+
+  expect(mockedRename).not.toHaveBeenCalled();
+  expect(screen.getByRole('textbox')).toHaveValue('履歴書');
+});
+
 it('keeps a replacement master cached when an old delete completes after unmount', async () => {
   let settle!: () => void;
   mockedDelete.mockImplementationOnce(

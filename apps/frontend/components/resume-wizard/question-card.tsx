@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslations } from '@/lib/i18n';
+import { isImeComposing } from '@/lib/utils/keyboard';
 import type { ResumeWizardProgress, ResumeWizardStep } from '@/lib/api/resume-wizard';
 
 interface QuestionCardProps {
@@ -87,9 +88,11 @@ export function QuestionCard({
     // Repo pattern: never let Enter bubble to a parent form/dialog.
     if (event.key !== 'Enter') return;
     event.stopPropagation();
-    // Enter submits, Shift+Enter inserts a newline.
+    // Enter submits, Shift+Enter inserts a newline. An Enter that confirms an IME
+    // candidate (Chinese, Japanese, Korean input) only finishes the word.
     if (!event.shiftKey) {
       event.preventDefault();
+      if (isImeComposing(event)) return;
       if (canContinue) acting(onContinue)();
     }
   };

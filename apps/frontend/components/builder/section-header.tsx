@@ -17,6 +17,7 @@ import {
 } from '@phosphor-icons/react';
 import type { SectionMeta } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
+import { isImeComposing } from '@/lib/utils/keyboard';
 
 interface SectionHeaderProps {
   section: SectionMeta;
@@ -79,6 +80,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isImeComposing(e)) return;
     if (e.key === 'Enter') {
       handleSaveEdit();
     } else if (e.key === 'Escape') {

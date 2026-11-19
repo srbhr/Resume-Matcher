@@ -18,6 +18,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Plus } from '@phosphor-icons/react';
 import type { SectionType } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
+import { isImeComposing } from '@/lib/utils/keyboard';
 
 interface AddSectionDialogProps {
   open: boolean;
@@ -53,6 +54,7 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isImeComposing(e)) return;
     if (e.key === 'Enter' && displayName.trim()) {
       handleSubmit();
     }
