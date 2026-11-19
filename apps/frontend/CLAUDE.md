@@ -180,6 +180,7 @@ npm run typecheck # tsc --noEmit
 npx oxfmt <files> # format only the files you changed
 npm run format    # oxfmt on EVERY supported file, incl. JSON and Markdown — don't use it for a change
 npm run test      # vitest run (includes the Swiss guard and contrast tests)
+npm run test:e2e  # Playwright browser specs in e2e/: ONLY by hand, after the owner approves
 npm run guard     # Swiss drift report; `npm run guard -- <path>` to filter
 npm run guard:update  # lower the guard allowlist (refuses increases)
 npm run report:first-load  # first-load JS per route, after a build
@@ -231,7 +232,9 @@ Specs (`tests/`):
 - **icons** — `brand-icon.test.tsx` (every mark is single-colour `currentColor`), `builder-brand-marks.test.tsx` (the outreach preview shows LinkedIn and the project form GitHub as brand marks).
 - **Swiss design** — `swiss-guard.test.ts` (the count ratchet over `tests/swiss-guard.allowlist.json`), `swiss-guard-rules.test.ts` (every rule flags what it should and allows what it should), `swiss-contrast.test.ts` (parses the `--sw-*` hex from `globals.css` and asserts WCAG 2.2 AA for every text and text-on-fill pairing, 3:1 for meaningful graphics, and that `THEME_COLOR` equals Canvas), `swiss-shadows.test.ts` (parses the `--shadow-sw-*` tokens: exactly six, none blurred or spread, the five floating/pressing roles solid `#000000`, and `nested` pinned to `4px 4px 0px 0px rgb(0 0 0 / 0.15)`). Changing a token so a pairing falls below its threshold, or turning a shadow soft, fails the test.
 
-Pure logic (i18n, utils, api) is tested directly with stubbed `fetch`/`t`; component specs render via Testing Library. The locale-parity spec mirrors `scripts/check_locale_parity.py` (which the pre-push hook also runs without Node). The local `pre-push` gate runs this vitest suite too when Node is available — `git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md).
+Pure logic (i18n, utils, api) is tested directly with stubbed `fetch`/`t`; component specs render via Testing Library. Page specs (`builder.flow`, `builder.identity`, `builder.agent`) render the real route inside its real layout with MSW answering the network (`tests/support/builder-page.tsx`, `tests/support/msw.ts`); only `next/navigation` is mocked. The locale-parity spec mirrors `scripts/check_locale_parity.py` (which the pre-push hook also runs without Node). The local `pre-push` gate runs this vitest suite too when Node is available — `git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md).
+
+**Browser specs (`e2e/`, Playwright).** For what jsdom can't show: focus, the top layer, inertness, real pointer hits, pixels. `Dialog` is a native modal `<dialog>`, and jsdom has no `showModal()` (`vitest.setup.ts` polyfills only `open`), so `e2e/dialog.spec.ts` is its contract. Run `npm run test:e2e` **only by hand, after the owner approves**. It is never in the pre-push hook. The specs stub every `/api/v1` call and point the backend at a closed port, but the rule holds anyway. Stop any other `next dev` first (both use `.next`). Screenshot baselines are per platform (`*-chromium-darwin.png`).
 
 ---
 
