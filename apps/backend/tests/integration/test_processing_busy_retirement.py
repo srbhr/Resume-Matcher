@@ -14,7 +14,6 @@ from app.main import app
 from app.models import Resume
 from app.routers import resumes
 from tests.db_helpers import hold_writer
-from tests.integration.test_storage_busy_writes import fast_busy_database  # noqa: F401
 from tests.integration.test_upload_processing import _docx_bytes
 
 

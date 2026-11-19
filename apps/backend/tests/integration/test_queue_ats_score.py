@@ -65,7 +65,10 @@ async def test_queue_output_stores_an_ats_score_and_can_be_recalculated(
         content=json.dumps(source), processed_data=source, processing_status="ready"
     )
     await isolated_db.create_queue_item(
-        "q1", master["resume_id"], "Senior Backend Engineer: Python", 0
+        "q1",
+        master["resume_id"],
+        "Senior Backend Engineer: Python",
+        rate_limit_seconds=0,
     )
 
     await QueueManager().drain()

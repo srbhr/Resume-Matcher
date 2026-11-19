@@ -312,7 +312,8 @@ def test_status_openapi_excludes_null_but_allows_omission() -> None:
     assert ApplicationUpdate().model_dump(exclude_unset=True) == {}
 
 
-async def test_sqlite_contention_is_retryable_503(isolated_db: Database) -> None:
+async def test_sqlite_contention_is_retryable_503(fast_busy_database: Database) -> None:
+    isolated_db = fast_busy_database
     card = await isolated_db.create_application(job_id="job", resume_id="resume")
     async with isolated_db._write_session():
         async with AsyncClient(
@@ -341,8 +342,9 @@ async def test_existing_tracker_card_does_not_wait_for_writer(
 
 
 async def test_job_upload_contention_is_retryable_without_partial_batch(
-    isolated_db: Database,
+    fast_busy_database: Database,
 ) -> None:
+    isolated_db = fast_busy_database
     seed = await isolated_db.create_job("existing job")
     async with isolated_db._write_session():
         async with AsyncClient(

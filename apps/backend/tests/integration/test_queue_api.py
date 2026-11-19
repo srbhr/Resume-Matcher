@@ -9,9 +9,6 @@ from httpx import ASGITransport, AsyncClient
 from app.database import Database, DatabaseBusyError
 from app.main import app
 from tests.db_helpers import hold_writer
-from tests.integration.test_storage_busy_writes import (  # noqa: F401 - fixture
-    fast_busy_database,
-)
 
 JOB_DESCRIPTION = (
     "Job Title: Fullstack Dev\nCompany: Stripe\nReq ID: REQ-42\n"

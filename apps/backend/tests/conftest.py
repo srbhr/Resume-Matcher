@@ -11,6 +11,7 @@ from typing import Any, NoReturn
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import event
 
 # Set DATA_DIR before pytest imports any test module. Several integration tests
 # import app.main at module scope, which constructs Settings and the global
@@ -405,3 +406,32 @@ def sample_changes():
 def isolated_db(isolated_backend_state: Any) -> Any:
     """Expose the per-test real database (SQLite, or a Postgres schema) to tests that need it."""
     return isolated_backend_state
+
+
+@pytest.fixture
+def fast_busy_database(isolated_db: Any) -> Iterator[Any]:
+    """Keep real database locks, shortening only the busy wait on test connections."""
+    if isolated_db.backend == "postgresql":
+        isolated_db.lock_timeout_ms = 10
+        yield isolated_db
+        return
+    isolated_db._ensure_initialized()
+    assert isolated_db._async_engine is not None
+    assert isolated_db._sync_engine is not None
+    engines = [isolated_db._async_engine.sync_engine, isolated_db._sync_engine]
+
+    def set_short_wait(connection: Any, record: Any, proxy: Any) -> None:
+        del record, proxy
+        cursor = connection.cursor()
+        try:
+            cursor.execute("PRAGMA busy_timeout=10")
+        finally:
+            cursor.close()
+
+    for engine in engines:
+        event.listen(engine, "checkout", set_short_wait)
+    try:
+        yield isolated_db
+    finally:
+        for engine in engines:
+            event.remove(engine, "checkout", set_short_wait)

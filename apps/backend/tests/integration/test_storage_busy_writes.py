@@ -1,47 +1,17 @@
 """Real SQLite contention must reach write callers as a retryable outcome."""
 
-from collections.abc import Iterator
 from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import event, text
+from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from app.config import get_api_keys_from_config, save_api_keys_to_config
 from app.database import Database, DatabaseBusyError
 from app.main import app
 from tests.db_helpers import hold_writer
-
-
-@pytest.fixture
-def fast_busy_database(isolated_db: Database) -> Iterator[Database]:
-    """Keep real database locks, shortening only the busy wait on test connections."""
-    if isolated_db.backend == "postgresql":
-        isolated_db.lock_timeout_ms = 10
-        yield isolated_db
-        return
-    isolated_db._ensure_initialized()
-    assert isolated_db._async_engine is not None
-    assert isolated_db._sync_engine is not None
-    engines = [isolated_db._async_engine.sync_engine, isolated_db._sync_engine]
-
-    def set_short_wait(connection: Any, record: Any, proxy: Any) -> None:
-        del record, proxy
-        cursor = connection.cursor()
-        try:
-            cursor.execute("PRAGMA busy_timeout=10")
-        finally:
-            cursor.close()
-
-    for engine in engines:
-        event.listen(engine, "checkout", set_short_wait)
-    try:
-        yield isolated_db
-    finally:
-        for engine in engines:
-            event.remove(engine, "checkout", set_short_wait)
 
 
 @pytest.mark.parametrize(

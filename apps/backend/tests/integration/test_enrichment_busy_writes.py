@@ -11,7 +11,6 @@ from app.database import Database
 from app.main import app
 from app.routers import enrichment
 from tests.db_helpers import hold_writer
-from tests.integration.test_storage_busy_writes import fast_busy_database  # noqa: F401
 
 
 def _apply_request(
