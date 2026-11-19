@@ -101,7 +101,7 @@ def tailoring_llm(
             },
             SKILL_PLAN: lambda: {"target_skills": [], "strategy_notes": ""},
             DIFF: lambda: {"changes": copy.deepcopy(changes)},
-            CRITIQUE: lambda: {"findings": []},
+            CRITIQUE: lambda: {"bullets": []},
         }
     )
     config = llm.LLMConfig(provider="openai", model="gpt-4o", api_key="synthetic")
@@ -144,6 +144,8 @@ async def test_preview_applies_the_llm_diff_through_the_real_pipeline(
     assert preview["resume_preview"]["personalInfo"] == source["personalInfo"]
     assert fake.calls[:3] == [KEYWORDS, SKILL_PLAN, DIFF]
     assert "unscripted" not in fake.calls
+    # The critique reply is valid, so it isn't retried: one call.
+    assert fake.calls.count(CRITIQUE) == 1
     # Preview persists nothing but the confirm handshake.
     assert (await isolated_db.get_stats())["total_resumes"] == 1
     assert (await isolated_db.get_job(job_id)).get("preview_hash")
