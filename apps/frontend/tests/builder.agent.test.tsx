@@ -39,6 +39,8 @@ const backend = {
   gate: null as Promise<void> | null,
   /** When set, a PATCH stores at once but answers this many ms later. */
   patchDelayMs: 0,
+  /** When not 200, a resume PATCH stores nothing and fails with this status. */
+  patchStatus: 200,
   jobKeywords: null as string[] | null,
   parentId: null as string | null,
 };
@@ -63,6 +65,9 @@ function serveBackend({ agentMode = true } = {}) {
     }),
     http.patch(`${API}/resumes/:id`, async ({ request }) => {
       calls.patchResume += 1;
+      if (backend.patchStatus !== 200) {
+        return HttpResponse.json({ detail: 'offline' }, { status: backend.patchStatus });
+      }
       backend.resume = (await request.json()) as Resume;
       if (backend.patchDelayMs) {
         await new Promise((resolve) => setTimeout(resolve, backend.patchDelayMs));
@@ -133,6 +138,7 @@ beforeEach(() => {
     outreach: '',
     gate: null,
     patchDelayMs: 0,
+    patchStatus: 200,
     jobKeywords: null,
     parentId: null,
   });
@@ -337,6 +343,43 @@ describe('builder in agent mode, when the agent saves', () => {
 
     expect(screen.getByText(en.builder.agentUpdate.applied)).toBeInTheDocument();
     expect(nameField()).toBe(field);
+  });
+
+  it('keeps and saves unsaved resume edits when the agent changed only the cover letter', async () => {
+    await openBuilder();
+    expect(screen.getByRole('tab', { name: en.builder.previewTabs.coverLetter })).toBeDisabled();
+    typeName('Local edit');
+    backend.coverLetter = 'Dear Acme';
+    await pageBecomesVisible(); // before autosave fires
+
+    // The agent's letter is in (its preview tab opens); the resume edit stays.
+    expect(screen.getByRole('tab', { name: en.builder.previewTabs.coverLetter })).toBeEnabled();
+    expect(nameField()).toHaveValue('Local edit');
+    await advance(6_000);
+    await settle();
+
+    expect(backend.resume.personalInfo.name).toBe('Local edit');
+    expect(backend.coverLetter).toBe('Dear Acme');
+  });
+
+  it("clears a failed save when the user takes the agent's version", async () => {
+    await openBuilder();
+    backend.patchStatus = 503;
+    typeName('Local edit');
+    await advance(3_000);
+    await settle();
+    expect(screen.getByText(en.builder.alerts.autoSaveFailed)).toBeInTheDocument();
+
+    agentRenames('Agent Ada');
+    await pageBecomesVisible();
+    fireEvent.click(screen.getByText(en.builder.agentUpdate.useAgent));
+    await settle();
+
+    expect(nameField()).toHaveValue('Agent Ada');
+    expect(screen.queryByText(en.builder.alerts.autoSaveFailed)).toBeNull();
+    expect(
+      screen.getByRole('button', { name: en.builder.autoSave.savedButton })
+    ).toBeInTheDocument();
   });
 
   it('picks up keywords the agent adds to the job', async () => {

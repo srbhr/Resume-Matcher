@@ -9,6 +9,7 @@ import {
   advance,
   backgroundHandlers,
   en,
+  nameField,
   renderBuilder,
   resumeBody,
   route,
@@ -151,6 +152,41 @@ describe('builder: saving at the page boundary', () => {
     // A 2.5s debounce allows a handful of saves; a 0 delay sends one per keystroke.
     expect(patches.length).toBeGreaterThan(0);
     expect(patches.length).toBeLessThanOrEqual(4);
+  });
+
+  it('a reset during an autosave still sends the reset copy to the server', async () => {
+    // The PATCH in flight carries the edit the reset discards, so the server is
+    // about to hold text the editor no longer shows.
+    answerPatches({ delayMs: 1_000 });
+    renderBuilder();
+    await advance(0);
+    typeName('Ada Byron');
+    await advance(2_600); // the autosave PATCH is in flight
+
+    fireEvent.click(screen.getByRole('button', { name: en.common.reset }));
+    expect(nameField()).toHaveValue('Ada Lovelace');
+    await advance(1_100); // the first PATCH lands
+    await advance(3_000); // autosave sends the reset copy
+
+    expect(patches.map((body) => body.personalInfo?.name)).toEqual(['Ada Byron', 'Ada Lovelace']);
+  });
+
+  it('a reset clears a failed save', async () => {
+    answerPatches({ status: 503 });
+    renderBuilder();
+    await advance(0);
+    typeName('Ada Byron');
+    await advance(3_000);
+    expect(screen.getByText(en.builder.alerts.autoSaveFailed)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: en.common.reset }));
+    await advance(0);
+
+    expect(nameField()).toHaveValue('Ada Lovelace');
+    expect(screen.queryByText(en.builder.alerts.autoSaveFailed)).toBeNull();
+    expect(
+      screen.getByRole('button', { name: en.builder.autoSave.savedButton })
+    ).toBeInTheDocument();
   });
 
   it("H-02: loading a resume leaves another resume's legacy draft intact", async () => {
