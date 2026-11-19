@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -134,7 +135,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, []);
 
   const handleLinkDialogClose = useCallback(() => {
-    setShowLinkDialog(false);
+    // Close the dialog first: while it is a modal, the editor behind it is inert and
+    // a focus() call is dropped.
+    flushSync(() => setShowLinkDialog(false));
     editor?.chain().focus().run();
   }, [editor]);
 
