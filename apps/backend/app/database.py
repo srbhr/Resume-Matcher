@@ -18,7 +18,7 @@ from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from uuid import uuid4
 
 from sqlalchemy import and_, delete, func, or_, select, text, update
@@ -1696,5 +1696,34 @@ class Database:
             return int(result.rowcount or 0)
 
 
-# Global database instance
-db = Database()
+class _DatabaseProxy:
+    """The ``db`` every module imports: it forwards to the current ``Database``.
+
+    Modules bind ``db`` at import time (``from app.database import db``), so the
+    instance behind it can change (``set_database``, used by tests) without
+    rebinding each module.
+    """
+
+    __slots__ = ()
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(_current, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        setattr(_current, name, value)
+
+    def __repr__(self) -> str:
+        return f"<db -> {_current!r}>"
+
+
+def set_database(database: Database) -> Database:
+    """Put ``database`` behind ``db``; returns the instance it replaces."""
+    global _current
+    previous = _current
+    _current = database
+    return previous
+
+
+# Global database instance, reached through the proxy.
+_current = Database()
+db = cast(Database, _DatabaseProxy())

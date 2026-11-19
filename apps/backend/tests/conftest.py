@@ -212,22 +212,16 @@ async def isolated_backend_state(
     monkeypatch.setattr(
         config_module, "CONFIG_FILE_PATH", test_data_dir / "config.json"
     )
-    monkeypatch.setattr(database_module, "db", test_db)
-
-    # Modules such as routers and app.main import ``db`` by value. Patch every
-    # alias already loaded during collection; modules imported later receive
-    # app.database.db, which is already the isolated instance.
-    for module_name, module in tuple(sys.modules.items()):
-        if not module_name.startswith("app.") or module is None:
-            continue
-        if isinstance(getattr(module, "db", None), Database):
-            monkeypatch.setattr(module, "db", test_db)
+    # Every module's ``db`` is a proxy for the current instance, so one swap
+    # isolates routers, services, the queue worker, MCP tools and the CLI alike.
+    previous_db = database_module.set_database(test_db)
 
     invalidate_config_cache()
     crypto.reset_cache()
     try:
         yield test_db
     finally:
+        database_module.set_database(previous_db)
         invalidate_config_cache()
         crypto.reset_cache()
         await test_db.close()
