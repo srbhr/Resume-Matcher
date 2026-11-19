@@ -18,10 +18,13 @@ import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-a
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/vivid.module.css';
 import { customSectionHasContent } from './dynamic-resume-section';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 
 interface ResumeVividProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
@@ -122,11 +125,13 @@ export const renderArrowBullets = (
  */
 export const VividHeader: React.FC<{
   personalInfo?: PersonalInfo;
+  photo?: string | null;
   showContactIcons: boolean;
   nameFallback?: string;
   nameRestClassName?: string;
 }> = ({
   personalInfo,
+  photo,
   showContactIcons,
   nameFallback = 'Your Name',
   nameRestClassName = styles.nameRestSolid,
@@ -137,7 +142,7 @@ export const VividHeader: React.FC<{
   const nameRest = firstSpace === -1 ? '' : fullName.slice(firstSpace + 1);
 
   return (
-    <div className={baseStyles['resume-header']}>
+    <div className={`${baseStyles['resume-header']}${photoHeaderClass(photo, false)}`}>
       <h1 className={baseStyles['resume-name']}>
         <span className={styles.nameFirst}>{nameFirst}</span>
         {nameRest && <span className={nameRestClassName}> {nameRest}</span>}
@@ -153,6 +158,7 @@ export const VividHeader: React.FC<{
           {renderContactDetail(showContactIcons, 'Location', personalInfo.location)}
         </div>
       )}
+      <ResumePhoto src={photo} />
     </div>
   );
 };
@@ -260,6 +266,7 @@ export const VividProjectItem: React.FC<{ project: Project; roleClassName?: stri
  */
 export const ResumeVivid: React.FC<ResumeVividProps> = ({
   data,
+  photo,
   showContactIcons = false,
   sectionHeadings,
   fallbackLabels,
@@ -294,6 +301,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
     <>
       <VividHeader
         personalInfo={personalInfo}
+        photo={photo}
         showContactIcons={showContactIcons}
         nameFallback={fallbackLabels?.name}
       />

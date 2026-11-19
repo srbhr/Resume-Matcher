@@ -21,10 +21,13 @@ import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-a
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/modern-deedy.module.css';
 import { customSectionHasContent } from './dynamic-resume-section';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 
 interface ResumeModernDeedyProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
 }
@@ -54,6 +57,7 @@ const joinMeta = (...parts: (string | undefined)[]) => parts.filter(Boolean).joi
  */
 export const ResumeModernDeedy: React.FC<ResumeModernDeedyProps> = ({
   data,
+  photo,
   showContactIcons = false,
   additionalSectionLabels,
   earlierExperienceLabel,
@@ -279,7 +283,7 @@ export const ResumeModernDeedy: React.FC<ResumeModernDeedyProps> = ({
   return (
     <div className={styles.container}>
       {personalInfo && (
-        <header className={styles.header}>
+        <header className={`${styles.header}${photoHeaderClass(photo, true)}`}>
           {personalInfo.name && <h1 className={styles.name}>{personalInfo.name}</h1>}
           {personalInfo.title && <div className={styles.tagline}>{personalInfo.title}</div>}
           {contactItems.length > 0 && (
@@ -292,6 +296,7 @@ export const ResumeModernDeedy: React.FC<ResumeModernDeedyProps> = ({
               ))}
             </div>
           )}
+          <ResumePhoto src={photo} />
         </header>
       )}
 

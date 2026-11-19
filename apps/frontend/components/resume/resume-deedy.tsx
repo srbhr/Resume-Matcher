@@ -22,6 +22,7 @@ import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/deedy.module.css';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 
 type Column = 'left' | 'right';
 
@@ -158,6 +159,8 @@ const joinPresent = (values: (string | undefined)[]) => values.filter(Boolean).j
 interface ResumeDeedyProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
@@ -177,6 +180,7 @@ interface ResumeDeedyProps {
  */
 export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
   data,
+  photo,
   sectionHeadings,
   additionalSectionLabels,
   fallbackLabels,
@@ -567,7 +571,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
 
   return (
     <div className={styles.deedy}>
-      <header className={styles.header}>
+      <header className={`${styles.header}${photoHeaderClass(photo, true)}`}>
         <h1 className={styles.name}>
           {nameFirst && (
             <>
@@ -587,6 +591,7 @@ export const ResumeDeedy: React.FC<ResumeDeedyProps> = ({
           </div>
         )}
         {contactLine.length > 0 && <div className={styles.contact}>{withPipes(contactLine)}</div>}
+        <ResumePhoto src={photo} />
       </header>
       <hr className={styles.rule} />
 

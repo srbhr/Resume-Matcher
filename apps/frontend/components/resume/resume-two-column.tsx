@@ -10,10 +10,13 @@ import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-two-column.module.css';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 
 interface ResumeTwoColumnProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
 }
@@ -31,6 +34,7 @@ interface ResumeTwoColumnProps {
  */
 export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
   data,
+  photo,
   showContactIcons = false,
   sectionHeadings,
   earlierExperienceLabel,
@@ -145,7 +149,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
       {/* Header Section - Centered Layout */}
       {personalInfo && (
         <header
-          className={`text-center ${baseStyles['resume-header']} border-b`}
+          className={`text-center ${baseStyles['resume-header']} border-b${photoHeaderClass(photo, true)}`}
           style={{ borderColor: 'var(--resume-border-primary)' }}
         >
           {/* Name - Centered */}
@@ -200,6 +204,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
               </>
             )}
           </div>
+          <ResumePhoto src={photo} />
         </header>
       )}
 

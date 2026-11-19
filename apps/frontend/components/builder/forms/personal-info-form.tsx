@@ -9,9 +9,11 @@ import { useTranslations } from '@/lib/i18n';
 interface PersonalInfoFormProps {
   data: PersonalInfo;
   onChange: (data: PersonalInfo) => void;
+  /** Shown under the fields (the builder's photo field). */
+  extra?: React.ReactNode;
 }
 
-export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange }) => {
+export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange, extra }) => {
   const { t } = useTranslations();
 
   const handleChange = (field: keyof PersonalInfo, value: string) => {
@@ -108,6 +110,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           />
         </div>
       </div>
+      {extra}
     </div>
   );
 };

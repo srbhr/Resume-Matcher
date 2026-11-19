@@ -1240,7 +1240,21 @@
       "location": "所在地",
       "website": "个人网站",
       "linkedin": "领英",
-      "github": "GitHub"
+      "github": "GitHub",
+      "photo": {
+        "label": "照片",
+        "hint": "用于带照片的简历：德国、奥地利、瑞士和日本通常需要，英国和美国一般不放。照片会裁剪为 35 × 45 毫米的证件照尺寸。",
+        "add": "添加照片",
+        "change": "更换照片",
+        "remove": "删除照片",
+        "uploading": "正在上传...",
+        "previewAlt": "你的简历照片",
+        "errors": {
+          "tooLarge": "照片超过 5 MB，请选择更小的照片。",
+          "unsupported": "请使用 JPEG、PNG 或 WebP 格式的照片。",
+          "failed": "无法保存照片，请重试。"
+        }
+      }
     },
     "sections": {
       "personalInfo": "个人信息",

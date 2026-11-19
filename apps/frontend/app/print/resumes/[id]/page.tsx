@@ -78,6 +78,26 @@ function parseBoolean(value: string | undefined, defaultValue: boolean): boolean
   return defaultValue;
 }
 
+/**
+ * The photo of a photo CV, or null. Page-fit drafts use their resume's photo
+ * too: it changes the header's height and so the page count. A photo that
+ * can't load never blocks the PDF.
+ */
+async function fetchResumePhoto(id: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE}/resumes/${encodeURIComponent(id)}/photo`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return ((await res.json()) as { photo: string | null }).photo;
+  } catch (error) {
+    console.error('Failed to load resume photo:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return null;
+  }
+}
+
 async function fetchResumeData(id: string, draftToken?: string): Promise<ResumeData> {
   const url =
     draftToken && /^[a-f0-9]{32}$/.test(draftToken)
@@ -167,8 +187,12 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const draftToken = resolvedSearchParams?.draft;
   let resumeData: ResumeData;
+  // Started together: the photo request mustn't wait for the resume. It never
+  // rejects, so leaving it unawaited on the error path below is safe.
+  const resumeRequest = fetchResumeData(resolvedParams.id, draftToken);
+  const photoRequest = fetchResumePhoto(resolvedParams.id);
   try {
-    resumeData = await fetchResumeData(resolvedParams.id, draftToken);
+    resumeData = await resumeRequest;
   } catch (error) {
     // Render a marker the PDF renderer waits for, so a resume that cannot load
     // (an expired page-fit draft, an unreachable backend) fails fast instead
@@ -282,6 +306,7 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
       />
       <Resume
         resumeData={localizedResumeData}
+        photo={await photoRequest}
         template={settings.template}
         settings={printSettings}
         locale={locale}

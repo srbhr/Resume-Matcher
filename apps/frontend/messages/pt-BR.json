@@ -1240,7 +1240,21 @@
       "location": "Localização",
       "website": "Website",
       "linkedin": "LinkedIn",
-      "github": "GitHub"
+      "github": "GitHub",
+      "photo": {
+        "label": "Foto",
+        "hint": "Para currículos com foto: esperada na Alemanha, Áustria, Suíça e Japão; no Reino Unido e nos EUA costuma ficar de fora. Recortada no formato passaporte de 35 × 45 mm.",
+        "add": "Adicionar foto",
+        "change": "Trocar foto",
+        "remove": "Remover foto",
+        "uploading": "Enviando...",
+        "previewAlt": "A foto do seu currículo",
+        "errors": {
+          "tooLarge": "A foto passa de 5 MB. Escolha uma menor.",
+          "unsupported": "Use uma foto JPEG, PNG ou WebP.",
+          "failed": "Não foi possível salvar a foto. Tente novamente."
+        }
+      }
     },
     "sections": {
       "personalInfo": "Informações Pessoais",

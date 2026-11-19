@@ -1240,7 +1240,21 @@
       "location": "所在地",
       "website": "ウェブサイト",
       "linkedin": "LinkedIn",
-      "github": "GitHub"
+      "github": "GitHub",
+      "photo": {
+        "label": "写真",
+        "hint": "写真付き履歴書向け：日本、ドイツ、オーストリア、スイスでは一般的ですが、英国や米国では通常付けません。35 × 45 mm のパスポート写真サイズに切り抜かれます。",
+        "add": "写真を追加",
+        "change": "写真を変更",
+        "remove": "写真を削除",
+        "uploading": "アップロード中...",
+        "previewAlt": "履歴書の写真",
+        "errors": {
+          "tooLarge": "写真が 5 MB を超えています。もっと小さい写真を選んでください。",
+          "unsupported": "JPEG、PNG、WebP のいずれかの写真を使ってください。",
+          "failed": "写真を保存できませんでした。もう一度お試しください。"
+        }
+      }
     },
     "sections": {
       "personalInfo": "個人情報",

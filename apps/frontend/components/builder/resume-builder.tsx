@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useCallback, useMemo, useRef } fr
 import { useSearchParams, useRouter } from 'next/navigation';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
+import { ResumePhotoField } from './forms/resume-photo-field';
 import { FormattingControls } from './formatting-controls';
 import { CoverLetterEditor } from './cover-letter-editor';
 import { OutreachEditor } from './outreach-editor';
@@ -54,6 +55,7 @@ import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useResumeFormatting } from '@/hooks/use-resume-formatting';
 import { useJobContext } from '@/hooks/use-job-context';
+import { useResumePhoto } from '@/hooks/use-resume-photo';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
@@ -277,6 +279,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const lastSavedDataRef = useRef<ResumeData>(initialData);
   const agentCheckRunningRef = useRef(false);
   const dismissedAgentVersionRef = useRef<string | null>(null);
+
+  // The photo of a photo CV: its own resource, saved by the field, not by autosave.
+  const { photo, setPhoto } = useResumePhoto(resumeId);
 
   // The job this resume was tailored to, for JD Match and the ATS check.
   const { jobDescription, jobKeywords, jobCompany, jobForcedKeywords, jobContextStatus } =
@@ -1678,6 +1683,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                       key={resumeFormKey}
                       resumeData={resumeData}
                       onUpdate={handleUpdate}
+                      photoField={
+                        resumeId && (
+                          <ResumePhotoField resumeId={resumeId} photo={photo} onChange={setPhoto} />
+                        )
+                      }
                     />
                   </>
                 ))}
@@ -1908,6 +1918,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                 <PaginatedPreview
                   resumeData={localizedResumeDataForPreview}
                   settings={templateSettings}
+                  photo={photo}
                 />
               )}
 

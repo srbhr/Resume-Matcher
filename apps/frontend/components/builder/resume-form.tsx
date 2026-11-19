@@ -46,9 +46,11 @@ import { useTranslations } from '@/lib/i18n';
 interface ResumeFormProps {
   resumeData: ResumeData;
   onUpdate: (data: ResumeData) => void;
+  /** Shown in the personal information section (the photo field). */
+  photoField?: React.ReactNode;
 }
 
-export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) => {
+export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate, photoField }) => {
   const { t } = useTranslations();
 
   // Get section metadata, falling back to defaults
@@ -219,6 +221,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
             <PersonalInfoForm
               data={resumeData.personalInfo || ({} as PersonalInfo)}
               onChange={(data) => onUpdate({ ...resumeData, personalInfo: data })}
+              extra={photoField}
             />
           );
 

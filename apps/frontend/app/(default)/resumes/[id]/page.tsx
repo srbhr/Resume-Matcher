@@ -39,6 +39,7 @@ import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { isSameResumeData } from '@/lib/utils/resume-draft-storage';
 import { useAgentRefresh } from '@/hooks/use-agent-refresh';
+import { useResumePhoto } from '@/hooks/use-resume-photo';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
 import { isImeComposing } from '@/lib/utils/keyboard';
@@ -97,6 +98,7 @@ export default function ResumeViewerPage() {
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
 
   const resumeId = params?.id as string;
+  const { photo } = useResumePhoto(resumeId);
   const {
     begin: beginResumeLoad,
     isCurrent: isCurrentResumeLoad,
@@ -631,6 +633,7 @@ export default function ResumeViewerPage() {
             <PaginatedPreview
               resumeData={localizedResumeData || resumeData}
               settings={templateSettings}
+              photo={photo}
             />
           </div>
           {/* Browser printing shows only .resume-print (globals.css), so print this copy
@@ -638,6 +641,7 @@ export default function ResumeViewerPage() {
           <div className="resume-print hidden print:block">
             <Resume
               resumeData={localizedResumeData || resumeData}
+              photo={photo}
               template={templateSettings.template}
               settings={templateSettings}
               additionalSectionLabels={{

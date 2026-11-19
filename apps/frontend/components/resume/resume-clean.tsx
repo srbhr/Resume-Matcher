@@ -14,10 +14,13 @@ import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-a
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/clean.module.css';
 import { customSectionHasContent } from './dynamic-resume-section';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 
 interface ResumeCleanProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
 }
@@ -36,6 +39,7 @@ interface ResumeCleanProps {
  */
 export const ResumeClean: React.FC<ResumeCleanProps> = ({
   data,
+  photo,
   showContactIcons = false,
   additionalSectionLabels,
   earlierExperienceLabel,
@@ -305,7 +309,9 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
   return (
     <div className={styles.container}>
       {personalInfo && (
-        <header className={`text-center ${baseStyles['resume-header']}`}>
+        <header
+          className={`text-center ${baseStyles['resume-header']}${photoHeaderClass(photo, true)}`}
+        >
           {personalInfo.name && <h1 className={`${styles.name} mb-1`}>{personalInfo.name}</h1>}
           {personalInfo.title && (
             <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>
@@ -322,6 +328,7 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
               ))}
             </div>
           )}
+          <ResumePhoto src={photo} />
         </header>
       )}
 

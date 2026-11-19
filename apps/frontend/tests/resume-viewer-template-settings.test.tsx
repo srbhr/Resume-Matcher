@@ -33,6 +33,7 @@ vi.mock('@/components/preview', () => ({
   },
 }));
 vi.mock('@/lib/api/resume', () => ({
+  fetchResumePhoto: vi.fn(() => Promise.resolve(null)),
   fetchResume: vi.fn(),
   downloadResumePdf: vi.fn(),
   getResumePdfUrl: vi.fn(() => 'https://example.invalid/pdf'),

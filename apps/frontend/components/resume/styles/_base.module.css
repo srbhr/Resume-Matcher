@@ -35,6 +35,30 @@
   padding-bottom: calc(var(--item-gap) * 1.25);
 }
 
+/* Photo CVs: the photo sits in the header's top-right corner at 35:45, the
+   passport format. The header makes room for it, on both sides when its text is
+   centred so the name stays centred on the page. Sizes are in mm so the preview
+   and the PDF match. */
+.resume-photo-header {
+  --resume-photo-width: 27mm;
+  position: relative;
+  padding-inline-end: calc(var(--resume-photo-width) + 4mm);
+  min-height: calc(var(--resume-photo-width) * 45 / 35);
+}
+
+.resume-photo-header-centered {
+  padding-inline-start: calc(var(--resume-photo-width) + 4mm);
+}
+
+.resume-photo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--resume-photo-width);
+  aspect-ratio: 35 / 45;
+  object-fit: cover;
+}
+
 .resume-name {
   font-size: calc(var(--font-size-base) * var(--header-scale));
   font-family: var(--header-font);

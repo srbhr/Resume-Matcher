@@ -26,6 +26,8 @@ import {
 interface ResumeVividSingleProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
@@ -47,6 +49,7 @@ interface ResumeVividSingleProps {
  */
 export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
   data,
+  photo,
   showContactIcons = false,
   sectionHeadings,
   fallbackLabels,
@@ -227,6 +230,7 @@ export const ResumeVividSingle: React.FC<ResumeVividSingleProps> = ({
     <>
       <VividHeader
         personalInfo={personalInfo}
+        photo={photo}
         showContactIcons={showContactIcons}
         nameFallback={fallbackLabels?.name}
         nameRestClassName={styles.nameRestSolid}

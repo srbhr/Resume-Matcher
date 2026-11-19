@@ -393,6 +393,39 @@ export async function deleteResume(resumeId: string): Promise<void> {
   clearResumeWizardCompletion(resumeId);
 }
 
+/**
+ * The photo of a photo CV (a JPEG data URL), or null when the resume has none.
+ * It is its own resource: resume JSON never carries it.
+ */
+export async function fetchResumePhoto(resumeId: string): Promise<string | null> {
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/photo`);
+  if (!res.ok) throw await apiError(res, `Failed to load the photo (status ${res.status}).`);
+  return ((await res.json()) as { photo: string | null }).photo;
+}
+
+/** Image types the photo upload accepts; the server checks the bytes too. */
+export const RESUME_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+/** The server's upload limit (MAX_PHOTO_BYTES in app/services/resume_photo.py). */
+export const RESUME_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+
+/** Stores a photo; the server crops it to 35:45 and returns it as a data URL. */
+export async function uploadResumePhoto(resumeId: string, file: File): Promise<string> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/photo`, {
+    method: 'PUT',
+    body: form,
+  });
+  if (!res.ok) throw await apiError(res, `Failed to upload the photo (status ${res.status}).`);
+  return ((await res.json()) as { photo: string }).photo;
+}
+
+/** Removes the resume's photo. */
+export async function deleteResumePhoto(resumeId: string): Promise<void> {
+  const res = await apiDelete(`/resumes/${encodeURIComponent(resumeId)}/photo`);
+  if (!res.ok) throw await apiError(res, `Failed to remove the photo (status ${res.status}).`);
+}
+
 /** Updates the cover letter for a resume */
 export async function updateCoverLetter(resumeId: string, content: string): Promise<void> {
   const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/cover-letter`, { content });

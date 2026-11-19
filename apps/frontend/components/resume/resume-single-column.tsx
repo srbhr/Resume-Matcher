@@ -12,6 +12,7 @@ import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
 import { TagList } from './tag-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-single.module.css';
@@ -20,6 +21,8 @@ import modernStyles from './styles/modern.module.css';
 interface ResumeSingleColumnProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
   /** Modern variant: accent-coloured section titles and a name underline. */
@@ -37,6 +40,7 @@ interface ResumeSingleColumnProps {
  */
 export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
   data,
+  photo,
   showContactIcons = false,
   additionalSectionLabels,
   earlierExperienceLabel,
@@ -308,7 +312,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       {/* Header Section - Centered Layout (always first) */}
       {personalInfo && (
         <header
-          className={`text-center ${baseStyles['resume-header']}${accent ? '' : ' border-b'}`}
+          className={`text-center ${baseStyles['resume-header']}${accent ? '' : ' border-b'}${photoHeaderClass(photo, true)}`}
           style={accent ? undefined : { borderColor: 'var(--resume-border-primary)' }}
         >
           {/* Name - Centered */}
@@ -366,6 +370,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
               </>
             )}
           </div>
+          <ResumePhoto src={photo} />
         </header>
       )}
 

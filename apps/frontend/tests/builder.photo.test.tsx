@@ -1,0 +1,188 @@
+import { fireEvent, screen } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { startMsw } from './support/msw';
+import { installDomShims, removeDomShims } from './support/dom-shims';
+import { installNodeFormData, nodeFile } from './support/node-form-data';
+import {
+  API,
+  SERVER_RESUME,
+  advance,
+  backgroundHandlers,
+  en,
+  renderBuilder,
+  resumeBody,
+  route,
+} from './support/builder-page';
+
+/**
+ * The photo of a photo CV in the builder: added, changed and removed from the
+ * personal information section, and shown in the live preview. Real page and
+ * providers; MSW plays the backend; only `next/navigation` is mocked.
+ */
+
+vi.mock('next/navigation', async () => (await import('./support/navigation')).navigation);
+
+const STORED = 'data:image/jpeg;base64,/9j/stored';
+const UPLOADED = 'data:image/jpeg;base64,/9j/uploaded';
+const text = en.resume.personalInfo.photo;
+
+/** Requests the photo endpoints received, as "METHOD". */
+let photoCalls: string[] = [];
+
+const server = startMsw();
+
+function serveBackend({ photo = null as string | null, putStatus = 200 } = {}) {
+  server.use(
+    // Before the harness defaults, which answer the photo route with "no photo".
+    http.get(`${API}/resumes/:id/photo`, () => {
+      photoCalls.push('GET');
+      return HttpResponse.json({ photo });
+    }),
+    http.put(`${API}/resumes/:id/photo`, async ({ request }) => {
+      photoCalls.push('PUT');
+      const body = await request.text();
+      if (!body.includes('filename="me.jpg"')) return new HttpResponse(null, { status: 400 });
+      if (putStatus !== 200) {
+        return HttpResponse.json({ detail: 'refused' }, { status: putStatus });
+      }
+      return HttpResponse.json({ photo: UPLOADED });
+    }),
+    http.delete(`${API}/resumes/:id/photo`, () => {
+      photoCalls.push('DELETE');
+      return HttpResponse.json({ photo: null });
+    }),
+    ...backgroundHandlers(),
+    http.get(`${API}/resumes`, () => HttpResponse.json(resumeBody(SERVER_RESUME)))
+  );
+}
+
+/** The photo in the live preview (the measuring copy is aria-hidden). */
+const previewPhotos = () =>
+  Array.from(document.querySelectorAll<HTMLImageElement>('img[data-resume-photo]')).map((img) =>
+    img.getAttribute('src')
+  );
+
+async function choose(file: File) {
+  fireEvent.change(screen.getByTestId('resume-photo-input'), { target: { files: [file] } });
+  await advance(10);
+}
+
+beforeEach(async () => {
+  vi.useFakeTimers();
+  installDomShims();
+  // Per test: removeDomShims unstubs every global, FormData included.
+  await installNodeFormData();
+  localStorage.clear();
+  route.search = 'id=res-1';
+  photoCalls = [];
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  removeDomShims();
+});
+
+describe('builder: the photo of a photo CV', () => {
+  it('offers to add one and shows none while the resume has none', async () => {
+    serveBackend();
+    renderBuilder();
+    await advance(10);
+
+    expect(screen.getByRole('button', { name: text.add })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: text.remove })).toBeNull();
+    expect(previewPhotos()).toEqual([]);
+    expect(screen.getByText(text.hint)).toBeInTheDocument();
+  });
+
+  it('shows the stored photo in the field and the preview', async () => {
+    serveBackend({ photo: STORED });
+    renderBuilder();
+    await advance(10);
+
+    expect(screen.getByRole('img', { name: text.previewAlt })).toHaveAttribute('src', STORED);
+    expect(previewPhotos().every((src) => src === STORED)).toBe(true);
+    expect(previewPhotos().length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: text.change })).toBeEnabled();
+  });
+
+  it('uploads a chosen photo and previews what the server stored', async () => {
+    serveBackend();
+    renderBuilder();
+    await advance(10);
+
+    await choose(nodeFile('jpeg bytes', 'me.jpg', 'image/jpeg'));
+
+    expect(photoCalls).toContain('PUT');
+    expect(screen.getByRole('img', { name: text.previewAlt })).toHaveAttribute('src', UPLOADED);
+    expect(previewPhotos().length).toBeGreaterThan(0);
+    expect(previewPhotos().every((src) => src === UPLOADED)).toBe(true);
+  });
+
+  it('removes the photo from the resume and the preview', async () => {
+    serveBackend({ photo: STORED });
+    renderBuilder();
+    await advance(10);
+
+    fireEvent.click(screen.getByRole('button', { name: text.remove }));
+    await advance(10);
+
+    expect(photoCalls).toContain('DELETE');
+    expect(previewPhotos()).toEqual([]);
+    expect(screen.getByRole('button', { name: text.add })).toBeEnabled();
+  });
+
+  it.each([
+    ['a GIF', nodeFile('gif', 'me.gif', 'image/gif'), text.errors.unsupported],
+    [
+      'a file over 5 MB',
+      nodeFile('x'.repeat(5 * 1024 * 1024 + 1), 'me.jpg', 'image/jpeg'),
+      text.errors.tooLarge,
+    ],
+  ])('refuses %s before uploading it', async (_label, file, message) => {
+    serveBackend();
+    renderBuilder();
+    await advance(10);
+
+    await choose(file);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(photoCalls).not.toContain('PUT');
+  });
+
+  it.each([
+    [422, text.errors.unsupported],
+    [413, text.errors.tooLarge],
+    [500, text.errors.failed],
+  ])(
+    'says why when the server refuses it (%i) and keeps the old photo',
+    async (status, message) => {
+      serveBackend({ photo: STORED, putStatus: status });
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      renderBuilder();
+      await advance(10);
+
+      await choose(nodeFile('jpeg bytes', 'me.jpg', 'image/jpeg'));
+
+      expect(screen.getByRole('alert')).toHaveTextContent(message);
+      expect(previewPhotos().every((src) => src === STORED)).toBe(true);
+    }
+  );
+
+  it('still edits the resume when the photo cannot be loaded', async () => {
+    serveBackend();
+    server.use(
+      http.get(`${API}/resumes/:id/photo`, () =>
+        HttpResponse.json({ detail: 'down' }, { status: 500 })
+      )
+    );
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    renderBuilder();
+    await advance(10);
+
+    expect(screen.getByLabelText(en.resume.personalInfo.name)).toHaveValue('Ada Lovelace');
+    expect(previewPhotos()).toEqual([]);
+    expect(screen.getByRole('button', { name: text.add })).toBeEnabled();
+  });
+});

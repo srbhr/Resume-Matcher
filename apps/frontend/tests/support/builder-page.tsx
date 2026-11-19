@@ -48,8 +48,10 @@ export const resumeBody = (processed: unknown, data: Record<string, unknown> = {
   },
 });
 
-/** The calls the layout's providers make on their own. */
+/** The calls the layout's providers make on their own, and the builder's photo load. */
 export const backgroundHandlers = ({ agentMode = false } = {}) => [
+  // No photo unless a spec says otherwise (photo specs override this route).
+  http.get(`${API}/resumes/:id/photo`, () => HttpResponse.json({ photo: null })),
   http.get(`${API}/status`, () =>
     HttpResponse.json({
       status: 'ready',

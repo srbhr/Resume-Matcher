@@ -39,6 +39,7 @@ vi.mock('@/components/dashboard/master-resume-choice-dialog', () => ({
   MasterResumeChoiceDialog: () => null,
 }));
 vi.mock('@/lib/api/resume', () => ({
+  fetchResumePhoto: vi.fn(() => Promise.resolve(null)),
   MAX_MASTER_RESUMES: 5,
   duplicateResume: (...args: unknown[]) => api.duplicate(...args),
   fetchResume: (...args: unknown[]) => api.fetchResume(...args),

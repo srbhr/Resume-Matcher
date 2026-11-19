@@ -27,6 +27,7 @@ vi.mock('@/components/preview', () => ({
   ),
 }));
 vi.mock('@/lib/api/resume', () => ({
+  fetchResumePhoto: vi.fn(() => Promise.resolve(null)),
   fetchResume: vi.fn(),
   deleteResume: vi.fn(),
   retryProcessing: vi.fn(),

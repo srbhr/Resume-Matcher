@@ -1240,7 +1240,21 @@
       "location": "Location",
       "website": "Website",
       "linkedin": "LinkedIn",
-      "github": "GitHub"
+      "github": "GitHub",
+      "photo": {
+        "label": "Photo",
+        "hint": "For photo CVs: expected in Germany, Austria, Switzerland and Japan, usually left out in the UK and US. Cropped to the 35 × 45 mm passport format.",
+        "add": "Add photo",
+        "change": "Change photo",
+        "remove": "Remove photo",
+        "uploading": "Uploading...",
+        "previewAlt": "Your resume photo",
+        "errors": {
+          "tooLarge": "That photo is over 5 MB. Choose a smaller one.",
+          "unsupported": "Use a JPEG, PNG or WebP photo.",
+          "failed": "Couldn't save the photo. Please try again."
+        }
+      }
     },
     "sections": {
       "personalInfo": "Personal Info",

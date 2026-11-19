@@ -1240,7 +1240,21 @@
       "location": "Lieu",
       "website": "Site web",
       "linkedin": "LinkedIn",
-      "github": "GitHub"
+      "github": "GitHub",
+      "photo": {
+        "label": "Photo",
+        "hint": "Pour les CV avec photo : attendue en Allemagne, en Autriche, en Suisse et au Japon, généralement absente au Royaume-Uni et aux États-Unis. Recadrée au format passeport 35 × 45 mm.",
+        "add": "Ajouter une photo",
+        "change": "Changer de photo",
+        "remove": "Supprimer la photo",
+        "uploading": "Envoi...",
+        "previewAlt": "La photo de votre CV",
+        "errors": {
+          "tooLarge": "Cette photo dépasse 5 Mo. Choisissez-en une plus légère.",
+          "unsupported": "Utilisez une photo JPEG, PNG ou WebP.",
+          "failed": "Impossible d'enregistrer la photo. Veuillez réessayer."
+        }
+      }
     },
     "sections": {
       "personalInfo": "Informations personnelles",

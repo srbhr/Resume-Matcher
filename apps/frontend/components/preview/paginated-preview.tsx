@@ -20,6 +20,8 @@ import { useLanguage } from '@/lib/context/language-context';
 interface PaginatedPreviewProps {
   resumeData: ResumeData;
   settings: TemplateSettings;
+  /** A photo CV's photo; it takes room in the header, so pages are measured with it. */
+  photo?: string | null;
 }
 
 const MIN_ZOOM = 0.4;
@@ -32,7 +34,7 @@ const ZOOM_STEP = 0.1;
  * PaginatedPreview shows a WYSIWYG preview of the resume with actual page dimensions,
  * margin guides, and automatic pagination.
  */
-export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps) {
+export function PaginatedPreview({ resumeData, settings, photo }: PaginatedPreviewProps) {
   const { t } = useTranslations();
   // Orders the CJK font fallback so the preview matches the generated PDF.
   const { contentLanguage } = useLanguage();
@@ -196,6 +198,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
         >
           <Resume
             resumeData={resumeData}
+            photo={photo}
             template={settings.template}
             settings={resumeSettings}
             locale={contentLanguage}
@@ -230,6 +233,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
               >
                 <Resume
                   resumeData={resumeData}
+                  photo={photo}
                   template={settings.template}
                   settings={resumeSettings}
                   locale={contentLanguage}

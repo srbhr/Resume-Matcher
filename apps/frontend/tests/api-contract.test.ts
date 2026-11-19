@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { startMsw } from './support/msw';
+import { installNodeFormData, nodeFile } from './support/node-form-data';
 import { checkResumeParse } from '@/lib/api/ats';
 import {
   analyzeResume,
@@ -33,6 +34,7 @@ import {
   clearQueueItems,
   deleteQueueItem,
   deleteResume,
+  deleteResumePhoto,
   downloadCoverLetterPdf,
   downloadResumePdf,
   duplicateResume,
@@ -41,6 +43,7 @@ import {
   fetchLastAtsScore,
   fetchResume,
   fetchResumeList,
+  fetchResumePhoto,
   generateCoverLetter,
   generateInterviewPrep,
   generateOutreachMessage,
@@ -54,6 +57,7 @@ import {
   updateResume,
   updateResumeTemplateSettings,
   uploadJobDescriptions,
+  uploadResumePhoto,
 } from '@/lib/api/resume';
 import {
   createInitialResumeWizardState,
@@ -272,6 +276,24 @@ const ROWS: Row[] = [
   },
   { name: 'deleteResume', call: () => deleteResume('r1'), method: 'DELETE', path: '/resumes/r1' },
   {
+    name: 'fetchResumePhoto',
+    call: () => fetchResumePhoto('r1'),
+    method: 'GET',
+    path: '/resumes/r1/photo',
+  },
+  {
+    name: 'uploadResumePhoto',
+    call: () => uploadResumePhoto('r1', nodeFile('jpeg', 'me.jpg', 'image/jpeg')),
+    method: 'PUT',
+    path: '/resumes/r1/photo',
+  },
+  {
+    name: 'deleteResumePhoto',
+    call: () => deleteResumePhoto('r1'),
+    method: 'DELETE',
+    path: '/resumes/r1/photo',
+  },
+  {
     name: 'updateCoverLetter',
     call: () => updateCoverLetter('r1', 'Dear'),
     method: 'PATCH',
@@ -436,8 +458,11 @@ function answer(status: number, seen: Seen[]) {
 }
 
 describe('lib/api request contract', () => {
+  // uploadResumePhoto sends multipart form data (see support/node-form-data).
+  beforeAll(installNodeFormData);
+
   it('covers every function with an error path', () => {
-    expect(ROWS).toHaveLength(52);
+    expect(ROWS).toHaveLength(55);
     expect(new Set(ROWS.map((r) => r.name)).size).toBe(ROWS.length);
   });
 

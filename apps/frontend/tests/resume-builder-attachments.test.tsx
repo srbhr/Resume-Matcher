@@ -22,6 +22,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/lib/api/resume', () => ({
+  fetchResumePhoto: vi.fn(() => Promise.resolve(null)),
   fetchResume: (...args: unknown[]) => fetchResume(...args),
   updateResume: (...args: unknown[]) => updateResume(...args),
   updateCoverLetter: (...args: unknown[]) => updateCoverLetter(...args),

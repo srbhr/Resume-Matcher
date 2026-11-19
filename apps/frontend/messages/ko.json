@@ -1240,7 +1240,21 @@
       "location": "위치",
       "website": "웹사이트",
       "linkedin": "LinkedIn",
-      "github": "GitHub"
+      "github": "GitHub",
+      "photo": {
+        "label": "사진",
+        "hint": "사진 이력서용: 독일, 오스트리아, 스위스, 일본에서는 일반적이며 영국과 미국에서는 보통 넣지 않습니다. 35 × 45 mm 여권 사진 규격으로 잘립니다.",
+        "add": "사진 추가",
+        "change": "사진 변경",
+        "remove": "사진 삭제",
+        "uploading": "업로드 중...",
+        "previewAlt": "이력서 사진",
+        "errors": {
+          "tooLarge": "사진이 5MB를 넘습니다. 더 작은 사진을 선택하세요.",
+          "unsupported": "JPEG, PNG 또는 WebP 사진을 사용하세요.",
+          "failed": "사진을 저장하지 못했습니다. 다시 시도해 주세요."
+        }
+      }
     },
     "sections": {
       "personalInfo": "개인 정보",

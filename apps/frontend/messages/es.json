@@ -1240,7 +1240,21 @@
       "location": "Ubicación",
       "website": "Sitio Web",
       "linkedin": "LinkedIn",
-      "github": "GitHub"
+      "github": "GitHub",
+      "photo": {
+        "label": "Foto",
+        "hint": "Para CV con foto: se espera en Alemania, Austria, Suiza y Japón; en Reino Unido y EE. UU. no suele incluirse. Se recorta al formato pasaporte de 35 × 45 mm.",
+        "add": "Añadir foto",
+        "change": "Cambiar foto",
+        "remove": "Quitar foto",
+        "uploading": "Subiendo...",
+        "previewAlt": "La foto de tu currículum",
+        "errors": {
+          "tooLarge": "La foto supera los 5 MB. Elige una más pequeña.",
+          "unsupported": "Usa una foto JPEG, PNG o WebP.",
+          "failed": "No se pudo guardar la foto. Inténtalo de nuevo."
+        }
+      }
     },
     "sections": {
       "personalInfo": "Información Personal",

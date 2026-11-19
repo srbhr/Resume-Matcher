@@ -9,6 +9,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 vi.mock('@/lib/api/resume', () => ({
+  fetchResumePhoto: vi.fn(() => Promise.resolve(null)),
   fetchResume: vi.fn(),
   updateResume: vi.fn(),
   updateResumeTemplateSettings: vi.fn(() => Promise.resolve()),

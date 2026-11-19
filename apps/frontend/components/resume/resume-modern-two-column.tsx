@@ -14,10 +14,13 @@ import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/modern-two-column.module.css';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 
 interface ResumeModernTwoColumnProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
@@ -36,6 +39,7 @@ interface ResumeModernTwoColumnProps {
  */
 export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
   data,
+  photo,
   showContactIcons = false,
   sectionHeadings,
   fallbackLabels,
@@ -151,7 +155,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
   return (
     <>
       {/* Header */}
-      <div className={baseStyles['resume-header']}>
+      <div className={`${baseStyles['resume-header']}${photoHeaderClass(photo, false)}`}>
         <h1 className={`${baseStyles['resume-name']} ${styles.nameAccent}`}>
           {personalInfo?.name || nameFallback}
         </h1>
@@ -168,6 +172,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             {renderContactDetail('GitHub', personalInfo.github)}
           </div>
         )}
+        <ResumePhoto src={photo} />
       </div>
 
       {/* Two-Column Grid */}

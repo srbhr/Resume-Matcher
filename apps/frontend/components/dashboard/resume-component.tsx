@@ -174,6 +174,8 @@ interface ResumeProps {
    * stack so a shared codepoint resolves to the right regional face.
    */
   locale?: string;
+  /** A photo CV's photo (a data URL): every template shows it top right. */
+  photo?: string | null;
 }
 
 /**
@@ -196,6 +198,7 @@ const Resume: React.FC<ResumeProps> = ({
   sectionHeadings,
   fallbackLabels,
   locale,
+  photo,
 }) => {
   // Merge provided settings with defaults
   const mergedSettings: TemplateSettings = {
@@ -223,6 +226,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeSingleColumn
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
         />
@@ -231,6 +235,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeTwoColumn
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
         />
@@ -239,6 +244,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeModern
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
         />
@@ -247,6 +253,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeModernTwoColumn
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
           fallbackLabels={fallbackLabels}
@@ -256,6 +263,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeLatex
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
         />
@@ -264,6 +272,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeClean
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
         />
@@ -272,6 +281,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeVivid
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
           fallbackLabels={fallbackLabels}
@@ -281,6 +291,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeVividSingle
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
           fallbackLabels={fallbackLabels}
@@ -290,6 +301,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeModernDeedy
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
         />
@@ -298,6 +310,7 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeDeedy
           earlierExperienceLabel={sectionHeadings?.earlierExperience}
           data={resumeData}
+          photo={photo}
           sectionHeadings={sectionHeadings}
           additionalSectionLabels={additionalSectionLabels}
           fallbackLabels={fallbackLabels}

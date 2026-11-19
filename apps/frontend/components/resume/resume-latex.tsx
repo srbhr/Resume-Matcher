@@ -14,10 +14,13 @@ import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-a
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/latex.module.css';
 import { customSectionHasContent } from './dynamic-resume-section';
+import { ResumePhoto, photoHeaderClass } from './resume-photo';
 
 interface ResumeLatexProps {
   earlierExperienceLabel?: string;
   data: ResumeData;
+  /** A photo CV's photo (a data URL); null or absent for none. */
+  photo?: string | null;
   showContactIcons?: boolean;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
 }
@@ -36,6 +39,7 @@ interface ResumeLatexProps {
  */
 export const ResumeLatex: React.FC<ResumeLatexProps> = ({
   data,
+  photo,
   showContactIcons = false,
   additionalSectionLabels,
   earlierExperienceLabel,
@@ -300,7 +304,9 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
   return (
     <div className={styles.container}>
       {personalInfo && (
-        <header className={`text-center ${baseStyles['resume-header']}`}>
+        <header
+          className={`text-center ${baseStyles['resume-header']}${photoHeaderClass(photo, true)}`}
+        >
           {personalInfo.name && <h1 className={`${styles.name} mb-1`}>{personalInfo.name}</h1>}
           {personalInfo.title && (
             <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>
@@ -320,6 +326,7 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
               ))}
             </div>
           )}
+          <ResumePhoto src={photo} />
         </header>
       )}
 

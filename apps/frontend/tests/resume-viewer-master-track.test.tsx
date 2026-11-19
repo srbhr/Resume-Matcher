@@ -21,6 +21,7 @@ vi.mock('@/components/enrichment/enrichment-modal', () => ({ EnrichmentModal: ()
 vi.mock('@/components/dashboard/resume-component', () => ({ default: () => null }));
 vi.mock('@/components/preview', () => ({ PaginatedPreview: () => null }));
 vi.mock('@/lib/api/resume', () => ({
+  fetchResumePhoto: vi.fn(() => Promise.resolve(null)),
   fetchResume: vi.fn(),
   deleteResume: vi.fn(),
   retryProcessing: vi.fn(),
