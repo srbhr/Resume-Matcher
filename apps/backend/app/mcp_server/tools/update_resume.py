@@ -3,9 +3,9 @@ from typing import Any
 
 from app.database import db
 from app.mcp_server.tools._shared import canonical, guard, require_resume, summary
-from app.routers.resumes import _get_original_resume_data
 from app.schemas import ResumeData
 from app.services.resume_preservation import grounding_review_warnings
+from app.services.tailoring import _get_original_resume_data
 
 
 @guard

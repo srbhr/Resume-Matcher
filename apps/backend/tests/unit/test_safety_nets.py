@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from app.routers.resumes import (
+from app.services.safety_nets import (
     _preserve_original_skills,
     _preserve_personal_info,
     _protect_custom_sections,

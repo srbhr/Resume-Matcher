@@ -289,7 +289,7 @@ class QueueManager:
                 await asyncio.sleep(_FINAL_WRITE_BACKOFF_SECONDS * attempt)
 
     async def _tailor(self, item: dict[str, Any]) -> dict[str, Any]:
-        from app.routers import resumes
+        from app.services import tailoring
 
         job_id = item.get("job_id")
         if job_id:
@@ -310,7 +310,7 @@ class QueueManager:
             await db.update_queue_item(item["item_id"], {"job_id": job_id})
         # The same per-operation deadline AIOperationRoute gives POST /improve.
         async with operation_budget(settings.request_timeout_seconds):
-            tailored_resume, *_ = await resumes.execute_tailoring_pipeline(
+            tailored_resume, *_ = await tailoring.execute_tailoring_pipeline(
                 resume_id=item["resume_id"],
                 job_id=job_id,
                 prompt_id=item.get("prompt_id"),

@@ -9,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.database import MAX_MASTER_RESUMES, Database
 from app.main import app
+from app.services import tailoring
 
 
 @pytest.fixture
@@ -129,21 +130,21 @@ async def test_preview_grounds_refiner_on_source_master(
     monkeypatch.setattr(resumes_router, "_load_config", lambda: {})
     monkeypatch.setattr(resumes_router, "get_content_language", lambda: "en")
     monkeypatch.setattr(
-        resumes_router,
+        tailoring,
         "extract_job_keywords",
         AsyncMock(return_value={"required_skills": ["Python"]}),
     )
     monkeypatch.setattr(
-        resumes_router, "generate_skill_target_plan", AsyncMock(return_value={})
+        tailoring, "generate_skill_target_plan", AsyncMock(return_value={})
     )
     monkeypatch.setattr(
-        resumes_router,
+        tailoring,
         "generate_resume_diffs",
         AsyncMock(return_value=ImproveDiffResult(changes=[])),
     )
-    monkeypatch.setattr(resumes_router, "refine_resume", fake_refine)
+    monkeypatch.setattr(tailoring, "refine_resume", fake_refine)
     monkeypatch.setattr(
-        resumes_router, "generate_resume_title", AsyncMock(return_value="Engineer")
+        tailoring, "generate_resume_title", AsyncMock(return_value="Engineer")
     )
     res = await client.post(
         "/api/v1/resumes/improve/preview",
@@ -188,21 +189,21 @@ async def test_tailored_source_grounds_refiner_on_its_own_track(
     monkeypatch.setattr(resumes_router, "get_content_language", lambda: "en")
     monkeypatch.setattr(resumes_router, "_get_default_prompt_id", lambda: "nudge")
     monkeypatch.setattr(
-        resumes_router,
+        tailoring,
         "extract_job_keywords",
         AsyncMock(return_value={"required_skills": ["Python"]}),
     )
     monkeypatch.setattr(
-        resumes_router, "generate_skill_target_plan", AsyncMock(return_value={})
+        tailoring, "generate_skill_target_plan", AsyncMock(return_value={})
     )
     monkeypatch.setattr(
-        resumes_router,
+        tailoring,
         "generate_resume_diffs",
         AsyncMock(return_value=ImproveDiffResult(changes=[])),
     )
-    monkeypatch.setattr(resumes_router, "refine_resume", fake_refine)
+    monkeypatch.setattr(tailoring, "refine_resume", fake_refine)
     monkeypatch.setattr(
-        resumes_router, "generate_resume_title", AsyncMock(return_value="Engineer")
+        tailoring, "generate_resume_title", AsyncMock(return_value="Engineer")
     )
     res = await client.post(
         f"/api/v1/resumes{endpoint}",

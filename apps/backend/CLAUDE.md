@@ -45,6 +45,8 @@ Stack: FastAPI 0.162 · Python **3.14+** · Pydantic v2 / pydantic-settings · S
 - `writing_quality.py` (code rules, score, `fact_violations` rewrite check), `writing_loop.py` (critic + one rewrite of hard findings, run after `refine_resume` in every tailoring; Light nudge only critiques), `keyword_forcing.py` (apply-keywords placement + verification), `progress.py` (stage registry behind the SSE endpoint).
 - `text_match.py` — `keyword_in_text` (whole-term match; CJK-aware, since CJK text has no spaces) and `normalize_skill_key`. The one matcher for ATS scoring, tailoring, refinement and writing checks; don't add a local `\b`/`(?<!\w)` copy.
 - `cover_letter.py` — `generate_cover_letter`, `generate_outreach_message`, `generate_resume_title`; resolves custom-vs-default feature prompts at runtime.
+- `tailoring.py` — the tailoring pipeline: the preview flow (`_improve_preview_flow`), the queue worker's `execute_tailoring_pipeline`, and the steps both share (job-keyword caching, ATS scoring, auxiliary messages, confirm-payload validation). The routers and MCP tools import from here; it imports no router.
+- `safety_nets.py` — the post-AI safety nets (below), pinned by `tests/unit/test_safety_nets.py`.
 
 ---
 
@@ -54,11 +56,11 @@ Stack: FastAPI 0.162 · Python **3.14+** · Pydantic v2 / pydantic-settings · S
 1. Load resume + job from `db`; resolve content language (`config_cache`) and `prompt_id`.
 2. `extract_job_keywords(jd)` (LLM, cached on the job by content hash).
 3. If structured `processed_data` exists → **diff mode**: skill-target plan → `generate_resume_diffs` → `apply_diffs` → `verify_diff_result`. Else → fallback `improve_resume` (full-output).
-4. **Local safety nets** (always run, defense-in-depth): `_preserve_personal_info`, `_restore_original_dates`, `restore_dates_from_markdown`, `_preserve_original_skills`, `_protect_custom_sections`.
+4. **Local safety nets** (always run, defense-in-depth; `services/safety_nets.py`): `_preserve_personal_info`, `_restore_original_dates`, `restore_dates_from_markdown`, `_preserve_original_skills`, `_protect_custom_sections`.
 5. `refine_resume` (keyword injection + AI-phrase scrub + alignment check).
 6. Persist a `preview_hash` on the job. `/improve/confirm` re-validates that hash (and that `personalInfo` is unchanged) before persisting the tailored resume + an `improvements` record.
 
-Routers call services; services call `app/llm.py`; persistence goes through the `db` singleton. The whole preview is wrapped in a 240s `asyncio.wait_for`.
+Routers call services (the pipeline is `services/tailoring.py`); services call `app/llm.py`; persistence goes through the `db` proxy. The whole preview is wrapped in a 240s `asyncio.wait_for`.
 
 ---
 

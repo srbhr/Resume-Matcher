@@ -47,7 +47,7 @@ def _refinement_result(data: dict[str, Any]) -> SimpleNamespace:
 def _pipeline_patches(initial: dict[str, Any], refinement: object) -> tuple[Any, ...]:
     return (
         patch(
-            "app.routers.resumes.extract_job_keywords",
+            "app.services.tailoring.extract_job_keywords",
             new_callable=AsyncMock,
             return_value={
                 "keywords": ["Python"],
@@ -56,26 +56,26 @@ def _pipeline_patches(initial: dict[str, Any], refinement: object) -> tuple[Any,
             },
         ),
         patch(
-            "app.routers.resumes.generate_skill_target_plan",
+            "app.services.tailoring.generate_skill_target_plan",
             new_callable=AsyncMock,
             return_value={"accepted": [], "rejected": []},
         ),
         patch(
-            "app.routers.resumes.verify_skill_target_plan",
+            "app.services.tailoring.verify_skill_target_plan",
             return_value={"accepted": [], "rejected": []},
         ),
         patch(
-            "app.routers.resumes.generate_resume_diffs",
+            "app.services.tailoring.generate_resume_diffs",
             new_callable=AsyncMock,
             return_value=SimpleNamespace(changes=[]),
         ),
         patch(
-            "app.routers.resumes.apply_diffs",
+            "app.services.tailoring.apply_diffs",
             return_value=(copy.deepcopy(initial), [], []),
         ),
-        patch("app.routers.resumes.verify_diff_result", return_value=[]),
+        patch("app.services.tailoring.verify_diff_result", return_value=[]),
         patch(
-            "app.routers.resumes.refine_resume",
+            "app.services.tailoring.refine_resume",
             new_callable=AsyncMock,
             **(
                 {"side_effect": refinement}
@@ -84,7 +84,7 @@ def _pipeline_patches(initial: dict[str, Any], refinement: object) -> tuple[Any,
             ),
         ),
         patch(
-            "app.routers.resumes.generate_resume_title",
+            "app.services.tailoring.generate_resume_title",
             new_callable=AsyncMock,
             return_value="Backend Engineer - Example",
         ),

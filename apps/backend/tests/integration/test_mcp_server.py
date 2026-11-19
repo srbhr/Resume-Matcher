@@ -28,9 +28,9 @@ from app.mcp_server.server import INSTRUCTIONS, build_server
 from app.models import Job
 from app.pdf import PDFRenderError
 from app.routers import resumes as resumes_router
-from app.routers.resumes import _hash_job_content
 from app.services import ats_parse
 from app.services.ats_parse.extract import ExtractedDocument
+from app.services.tailoring import _hash_job_content
 from tests.ats_fixtures import john_doe, render
 from tests.unit.test_page_fit import _pdf
 

@@ -19,6 +19,7 @@ from app.main import app
 from app.models import Improvement, Resume
 from app.routers import resumes
 from app.schemas.models import ImproveDiffResult, ResumeData
+from app.services import tailoring
 
 
 @pytest.fixture
@@ -36,22 +37,22 @@ async def direct_case(
     monkeypatch.setattr(resumes, "get_content_language", lambda: "en")
     monkeypatch.setattr(resumes, "_get_default_prompt_id", lambda: "nudge")
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "extract_job_keywords",
         AsyncMock(return_value={"keywords": ["Python"], "required_skills": []}),
     )
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "generate_resume_diffs",
         AsyncMock(return_value=ImproveDiffResult(changes=[])),
     )
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "refine_resume",
         AsyncMock(side_effect=RuntimeError("Synthetic unavailable refinement")),
     )
     monkeypatch.setattr(
-        resumes, "generate_resume_title", AsyncMock(return_value="Synthetic engineer")
+        tailoring, "generate_resume_title", AsyncMock(return_value="Synthetic engineer")
     )
     async with AsyncClient(
         transport=ASGITransport(app=app, raise_app_exceptions=False),
@@ -201,7 +202,7 @@ async def test_direct_tailoring_puts_the_extracted_company_on_the_tracker_card(
 ) -> None:
     client, payload = direct_case
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "extract_job_keywords",
         AsyncMock(
             return_value={

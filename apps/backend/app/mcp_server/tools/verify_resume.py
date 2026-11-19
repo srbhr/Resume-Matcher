@@ -14,11 +14,11 @@ from app.mcp_server.tools._shared import (
     require_valid_structured,
 )
 from app.pdf import PDFRenderError
-from app.routers.resumes import _grounding_master_data, _scorable_job_keywords
 from app.schemas.models import PageFitSettings
 from app.services import ats_parse
 from app.services.ats_parse.models import ParseCheckReport
 from app.services.page_fit import count_pdf_pages, page_limit
+from app.services.tailoring import _grounding_master_data, _scorable_job_keywords
 from app.services.writing_quality import writing_report
 
 logger = logging.getLogger(__name__)

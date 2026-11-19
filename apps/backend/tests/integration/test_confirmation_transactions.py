@@ -21,6 +21,7 @@ from app.models import Improvement, Job, Resume, TailoringPreview
 from app.preview import PreviewBusyError, PreviewConflictError
 from app.routers import resumes
 from app.schemas.models import ImproveDiffResult, ResumeChange, ResumeData
+from app.services import tailoring
 from tests.db_helpers import same_database
 
 
@@ -29,10 +30,13 @@ async def confirmation_client(
     isolated_db: Database,
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[AsyncClient]:
-    monkeypatch.setattr(resumes, "_load_config", lambda: {})
-    monkeypatch.setattr(resumes, "get_content_language", lambda: "en")
+    # The preview and confirm routes read these, and so does the tailoring
+    # pipeline they call.
+    for module in (resumes, tailoring):
+        monkeypatch.setattr(module, "_load_config", lambda: {})
+        monkeypatch.setattr(module, "get_content_language", lambda: "en")
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "extract_job_keywords",
         AsyncMock(
             return_value={
@@ -43,20 +47,20 @@ async def confirmation_client(
         ),
     )
     monkeypatch.setattr(
-        resumes, "generate_skill_target_plan", AsyncMock(return_value={"targets": []})
+        tailoring, "generate_skill_target_plan", AsyncMock(return_value={"targets": []})
     )
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "generate_resume_diffs",
         AsyncMock(return_value=ImproveDiffResult(changes=[])),
     )
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "refine_resume",
         AsyncMock(side_effect=RuntimeError("synthetic unavailable refinement")),
     )
     monkeypatch.setattr(
-        resumes, "generate_resume_title", AsyncMock(return_value="Engineer @ Acme")
+        tailoring, "generate_resume_title", AsyncMock(return_value="Engineer @ Acme")
     )
     async with AsyncClient(
         transport=ASGITransport(app=app, raise_app_exceptions=False),
@@ -113,7 +117,7 @@ async def test_replayed_confirmation_returns_identical_committed_result(
     assert len(await isolated_db.list_applications()) == 1
     async with isolated_db._session() as session:
         assert len(list((await session.execute(select(Improvement))).scalars())) == 1
-    resumes.generate_resume_title.assert_awaited_once()
+    tailoring.generate_resume_title.assert_awaited_once()
 
 
 async def test_concurrent_confirmation_does_not_repeat_optional_generation(
@@ -134,7 +138,7 @@ async def test_concurrent_confirmation_does_not_repeat_optional_generation(
             await release.wait()
         return "Engineer @ Acme"
 
-    monkeypatch.setattr(resumes, "generate_resume_title", title)
+    monkeypatch.setattr(tailoring, "generate_resume_title", title)
     first_task = asyncio.create_task(
         confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
     )
@@ -191,7 +195,7 @@ async def test_changed_inputs_invalidate_unconfirmed_preview(
     )
     assert response.status_code == 409
     assert len(await isolated_db.list_resumes()) == 1
-    resumes.generate_resume_title.assert_not_awaited()
+    tailoring.generate_resume_title.assert_not_awaited()
 
 
 @pytest.mark.parametrize("model", [Resume, Improvement])
@@ -292,7 +296,7 @@ async def test_independent_concurrent_previews_remain_confirmable(
             ]
         )
 
-    monkeypatch.setattr(resumes, "generate_resume_diffs", diffs)
+    monkeypatch.setattr(tailoring, "generate_resume_diffs", diffs)
     tasks = {
         key: asyncio.create_task(
             confirmation_client.post(
@@ -366,7 +370,7 @@ async def test_preview_binding_and_expiry_are_enforced(
         "/api/v1/resumes/improve/confirm", json=payload
     )
     assert response.status_code == (400 if change == "payload" else 409), response.text
-    resumes.generate_resume_title.assert_not_awaited()
+    tailoring.generate_resume_title.assert_not_awaited()
 
 
 async def test_committed_replay_survives_later_input_changes_and_expiry(
@@ -395,7 +399,7 @@ async def test_committed_replay_survives_later_input_changes_and_expiry(
     )
     assert second.status_code == 200, second.text
     assert second.json() == first.json()
-    resumes.generate_resume_title.assert_awaited_once()
+    tailoring.generate_resume_title.assert_awaited_once()
 
 
 async def test_source_edit_during_confirmation_prevents_stale_commit(
@@ -412,7 +416,7 @@ async def test_source_edit_during_confirmation_prevents_stale_commit(
         )
         return "Engineer @ Acme"
 
-    monkeypatch.setattr(resumes, "generate_resume_title", title)
+    monkeypatch.setattr(tailoring, "generate_resume_title", title)
     result = await confirmation_client.post(
         "/api/v1/resumes/improve/confirm", json=payload
     )
@@ -434,7 +438,7 @@ async def test_cancellation_releases_uncommitted_claim(
         await asyncio.Event().wait()
         return "unreachable"
 
-    monkeypatch.setattr(resumes, "generate_resume_title", title)
+    monkeypatch.setattr(tailoring, "generate_resume_title", title)
     pending = asyncio.create_task(
         confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
     )
@@ -447,7 +451,7 @@ async def test_cancellation_releases_uncommitted_claim(
         assert row is not None and row.claim_token is None
     assert len(await isolated_db.list_resumes()) == 1
     monkeypatch.setattr(
-        resumes, "generate_resume_title", AsyncMock(return_value="Retry title")
+        tailoring, "generate_resume_title", AsyncMock(return_value="Retry title")
     )
     retry = await confirmation_client.post(
         "/api/v1/resumes/improve/confirm", json=payload
@@ -474,7 +478,7 @@ async def test_deleted_result_is_not_recreated_or_retained_in_replay_storage(
     )
     assert replay.status_code == 409
     assert len(await isolated_db.list_resumes()) == 1
-    resumes.generate_resume_title.assert_awaited_once()
+    tailoring.generate_resume_title.assert_awaited_once()
 
 
 async def test_new_explicit_preview_recovers_after_deleted_tokenless_result(
@@ -508,7 +512,7 @@ async def test_new_explicit_preview_recovers_after_deleted_tokenless_result(
     )
     assert replay.status_code == 409, replay.text
     assert len(await isolated_db.list_resumes()) == 1
-    resumes.generate_resume_title.assert_awaited_once()
+    tailoring.generate_resume_title.assert_awaited_once()
 
     fresh_payload = {**payload, "preview_id": fresh["preview_id"]}
     confirmed = await confirmation_client.post(
@@ -526,7 +530,7 @@ async def test_new_explicit_preview_recovers_after_deleted_tokenless_result(
         "/api/v1/resumes/improve/confirm", json=fresh_payload
     )
     assert repeated.json() == confirmed.json()
-    assert resumes.generate_resume_title.await_count == 2
+    assert tailoring.generate_resume_title.await_count == 2
     async with isolated_db._session() as session:
         old = await session.get(TailoringPreview, payload["preview_id"])
         assert old is not None and old.response_data is None
@@ -586,7 +590,7 @@ async def test_timed_out_generation_releases_claim_and_creates_no_required_rows(
             raise
         return "unreachable"
 
-    monkeypatch.setattr(resumes, "generate_resume_title", title)
+    monkeypatch.setattr(tailoring, "generate_resume_title", title)
     response = await confirmation_client.post(
         "/api/v1/resumes/improve/confirm", json=payload
     )
@@ -638,7 +642,7 @@ async def test_source_edit_during_preview_requires_recomputation(
         )
         return ImproveDiffResult(changes=[])
 
-    monkeypatch.setattr(resumes, "generate_resume_diffs", diffs)
+    monkeypatch.setattr(tailoring, "generate_resume_diffs", diffs)
     response = await confirmation_client.post(
         "/api/v1/resumes/improve/preview",
         json={"resume_id": seed["resume_id"], "job_id": seed["job_id"]},
@@ -806,7 +810,7 @@ async def test_verified_description_append_survives_preview_and_confirmation(
     retained: bool,
 ) -> None:
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "generate_resume_diffs",
         AsyncMock(
             return_value=ImproveDiffResult(
@@ -846,7 +850,7 @@ async def test_optional_title_timeout_can_still_commit_required_resume(
         await asyncio.Event().wait()
         return "unreachable"
 
-    monkeypatch.setattr(resumes, "generate_resume_title", stalled_title)
+    monkeypatch.setattr(tailoring, "generate_resume_title", stalled_title)
     response = await confirmation_client.post(
         "/api/v1/resumes/improve/confirm", json=payload
     )

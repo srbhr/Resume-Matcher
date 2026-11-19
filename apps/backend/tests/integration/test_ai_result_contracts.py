@@ -13,7 +13,7 @@ from app.main import app
 from app.preview import job_fingerprint, resume_fingerprint
 from app.routers import enrichment, resumes
 from app.schemas.models import ResumeData
-from app.services import cover_letter, improver, parser
+from app.services import cover_letter, improver, parser, tailoring
 
 
 @pytest.fixture
@@ -547,7 +547,9 @@ async def test_auxiliary_blank_and_failed_outputs_become_durable_warnings(
         lambda: {"enable_cover_letter": True, "enable_outreach_message": True},
     )
     monkeypatch.setattr(resumes, "get_content_language", lambda: "en")
-    monkeypatch.setattr(resumes, "generate_resume_title", AsyncMock(return_value="   "))
+    monkeypatch.setattr(
+        tailoring, "generate_resume_title", AsyncMock(return_value="   ")
+    )
     monkeypatch.setattr(resumes, "generate_cover_letter", AsyncMock(return_value="\n"))
     monkeypatch.setattr(
         resumes,

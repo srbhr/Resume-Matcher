@@ -59,22 +59,22 @@ async def _preview(sample_resume: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     job_id = job.json()["job_id"][0]
     with (
         patch(
-            "app.routers.resumes.extract_job_keywords",
+            "app.services.tailoring.extract_job_keywords",
             new_callable=AsyncMock,
             return_value=copy.deepcopy(JOB_KEYWORDS),
         ),
         patch(
-            "app.routers.resumes.generate_skill_target_plan",
+            "app.services.tailoring.generate_skill_target_plan",
             new_callable=AsyncMock,
             return_value={"accepted": [], "rejected": []},
         ),
         patch(
-            "app.routers.resumes.generate_resume_diffs",
+            "app.services.tailoring.generate_resume_diffs",
             new_callable=AsyncMock,
             return_value=SimpleNamespace(changes=[]),
         ),
         patch(
-            "app.routers.resumes.refine_resume",
+            "app.services.tailoring.refine_resume",
             new_callable=AsyncMock,
             side_effect=RuntimeError("refinement disabled for test"),
         ),
@@ -226,7 +226,7 @@ async def test_confirm_stores_forced_keywords_and_updates_master(
     )
     data = applied.json()["data"]
     with patch(
-        "app.routers.resumes.generate_resume_title",
+        "app.services.tailoring.generate_resume_title",
         new_callable=AsyncMock,
         return_value="Platform Engineer",
     ):
@@ -261,7 +261,7 @@ async def test_master_write_back_ignores_keywords_that_were_not_forced(
 ) -> None:
     resume_id, preview = await _preview(sample_resume)
     with patch(
-        "app.routers.resumes.generate_resume_title",
+        "app.services.tailoring.generate_resume_title",
         new_callable=AsyncMock,
         return_value="Platform Engineer",
     ):

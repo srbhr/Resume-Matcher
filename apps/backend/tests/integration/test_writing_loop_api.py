@@ -64,27 +64,27 @@ async def _master_and_job(sample_resume: dict[str, Any]) -> tuple[str, str]:
 def _tailor_mocks() -> list[Any]:
     return [
         patch(
-            "app.routers.resumes.extract_job_keywords",
+            "app.services.tailoring.extract_job_keywords",
             new_callable=AsyncMock,
             return_value={"keywords": ["microservices"], "required_skills": ["Python"]},
         ),
         patch(
-            "app.routers.resumes.generate_skill_target_plan",
+            "app.services.tailoring.generate_skill_target_plan",
             new_callable=AsyncMock,
             return_value={"accepted": [], "rejected": []},
         ),
         patch(
-            "app.routers.resumes.generate_resume_diffs",
+            "app.services.tailoring.generate_resume_diffs",
             new_callable=AsyncMock,
             return_value=SimpleNamespace(changes=[]),
         ),
         patch(
-            "app.routers.resumes.refine_resume",
+            "app.services.tailoring.refine_resume",
             new_callable=AsyncMock,
             side_effect=RuntimeError("refinement disabled for test"),
         ),
         patch(
-            "app.routers.resumes.generate_resume_title",
+            "app.services.tailoring.generate_resume_title",
             new_callable=AsyncMock,
             return_value="Backend Engineer - Acme",
         ),
@@ -144,7 +144,7 @@ async def test_preview_rewrites_weak_bullet_and_confirm_accepts_it(
     assert not any(f["rule"] == "weak_opener" for f in writing["findings"])
 
     with patch(
-        "app.routers.resumes.generate_resume_title",
+        "app.services.tailoring.generate_resume_title",
         new_callable=AsyncMock,
         return_value="Backend Engineer - Acme",
     ):

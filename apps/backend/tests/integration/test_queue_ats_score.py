@@ -12,6 +12,7 @@ from app.database import Database
 from app.main import app
 from app.routers import resumes
 from app.schemas.models import ImproveDiffResult, ResumeData
+from app.services import tailoring
 from app.services.queue_worker import QueueManager
 
 JOB_KEYWORDS = {
@@ -37,20 +38,20 @@ def stub_llm(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(resumes, "get_content_language", lambda: "en")
     monkeypatch.setattr(resumes, "_get_default_prompt_id", lambda: "nudge")
     monkeypatch.setattr(
-        resumes, "extract_job_keywords", AsyncMock(return_value=JOB_KEYWORDS)
+        tailoring, "extract_job_keywords", AsyncMock(return_value=JOB_KEYWORDS)
     )
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "generate_resume_diffs",
         AsyncMock(return_value=ImproveDiffResult(changes=[])),
     )
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "refine_resume",
         AsyncMock(side_effect=RuntimeError("Synthetic unavailable refinement")),
     )
     monkeypatch.setattr(
-        resumes, "generate_resume_title", AsyncMock(return_value="Backend role")
+        tailoring, "generate_resume_title", AsyncMock(return_value="Backend role")
     )
 
 

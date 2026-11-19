@@ -16,14 +16,6 @@ from app.ai_limits import MAX_SOURCE_CHARACTERS
 from app.config import settings
 from app.database import DatabaseBusyError, ResumeNotFoundError, db
 from app.pdf import render_resume_pdf
-from app.routers.resumes import (
-    _cached_job_keywords,
-    _get_original_resume_data,
-    _grounding_master_data,
-    _hash_job_content,
-    _score_tailored_data,
-    _validate_confirm_payload,
-)
 from app.schemas import ResumeData, normalize_resume_data
 from app.schemas.models import PageFitSettings
 from app.services.ats import compute_ats_score
@@ -33,6 +25,14 @@ from app.services.refiner import analyze_keyword_gaps, calculate_keyword_match
 from app.services.resume_preservation import (
     finalize_ai_resume,
     grounding_review_warnings,
+)
+from app.services.tailoring import (
+    _cached_job_keywords,
+    _get_original_resume_data,
+    _grounding_master_data,
+    _hash_job_content,
+    _score_tailored_data,
+    _validate_confirm_payload,
 )
 
 logger = logging.getLogger(__name__)

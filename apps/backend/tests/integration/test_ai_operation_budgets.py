@@ -13,6 +13,7 @@ from app.main import app
 from app.routers import enrichment, resume_wizard, resumes
 from app.schemas.enrichment import EnhanceRequest, RegeneratedItem, RegenerateRequest
 from app.schemas.resume_wizard import ResumeWizardState
+from app.services import tailoring
 
 
 def item(index: int = 0) -> dict[str, Any]:
@@ -342,7 +343,7 @@ async def test_auxiliary_timeout_keeps_completed_output_and_returns_warning(
         await asyncio.sleep(1)
         return "late"
 
-    monkeypatch.setattr(resumes, "generate_resume_title", title)
+    monkeypatch.setattr(tailoring, "generate_resume_title", title)
     monkeypatch.setattr(resumes, "generate_cover_letter", slow_cover)
     monkeypatch.setattr(resumes, "remaining_timeout", lambda: 0.02)
 
@@ -578,7 +579,7 @@ async def test_dedicated_ai_failures_reach_api_boundary(
         path, payload = "/resumes/improve/preview", {"resume_id": "r", "job_id": "j"}
     elif boundary == "direct":
         monkeypatch.setattr(
-            resumes, "extract_job_keywords", AsyncMock(side_effect=error)
+            tailoring, "extract_job_keywords", AsyncMock(side_effect=error)
         )
         path, payload = "/resumes/improve", {"resume_id": "r", "job_id": "j"}
     else:
@@ -655,7 +656,7 @@ async def test_auxiliary_boundary_failure_is_not_an_optional_item_error(
 
     kind = AIOperationDeadlineExceeded if failure == "deadline" else PromptSizeError
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "generate_resume_title",
         AsyncMock(side_effect=kind("synthetic boundary")),
     )

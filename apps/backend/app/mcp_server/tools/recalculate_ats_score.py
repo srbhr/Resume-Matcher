@@ -9,7 +9,7 @@ from app.mcp_server.tools._shared import (
     require_resume,
     require_valid_structured,
 )
-from app.routers.resumes import (
+from app.services.tailoring import (
     _cached_job_keywords,
     _grounding_master_data,
     _score_tailored_data,

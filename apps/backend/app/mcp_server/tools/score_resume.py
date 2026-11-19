@@ -10,8 +10,8 @@ from app.mcp_server.tools._shared import (
     require_resume,
     require_valid_structured,
 )
-from app.routers.resumes import _get_original_resume_data, _grounding_master_data
 from app.schemas import ResumeData
+from app.services.tailoring import _get_original_resume_data, _grounding_master_data
 
 
 async def score_resume(

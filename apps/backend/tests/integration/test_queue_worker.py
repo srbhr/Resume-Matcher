@@ -35,7 +35,9 @@ def stub_pipeline(
         )
 
     def install(pipeline: Pipeline) -> None:
-        monkeypatch.setattr("app.routers.resumes.execute_tailoring_pipeline", pipeline)
+        monkeypatch.setattr(
+            "app.services.tailoring.execute_tailoring_pipeline", pipeline
+        )
 
     install(succeed)
     return install

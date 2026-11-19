@@ -170,6 +170,7 @@ from typing import Any
 import uvicorn
 from app.main import app
 from app.routers import resumes
+from app.services import tailoring
 from app.schemas.refinement import RefinementResult
 from app.schemas import ImproveDiffResult
 async def keywords(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -188,11 +189,12 @@ async def auxiliary(
     *args: Any, **kwargs: Any
 ) -> tuple[None, None, str, None, list[str]]:
     return None, None, 'Synthetic backend role', None, []
-resumes.extract_job_keywords = keywords
-resumes.generate_skill_target_plan = targets
-resumes.generate_resume_diffs = diffs
-resumes.refine_resume = refine
+tailoring.extract_job_keywords = keywords
+tailoring.generate_skill_target_plan = targets
+tailoring.generate_resume_diffs = diffs
+tailoring.refine_resume = refine
 resumes._generate_auxiliary_messages = auxiliary
+tailoring._generate_auxiliary_messages = auxiliary
 uvicorn.run(app, host='127.0.0.1', port=int(sys.argv[1]))
 """
     )

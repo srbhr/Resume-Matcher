@@ -117,7 +117,7 @@ def pipeline(monkeypatch: pytest.MonkeyPatch) -> Any:
     with ExitStack() as stack:
         stack.enter_context(
             patch(
-                "app.routers.resumes.extract_job_keywords",
+                "app.services.tailoring.extract_job_keywords",
                 new_callable=AsyncMock,
                 return_value={
                     "keywords": ["Python"],
@@ -128,34 +128,34 @@ def pipeline(monkeypatch: pytest.MonkeyPatch) -> Any:
         )
         stack.enter_context(
             patch(
-                "app.routers.resumes.generate_skill_target_plan",
+                "app.services.tailoring.generate_skill_target_plan",
                 new_callable=AsyncMock,
                 return_value={"accepted": [], "rejected": []},
             )
         )
         stack.enter_context(
             patch(
-                "app.routers.resumes.verify_skill_target_plan",
+                "app.services.tailoring.verify_skill_target_plan",
                 return_value={"accepted": [], "rejected": []},
             )
         )
         stack.enter_context(
             patch(
-                "app.routers.resumes.generate_resume_diffs",
+                "app.services.tailoring.generate_resume_diffs",
                 new_callable=AsyncMock,
                 return_value=ImproveDiffResult(changes=[]),
             )
         )
         stack.enter_context(
             patch(
-                "app.routers.resumes.refine_resume",
+                "app.services.tailoring.refine_resume",
                 new_callable=AsyncMock,
                 side_effect=RuntimeError("refinement disabled for test"),
             )
         )
         stack.enter_context(
             patch(
-                "app.routers.resumes.generate_resume_title",
+                "app.services.tailoring.generate_resume_title",
                 new_callable=AsyncMock,
                 return_value="Backend Engineer - Example",
             )
@@ -443,7 +443,7 @@ async def _selection_preview(
     diff: ImproveDiffResult,
 ) -> dict[str, Any]:
     with patch(
-        "app.routers.resumes.generate_resume_diffs",
+        "app.services.tailoring.generate_resume_diffs",
         new_callable=AsyncMock,
         return_value=diff,
     ):
@@ -523,7 +523,7 @@ async def test_selection_tells_the_diff_llm_the_bullet_set_is_fixed(
     client: AsyncClient, master: dict[str, Any], job: dict[str, Any]
 ) -> None:
     with patch(
-        "app.routers.resumes.generate_resume_diffs",
+        "app.services.tailoring.generate_resume_diffs",
         new_callable=AsyncMock,
         return_value=ImproveDiffResult(changes=[]),
     ) as diffs:
@@ -566,7 +566,7 @@ async def test_legacy_preview_keeps_bullet_appends_and_rejection_warnings(
         ]
     )
     with patch(
-        "app.routers.resumes.generate_resume_diffs",
+        "app.services.tailoring.generate_resume_diffs",
         new_callable=AsyncMock,
         return_value=diff,
     ) as diffs:
@@ -645,7 +645,7 @@ async def test_split_rewrite_keeps_every_chosen_bullet_through_the_real_refiner(
     )
     with (
         patch(
-            "app.routers.resumes.refine_resume",
+            "app.services.tailoring.refine_resume",
             new_callable=AsyncMock,
             side_effect=real_refine_resume,
         ) as refine,
@@ -675,7 +675,7 @@ async def test_refiner_grounds_on_the_full_master_while_tailoring_the_condensed_
 ) -> None:
     """Spec §4.3: dropped bullets are still true facts, so grounding uses the full master."""
     with patch(
-        "app.routers.resumes.refine_resume",
+        "app.services.tailoring.refine_resume",
         new_callable=AsyncMock,
         side_effect=RuntimeError("stop after capturing the call"),
     ) as refine:
@@ -696,7 +696,7 @@ async def test_diff_llm_sees_only_the_condensed_source(
 ) -> None:
     """The diff LLM gets the fitted JSON, so its indexes address condensed bullets."""
     with patch(
-        "app.routers.resumes.generate_resume_diffs",
+        "app.services.tailoring.generate_resume_diffs",
         new_callable=AsyncMock,
         return_value=ImproveDiffResult(changes=[]),
     ) as diffs:
@@ -824,7 +824,7 @@ async def test_condensed_cjk_source_reaches_the_diff_llm_verbatim(
     )
     job = await isolated_db.create_job("后端工程师 Python", master["resume_id"])
     with patch(
-        "app.routers.resumes.generate_resume_diffs",
+        "app.services.tailoring.generate_resume_diffs",
         new_callable=AsyncMock,
         return_value=ImproveDiffResult(changes=[]),
     ) as diffs:

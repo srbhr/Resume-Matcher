@@ -11,7 +11,7 @@ import pytest
 
 from app.database import Database
 from app.schemas.refinement import RefinementConfig
-from app.services import refiner
+from app.services import refiner, tailoring
 from e2e_monitor.flow import seed_master_db
 from tests.evals.scorers import is_valid_resume, jd_keywords_present, sections_preserved
 
@@ -197,17 +197,16 @@ async def test_preview_reports_its_current_stage_without_leaking_errors(
 
     from fastapi import HTTPException
 
-    from app.routers import resumes
     from tests.evals.golden.cases import GOLDEN_CASES
     from tests.evals.test_tailoring_eval import generate_tailoring
 
     monkeypatch.setattr(
-        resumes,
+        tailoring,
         "extract_job_keywords",
         AsyncMock(return_value={"required_skills": ["Python"]}),
     )
     monkeypatch.setattr(
-        resumes, "generate_skill_target_plan", AsyncMock(return_value={"targets": []})
+        tailoring, "generate_skill_target_plan", AsyncMock(return_value={"targets": []})
     )
     failure = (
         asyncio.CancelledError()
@@ -215,7 +214,7 @@ async def test_preview_reports_its_current_stage_without_leaking_errors(
         else ValueError("private synthetic provider details")
     )
     monkeypatch.setattr(
-        resumes, "generate_resume_diffs", AsyncMock(side_effect=failure)
+        tailoring, "generate_resume_diffs", AsyncMock(side_effect=failure)
     )
     with caplog.at_level("INFO"):
         with pytest.raises(

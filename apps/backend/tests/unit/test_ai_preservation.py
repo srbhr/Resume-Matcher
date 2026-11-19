@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from app.routers import resumes
 from app.schemas.models import ResumeData
 from app.schemas.refinement import RefinementConfig
+from app.services import tailoring
 from app.services.parser import restore_dates_from_markdown
 from app.services.refiner import refine_resume
 from app.services.resume_preservation import (
@@ -713,12 +713,12 @@ def test_ats_score_uses_post_preservation_resume_match() -> None:
         "recommendations": [],
     }
     with (
-        patch("app.routers.resumes.calculate_keyword_match", return_value=25.0),
+        patch("app.services.tailoring.calculate_keyword_match", return_value=25.0),
         patch(
-            "app.routers.resumes.compute_ats_score", return_value=ats_payload
+            "app.services.tailoring.compute_ats_score", return_value=ats_payload
         ) as score,
     ):
-        resumes._build_ats_score(
+        tailoring._build_ats_score(
             {"summary": "Finalized"},
             {"keywords": ["Python"]},
             SimpleNamespace(
