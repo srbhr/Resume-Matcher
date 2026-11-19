@@ -374,7 +374,7 @@ class TestTailoringPipeline:
         ``improve/preview`` hashes the raw ``improved_data`` — here a project that
         omits the optional ``github``/``website`` keys ``ResumeData`` defaults to
         ``None`` — while ``improve/confirm`` hashes the schema-defaulted
-        ``ResumeData`` round-trip. Before ``_hash_improved_data`` canonicalized
+        ``ResumeData`` round-trip. Before ``hash_improved_data`` canonicalized
         both sides these diverged and confirm returned 400 ("preview hash
         mismatch"). NO canonicalize workaround is applied to ``improved`` here —
         that is exactly the point.
@@ -506,7 +506,7 @@ class TestConfigurableImproveTimeout:
         async def _slow_flow(**_kwargs):
             await asyncio.sleep(1.0)
 
-        monkeypatch.setattr("app.routers.resumes._improve_preview_flow", _slow_flow)
+        monkeypatch.setattr("app.routers.resumes.improve_preview_flow", _slow_flow)
 
         async with _new_client() as client:
             resp = await client.post(

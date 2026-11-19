@@ -6,13 +6,13 @@ The bug: ``improve/preview`` hashes the RAW ``improved_data`` dict, while
 fields — which ``ResumeData`` defaults to ``None`` — therefore hashes
 differently on the two sides, so a valid tailoring is rejected with 400
 ("preview hash mismatch") whenever the stored ``processed_data`` is not already
-schema-complete. ``_hash_improved_data`` must canonicalize through ``ResumeData``
+schema-complete. ``hash_improved_data`` must canonicalize through ``ResumeData``
 so the two sides agree.
 """
 
 from __future__ import annotations
 
-from app.routers.resumes import _hash_improved_data
+from app.routers.resumes import hash_improved_data
 from app.schemas import ResumeData
 
 
@@ -42,11 +42,11 @@ def test_hash_is_stable_across_resumedata_roundtrip() -> None:
     assert "github" in _canonical(raw)["personalProjects"][0]
     # ...but their hashes MUST match, or preview (hashes raw) and confirm
     # (hashes the round-trip) disagree and reject a valid tailoring.
-    assert _hash_improved_data(raw) == _hash_improved_data(_canonical(raw))
+    assert hash_improved_data(raw) == hash_improved_data(_canonical(raw))
 
 
 def test_hash_distinguishes_genuinely_different_resumes() -> None:
     # Anti-theater: canonicalization must NOT collapse real content differences.
     a = {"personalInfo": {"name": "Jane"}, "summary": "Backend engineer."}
     b = {"personalInfo": {"name": "Jane"}, "summary": "Frontend engineer."}
-    assert _hash_improved_data(a) != _hash_improved_data(b)
+    assert hash_improved_data(a) != hash_improved_data(b)

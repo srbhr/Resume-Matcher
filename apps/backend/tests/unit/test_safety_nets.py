@@ -12,10 +12,10 @@ from typing import Any
 import pytest
 
 from app.services.safety_nets import (
-    _preserve_original_skills,
-    _preserve_personal_info,
-    _protect_custom_sections,
-    _restore_original_dates,
+    preserve_original_skills,
+    preserve_personal_info,
+    protect_custom_sections,
+    restore_original_dates,
 )
 
 
@@ -26,14 +26,14 @@ def entries(section: str, *years: str) -> dict[str, Any]:
 class TestRestoreOriginalDates:
     def test_without_an_original_returns_the_result_untouched(self) -> None:
         improved = entries("workExperience", "2021 - Present")
-        assert _restore_original_dates(None, improved) is improved
+        assert restore_original_dates(None, improved) is improved
 
     @pytest.mark.parametrize(
         "section", ["workExperience", "education", "personalProjects"]
     )
     def test_puts_back_a_month_the_llm_dropped(self, section: str) -> None:
         original = entries(section, "Jan 2021 - Present")
-        result = _restore_original_dates(original, entries(section, "2021 - Present"))
+        result = restore_original_dates(original, entries(section, "2021 - Present"))
         assert result[section][0]["years"] == "Jan 2021 - Present"
 
     @pytest.mark.parametrize(
@@ -48,7 +48,7 @@ class TestRestoreOriginalDates:
     def test_leaves_dates_that_lost_no_month(
         self, original: str, tailored: str
     ) -> None:
-        result = _restore_original_dates(
+        result = restore_original_dates(
             entries("workExperience", original), entries("workExperience", tailored)
         )
         assert result["workExperience"][0]["years"] == tailored
@@ -57,11 +57,11 @@ class TestRestoreOriginalDates:
         original = entries(
             "workExperience", "Jan 2021 - Present", "Jun 2018 - Dec 2020"
         )
-        shorter = _restore_original_dates(
+        shorter = restore_original_dates(
             original, entries("workExperience", "2021 - Now")
         )
         assert shorter["workExperience"] == [{"years": "Jan 2021 - Present"}]
-        longer = _restore_original_dates(
+        longer = restore_original_dates(
             entries("workExperience", "Jan 2021 - Present"),
             entries("workExperience", "2021 - Now", "2010 - 2012"),
         )
@@ -75,11 +75,11 @@ class TestRestoreOriginalDates:
                 }
             }
 
-        restored = _restore_original_dates(
+        restored = restore_original_dates(
             custom("itemList", "Mar 2022"), custom("itemList", "2022")
         )
         assert restored["customSections"]["talks"]["items"][0]["years"] == "Mar 2022"
-        other = _restore_original_dates(
+        other = restore_original_dates(
             custom("text", "Mar 2022"), custom("text", "2022")
         )
         assert other["customSections"]["talks"]["items"][0]["years"] == "2022"
@@ -88,7 +88,7 @@ class TestRestoreOriginalDates:
         original = entries("workExperience", "Jan 2021 - Present")
         improved = entries("workExperience", "2021 - Present")
         snapshot = copy.deepcopy((original, improved))
-        _restore_original_dates(original, improved)
+        restore_original_dates(original, improved)
         assert (original, improved) == snapshot
 
 
@@ -97,39 +97,39 @@ class TestPreserveOriginalSkills:
 
     def test_without_an_original_returns_the_result_untouched(self) -> None:
         improved = {"additional": {"technicalSkills": ["Go"]}}
-        assert _preserve_original_skills(None, improved) is improved
+        assert preserve_original_skills(None, improved) is improved
 
     @pytest.mark.parametrize("field", FIELDS)
     def test_appends_dropped_items_after_the_kept_ones(self, field: str) -> None:
         original = {"additional": {field: ["Python", "AWS", "Docker"]}}
         improved = {"additional": {field: ["Docker", "Kubernetes"]}}
-        result = _preserve_original_skills(original, improved)
+        result = preserve_original_skills(original, improved)
         assert result["additional"][field] == ["Docker", "Kubernetes", "Python", "AWS"]
 
     def test_matches_case_insensitively_and_never_duplicates(self) -> None:
         original = {"additional": {"technicalSkills": ["Python", "python", "AWS"]}}
         improved = {"additional": {"technicalSkills": ["PYTHON"]}}
-        result = _preserve_original_skills(original, improved)
+        result = preserve_original_skills(original, improved)
         assert result["additional"]["technicalSkills"] == ["PYTHON", "AWS"]
 
     def test_replaces_a_non_list_field_with_the_originals(self) -> None:
         original = {"additional": {"languages": ["English"]}}
-        result = _preserve_original_skills(original, {"additional": {"languages": "?"}})
+        result = preserve_original_skills(original, {"additional": {"languages": "?"}})
         assert result["additional"]["languages"] == ["English"]
 
     def test_creates_the_additional_block_when_the_llm_removed_it(self) -> None:
-        result = _preserve_original_skills({"additional": {"awards": ["Gold"]}}, {})
+        result = preserve_original_skills({"additional": {"awards": ["Gold"]}}, {})
         assert result["additional"] == {"awards": ["Gold"]}
 
     def test_ignores_an_original_without_an_additional_block(self) -> None:
         improved = {"summary": "x"}
-        assert _preserve_original_skills({"additional": "bad"}, improved) == improved
+        assert preserve_original_skills({"additional": "bad"}, improved) == improved
 
     def test_does_not_mutate_its_inputs(self) -> None:
         original = {"additional": {"technicalSkills": ["Python"]}}
         improved = {"additional": {"technicalSkills": []}}
         snapshot = copy.deepcopy((original, improved))
-        _preserve_original_skills(original, improved)
+        preserve_original_skills(original, improved)
         assert (original, improved) == snapshot
 
 
@@ -139,12 +139,12 @@ class TestProtectCustomSections:
 
     def test_without_custom_sections_returns_the_result_untouched(self) -> None:
         improved = {"customSections": {"x": {}}}
-        assert _protect_custom_sections(None, improved) is improved
-        assert _protect_custom_sections({"customSections": {}}, improved) is improved
+        assert protect_custom_sections(None, improved) is improved
+        assert protect_custom_sections({"customSections": {}}, improved) is improved
 
     def test_restores_a_section_the_llm_removed(self) -> None:
         talks = self.item_list({"title": "PyCon"})
-        result = _protect_custom_sections(
+        result = protect_custom_sections(
             {"customSections": {"talks": talks}}, {"customSections": {}}
         )
         assert result["customSections"]["talks"] == talks
@@ -156,7 +156,7 @@ class TestProtectCustomSections:
                 "talks": self.item_list({"title": "PyCon"}, {"title": "Invented"})
             }
         }
-        result = _protect_custom_sections(original, improved)
+        result = protect_custom_sections(original, improved)
         assert result["customSections"]["talks"]["items"] == [{"title": "PyCon"}]
 
     def test_reverts_a_description_invented_for_an_item_that_had_none(self) -> None:
@@ -176,7 +176,7 @@ class TestProtectCustomSections:
                 )
             }
         }
-        items = _protect_custom_sections(original, improved)["customSections"]["talks"][
+        items = protect_custom_sections(original, improved)["customSections"]["talks"][
             "items"
         ]
         assert items[0]["description"] == []
@@ -184,7 +184,7 @@ class TestProtectCustomSections:
 
     def test_keeps_a_result_whose_custom_sections_are_not_a_mapping(self) -> None:
         original = {"customSections": {"talks": self.item_list()}}
-        assert _protect_custom_sections(original, {"customSections": None}) == {
+        assert protect_custom_sections(original, {"customSections": None}) == {
             "customSections": None
         }
 
@@ -192,14 +192,14 @@ class TestProtectCustomSections:
 class TestPreservePersonalInfo:
     def test_without_an_original_warns_and_keeps_the_result(self) -> None:
         improved = {"personalInfo": {"name": "X"}}
-        result, warnings = _preserve_personal_info(None, improved)
+        result, warnings = preserve_personal_info(None, improved)
         assert result is improved
         assert warnings == [
             "Original resume data unavailable - personal info may be AI-generated"
         ]
 
     def test_warns_when_the_original_has_no_personal_info(self) -> None:
-        result, warnings = _preserve_personal_info({"summary": "s"}, {"summary": "t"})
+        result, warnings = preserve_personal_info({"summary": "s"}, {"summary": "t"})
         assert result == {"summary": "t"}
         assert warnings == ["Original personal info missing or invalid"]
 
@@ -208,7 +208,7 @@ class TestPreservePersonalInfo:
     ) -> None:
         original = {"personalInfo": {"name": "Ada", "email": "ada@example.com"}}
         improved = {"personalInfo": {"name": "Someone Else"}, "summary": "t"}
-        result, warnings = _preserve_personal_info(original, improved)
+        result, warnings = preserve_personal_info(original, improved)
         assert warnings == []
         assert result == {
             "personalInfo": {"name": "Ada", "email": "ada@example.com"},

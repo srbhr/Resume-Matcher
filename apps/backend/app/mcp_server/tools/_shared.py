@@ -27,12 +27,12 @@ from app.services.resume_preservation import (
     grounding_review_warnings,
 )
 from app.services.tailoring import (
-    _cached_job_keywords,
-    _get_original_resume_data,
-    _grounding_master_data,
-    _hash_job_content,
-    _score_tailored_data,
-    _validate_confirm_payload,
+    cached_job_keywords,
+    get_original_resume_data,
+    grounding_master_data,
+    hash_job_content,
+    score_tailored_data,
+    validate_confirm_payload,
 )
 
 logger = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ async def require_job(job_id: str) -> dict[str, Any]:
 
 
 def require_structured(resume: dict[str, Any]) -> dict[str, Any]:
-    data = _get_original_resume_data(resume)
+    data = get_original_resume_data(resume)
     if not data:
         raise ToolError(
             "Resume has no structured data yet. Read its source_markdown with "
@@ -202,7 +202,7 @@ def keyword_updates(content: str, keywords: JobKeywords) -> dict[str, Any]:
         )
     updates: dict[str, Any] = {
         "job_keywords": keywords.model_dump(),
-        "job_keywords_hash": _hash_job_content(content),
+        "job_keywords_hash": hash_job_content(content),
     }
     if keywords.company.strip():
         updates["company"] = keywords.company.strip()
@@ -245,7 +245,7 @@ def tailoring_report(
         )
         report["repaired_resume_data"] = repaired
     try:
-        _validate_confirm_payload(original, candidate, allow_appended_rows=True)
+        validate_confirm_payload(original, candidate, allow_appended_rows=True)
     except ValueError as e:
         violations.append(str(e))
     changed = diff_paths(original, candidate)
@@ -300,13 +300,13 @@ async def store_tailored_resume(
     title = clean_title(title) or clean_title(job.get("role"))
     # The builder's last ATS score, as stored when preview confirmation saves a resume.
     ats_record: dict[str, Any] | None = None
-    job_keywords = _cached_job_keywords(job)
+    job_keywords = cached_job_keywords(job)
     if job_keywords:
         try:
-            ats_record = _score_tailored_data(
+            ats_record = score_tailored_data(
                 candidate,
                 job_keywords,
-                await _grounding_master_data(source) or candidate,
+                await grounding_master_data(source) or candidate,
             )
         except Exception:  # noqa: BLE001 - the score is recalculable, never block the save
             logger.warning("ATS score at save failed", exc_info=True)

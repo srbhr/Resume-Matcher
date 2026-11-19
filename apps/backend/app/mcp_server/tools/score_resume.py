@@ -11,7 +11,7 @@ from app.mcp_server.tools._shared import (
     require_valid_structured,
 )
 from app.schemas import ResumeData
-from app.services.tailoring import _get_original_resume_data, _grounding_master_data
+from app.services.tailoring import get_original_resume_data, grounding_master_data
 
 
 async def score_resume(
@@ -35,10 +35,10 @@ async def score_resume(
     if resume_id is not None:
         resume = await require_resume(resume_id)
         data = require_valid_structured(resume)
-        master = await _grounding_master_data(resume) or data
+        master = await grounding_master_data(resume) or data
     else:
         data = resume_data.model_dump(mode="json")
         default = await db.get_master_resume()
-        master = (_get_original_resume_data(default) if default else None) or data
+        master = (get_original_resume_data(default) if default else None) or data
 
     return keyword_score(data, job_keywords, master)

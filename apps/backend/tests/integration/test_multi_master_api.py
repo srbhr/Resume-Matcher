@@ -187,7 +187,7 @@ async def test_tailored_source_grounds_refiner_on_its_own_track(
 
     monkeypatch.setattr(resumes_router, "_load_config", lambda: {})
     monkeypatch.setattr(resumes_router, "get_content_language", lambda: "en")
-    monkeypatch.setattr(resumes_router, "_get_default_prompt_id", lambda: "nudge")
+    monkeypatch.setattr(resumes_router, "get_default_prompt_id", lambda: "nudge")
     monkeypatch.setattr(
         tailoring,
         "extract_job_keywords",
@@ -220,7 +220,7 @@ async def test_tailored_source_grounds_refiner_on_its_own_track(
 async def test_grounding_falls_back_to_default_master_then_source(
     isolated_db: Database, parent: str, expected: str
 ) -> None:
-    from app.routers.resumes import _grounding_master_data
+    from app.routers.resumes import grounding_master_data
 
     if parent == "none":
         source = await _tailored(isolated_db, None, "source")
@@ -233,7 +233,7 @@ async def test_grounding_falls_back_to_default_master_then_source(
                 "resume_id"
             ]
         source = await _tailored(isolated_db, parent_id, "source")
-    grounding = await _grounding_master_data(source)
+    grounding = await grounding_master_data(source)
     assert grounding is not None and grounding["summary"] == expected
 
 

@@ -36,7 +36,7 @@ def stub_llm(monkeypatch: pytest.MonkeyPatch) -> None:
     """Run the real tailoring pipeline with every LLM step stubbed out."""
     monkeypatch.setattr(resumes, "_load_config", lambda: {})
     monkeypatch.setattr(resumes, "get_content_language", lambda: "en")
-    monkeypatch.setattr(resumes, "_get_default_prompt_id", lambda: "nudge")
+    monkeypatch.setattr(resumes, "get_default_prompt_id", lambda: "nudge")
     monkeypatch.setattr(
         tailoring, "extract_job_keywords", AsyncMock(return_value=JOB_KEYWORDS)
     )

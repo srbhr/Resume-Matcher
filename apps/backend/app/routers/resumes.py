@@ -93,22 +93,22 @@ from app.services.resume_preservation import (
 )
 from app.services.tailoring import (
     DIFF_UNAVAILABLE_WARNING,
-    _ats_score_model,
-    _auto_create_tracker_application,
-    _cached_job_keywords,
-    _calculate_diff_from_resume,
-    _generate_auxiliary_messages,
-    _get_default_prompt_id,
-    _get_original_resume_data,
-    _grounding_master_data,
-    _hash_improved_data,
-    _improve_preview_flow,
-    _scorable_job_keywords,
-    _score_tailored_data,
-    _serialize_interview_prep,
-    _validate_ai_sources,
-    _validate_confirm_payload,
+    ats_score_model,
+    auto_create_tracker_application,
+    cached_job_keywords,
+    calculate_diff_from_resume,
     execute_tailoring_pipeline,
+    generate_auxiliary_messages,
+    get_default_prompt_id,
+    get_original_resume_data,
+    grounding_master_data,
+    hash_improved_data,
+    improve_preview_flow,
+    scorable_job_keywords,
+    score_tailored_data,
+    serialize_interview_prep,
+    validate_ai_sources,
+    validate_confirm_payload,
 )
 from app.services.text_match import keyword_in_text
 from app.services.writing_loop import finalized_writing_report
@@ -649,9 +649,9 @@ async def improve_resume_preview_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    _validate_ai_sources(resume, job)
+    validate_ai_sources(resume, job)
     language = get_content_language()
-    prompt_id = request.prompt_id or _get_default_prompt_id()
+    prompt_id = request.prompt_id or get_default_prompt_id()
 
     detail = "Failed to preview resume. Please try again."
     with tracked_progress(request.progress_id, "load_job_keywords") as progress:
@@ -671,7 +671,7 @@ async def _run_preview_with_progress(
 ) -> ImproveResumeResponse:
     try:
         return await asyncio.wait_for(
-            _improve_preview_flow(
+            improve_preview_flow(
                 request=request,
                 resume=resume,
                 job=job,
@@ -764,7 +764,7 @@ async def apply_keywords_endpoint(
     job = await db.get_job(request.job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
-    _validate_ai_sources(resume, job)
+    validate_ai_sources(resume, job)
 
     current = request.improved_data.model_dump()
     preview = await db.get_preview(request.preview_id)
@@ -774,22 +774,22 @@ async def apply_keywords_endpoint(
         or preview["job_id"] != request.job_id
         or preview["result_resume_id"] is not None
         or preview["expires_at"] <= datetime.now(timezone.utc).isoformat()
-        or preview["payload_hash"] != _hash_improved_data(current)
+        or preview["payload_hash"] != hash_improved_data(current)
     ):
         raise HTTPException(
             status_code=409,
             detail="Preview expired or changed. Please generate a new preview.",
         )
-    job_keywords = _scorable_job_keywords(job)
+    job_keywords = scorable_job_keywords(job)
     if not job_keywords:
         raise HTTPException(
             status_code=409,
             detail="This job has no keywords. Please generate a new preview.",
         )
-    source = preview["source_data"] or _get_original_resume_data(resume)
+    source = preview["source_data"] or get_original_resume_data(resume)
     if source is None:
         raise HTTPException(status_code=400, detail="Resume has no structured data.")
-    master = await _grounding_master_data(resume) or source
+    master = await grounding_master_data(resume) or source
     master_text = _extract_all_text(master)
     terms = {term.casefold(): term for term in job_keyword_terms(job_keywords)}
 
@@ -830,10 +830,10 @@ async def apply_keywords_endpoint(
         registered = await db.register_preview(
             source_id=request.resume_id,
             job_id=request.job_id,
-            payload_hash=_hash_improved_data(final),
+            payload_hash=hash_improved_data(final),
             source_hash=preview["source_hash"],
             job_hash=preview["job_hash"],
-            prompt_id=request.prompt_id or _get_default_prompt_id(),
+            prompt_id=request.prompt_id or get_default_prompt_id(),
             ttl_seconds=settings.preview_ttl_seconds,
             improvements=preview["improvements"],
             source_data=preview["source_data"],
@@ -841,7 +841,7 @@ async def apply_keywords_endpoint(
     except PreviewConflictError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     response_warnings: list[str] = []
-    diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
+    diff_summary, detailed_changes, diff_error = calculate_diff_from_resume(
         resume, final, source
     )
     if diff_error:
@@ -864,7 +864,7 @@ async def apply_keywords_endpoint(
             markdownImproved=json.dumps(final, indent=2),
             diff_summary=diff_summary,
             detailed_changes=detailed_changes,
-            ats_score=_ats_score_model(
+            ats_score=ats_score_model(
                 final, job_keywords, analyze_keyword_gaps(job_keywords, final, master)
             ),
             writing=finalized_writing_report(None, final, language, source),
@@ -887,7 +887,7 @@ async def improve_resume_confirm_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    _validate_ai_sources(resume, job)
+    validate_ai_sources(resume, job)
     stage = "claim_preview"
     detail = "Failed to confirm resume. Please try again."
     claim: PreviewClaim | None = None
@@ -897,12 +897,12 @@ async def improve_resume_confirm_endpoint(
             preview_id=request.preview_id,
             source_id=request.resume_id,
             job_id=request.job_id,
-            payload_hash=_hash_improved_data(improved_data),
+            payload_hash=hash_improved_data(improved_data),
             lease_seconds=settings.request_timeout_seconds + 15,
         )
         if claim.response is not None:
             data = ImproveResumeData.model_validate(claim.response)
-            await _auto_create_tracker_application(
+            await auto_create_tracker_application(
                 job_id=request.job_id,
                 tailored_resume_id=data.resume_id,
                 master_resume_id=request.resume_id,
@@ -916,7 +916,7 @@ async def improve_resume_confirm_endpoint(
         forced_keywords = _clean_keywords(request.forced_keywords)
 
         try:
-            original = claim.source_data or _get_original_resume_data(resume)
+            original = claim.source_data or get_original_resume_data(resume)
             if original is None:
                 raise ValueError(
                     "Original resume data is unavailable; process the source before preview"
@@ -928,7 +928,7 @@ async def improve_resume_confirm_endpoint(
                 raise ValueError(
                     "Registered preview no longer satisfies preservation rules"
                 )
-            _validate_confirm_payload(original, improved_data, allow_appended_rows=True)
+            validate_confirm_payload(original, improved_data, allow_appended_rows=True)
         except ValueError as e:
             logger.warning("Resume confirm rejected: %s", e)
             raise HTTPException(
@@ -938,7 +938,7 @@ async def improve_resume_confirm_endpoint(
 
         stage = "calculate_diff"
         response_warnings: list[str] = []
-        diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
+        diff_summary, detailed_changes, diff_error = calculate_diff_from_resume(
             resume, improved_data, original
         )
         if diff_error:
@@ -956,7 +956,7 @@ async def improve_resume_confirm_endpoint(
             interview_prep,
             aux_warnings,
         ) = await asyncio.wait_for(
-            _generate_auxiliary_messages(
+            generate_auxiliary_messages(
                 improved_data,
                 job["content"],
                 language,
@@ -987,13 +987,13 @@ async def improve_resume_confirm_endpoint(
             warnings=response_warnings,
         )
         ats_record: dict[str, Any] | None = None
-        job_keywords = _cached_job_keywords(job)
+        job_keywords = cached_job_keywords(job)
         if job_keywords is not None:
             try:
-                ats_record = _score_tailored_data(
+                ats_record = score_tailored_data(
                     improved_data,
                     job_keywords,
-                    await _grounding_master_data(resume) or improved_data,
+                    await grounding_master_data(resume) or improved_data,
                 )
             except Exception:
                 logger.warning("ATS score at confirmation failed", exc_info=True)
@@ -1010,7 +1010,7 @@ async def improve_resume_confirm_endpoint(
                 "processing_status": "ready",
                 "cover_letter": cover_letter,
                 "outreach_message": outreach_message,
-                "interview_prep": _serialize_interview_prep(interview_prep),
+                "interview_prep": serialize_interview_prep(interview_prep),
                 "title": title,
                 "template_settings": copy.deepcopy(resume.get("template_settings")),
             },
@@ -1028,7 +1028,7 @@ async def improve_resume_confirm_endpoint(
                 if keyword in forced_keywords
             ],
         )
-        await _auto_create_tracker_application(
+        await auto_create_tracker_application(
             job_id=request.job_id,
             tailored_resume_id=result["resume_id"],
             master_resume_id=request.resume_id,
@@ -1586,7 +1586,7 @@ async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentRespo
         )
 
     # Get language setting
-    _validate_ai_sources(resume, job)
+    validate_ai_sources(resume, job)
     language = get_content_language()
 
     # Generate cover letter
@@ -1660,7 +1660,7 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
         )
 
     # Get language setting
-    _validate_ai_sources(resume, job)
+    validate_ai_sources(resume, job)
     language = get_content_language()
 
     # Generate outreach message
@@ -1727,7 +1727,7 @@ async def generate_interview_prep_endpoint(
             detail="Resume has no processed data. Please re-upload the resume.",
         )
 
-    _validate_ai_sources(resume, job)
+    validate_ai_sources(resume, job)
     language = get_content_language()
 
     try:
@@ -1749,7 +1749,7 @@ async def generate_interview_prep_endpoint(
 
     await db.update_resume(
         resume_id,
-        {"interview_prep": _serialize_interview_prep(interview_prep)},
+        {"interview_prep": serialize_interview_prep(interview_prep)},
     )
 
     return GenerateInterviewPrepResponse(
@@ -1801,20 +1801,20 @@ async def recalculate_ats_score_for_resume(resume_id: str) -> ATSScoreRecord:
             status_code=404,
             detail="No job description is linked to this resume.",
         )
-    job_keywords = _cached_job_keywords(job)
+    job_keywords = cached_job_keywords(job)
     if job_keywords is None:
         raise HTTPException(
             status_code=409,
             detail="The job description has not been analyzed. Tailor the resume again to score it.",
         )
-    tailored_data = _get_original_resume_data(resume)
+    tailored_data = get_original_resume_data(resume)
     if not tailored_data:
         raise HTTPException(
             status_code=409, detail="This resume has no structured data to score."
         )
-    master_data = await _grounding_master_data(resume) or tailored_data
+    master_data = await grounding_master_data(resume) or tailored_data
     try:
-        record = _score_tailored_data(tailored_data, job_keywords, master_data)
+        record = score_tailored_data(tailored_data, job_keywords, master_data)
         await db.set_ats_score(resume_id, record)
     except DatabaseBusyError:
         raise  # mapped to a retryable 503 by the app-level handler
@@ -1862,7 +1862,7 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
             detail="The associated job description was not found.",
         )
 
-    keywords = _scorable_job_keywords(job)
+    keywords = scorable_job_keywords(job)
     return {
         "job_id": job["job_id"],
         "content": job["content"],

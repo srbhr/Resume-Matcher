@@ -194,8 +194,8 @@ tailoring.extract_job_keywords = keywords
 tailoring.generate_skill_target_plan = targets
 tailoring.generate_resume_diffs = diffs
 tailoring.refine_resume = refine
-resumes._generate_auxiliary_messages = auxiliary
-tailoring._generate_auxiliary_messages = auxiliary
+resumes.generate_auxiliary_messages = auxiliary
+tailoring.generate_auxiliary_messages = auxiliary
 uvicorn.run(app, host='127.0.0.1', port=int(sys.argv[1]))
 """
     )

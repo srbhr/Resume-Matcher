@@ -529,7 +529,7 @@ async def test_auxiliary_blank_and_failed_outputs_become_durable_warnings(
         processing_status="ready",
     )
     job = await isolated_db.create_job("Python engineer at Acme")
-    payload_hash = resumes._hash_improved_data(data)
+    payload_hash = resumes.hash_improved_data(data)
     registered = await isolated_db.register_preview(
         source_id=source["resume_id"],
         job_id=job["job_id"],

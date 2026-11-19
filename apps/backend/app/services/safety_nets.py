@@ -18,7 +18,7 @@ def _has_month(date_str: str) -> bool:
     return bool(MONTH_PATTERN.search(date_str))
 
 
-def _restore_original_dates(
+def restore_original_dates(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
 ) -> dict[str, Any]:
@@ -99,7 +99,7 @@ def _restore_original_dates(
     return result
 
 
-def _preserve_original_skills(
+def preserve_original_skills(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
 ) -> dict[str, Any]:
@@ -153,7 +153,7 @@ def _preserve_original_skills(
     return result
 
 
-def _protect_custom_sections(
+def protect_custom_sections(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
 ) -> dict[str, Any]:
@@ -223,7 +223,7 @@ def _protect_custom_sections(
     return result
 
 
-def _preserve_personal_info(
+def preserve_personal_info(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
 ) -> tuple[dict[str, Any], list[str]]:

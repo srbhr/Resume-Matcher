@@ -11,9 +11,9 @@ from app.database import db
 from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers.resumes import (
     PASSWORD_PDF_DETAIL,
-    _get_original_resume_data,
     _read_upload_content,
     _validate_upload_type,
+    get_original_resume_data,
 )
 from app.schemas.models import PageFitSettings
 from app.services.ats_parse import parse_check_bytes, parse_check_render
@@ -89,7 +89,7 @@ async def parse_check_resume(
     resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
-    data = _get_original_resume_data(resume)
+    data = get_original_resume_data(resume)
     if not data:
         raise HTTPException(
             status_code=422, detail="Resume has no structured data to check yet."

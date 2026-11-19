@@ -216,7 +216,7 @@ async def test_oversized_saved_source_rejected_before_ai(
         resumes.db, "get_job", AsyncMock(return_value={"content": "Engineer"})
     )
     ai = AsyncMock(side_effect=AssertionError("AI must not run"))
-    monkeypatch.setattr(resumes, "_improve_preview_flow", ai)
+    monkeypatch.setattr(resumes, "improve_preview_flow", ai)
     monkeypatch.setattr(enrichment, "complete_json", ai)
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -353,7 +353,7 @@ async def test_auxiliary_timeout_keeps_completed_output_and_returns_warning(
         title_value,
         interview,
         warnings,
-    ) = await resumes._generate_auxiliary_messages(
+    ) = await resumes.generate_auxiliary_messages(
         {}, "Engineer", "en", True, False, False
     )
 
@@ -574,7 +574,7 @@ async def test_dedicated_ai_failures_reach_api_boundary(
         }
     elif boundary == "preview":
         monkeypatch.setattr(
-            resumes, "_improve_preview_flow", AsyncMock(side_effect=error)
+            resumes, "improve_preview_flow", AsyncMock(side_effect=error)
         )
         path, payload = "/resumes/improve/preview", {"resume_id": "r", "job_id": "j"}
     elif boundary == "direct":
@@ -661,7 +661,7 @@ async def test_auxiliary_boundary_failure_is_not_an_optional_item_error(
         AsyncMock(side_effect=kind("synthetic boundary")),
     )
     with pytest.raises(kind):
-        await resumes._generate_auxiliary_messages(
+        await resumes.generate_auxiliary_messages(
             {}, "Engineer", "en", False, False, False
         )
 

@@ -35,7 +35,7 @@ async def direct_case(
     job = await isolated_db.create_job("Python engineer at Synthetic Co")
     monkeypatch.setattr(resumes, "_load_config", lambda: {})
     monkeypatch.setattr(resumes, "get_content_language", lambda: "en")
-    monkeypatch.setattr(resumes, "_get_default_prompt_id", lambda: "nudge")
+    monkeypatch.setattr(resumes, "get_default_prompt_id", lambda: "nudge")
     monkeypatch.setattr(
         tailoring,
         "extract_job_keywords",

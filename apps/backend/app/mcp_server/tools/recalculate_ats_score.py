@@ -10,9 +10,9 @@ from app.mcp_server.tools._shared import (
     require_valid_structured,
 )
 from app.services.tailoring import (
-    _cached_job_keywords,
-    _grounding_master_data,
-    _score_tailored_data,
+    cached_job_keywords,
+    grounding_master_data,
+    score_tailored_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,15 +32,15 @@ async def recalculate_ats_score(resume_id: str) -> dict[str, Any]:
     job = await db.get_job(improvement["job_id"]) if improvement else None
     if not job:
         raise ToolError("No job description is linked to this resume.")
-    job_keywords = _cached_job_keywords(job)
+    job_keywords = cached_job_keywords(job)
     if job_keywords is None:
         raise ToolError(
             "The linked job has no current keywords. Call set_job_keywords for it first."
         )
     data = require_valid_structured(resume)
     try:
-        record = _score_tailored_data(
-            data, job_keywords, await _grounding_master_data(resume) or data
+        record = score_tailored_data(
+            data, job_keywords, await grounding_master_data(resume) or data
         )
         await db.set_ats_score(resume_id, record)
     except DatabaseBusyError:

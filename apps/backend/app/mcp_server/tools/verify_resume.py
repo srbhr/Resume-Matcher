@@ -18,7 +18,7 @@ from app.schemas.models import PageFitSettings
 from app.services import ats_parse
 from app.services.ats_parse.models import ParseCheckReport
 from app.services.page_fit import count_pdf_pages, page_limit
-from app.services.tailoring import _grounding_master_data, _scorable_job_keywords
+from app.services.tailoring import grounding_master_data, scorable_job_keywords
 from app.services.writing_quality import writing_report
 
 logger = logging.getLogger(__name__)
@@ -82,9 +82,9 @@ async def verify(
     job_keywords = None
     if job_id is not None:
         # Stale (cached for other job text) or empty keywords count as missing, as in the builder.
-        job_keywords = _scorable_job_keywords(await require_job(job_id))
+        job_keywords = scorable_job_keywords(await require_job(job_id))
         if job_keywords:
-            master = await _grounding_master_data(resume) or data
+            master = await grounding_master_data(resume) or data
             score = keyword_score(data, job_keywords, master)
 
     result: dict[str, Any] = {

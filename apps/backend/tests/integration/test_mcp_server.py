@@ -30,7 +30,7 @@ from app.pdf import PDFRenderError
 from app.routers import resumes as resumes_router
 from app.services import ats_parse
 from app.services.ats_parse.extract import ExtractedDocument
-from app.services.tailoring import _hash_job_content
+from app.services.tailoring import hash_job_content
 from tests.ats_fixtures import john_doe, render
 from tests.unit.test_page_fit import _pdf
 
@@ -257,7 +257,7 @@ async def test_add_job_caches_keywords_under_the_pipeline_hash(
     async with connect() as mcp:
         job_id = await _job(mcp, sample_job_description, sample_job_keywords)
         stored = await isolated_db.get_job(job_id)
-        assert stored["job_keywords_hash"] == _hash_job_content(stored["content"])
+        assert stored["job_keywords_hash"] == hash_job_content(stored["content"])
         assert (
             stored["job_keywords"]["required_skills"]
             == sample_job_keywords["required_skills"]

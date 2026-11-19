@@ -157,7 +157,7 @@ async def test_concurrent_confirmation_does_not_repeat_optional_generation(
                     preview_id=payload["preview_id"],
                     source_id=payload["resume_id"],
                     job_id=payload["job_id"],
-                    payload_hash=resumes._hash_improved_data(payload["improved_data"]),
+                    payload_hash=resumes.hash_improved_data(payload["improved_data"]),
                     lease_seconds=30,
                 )
         finally:
@@ -547,7 +547,7 @@ async def test_expired_claim_can_be_recovered_without_old_owner_committing_or_re
         preview_id=payload["preview_id"],
         source_id=payload["resume_id"],
         job_id=payload["job_id"],
-        payload_hash=resumes._hash_improved_data(payload["improved_data"]),
+        payload_hash=resumes.hash_improved_data(payload["improved_data"]),
         lease_seconds=30,
     )
     old = await isolated_db.claim_preview(**kwargs)
@@ -696,7 +696,7 @@ async def test_replay_repairs_tracker_card_after_lost_followup(
     payload = await preview_payload(isolated_db, confirmation_client, sample_resume)
     with monkeypatch.context() as stage:
         stage.setattr(
-            resumes, "_auto_create_tracker_application", AsyncMock(return_value=None)
+            resumes, "auto_create_tracker_application", AsyncMock(return_value=None)
         )
         first = await confirmation_client.post(
             "/api/v1/resumes/improve/confirm", json=payload
@@ -750,7 +750,7 @@ async def test_legacy_registered_preview_cannot_persist_unsupported_additions(
     async with isolated_db._session() as session:
         row = await session.get(TailoringPreview, payload["preview_id"])
         assert row is not None
-        row.payload_hash = resumes._hash_improved_data(payload["improved_data"])
+        row.payload_hash = resumes.hash_improved_data(payload["improved_data"])
         await session.commit()
     response = await confirmation_client.post(
         "/api/v1/resumes/improve/confirm", json=payload
@@ -774,7 +774,7 @@ async def test_legacy_preview_without_structured_source_requires_reprocessing(
     preview = await isolated_db.register_preview(
         source_id=source["resume_id"],
         job_id=job["job_id"],
-        payload_hash=resumes._hash_improved_data(candidate),
+        payload_hash=resumes.hash_improved_data(candidate),
         source_hash=resume_fingerprint(source["content"], None, None),
         job_hash=job_fingerprint(job["content"]),
         prompt_id="nudge",

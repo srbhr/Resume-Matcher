@@ -86,10 +86,10 @@ from app.services.resume_preservation import (
     validate_confirmed_resume,
 )
 from app.services.safety_nets import (
-    _preserve_original_skills,
-    _preserve_personal_info,
-    _protect_custom_sections,
-    _restore_original_dates,
+    preserve_original_skills,
+    preserve_personal_info,
+    protect_custom_sections,
+    restore_original_dates,
 )
 from app.services.tailor_selection import (
     PAGE_FIT_FINAL_OVER_WARNING,
@@ -106,7 +106,7 @@ REFINEMENT_FAILED_WARNING = "REFINEMENT_FAILED: Resume refinement was unavailabl
 DIFF_UNAVAILABLE_WARNING = "DIFF_UNAVAILABLE: Resume changes could not be calculated."
 
 
-async def _auto_create_tracker_application(
+async def auto_create_tracker_application(
     *,
     job_id: str,
     tailored_resume_id: str,
@@ -137,7 +137,7 @@ async def _auto_create_tracker_application(
         logger.warning("Failed to auto-create tracker application: %s", e)
 
 
-def _get_default_prompt_id() -> str:
+def get_default_prompt_id() -> str:
     """Get configured default prompt id from config file."""
     config = _load_config()
     option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
@@ -145,7 +145,7 @@ def _get_default_prompt_id() -> str:
     return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
 
 
-def _hash_job_content(content: str) -> str:
+def hash_job_content(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
@@ -198,13 +198,13 @@ def _normalize_payload(value: Any) -> Any:
     return value
 
 
-def _serialize_interview_prep(interview_prep: InterviewPrepData | None) -> str | None:
+def serialize_interview_prep(interview_prep: InterviewPrepData | None) -> str | None:
     if interview_prep is None:
         return None
     return json.dumps(interview_prep.model_dump(mode="json"), ensure_ascii=False)
 
 
-def _hash_improved_data(data: dict[str, Any]) -> str:
+def hash_improved_data(data: dict[str, Any]) -> str:
     """Hash canonicalized improved data for preview/confirm validation.
 
     Canonicalize through ``ResumeData`` first so a payload that merely omits
@@ -230,7 +230,7 @@ def _hash_improved_data(data: dict[str, Any]) -> str:
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
-def _validate_ai_sources(
+def validate_ai_sources(
     resume: dict[str, Any], job: dict[str, Any] | None = None
 ) -> None:
     """Check all stored inputs before starting expensive AI work."""
@@ -242,7 +242,7 @@ def _validate_ai_sources(
         require_source_size(job.get("content", ""), MAX_JOB_CHARACTERS)
 
 
-def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
+def get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
     original_data = resume.get("processed_data")
     if not original_data and resume.get("content_type") == "json":
         try:
@@ -252,18 +252,18 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
     return original_data
 
 
-async def _grounding_master_data(resume: dict[str, Any]) -> dict[str, Any] | None:
+async def grounding_master_data(resume: dict[str, Any]) -> dict[str, Any] | None:
     """Truth source for refinement: the source master, its parent master, else the default."""
     if resume.get("is_master", False):
-        return _get_original_resume_data(resume)
+        return get_original_resume_data(resume)
     parent_id = resume.get("parent_id")
     parent = await db.get_resume(parent_id) if parent_id else None
     if parent and parent.get("is_master", False):
-        return _get_original_resume_data(parent)
+        return get_original_resume_data(parent)
     master_resume = await db.get_master_resume()
     if master_resume:
-        return _get_original_resume_data(master_resume)
-    return _get_original_resume_data(resume)
+        return get_original_resume_data(master_resume)
+    return get_original_resume_data(resume)
 
 
 def _get_original_markdown(resume: dict[str, Any]) -> str | None:
@@ -308,7 +308,7 @@ def _build_ats_score(
     refinement_successful: bool,
 ) -> ATSScore | None:
     """Build ATSScore from refinement result and resume data."""
-    return _ats_score_model(
+    return ats_score_model(
         improved_data,
         job_keywords,
         refinement_result.keyword_analysis
@@ -317,7 +317,7 @@ def _build_ats_score(
     )
 
 
-def _ats_score_model(
+def ats_score_model(
     improved_data: dict[str, Any],
     job_keywords: dict[str, Any],
     kw_analysis: Any,
@@ -344,7 +344,7 @@ def _ats_score_model(
         return None
 
 
-def _calculate_diff_from_resume(
+def calculate_diff_from_resume(
     resume: dict[str, Any],
     improved_data: dict[str, Any],
     original_data: dict[str, Any] | None = None,
@@ -356,7 +356,7 @@ def _calculate_diff_from_resume(
     Error reason is None on success, or a string describing why diff calculation
     failed.
     """
-    original_data = original_data or _get_original_resume_data(resume)
+    original_data = original_data or get_original_resume_data(resume)
     if not original_data:
         return None, None, "original_data_missing"
     from app.services.improver import calculate_resume_diff
@@ -369,7 +369,7 @@ def _calculate_diff_from_resume(
         return None, None, "calculation_error"
 
 
-async def _generate_auxiliary_messages(
+async def generate_auxiliary_messages(
     improved_data: dict[str, Any],
     job_content: str,
     language: str,
@@ -455,7 +455,7 @@ async def _generate_auxiliary_messages(
     return cover_letter, outreach_message, title, interview_prep, warnings
 
 
-async def _improve_preview_flow(
+async def improve_preview_flow(
     *,
     request: ImproveResumeRequest,
     resume: dict[str, Any],
@@ -470,12 +470,12 @@ async def _improve_preview_flow(
     progress["stage"] = "load_job_keywords"
     job_keywords = job.get("job_keywords")
     job_keywords_hash = job.get("job_keywords_hash")
-    content_hash = _hash_job_content(job["content"])
+    content_hash = hash_job_content(job["content"])
     if not job_keywords or job_keywords_hash != content_hash:
         job_keywords = await extract_job_keywords(job["content"])
         await _cache_job_keywords(request.job_id, content_hash, job_keywords)
     progress["stage"] = "load_original_resume"
-    original_resume_data = _get_original_resume_data(resume)
+    original_resume_data = get_original_resume_data(resume)
     # Collect warnings throughout the process
     response_warnings: list[str] = []
     allow_appended_rows = False
@@ -600,18 +600,18 @@ async def _improve_preview_flow(
 
     progress["stage"] = "preserve_source_fields"
     # Safety nets (defense in depth — should rarely activate with diff-based flow)
-    improved_data, preserve_warnings = _preserve_personal_info(
+    improved_data, preserve_warnings = preserve_personal_info(
         original_resume_data,
         improved_data,
     )
     response_warnings.extend(preserve_warnings)
 
-    improved_data = _restore_original_dates(original_resume_data, improved_data)
+    improved_data = restore_original_dates(original_resume_data, improved_data)
     original_markdown = _get_original_markdown(resume)
     if original_markdown:
         improved_data = restore_dates_from_markdown(improved_data, original_markdown)
-    improved_data = _preserve_original_skills(original_resume_data, improved_data)
-    improved_data = _protect_custom_sections(original_resume_data, improved_data)
+    improved_data = preserve_original_skills(original_resume_data, improved_data)
+    improved_data = protect_custom_sections(original_resume_data, improved_data)
 
     # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
     refinement_stats: RefinementStats | None = None
@@ -620,7 +620,7 @@ async def _improve_preview_flow(
     refinement_successful = False
     try:
         # Get master resume for alignment validation
-        master_data = await _grounding_master_data(resume)
+        master_data = await grounding_master_data(resume)
         if master_data:
             initial_match = calculate_keyword_match(improved_data, job_keywords)
             refinement_attempted = True
@@ -686,7 +686,7 @@ async def _improve_preview_flow(
 
     progress["stage"] = "register_preview"
     improved_text = json.dumps(improved_data, indent=2)
-    preview_hash = _hash_improved_data(improved_data)
+    preview_hash = hash_improved_data(improved_data)
     improvements = generate_improvements(job_keywords)
     registered_preview = await db.register_preview(
         source_id=request.resume_id,
@@ -704,7 +704,7 @@ async def _improve_preview_flow(
         source_data=original_resume_data if bullet_selection is not None else None,
     )
     progress["stage"] = "calculate_diff"
-    diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
+    diff_summary, detailed_changes, diff_error = calculate_diff_from_resume(
         resume,
         improved_data,
         original_resume_data,
@@ -803,7 +803,7 @@ async def execute_tailoring_pipeline(
     enable_cover_letter = feature_config.get("enable_cover_letter", False)
     enable_outreach = feature_config.get("enable_outreach_message", False)
     enable_interview_prep = feature_config.get("enable_interview_prep", False)
-    _validate_ai_sources(resume, job)
+    validate_ai_sources(resume, job)
     language = get_content_language()
 
     # Extract keywords from job description; the cache lets the ATS score be
@@ -812,13 +812,13 @@ async def execute_tailoring_pipeline(
     # The refreshed job carries the extracted company/role for the tracker card.
     job = (
         await _cache_job_keywords(
-            job_id, _hash_job_content(job["content"]), job_keywords
+            job_id, hash_job_content(job["content"]), job_keywords
         )
         or job
     )
 
-    effective_prompt_id = prompt_id or _get_default_prompt_id()
-    original_resume_data = _get_original_resume_data(resume)
+    effective_prompt_id = prompt_id or get_default_prompt_id()
+    original_resume_data = get_original_resume_data(resume)
     response_warnings: list[str] = []
     allow_appended_rows = False
 
@@ -873,18 +873,18 @@ async def execute_tailoring_pipeline(
         )
 
     # Safety nets (defense in depth)
-    improved_data, preserve_warnings = _preserve_personal_info(
+    improved_data, preserve_warnings = preserve_personal_info(
         original_resume_data,
         improved_data,
     )
     response_warnings.extend(preserve_warnings)
 
-    improved_data = _restore_original_dates(original_resume_data, improved_data)
+    improved_data = restore_original_dates(original_resume_data, improved_data)
     original_markdown = _get_original_markdown(resume)
     if original_markdown:
         improved_data = restore_dates_from_markdown(improved_data, original_markdown)
-    improved_data = _preserve_original_skills(original_resume_data, improved_data)
-    improved_data = _protect_custom_sections(original_resume_data, improved_data)
+    improved_data = preserve_original_skills(original_resume_data, improved_data)
+    improved_data = protect_custom_sections(original_resume_data, improved_data)
 
     # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
     refinement_stats: RefinementStats | None = None
@@ -892,7 +892,7 @@ async def execute_tailoring_pipeline(
     refinement_attempted = False
     refinement_successful = False
     try:
-        master_data = await _grounding_master_data(resume)
+        master_data = await grounding_master_data(resume)
         if master_data:
             initial_match = calculate_keyword_match(improved_data, job_keywords)
             refinement_attempted = True
@@ -942,7 +942,7 @@ async def execute_tailoring_pipeline(
 
     improved_text = json.dumps(improved_data, indent=2)
 
-    diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
+    diff_summary, detailed_changes, diff_error = calculate_diff_from_resume(
         resume,
         improved_data,
     )
@@ -957,7 +957,7 @@ async def execute_tailoring_pipeline(
         title,
         interview_prep,
         aux_warnings,
-    ) = await _generate_auxiliary_messages(
+    ) = await generate_auxiliary_messages(
         improved_data,
         job["content"],
         language,
@@ -970,10 +970,10 @@ async def execute_tailoring_pipeline(
     # Stored as the builder's last ATS score, as at preview confirmation.
     ats_record: dict[str, Any] | None = None
     try:
-        ats_record = _score_tailored_data(
+        ats_record = score_tailored_data(
             improved_data,
             job_keywords,
-            await _grounding_master_data(resume) or improved_data,
+            await grounding_master_data(resume) or improved_data,
         )
     except Exception:
         logger.warning("ATS score at tailoring failed", exc_info=True)
@@ -993,7 +993,7 @@ async def execute_tailoring_pipeline(
             "processing_status": "ready",
             "cover_letter": cover_letter,
             "outreach_message": outreach_message,
-            "interview_prep": _serialize_interview_prep(interview_prep),
+            "interview_prep": serialize_interview_prep(interview_prep),
             "title": title,
             "template_settings": copy.deepcopy(resume.get("template_settings")),
         },
@@ -1001,7 +1001,7 @@ async def execute_tailoring_pipeline(
         ats_score=ats_record,
     )
 
-    await _auto_create_tracker_application(
+    await auto_create_tracker_application(
         job_id=job_id,
         tailored_resume_id=tailored_resume["resume_id"],
         master_resume_id=resume_id,
@@ -1035,7 +1035,7 @@ async def execute_tailoring_pipeline(
     return tailored_resume, improved_data, improvements, request_id, extra_meta
 
 
-def _score_tailored_data(
+def score_tailored_data(
     tailored_data: dict[str, Any],
     job_keywords: dict[str, Any],
     master_data: dict[str, Any],
@@ -1074,7 +1074,7 @@ def _normalize_personal_info_value(value: Any) -> str:
     )
 
 
-def _validate_confirm_payload(
+def validate_confirm_payload(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
     *,
@@ -1118,22 +1118,22 @@ def _validate_confirm_payload(
         )
 
 
-def _cached_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
+def cached_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
     """Job keywords cached at tailoring time, or None when missing or stale."""
     keywords = job.get("job_keywords")
-    if not keywords or job.get("job_keywords_hash") != _hash_job_content(
+    if not keywords or job.get("job_keywords_hash") != hash_job_content(
         job.get("content", "")
     ):
         return None
     return keywords
 
 
-def _scorable_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
+def scorable_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
     """Cached job keywords with at least one term to score against, else None.
 
     Extraction can return empty lists; such a dict is truthy but scores 0%.
     """
-    keywords = _cached_job_keywords(job)
+    keywords = cached_job_keywords(job)
     if keywords and any(term.strip() for term in job_keyword_terms(keywords)):
         return keywords
     return None
