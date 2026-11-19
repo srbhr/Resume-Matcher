@@ -74,6 +74,12 @@ import {
 } from '@/lib/utils/resume-draft-storage';
 import { nextSaveDelay } from '@/lib/builder/save-schedule';
 import {
+  initialResumeSync,
+  resumeSync,
+  type ResumeSyncEvent,
+  type ResumeSyncState,
+} from '@/lib/builder/resume-sync';
+import {
   experienceRegenerateItems,
   projectRegenerateItems,
   skillsRegenerateItem,
@@ -176,11 +182,22 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
   const initialData = useMemo(() => buildInitialData(t), [t]);
   const [resumeData, setResumeData] = useState<ResumeData>(() => initialData);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  // The resume's save state (lib/builder/resume-sync.ts). The ref holds the
+  // latest state for callbacks that read it after an await; dispatchSync
+  // returns it so side effects can follow the transition.
+  const syncRef = useRef(initialResumeSync);
+  const [sync, setSync] = useState(initialResumeSync);
+  const dispatchSync = useCallback((event: ResumeSyncEvent): ResumeSyncState => {
+    syncRef.current = resumeSync(syncRef.current, event);
+    setSync(syncRef.current);
+    return syncRef.current;
+  }, []);
+  const hasUnsavedChanges = sync.dirty;
+  const isSaving = sync.manualSaving;
+  const isAutoSaving = sync.autoSaving;
+  const loadingState = sync.load;
+  const autoSaveError = sync.saveFailed ? t('builder.alerts.autoSaveFailed') : null;
   const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => initialData);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
-  const [autoSaveError, setAutoSaveError] = useState<string | null>(null);
   const [lastAutoSavedAt, setLastAutoSavedAt] = useState<number | null>(null);
   const [pendingDraftRestore, setPendingDraftRestore] = useState<StoredResumeDraft | null>(null);
   const [pendingAttachmentDraftRestore, setPendingAttachmentDraftRestore] =
@@ -188,7 +205,6 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const [showLeaveWithLocalDraftDialog, setShowLeaveWithLocalDraftDialog] = useState(false);
   const [hasCurrentLocalDraft, setHasCurrentLocalDraft] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
   const improvedCoverLetter = improvedData?.data?.cover_letter;
@@ -199,15 +215,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const resumeId = searchParams.get('id');
   const { templateSettings, formattingSaveFailed, handleSettingsChange, applySavedSettings } =
     useResumeFormatting(resumeId, loadingState === 'loaded');
-  // Monotonic edit counter. It is deliberately never reset: two savers can be
-  // in flight (a queued manual flush behind an autosave), and resetting it to 0
-  // on whichever finishes first invalidated the other's captured baseline, so a
-  // save that actually succeeded reported failure. "Everything is synced" is
-  // now `editVersionRef === syncedVersionRef`, which no other saver can forge.
-  const editVersionRef = useRef(0);
-  const syncedVersionRef = useRef(0);
   const resumeSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const unsyncedSinceRef = useRef<number | null>(null);
   const documentIsActiveRef = useRef(true);
 
   useEffect(() => {
@@ -304,9 +312,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         if (data.processed_resume) {
           setResumeData(data.processed_resume as ResumeData);
           setLastSavedData(data.processed_resume as ResumeData);
-          setHasUnsavedChanges(false);
-          syncedVersionRef.current = editVersionRef.current;
-          unsyncedSinceRef.current = null;
+          dispatchSync({ type: 'regenerated' });
         }
       } catch (error) {
         console.error('Failed to reload resume after applying regenerated changes:', error);
@@ -387,7 +393,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
     const loadResumeData = async () => {
       if (cancelled) return;
-      setLoadingState('loading');
+      dispatchSync({ type: 'loadStarted' });
       setPendingDraftRestore(null);
       setPendingAttachmentDraftRestore(null);
 
@@ -403,7 +409,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
             status === 'failed' ||
             (status === 'pending' && !isResumeDataShape(data.processed_resume))
           ) {
-            setLoadingState('error');
+            dispatchSync({ type: 'loadFailed' });
             return;
           }
           let serverData: ResumeData | null = null;
@@ -419,7 +425,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
           }
           if (!serverData) {
             // Preserve drafts until a usable server baseline has been read.
-            setLoadingState('error');
+            dispatchSync({ type: 'loadFailed' });
             return;
           }
           // Track if this is a tailored resume (has parent_id)
@@ -455,17 +461,13 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
           const localDraft = readStoredResumeDraft(resumeId);
           setResumeData(serverData);
           setLastSavedData(serverData);
-          setHasUnsavedChanges(false);
           setHasCurrentLocalDraft(false);
-          syncedVersionRef.current = editVersionRef.current;
-          unsyncedSinceRef.current = null;
-          setAutoSaveError(null);
           if (shouldPromptForDraftRestore(localDraft, serverData)) {
             setPendingDraftRestore(localDraft);
           } else {
             clearStoredResumeDraft(resumeId);
           }
-          setLoadingState('loaded');
+          dispatchSync({ type: 'loadedFromServer' });
           return;
         } catch (err) {
           if (cancelled) return;
@@ -474,7 +476,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
           // PATCH a stale draft over a server copy we failed to read and
           // therefore know nothing about. Surface the failure instead.
           console.error('Failed to load resume from API:', err);
-          setLoadingState('error');
+          dispatchSync({ type: 'loadFailed' });
           return;
         }
       }
@@ -499,7 +501,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         setInterviewPrepError(null);
         // Persist to localStorage as backup
         setHasCurrentLocalDraft(writeStoredResumeDraft(resumeId, improvedPreview));
-        setLoadingState('loaded');
+        dispatchSync({ type: 'loadedLocally' });
         return;
       }
 
@@ -507,12 +509,12 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       const savedDraft = readStoredResumeDraft(resumeId);
       if (savedDraft) {
         setPendingDraftRestore(savedDraft);
-        setLoadingState('loaded');
+        dispatchSync({ type: 'loadedLocally' });
         return;
       }
 
       // Fallback: Use initial data
-      setLoadingState('loaded');
+      dispatchSync({ type: 'loadedLocally' });
     };
 
     void loadResumeData();
@@ -522,6 +524,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     };
   }, [
     applySavedSettings,
+    dispatchSync,
     improvedData?.data?.job_id,
     improvedData?.data?.resume_id,
     improvedPreview,
@@ -540,15 +543,12 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
   const handleUpdate = useCallback(
     (newData: ResumeData) => {
-      editVersionRef.current += 1;
-      unsyncedSinceRef.current ??= Date.now();
+      dispatchSync({ type: 'edited', now: Date.now() });
       setResumeData(newData);
-      setHasUnsavedChanges(true);
-      setAutoSaveError(null);
       // Auto-save draft to localStorage
       setHasCurrentLocalDraft(writeStoredResumeDraft(resumeId, newData));
     },
-    [resumeId]
+    [dispatchSync, resumeId]
   );
 
   useEffect(() => {
@@ -651,18 +651,12 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       return;
     }
 
-    const versionAtSchedule = editVersionRef.current;
+    const versionAtSchedule = syncRef.current.editVersion;
     const editorSnapshot = resumeData;
-    const saveDelay = nextSaveDelay(
-      unsyncedSinceRef.current ? Date.now() - unsyncedSinceRef.current : 0
-    );
+    const { unsyncedSince } = syncRef.current;
+    const saveDelay = nextSaveDelay(unsyncedSince ? Date.now() - unsyncedSince : 0);
     const timerId = window.setTimeout(async () => {
-      setIsAutoSaving(true);
-      // Restart the max-wait window on EVERY attempt, not only on attempts
-      // whose version check happens to match. Otherwise a single edit landing
-      // mid-flight leaves this marker set forever, the computed delay pins to
-      // its floor, and every subsequent keystroke schedules another PATCH.
-      unsyncedSinceRef.current = Date.now();
+      dispatchSync({ type: 'autoSaveStarted', now: Date.now() });
       try {
         const agentVersion = await findAgentConflict('resume');
         if (agentVersion) {
@@ -672,26 +666,23 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         }
         const { response, canonicalPayload } = await queueResumeSave(editorSnapshot);
         if (!documentIsActiveRef.current) return;
+        const next = dispatchSync({ type: 'autoSaveSucceeded', version: versionAtSchedule });
         // Prefer the server's copy: it may rewrite the payload (e.g. aligning
         // descriptionStyles), and comparing a stale client payload against the
         // server state would surface a spurious draft-recovery prompt on reload.
         setLastSavedData((response?.processed_resume as ResumeData) ?? canonicalPayload);
         setLastAutoSavedAt(Date.now());
-        setAutoSaveError(null);
 
-        if (editVersionRef.current === versionAtSchedule) {
-          setHasUnsavedChanges(false);
-          syncedVersionRef.current = versionAtSchedule;
-          unsyncedSinceRef.current = null;
+        if (next.editVersion === versionAtSchedule) {
           clearStoredResumeDraft(resumeId);
           setHasCurrentLocalDraft(false);
         }
       } catch (error) {
         if (!documentIsActiveRef.current) return;
         console.error('Failed to auto-save resume:', error);
-        setAutoSaveError(t('builder.alerts.autoSaveFailed'));
+        dispatchSync({ type: 'saveFailed' });
       } finally {
-        if (documentIsActiveRef.current) setIsAutoSaving(false);
+        if (documentIsActiveRef.current) dispatchSync({ type: 'saveSettled', kind: 'auto' });
       }
     }, saveDelay);
 
@@ -699,6 +690,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   }, [
     agentUpdate,
     autoSaveError,
+    dispatchSync,
     findAgentConflict,
     hasUnsavedChanges,
     isAutoSaving,
@@ -708,7 +700,6 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     regenerateWizard.step,
     resumeData,
     resumeId,
-    t,
   ]);
 
   const flushResumeChanges = useCallback(
@@ -726,27 +717,21 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       }
 
       try {
-        setIsSaving(true);
+        dispatchSync({ type: 'manualSaveStarted' });
         // Capture the text and its edit number before any wait, so edits typed
         // meanwhile stay unsaved (and autosave picks them up) instead of being
         // marked saved.
-        const versionAtFlush = editVersionRef.current;
+        const versionAtFlush = syncRef.current.editVersion;
         const editorSnapshot = resumeData;
         // Agent mode: never save over the agent's version before the user has
         // chosen between it and their edits (Download, Back and Save all land here).
         if (!(await agentAllowsSave('resume', showErrorDialog))) return false;
         const { response, canonicalPayload } = await queueResumeSave(editorSnapshot);
         if (!documentIsActiveRef.current) return false;
+        const next = dispatchSync({ type: 'manualSaveSucceeded', version: versionAtFlush });
         setLastSavedData((response?.processed_resume as ResumeData) ?? canonicalPayload);
-        setAutoSaveError(null);
 
-        // Compare against syncedVersionRef, not a zeroed counter: an autosave
-        // completing ahead of this queued save used to reset the baseline and
-        // make a successful PATCH look like a failure to the caller.
-        syncedVersionRef.current = Math.max(syncedVersionRef.current, versionAtFlush);
-        if (editVersionRef.current === syncedVersionRef.current) {
-          setHasUnsavedChanges(false);
-          unsyncedSinceRef.current = null;
+        if (next.editVersion === next.syncedVersion) {
           setLastAutoSavedAt(Date.now());
           clearStoredResumeDraft(resumeId);
           setHasCurrentLocalDraft(false);
@@ -757,18 +742,19 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       } catch (error) {
         if (!documentIsActiveRef.current) return false;
         console.error('Failed to save resume:', error);
-        setAutoSaveError(t('builder.alerts.autoSaveFailed'));
+        dispatchSync({ type: 'saveFailed' });
         if (showErrorDialog) {
           showNotification(t('builder.alerts.saveFailed'), 'danger');
         }
         return false;
       } finally {
-        if (documentIsActiveRef.current) setIsSaving(false);
+        if (documentIsActiveRef.current) dispatchSync({ type: 'saveSettled', kind: 'manual' });
       }
     },
     [
       agentAllowsSave,
       autoSaveError,
+      dispatchSync,
       hasUnsavedChanges,
       loadingState,
       queueResumeSave,
@@ -788,39 +774,24 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   };
 
   const handleReset = () => {
-    const saveInFlight = isSaving || isAutoSaving;
+    const saveInFlight = syncRef.current.autoSaving || syncRef.current.manualSaving;
+    dispatchSync({ type: 'reset', now: Date.now() });
     setResumeData(lastSavedData);
 
-    // Bump the version so any save already in flight cannot claim the reset
-    // state as synced when it lands — its captured baseline is now stale.
-    editVersionRef.current += 1;
-
     if (saveInFlight) {
-      // That in-flight PATCH is carrying the edits we just discarded, so the
-      // server is about to hold content the editor no longer shows. Stay dirty
-      // and let autosave push the reset state, converging the two. Marking this
-      // clean is what left the discarded text on the server silently.
-      setHasUnsavedChanges(true);
-      unsyncedSinceRef.current = Date.now();
+      // That save carries the discarded edits, so the resume stays unsaved
+      // (resumeSync) and the draft keeps the reset copy until autosave sends it.
       setHasCurrentLocalDraft(writeStoredResumeDraft(resumeId, lastSavedData));
     } else {
-      setHasUnsavedChanges(false);
-      syncedVersionRef.current = editVersionRef.current;
-      unsyncedSinceRef.current = null;
       clearStoredResumeDraft(resumeId);
       setHasCurrentLocalDraft(false);
     }
-
-    setAutoSaveError(null);
   };
 
   const handleRestoreLocalDraft = () => {
     if (!pendingDraftRestore) return;
-    editVersionRef.current += 1;
-    unsyncedSinceRef.current = Date.now();
+    dispatchSync({ type: 'draftRestored', now: Date.now() });
     setResumeData(pendingDraftRestore.data);
-    setHasUnsavedChanges(true);
-    setAutoSaveError(null);
     const didWriteScopedDraft = writeStoredResumeDraft(resumeId, pendingDraftRestore.data);
     setHasCurrentLocalDraft(
       didWriteScopedDraft ||
@@ -942,16 +913,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
    */
   const applyAgentVersion = (data: ServerResume) => {
     const changes = agentChanges(data);
-    // Invalidates any check that started before this, so it cannot reopen the banner.
-    editVersionRef.current += 1;
+    dispatchSync({ type: 'agentApplied', resume: Boolean(changes.serverResume && changes.resume) });
     if (changes.serverResume && changes.resume) {
       setResumeFormKey((key) => key + 1);
       setResumeData(changes.serverResume);
       setLastSavedData(changes.serverResume);
-      setHasUnsavedChanges(false);
-      syncedVersionRef.current = editVersionRef.current;
-      unsyncedSinceRef.current = null;
-      setAutoSaveError(null);
       clearStoredResumeDraft(resumeId);
       setHasCurrentLocalDraft(false);
     }
@@ -995,7 +961,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     }
     const before = [
       ownWritesRef.current.epoch,
-      editVersionRef.current,
+      syncRef.current.editVersion,
       coverLetterEditVersionRef.current,
       outreachEditVersionRef.current,
     ].join();
@@ -1004,7 +970,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       const data = await fetchResume(resumeId);
       const after = [
         ownWritesRef.current.epoch,
-        editVersionRef.current,
+        syncRef.current.editVersion,
         coverLetterEditVersionRef.current,
         outreachEditVersionRef.current,
       ].join();
@@ -1671,7 +1637,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
               {/* Resume Editor */}
               {activeTab === 'resume' &&
-                (loadingState === 'error' ? (
+                (loadingState === 'failed' ? (
                   <Alert tone="error">{t('builder.alerts.loadFailed')}</Alert>
                 ) : (
                   <>
