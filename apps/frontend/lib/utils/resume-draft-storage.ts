@@ -236,3 +236,57 @@ export const safeStorage = {
     }
   },
 };
+
+// -- The builder's resume draft for one resume ID (scoped key, legacy fallback) --
+
+/** A draft together with the storage key it was read from. */
+export type StoredResumeDraft = ResumeDraftEnvelope & { storageKey: string };
+
+const withStorageKey = (
+  draft: ResumeDraftEnvelope | null,
+  storageKey: string
+): StoredResumeDraft | null => {
+  return draft ? { ...draft, storageKey } : null;
+};
+
+export const readStoredResumeDraft = (resumeId: string | null): StoredResumeDraft | null => {
+  const scopedKey = getResumeDraftStorageKey(resumeId);
+  const scopedDraft = withStorageKey(
+    parseResumeDraft(safeStorage.get(scopedKey), resumeId),
+    scopedKey
+  );
+  if (scopedDraft) {
+    return scopedDraft;
+  }
+
+  const legacyDraft = withStorageKey(
+    parseResumeDraft(safeStorage.get(LEGACY_RESUME_DRAFT_STORAGE_KEY), resumeId, Date.now(), {
+      allowLegacyPlainData: !resumeId,
+    }),
+    LEGACY_RESUME_DRAFT_STORAGE_KEY
+  );
+
+  return legacyDraft;
+};
+
+export const writeStoredResumeDraft = (resumeId: string | null, data: ResumeData): boolean => {
+  try {
+    return safeStorage.set(
+      getResumeDraftStorageKey(resumeId),
+      JSON.stringify(buildResumeDraft(resumeId, data))
+    );
+  } catch {
+    return false;
+  }
+};
+
+export const clearStoredResumeDraft = (resumeId: string | null): void => {
+  // Only clear this resume's own scoped key. Removing the legacy key here too
+  // would destroy a pre-upgrade draft for a *different* (new, unsaved) resume,
+  // which the read path deliberately only surfaces when there is no resumeId.
+  safeStorage.remove(getResumeDraftStorageKey(resumeId));
+};
+
+export const clearResumeDraftStorageKey = (storageKey: string): void => {
+  safeStorage.remove(storageKey);
+};

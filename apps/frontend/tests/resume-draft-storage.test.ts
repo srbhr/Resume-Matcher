@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import {
   buildResumeDraft,
+  clearStoredResumeDraft,
   getResumeDraftStorageKey,
+  LEGACY_RESUME_DRAFT_STORAGE_KEY,
+  readStoredResumeDraft,
+  writeStoredResumeDraft,
   parseResumeDraft,
   RESUME_DRAFT_MAX_AGE_MS,
   RESUME_DRAFT_MAX_CLOCK_SKEW_MS,
@@ -236,5 +240,38 @@ describe('draft timestamp validation', () => {
   it('rejects a non-numeric timestamp', () => {
     const stringy = `{"resumeId":"abc-123","updatedAt":"yesterday","data":${JSON.stringify(baseResume)}}`;
     expect(parseResumeDraft(stringy, 'abc-123')).toBeNull();
+  });
+});
+
+describe("the builder's stored draft for one resume", () => {
+  beforeEach(() => localStorage.clear());
+  const edited = { ...baseResume, summary: 'Edited offline' };
+
+  it('reads back the draft written for the same resume, with its key', () => {
+    expect(writeStoredResumeDraft('r1', edited)).toBe(true);
+    expect(readStoredResumeDraft('r1')).toMatchObject({
+      data: edited,
+      storageKey: getResumeDraftStorageKey('r1'),
+    });
+    expect(readStoredResumeDraft('r2')).toBeNull();
+  });
+
+  it('falls back to a legacy plain draft only for a new resume (no id)', () => {
+    localStorage.setItem(LEGACY_RESUME_DRAFT_STORAGE_KEY, JSON.stringify(edited));
+    expect(readStoredResumeDraft(null)).toMatchObject({
+      data: edited,
+      storageKey: LEGACY_RESUME_DRAFT_STORAGE_KEY,
+    });
+    expect(readStoredResumeDraft('r1')).toBeNull();
+  });
+
+  it("H-02: clearing one resume's draft leaves the legacy draft alone", () => {
+    localStorage.setItem(LEGACY_RESUME_DRAFT_STORAGE_KEY, JSON.stringify(edited));
+    writeStoredResumeDraft('r1', edited);
+
+    clearStoredResumeDraft('r1');
+
+    expect(localStorage.getItem(getResumeDraftStorageKey('r1'))).toBeNull();
+    expect(localStorage.getItem(LEGACY_RESUME_DRAFT_STORAGE_KEY)).not.toBeNull();
   });
 });

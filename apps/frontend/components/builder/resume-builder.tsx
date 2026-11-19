@@ -61,16 +61,24 @@ import { useLanguage } from '@/lib/context/language-context';
 import { buildResumeFilename, downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
 import { normalizeResumeForRender, normalizeResumeForSave } from '@/lib/utils/resume-normalization';
 import {
-  buildResumeDraft,
+  clearResumeDraftStorageKey,
+  clearStoredResumeDraft,
   getResumeDraftStorageKey,
-  LEGACY_RESUME_DRAFT_STORAGE_KEY,
-  parseResumeDraft,
   isResumeDataShape,
   isSameResumeData,
-  safeStorage,
+  readStoredResumeDraft,
   shouldPromptForDraftRestore,
-  type ResumeDraftEnvelope,
+  writeStoredResumeDraft,
+  type StoredResumeDraft,
 } from '@/lib/utils/resume-draft-storage';
+import { FORMATTING_SAVE_DEBOUNCE_MS, nextSaveDelay } from '@/lib/builder/save-schedule';
+import {
+  agentVersionOf,
+  trackOwnWrite,
+  type AgentPart,
+  type OwnWrites,
+  type ServerResume,
+} from '@/lib/builder/agent-sync';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 import { AgentPromptDialog, type AgentTask } from '@/components/agent/agent-prompt-dialog';
 import { useAgentRefresh } from '@/hooks/use-agent-refresh';
@@ -101,17 +109,6 @@ const TAB_IDS: TabId[] = [
   'ats-check',
   'writing',
 ];
-const RESUME_AUTOSAVE_DEBOUNCE_MS = 2500;
-const FORMATTING_SAVE_DEBOUNCE_MS = 600;
-const RESUME_AUTOSAVE_MAX_WAIT_MS = 12000;
-// Floor for the computed delay. Without it, once an unsynced streak exceeds the
-// max wait the delay pins to 0 and every keystroke schedules an immediate
-// full-document PATCH.
-// This floor deliberately wins over the remaining max-wait budget, so a save
-// can land up to MIN_DELAY after MAX_WAIT elapses. MAX_WAIT is a target for
-// how long edits may stay unsynced, not a hard deadline — dropping the floor
-// to honour it exactly is what produced one PATCH per keystroke.
-const RESUME_AUTOSAVE_MIN_DELAY_MS = 500;
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 
@@ -142,83 +139,6 @@ const buildInitialData = (t: Translate): ResumeData => ({
     awards: [],
   },
 });
-
-type StoredResumeDraft = ResumeDraftEnvelope & { storageKey: string };
-
-type ServerResume = Awaited<ReturnType<typeof fetchResume>>;
-type OwnWrites = { pending: number; epoch: number };
-/** The parts of a resume the agent can change and the editor saves separately. */
-type AgentPart = 'resume' | 'coverLetter' | 'outreach';
-
-/** Identifies one saved version of the parts the agent can change. */
-const agentVersionOf = (data: ServerResume): string =>
-  JSON.stringify([
-    data.processed_resume,
-    data.cover_letter ?? '',
-    data.outreach_message ?? '',
-    data.title ?? null,
-  ]);
-
-/**
- * Count a write this editor makes. While one is pending, or when one finished
- * during an agent-change check, the server copy may be the editor's own save,
- * so the check skips that round.
- */
-const trackOwnWrite = <T,>(writes: { current: OwnWrites }, write: Promise<T>): Promise<T> => {
-  writes.current = { pending: writes.current.pending + 1, epoch: writes.current.epoch + 1 };
-  return write.finally(() => {
-    writes.current = { pending: writes.current.pending - 1, epoch: writes.current.epoch + 1 };
-  });
-};
-
-const withStorageKey = (
-  draft: ResumeDraftEnvelope | null,
-  storageKey: string
-): StoredResumeDraft | null => {
-  return draft ? { ...draft, storageKey } : null;
-};
-
-const readStoredResumeDraft = (resumeId: string | null): StoredResumeDraft | null => {
-  const scopedKey = getResumeDraftStorageKey(resumeId);
-  const scopedDraft = withStorageKey(
-    parseResumeDraft(safeStorage.get(scopedKey), resumeId),
-    scopedKey
-  );
-  if (scopedDraft) {
-    return scopedDraft;
-  }
-
-  const legacyDraft = withStorageKey(
-    parseResumeDraft(safeStorage.get(LEGACY_RESUME_DRAFT_STORAGE_KEY), resumeId, Date.now(), {
-      allowLegacyPlainData: !resumeId,
-    }),
-    LEGACY_RESUME_DRAFT_STORAGE_KEY
-  );
-
-  return legacyDraft;
-};
-
-const writeStoredResumeDraft = (resumeId: string | null, data: ResumeData): boolean => {
-  try {
-    return safeStorage.set(
-      getResumeDraftStorageKey(resumeId),
-      JSON.stringify(buildResumeDraft(resumeId, data))
-    );
-  } catch {
-    return false;
-  }
-};
-
-const clearStoredResumeDraft = (resumeId: string | null): void => {
-  // Only clear this resume's own scoped key. Removing the legacy key here too
-  // would destroy a pre-upgrade draft for a *different* (new, unsaved) resume,
-  // which the read path deliberately only surfaces when there is no resumeId.
-  safeStorage.remove(getResumeDraftStorageKey(resumeId));
-};
-
-const clearResumeDraftStorageKey = (storageKey: string): void => {
-  safeStorage.remove(storageKey);
-};
 
 interface ResumeBuilderProps {
   /** The user's coding agent does the AI work: AI actions show a prompt for it. */
@@ -848,12 +768,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
     const versionAtSchedule = editVersionRef.current;
     const editorSnapshot = resumeData;
-    const elapsedSinceStreakStart = unsyncedSinceRef.current
-      ? Date.now() - unsyncedSinceRef.current
-      : 0;
-    const saveDelay = Math.max(
-      RESUME_AUTOSAVE_MIN_DELAY_MS,
-      Math.min(RESUME_AUTOSAVE_DEBOUNCE_MS, RESUME_AUTOSAVE_MAX_WAIT_MS - elapsedSinceStreakStart)
+    const saveDelay = nextSaveDelay(
+      unsyncedSinceRef.current ? Date.now() - unsyncedSinceRef.current : 0
     );
     const timerId = window.setTimeout(async () => {
       setIsAutoSaving(true);
