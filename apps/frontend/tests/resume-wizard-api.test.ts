@@ -85,10 +85,13 @@ describe('resume wizard api', () => {
     expect(error).not.toBeInstanceOf(ResumeWizardConflictError);
   });
 
-  it('throws endpoint text when finalize fails', async () => {
+  it('keeps a non-JSON error body out of the message', async () => {
+    // A proxy or crash page is not a reason for the user; the status is kept.
     fetchMock.mockResolvedValueOnce(new Response('already exists', { status: 409 }));
-    await expect(finalizeResumeWizard(createInitialResumeWizardState())).rejects.toThrow(
-      /already exists/
-    );
+    await expect(finalizeResumeWizard(createInitialResumeWizardState())).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 409,
+      message: 'Resume wizard finalize failed (status 409).',
+    });
   });
 });

@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { UploadSimple, SpinnerGap, FileIcon, X } from '@phosphor-icons/react';
 import { useFileUpload, formatBytes } from '@/hooks/use-file-upload';
-import { getUploadUrl } from '@/lib/api/client';
+import { ApiError, getUploadUrl } from '@/lib/api/client';
 import { useTranslations } from '@/lib/i18n';
 import { deleteResume, retryProcessing } from '@/lib/api/resume';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -258,7 +258,7 @@ export function ResumeUploadDialog({
     } catch (err) {
       if (owner !== recoveryOwnerRef.current) return;
       console.error('Retry processing failed:', err);
-      if (err instanceof Error && err.message.includes('status 404')) {
+      if (err instanceof ApiError && err.status === 404) {
         clearFiles();
         setFailedResumeId(null);
         setUploadFeedback({ type: 'error', message: t('common.resumeDeleted') });
@@ -287,7 +287,7 @@ export function ResumeUploadDialog({
     } catch (err) {
       if (owner !== recoveryOwnerRef.current) return;
       console.error('Failed to delete saved upload:', err);
-      if (err instanceof Error && err.message.includes('status 404')) {
+      if (err instanceof ApiError && err.status === 404) {
         clearFiles();
         setUploadFeedback({ type: 'error', message: t('common.resumeDeleted') });
         return;

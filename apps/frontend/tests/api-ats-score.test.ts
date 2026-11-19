@@ -34,7 +34,10 @@ describe('ATS score api client', () => {
 
   it('treats a 404 as an error, not as "never calculated"', async () => {
     respond(404, { detail: 'Resume not found' });
-    await expect(fetchLastAtsScore('missing')).rejects.toThrow('status 404');
+    await expect(fetchLastAtsScore('missing')).rejects.toMatchObject({
+      status: 404,
+      message: 'Resume not found',
+    });
   });
 
   it('posts to recalculate', async () => {

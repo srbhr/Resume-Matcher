@@ -1,4 +1,4 @@
-import { apiPost } from './client';
+import { apiError, apiPost } from './client';
 import { toPageFitSettings } from './resume';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 
@@ -43,10 +43,6 @@ export async function checkResumeParse(
     `/resumes/${encodeURIComponent(resumeId)}/parse-check`,
     toPageFitSettings(settings, locale)
   );
-  if (!res.ok) {
-    const data = (await res.json().catch(() => ({}))) as { detail?: unknown };
-    const detail = typeof data.detail === 'string' ? data.detail : null;
-    throw new Error(detail || `Parse check failed (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Parse check failed (status ${res.status}).`);
   return res.json() as Promise<ParseCheckReport>;
 }

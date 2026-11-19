@@ -10,6 +10,7 @@ import {
   retryProcessing,
 } from '@/lib/api/resume';
 import { openUrlInNewTab } from '@/lib/utils/download';
+import { ApiError } from '@/lib/api/client';
 
 const route = vi.hoisted(() => ({ resumeId: 'resume-123' }));
 const push = vi.fn();
@@ -148,9 +149,7 @@ it('shows deletion instead of a processing failure when retry returns 404', asyn
       processing_status: 'failed',
     },
   });
-  vi.mocked(retryProcessing).mockRejectedValueOnce(
-    new Error('Failed to retry processing (status 404)')
-  );
+  vi.mocked(retryProcessing).mockRejectedValueOnce(new ApiError('Resume not found', 404));
   render(<ResumeViewerPage />);
   fireEvent.click(await screen.findByRole('button', { name: 'resumeViewer.retryProcessing' }));
   expect(await screen.findByText('common.resumeDeleted')).toBeVisible();

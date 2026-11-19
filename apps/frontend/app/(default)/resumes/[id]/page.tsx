@@ -23,6 +23,7 @@ import {
   setDefaultMasterResume,
   duplicateResume,
 } from '@/lib/api/resume';
+import { ApiError } from '@/lib/api/client';
 import { useStatusCache } from '@/lib/context/status-cache';
 import {
   NotePencil,
@@ -229,7 +230,7 @@ export default function ResumeViewerPage() {
         );
       }
     } catch (err) {
-      if (err instanceof Error && err.message.includes('status 404')) {
+      if (err instanceof ApiError && err.status === 404) {
         if (localStorage.getItem('master_resume_id') === resumeId) {
           localStorage.removeItem('master_resume_id');
           setHasMasterResume(false);

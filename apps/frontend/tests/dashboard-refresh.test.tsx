@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import Dashboard from '@/app/(default)/dashboard/page';
 import type { fetchResume, ResumeListItem } from '@/lib/api/resume';
+import { ApiError } from '@/lib/api/client';
 
 const api = vi.hoisted(() => ({ list: vi.fn(), get: vi.fn(), retry: vi.fn(), push: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: api.push }) }));
@@ -114,7 +115,7 @@ describe('dashboard refresh ownership', () => {
     api.list.mockResolvedValue([row('new', true)]);
     render(<Dashboard />);
     await act(async () => {});
-    await act(async () => old.reject(new Error('404 old resume missing')));
+    await act(async () => old.reject(new ApiError('Resume not found', 404)));
     expect(localStorage.getItem('master_resume_id')).toBe('new');
     expect(screen.getByText('dashboard.statusLine:dashboard.status.ready')).toBeInTheDocument();
   });
@@ -332,7 +333,7 @@ describe('dashboard refresh ownership', () => {
   it('clears a master deleted while retry processing is pending', async () => {
     api.list.mockResolvedValue([row('master', true)]);
     api.get.mockResolvedValue(status('failed'));
-    api.retry.mockRejectedValue(new Error('Failed to retry processing (status 404)'));
+    api.retry.mockRejectedValue(new ApiError('Resume not found', 404));
     render(<Dashboard />);
     await act(async () => {});
     await act(async () =>

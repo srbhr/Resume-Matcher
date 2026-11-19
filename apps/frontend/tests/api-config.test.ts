@@ -150,19 +150,18 @@ describe('feature config API', () => {
 });
 
 describe('updateLlmConfig error surfacing', () => {
-  it('serializes a structured 422 detail instead of rendering [object Object]', async () => {
+  it('exposes a structured 422 detail as a code, with a readable message', async () => {
     const detail = { code: 'missing_base_url', field: 'api_base', missing: ['api_base'] };
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(JSON.stringify({ detail }), { status: 422 }))
     );
 
-    await expect(updateLlmConfig({ provider: 'azure_foundry' })).rejects.toThrow(
-      /missing_base_url/
-    );
-    await expect(updateLlmConfig({ provider: 'azure_foundry' })).rejects.not.toThrow(
-      /\[object Object\]/
-    );
+    await expect(updateLlmConfig({ provider: 'azure_foundry' })).rejects.toMatchObject({
+      name: 'LlmConfigError',
+      code: 'missing_base_url',
+      message: 'Failed to update LLM config (status 422).',
+    });
 
     vi.unstubAllGlobals();
   });

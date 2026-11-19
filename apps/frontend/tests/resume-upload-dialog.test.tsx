@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushSync } from 'react-dom';
 import { deleteResume, retryProcessing } from '@/lib/api/resume';
 import { ResumeUploadDialog } from '@/components/dashboard/resume-upload-dialog';
+import { ApiError } from '@/lib/api/client';
 
 vi.mock('@/lib/i18n', () => ({
   useTranslations: () => ({ t: (key: string) => key }),
@@ -204,9 +205,7 @@ it('shows a deleted-record message and allows another file after retry returns 4
       headers: { 'content-type': 'application/json' },
     })
   );
-  vi.mocked(retryProcessing).mockRejectedValueOnce(
-    new Error('Failed to retry processing (status 404)')
-  );
+  vi.mocked(retryProcessing).mockRejectedValueOnce(new ApiError('Resume not found', 404));
   render(<ControlledDialog onUploadComplete={vi.fn()} />);
   chooseResume();
   fireEvent.click(await screen.findByRole('button', { name: 'dashboard.retryProcessing' }));
@@ -441,7 +440,7 @@ it('shows the server reason when the master limit refuses the upload', async () 
 
 it('recovers from an already deleted saved upload without retrying creation', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(uploadFailure());
-  vi.mocked(deleteResume).mockRejectedValueOnce(new Error('Failed to delete resume (status 404)'));
+  vi.mocked(deleteResume).mockRejectedValueOnce(new ApiError('Resume not found', 404));
   const onComplete = vi.fn();
   render(<ControlledDialog onUploadComplete={onComplete} />);
   chooseResume();

@@ -2,7 +2,7 @@
  * API functions for AI-powered resume enrichment.
  */
 
-import { apiFetch, apiPost } from './client';
+import { apiFetch, apiPost, apiError } from './client';
 
 // Types matching backend schemas
 
@@ -64,10 +64,7 @@ export async function analyzeResume(resumeId: string): Promise<AnalysisResponse>
     credentials: 'include',
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to analyze resume (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to analyze resume (status ${res.status}).`);
 
   return res.json();
 }
@@ -84,10 +81,7 @@ export async function generateEnhancements(
     answers,
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to generate enhancements (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to generate enhancements (status ${res.status}).`);
 
   return res.json();
 }
@@ -103,10 +97,7 @@ export async function applyEnhancements(
     enhancements,
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to apply enhancements (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to apply enhancements (status ${res.status}).`);
 
   return res.json();
 }
@@ -160,10 +151,7 @@ export interface RegenerateResponse {
 export async function regenerateItems(request: RegenerateRequest): Promise<RegenerateResponse> {
   const res = await apiPost('/enrichment/regenerate', request);
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to regenerate content (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to regenerate content (status ${res.status}).`);
 
   return res.json();
 }
@@ -177,10 +165,7 @@ export async function applyRegeneratedItems(
 ): Promise<{ message: string; updated_items: number }> {
   const res = await apiPost(`/enrichment/apply-regenerated/${resumeId}`, regeneratedItems);
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to apply changes (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to apply changes (status ${res.status}).`);
 
   return res.json();
 }

@@ -33,6 +33,7 @@ import {
   MAX_MASTER_RESUMES,
   type ResumeListItem,
 } from '@/lib/api/resume';
+import { ApiError } from '@/lib/api/client';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { hasMeaningfulResumeContent } from '@/lib/utils/resume-content';
 
@@ -190,7 +191,7 @@ export default function DashboardPage() {
         if (!isCurrent()) return;
         console.error('Failed to check resume status:', err);
         // If resume not found (404), clear the stale localStorage
-        if (err instanceof Error && err.message.includes('404')) {
+        if (err instanceof ApiError && err.status === 404) {
           localStorage.removeItem('master_resume_id');
           adoptMasterResume(null);
           return;
@@ -460,7 +461,7 @@ export default function DashboardPage() {
     } catch (err) {
       if (!isCurrent()) return;
       console.error('Retry processing failed:', err);
-      if (err instanceof Error && err.message.includes('status 404')) {
+      if (err instanceof ApiError && err.status === 404) {
         localStorage.removeItem('master_resume_id');
         adoptMasterResume(null);
         setHasMasterResume(false);

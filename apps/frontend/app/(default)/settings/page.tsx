@@ -23,6 +23,7 @@ import {
   llmProviderToKeyProvider,
   API_KEY_PROVIDER_INFO,
   API_KEY_REQUIRED_FOR_ENDPOINT,
+  MISSING_BASE_URL,
   LlmConfigError,
   type LLMConfigUpdate,
   type LLMProvider,
@@ -551,6 +552,9 @@ export default function SettingsPage() {
       console.error('Failed to save config', err);
       if (err instanceof LlmConfigError && err.code === API_KEY_REQUIRED_FOR_ENDPOINT) {
         setError(t('settings.errors.apiKeyRequiredForEndpoint'));
+      } else if (err instanceof LlmConfigError && err.code === MISSING_BASE_URL) {
+        // The server's own check, for a provider whose Base URL check above passed.
+        setError(t('settings.errors.baseUrlRequired', { provider: providerInfo.name }));
       } else {
         setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
       }

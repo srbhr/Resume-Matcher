@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, apiError } from './client';
 
 // Supported LLM providers
 export type LLMProvider =
@@ -72,9 +72,7 @@ export interface LLMHealthCheck {
 export async function fetchLlmConfig(): Promise<LLMConfig> {
   const res = await apiFetch('/config/llm-api-key', { credentials: 'include' });
 
-  if (!res.ok) {
-    throw new Error(`Failed to load LLM config (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to load LLM config (status ${res.status}).`);
 
   return res.json();
 }
@@ -89,24 +87,10 @@ export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfi
   });
 
   if (!res.ok) {
-    const data = (await res.json().catch(() => ({}))) as { detail?: unknown };
-    // FastAPI returns `detail` as a string OR a structured object (this
-    // endpoint now emits {code, field, missing} for a missing Base URL).
-    // Passing an object straight to `new Error()` renders "[object Object]",
-    // so serialize explicitly — same treatment as updateFeaturePrompts.
-    let message: string;
-    if (typeof data.detail === 'string') {
-      message = data.detail;
-    } else if (data.detail) {
-      message = JSON.stringify(data.detail);
-    } else {
-      message = `Failed to update LLM config (status ${res.status}).`;
-    }
-    const code =
-      data.detail && typeof data.detail === 'object' && 'code' in data.detail
-        ? String((data.detail as { code: unknown }).code)
-        : undefined;
-    throw new LlmConfigError(message, code);
+    // This endpoint can answer with {code, field, missing} (e.g. a missing Base
+    // URL); callers branch on `code`.
+    const error = await apiError(res, `Failed to update LLM config (status ${res.status}).`);
+    throw new LlmConfigError(error.message, error.code);
   }
 
   return res.json();
@@ -125,6 +109,8 @@ export class LlmConfigError extends Error {
 
 /** The server refuses to move a saved key to a new endpoint unless the key is sent too. */
 export const API_KEY_REQUIRED_FOR_ENDPOINT = 'api_key_required_for_endpoint';
+/** The provider needs a Base URL and none is saved. */
+export const MISSING_BASE_URL = 'missing_base_url';
 
 // Test LLM connection with optional config (for pre-save testing)
 export async function testLlmConnection(config?: LLMConfigUpdate): Promise<LLMHealthCheck> {
@@ -141,9 +127,7 @@ export async function testLlmConnection(config?: LLMConfigUpdate): Promise<LLMHe
 
   const res = await apiFetch('/config/llm-test', options);
 
-  if (!res.ok) {
-    throw new Error(`Failed to test LLM connection (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to test LLM connection (status ${res.status}).`);
 
   return res.json();
 }
@@ -152,9 +136,7 @@ export async function testLlmConnection(config?: LLMConfigUpdate): Promise<LLMHe
 export async function fetchSystemStatus(): Promise<SystemStatus> {
   const res = await apiFetch('/status', { credentials: 'include' });
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch system status (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to fetch system status (status ${res.status}).`);
 
   return res.json();
 }
@@ -276,9 +258,7 @@ export interface FeatureConfigUpdate {
 export async function fetchFeatureConfig(): Promise<FeatureConfig> {
   const res = await apiFetch('/config/features', { credentials: 'include' });
 
-  if (!res.ok) {
-    throw new Error(`Failed to load feature config (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to load feature config (status ${res.status}).`);
 
   return res.json();
 }
@@ -292,10 +272,7 @@ export async function updateFeatureConfig(config: FeatureConfigUpdate): Promise<
     body: JSON.stringify(config),
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to update feature config (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to update feature config (status ${res.status}).`);
 
   return res.json();
 }
@@ -318,9 +295,7 @@ export interface LanguageConfigUpdate {
 export async function fetchLanguageConfig(): Promise<LanguageConfig> {
   const res = await apiFetch('/config/language', { credentials: 'include' });
 
-  if (!res.ok) {
-    throw new Error(`Failed to load language config (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to load language config (status ${res.status}).`);
 
   return res.json();
 }
@@ -334,10 +309,8 @@ export async function updateLanguageConfig(update: LanguageConfigUpdate): Promis
     body: JSON.stringify(update),
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to update language config (status ${res.status}).`);
-  }
+  if (!res.ok)
+    throw await apiError(res, `Failed to update language config (status ${res.status}).`);
 
   return res.json();
 }
@@ -361,9 +334,7 @@ export interface PromptConfigUpdate {
 export async function fetchPromptConfig(): Promise<PromptConfig> {
   const res = await apiFetch('/config/prompts', { credentials: 'include' });
 
-  if (!res.ok) {
-    throw new Error(`Failed to load prompt config (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to load prompt config (status ${res.status}).`);
 
   return res.json();
 }
@@ -377,10 +348,7 @@ export async function updatePromptConfig(update: PromptConfigUpdate): Promise<Pr
     body: JSON.stringify(update),
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to update prompt config (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to update prompt config (status ${res.status}).`);
 
   return res.json();
 }
@@ -419,9 +387,7 @@ export class FeaturePromptsError extends Error {
 
 export async function fetchFeaturePrompts(): Promise<FeaturePrompts> {
   const res = await apiFetch('/config/feature-prompts', { credentials: 'include' });
-  if (!res.ok) {
-    throw new Error(`Failed to load feature prompts (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to load feature prompts (status ${res.status}).`);
   return res.json();
 }
 
@@ -434,31 +400,12 @@ export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promis
   });
 
   if (!res.ok) {
-    // Error path: body may be absent or malformed, so we tolerate parse
-    // failure. A fetch body is a one-shot stream — read it once and reuse
-    // for both the 422-special-case and the generic fallback.
-    const errBody = (await res.json().catch(() => ({}))) as {
-      detail?: FeaturePromptsValidationError | string;
-    };
-    if (
-      res.status === 422 &&
-      typeof errBody.detail === 'object' &&
-      errBody.detail?.code === 'missing_placeholders'
-    ) {
-      throw new FeaturePromptsError(errBody.detail);
+    const error = await apiError(res, `Failed to update feature prompts (status ${res.status}).`);
+    // A prompt missing a required placeholder: the settings page names the fields.
+    if (error.status === 422 && error.code === 'missing_placeholders') {
+      throw new FeaturePromptsError(error.detail as FeaturePromptsValidationError);
     }
-    // FastAPI can return ``detail`` as a string or a structured object.
-    // Stringifying an object via the ``||`` shortcut yields "[object Object]";
-    // serialize explicitly.
-    let message: string;
-    if (typeof errBody.detail === 'string') {
-      message = errBody.detail;
-    } else if (errBody.detail) {
-      message = JSON.stringify(errBody.detail);
-    } else {
-      message = `Failed to update feature prompts (status ${res.status}).`;
-    }
-    throw new Error(message);
+    throw error;
   }
 
   // Success path: require a valid JSON body. Swallowing parse errors here
@@ -533,9 +480,7 @@ export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; descr
 export async function fetchApiKeyStatus(): Promise<ApiKeyStatusResponse> {
   const res = await apiFetch('/config/api-keys', { credentials: 'include' });
 
-  if (!res.ok) {
-    throw new Error(`Failed to load API key status (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to load API key status (status ${res.status}).`);
 
   return res.json();
 }
@@ -549,10 +494,7 @@ export async function updateApiKeys(keys: ApiKeysUpdateRequest): Promise<ApiKeys
     body: JSON.stringify(keys),
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to update API keys (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to update API keys (status ${res.status}).`);
 
   return res.json();
 }
@@ -564,10 +506,7 @@ export async function deleteApiKey(provider: ApiKeyProvider): Promise<void> {
     credentials: 'include',
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to delete API key (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to delete API key (status ${res.status}).`);
 }
 
 // Clear all API keys
@@ -577,10 +516,7 @@ export async function clearAllApiKeys(): Promise<void> {
     credentials: 'include',
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to clear API keys (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to clear API keys (status ${res.status}).`);
 }
 
 // Reset database
@@ -592,8 +528,5 @@ export async function resetDatabase(): Promise<void> {
     body: JSON.stringify({ confirm: 'RESET_ALL_DATA' }),
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to reset database (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `Failed to reset database (status ${res.status}).`);
 }

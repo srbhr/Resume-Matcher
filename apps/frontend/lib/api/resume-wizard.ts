@@ -1,5 +1,5 @@
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import { apiPost, parseErrorDetail } from './client';
+import { apiError, apiPost } from './client';
 
 export type ResumeWizardSection =
   | 'intro'
@@ -107,8 +107,7 @@ export async function postResumeWizardTurn(
 ): Promise<ResumeWizardTurnResponse> {
   const response = await apiPost('/resume-wizard/turn', payload);
   if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(text || `Resume wizard turn failed with status ${response.status}`);
+    throw await apiError(response, `Resume wizard turn failed (status ${response.status}).`);
   }
   return response.json();
 }
@@ -126,10 +125,14 @@ export async function finalizeResumeWizard(
 ): Promise<ResumeWizardFinalizeResponse> {
   const response = await apiPost('/resume-wizard/finalize', { state });
   if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    const detail = response.status === 409 ? parseErrorDetail(text) : null;
-    if (detail) throw new ResumeWizardConflictError(detail);
-    throw new Error(text || `Resume wizard finalize failed with status ${response.status}`);
+    const error = await apiError(
+      response,
+      `Resume wizard finalize failed (status ${response.status}).`
+    );
+    if (error.status === 409 && typeof error.detail === 'string') {
+      throw new ResumeWizardConflictError(error.detail);
+    }
+    throw error;
   }
   return response.json();
 }

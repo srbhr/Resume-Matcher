@@ -1,4 +1,4 @@
-import { apiPost, DEFAULT_TIMEOUT_MS } from './client';
+import { apiError, apiPost, DEFAULT_TIMEOUT_MS } from './client';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 
 export type WritingRule =
@@ -46,15 +46,10 @@ export interface WritingImproveResult {
   changes: WritingChange[];
 }
 
-async function readError(res: Response, fallback: string): Promise<Error> {
-  const data = (await res.json().catch(() => ({}))) as { detail?: unknown };
-  return new Error(typeof data.detail === 'string' ? data.detail : fallback);
-}
-
 /** Scores a resume's writing with the code rules (no AI call). */
 export async function checkWriting(resumeData: ResumeData): Promise<WritingReport> {
   const res = await apiPost('/writing/check', { resume_data: resumeData });
-  if (!res.ok) throw await readError(res, `Writing check failed (status ${res.status}).`);
+  if (!res.ok) throw await apiError(res, `Writing check failed (status ${res.status}).`);
   return res.json() as Promise<WritingReport>;
 }
 
@@ -68,6 +63,6 @@ export async function improveWriting(
     { resume_data: resumeData, ...(progressId ? { progress_id: progressId } : {}) },
     DEFAULT_TIMEOUT_MS
   );
-  if (!res.ok) throw await readError(res, `Improve writing failed (status ${res.status}).`);
+  if (!res.ok) throw await apiError(res, `Improve writing failed (status ${res.status}).`);
   return res.json() as Promise<WritingImproveResult>;
 }

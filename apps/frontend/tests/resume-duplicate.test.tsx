@@ -131,7 +131,7 @@ describe('duplicateResume api', () => {
     );
 
     await expect(actual.duplicateResume('r1')).rejects.toMatchObject({
-      message: 'Failed to duplicate resume (status 503): busy',
+      message: 'Failed to duplicate resume (status 503).',
       status: 503,
     });
   });

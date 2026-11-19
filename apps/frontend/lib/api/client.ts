@@ -210,12 +210,65 @@ export function getUploadUrl(): string {
   return `${API_BASE}/resumes/upload`;
 }
 
+/** FastAPI's `detail` from an error body (string or object), or undefined. */
+function readDetail(body: string): unknown {
+  try {
+    return (JSON.parse(body) as { detail?: unknown }).detail;
+  } catch {
+    return undefined;
+  }
+}
+
 /** The FastAPI `detail` string of an error body, or null when there is none. */
 export function parseErrorDetail(body: string): string | null {
-  try {
-    const detail = (JSON.parse(body) as { detail?: unknown }).detail;
-    return typeof detail === 'string' && detail ? detail : null;
-  } catch {
-    return null;
+  const detail = readDetail(body);
+  return typeof detail === 'string' && detail ? detail : null;
+}
+
+/**
+ * A failed API response. `status` is the HTTP status, `detail` FastAPI's `detail`
+ * (a string, or an object such as `{ code, field, missing }`), and `code` that
+ * object's `code` when it has one.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly detail: unknown;
+  readonly code?: string;
+
+  constructor(message: string, status: number, detail?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.detail = detail;
+    if (detail && typeof detail === 'object' && 'code' in detail) {
+      this.code = String((detail as { code: unknown }).code);
+    }
   }
+}
+
+/** A user-facing message from `detail`: a string, or a validation error's `msg` list. */
+function detailMessage(detail: unknown): string | null {
+  if (typeof detail === 'string') return detail || null;
+  if (Array.isArray(detail)) {
+    // FastAPI validation errors: [{ loc, msg, type }, ...]
+    const messages = detail
+      .map((d) =>
+        d && typeof d === 'object' && 'msg' in d ? String((d as { msg: unknown }).msg) : null
+      )
+      .filter((m): m is string => Boolean(m));
+    return messages.length > 0 ? messages.join('; ') : null;
+  }
+  return null;
+}
+
+/**
+ * The error for a failed response. Its message is the server's `detail` when that
+ * is a string (backend errors are written for users) or a validation error list,
+ * otherwise `fallback`. Raw bodies never reach the message: an object `detail`
+ * would print "[object Object]" or a JSON blob, and proxy or HTML error pages
+ * aren't meant for users. The object stays available as `detail` and `code`.
+ */
+export async function apiError(res: Response, fallback: string): Promise<ApiError> {
+  const detail = readDetail(await res.text().catch(() => ''));
+  return new ApiError(detailMessage(detail) ?? fallback, res.status, detail);
 }

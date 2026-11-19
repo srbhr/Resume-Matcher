@@ -1,4 +1,4 @@
-import { apiFetch, apiPost, apiPatch, apiDelete } from './client';
+import { apiDelete, apiError, apiFetch, apiPatch, apiPost } from './client';
 
 // The seven stable Kanban columns (keys are decoupled from i18n labels).
 export type ApplicationStatus =
@@ -70,38 +70,8 @@ export interface ApplicationActionResponse {
   affected: number;
 }
 
-// FastAPI returns `detail` as a string for HTTPException but as an array of
-// `{ msg, loc, ... }` objects for validation errors — coerce both to a string
-// so error messages never render as "[object Object]".
-function extractDetail(data: unknown): string | null {
-  if (!data || typeof data !== 'object') return null;
-  const detail = (data as { detail?: unknown }).detail;
-  if (typeof detail === 'string') return detail;
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map((d) =>
-        d && typeof d === 'object' && 'msg' in d ? String((d as { msg: unknown }).msg) : null
-      )
-      .filter((m): m is string => Boolean(m));
-    if (messages.length > 0) return messages.join('; ');
-  }
-  // A dict detail (e.g. HTTPException(detail={...})) — stringify so it reads as
-  // something rather than "[object Object]".
-  if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
-    try {
-      return JSON.stringify(detail);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
 async function asJson<T>(res: Response, fallback: string): Promise<T> {
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(extractDetail(data) || `${fallback} (status ${res.status}).`);
-  }
+  if (!res.ok) throw await apiError(res, `${fallback} (status ${res.status}).`);
   return res.json() as Promise<T>;
 }
 
