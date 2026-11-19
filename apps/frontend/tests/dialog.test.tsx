@@ -12,6 +12,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+/** A click on the layer around the panel: where a real pointer lands outside it. */
+function clickOutside() {
+  const layer = screen.getByRole('dialog').parentElement as HTMLElement;
+  fireEvent.pointerDown(layer);
+  fireEvent.click(layer);
+}
+
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));
 
 function Harness() {
@@ -317,8 +324,7 @@ describe('Dialog', () => {
 
     it('ignores a backdrop click', () => {
       const onOpenChange = openForcedChoice();
-      const overlay = document.querySelector('.bg-overlay') as HTMLElement;
-      fireEvent.click(overlay);
+      clickOutside();
       expect(onOpenChange).not.toHaveBeenCalled();
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
@@ -335,7 +341,7 @@ describe('Dialog', () => {
         </Dialog>
       );
       fireEvent.keyDown(document, { key: 'Escape' });
-      fireEvent.click(document.querySelector('.bg-overlay') as HTMLElement);
+      clickOutside();
       fireEvent.click(screen.getByRole('button', { name: 'common.close' }));
       expect(onOpenChange).toHaveBeenCalledTimes(3);
     });

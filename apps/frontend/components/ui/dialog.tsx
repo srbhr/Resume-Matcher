@@ -161,6 +161,7 @@ const DialogContent: React.FC<DialogContentProps> = ({
   const { open, onOpenChange, dismissible, titleId } = useDialogContext();
   const { t } = useTranslations();
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const pressStartedOutside = React.useRef(false);
   const idRef = React.useRef(Symbol('dialog'));
   // Reduced motion: the panel only fades, it does not scale (spec §7).
   const reducedMotion = useReducedMotion();
@@ -245,9 +246,6 @@ const DialogContent: React.FC<DialogContentProps> = ({
           <m.div
             className="fixed inset-0 bg-overlay"
             aria-hidden="true"
-            onClick={() => {
-              if (dismissible) onOpenChange(false);
-            }}
             initial={{ opacity: 0 }}
             animate={{
               opacity: 1,
@@ -255,7 +253,19 @@ const DialogContent: React.FC<DialogContentProps> = ({
             }}
             exit={{ opacity: 0, transition: { duration: DURATION.exit, ease: EASE_OUT_EXPO } }}
           />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
+          {/* This layer covers the overlay, so it is what an outside click hits. A press
+              that starts in the panel (selecting text) and ends out here doesn't count. */}
+          <div
+            className="fixed inset-0 flex items-center justify-center p-4"
+            onPointerDown={(e) => {
+              pressStartedOutside.current = e.target === e.currentTarget;
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget && pressStartedOutside.current && dismissible) {
+                onOpenChange(false);
+              }
+            }}
+          >
             <m.div
               ref={panelRef}
               role="dialog"

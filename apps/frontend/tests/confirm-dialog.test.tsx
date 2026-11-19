@@ -2,6 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
+/** A click on the layer around the panel: where a real pointer lands outside it. */
+function clickOutside() {
+  const layer = screen.getByRole('dialog').parentElement as HTMLElement;
+  fireEvent.pointerDown(layer);
+  fireEvent.click(layer);
+}
+
 vi.mock('@/lib/i18n', () => ({
   useTranslations: () => ({
     t: (key: string) => key,
@@ -64,7 +71,7 @@ describe('ConfirmDialog', () => {
       const onOpenChange = vi.fn();
       renderDialog({ dismissible: false, onOpenChange });
       fireEvent.keyDown(document, { key: 'Escape' });
-      fireEvent.click(document.querySelector('.bg-overlay') as HTMLElement);
+      clickOutside();
       expect(onOpenChange).not.toHaveBeenCalled();
     });
   });
