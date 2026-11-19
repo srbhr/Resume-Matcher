@@ -16,6 +16,8 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [['list']],
+  // Hides the Next.js dev indicator in screenshots (see the file).
+  expect: { toHaveScreenshot: { stylePath: './e2e/screenshot.css' } },
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     // Motion is feedback only; reduced motion keeps screenshots stable.

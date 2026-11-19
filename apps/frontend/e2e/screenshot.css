@@ -1,0 +1,8 @@
+/*
+ * Applied to every e2e screenshot. The Next.js dev indicator is not part of the app,
+ * and where it stacks against a modal changes with the browser's top layer.
+ * Its host element has no box of its own, so `mask` can't cover it.
+ */
+nextjs-portal {
+  display: none !important;
+}
