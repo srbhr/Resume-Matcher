@@ -1713,6 +1713,10 @@ class _DatabaseProxy:
     def __setattr__(self, name: str, value: Any) -> None:
         setattr(_current, name, value)
 
+    def __delattr__(self, name: str) -> None:
+        # monkeypatch undoes a patch on ``db`` by deleting the attribute again.
+        delattr(_current, name)
+
     def __repr__(self) -> str:
         return f"<db -> {_current!r}>"
 

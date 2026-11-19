@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from app import database as database_module
 from app.database import Database, db, set_database
 
@@ -37,3 +39,16 @@ def test_attribute_writes_reach_the_current_instance(tmp_path: Path) -> None:
         assert database_module.db.lock_timeout_ms == 123
     finally:
         set_database(previous)
+
+
+def test_a_method_patched_on_db_is_restored_when_the_patch_is_undone() -> None:
+    # pytest 9.2 undoes an instance patch by deleting the attribute again, so the
+    # proxy must forward deletes to the current database.
+    def fake_stats() -> dict[str, int]:
+        return {"total_resumes": -1}
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(db, "get_stats", fake_stats)
+        assert db.get_stats is fake_stats
+
+    assert db.get_stats.__func__ is Database.get_stats

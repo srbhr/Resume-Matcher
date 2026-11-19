@@ -236,7 +236,9 @@ async def isolated_backend_state(
     )
     # Every module's ``db`` is a proxy for the current instance, so one swap
     # isolates routers, services, the queue worker, MCP tools and the CLI alike.
-    previous_db = database_module.set_database(test_db)
+    # monkeypatch undoes in reverse order, so a test's own patches on ``db``
+    # are undone while its database is still the current one.
+    monkeypatch.setattr(database_module, "_current", test_db)
 
     invalidate_config_cache()
     crypto.reset_cache()
@@ -245,7 +247,6 @@ async def isolated_backend_state(
     finally:
         # Torn down last, so the test's own PDF fixtures have closed the renderer.
         await drain_pdf_cleanup()
-        database_module.set_database(previous_db)
         invalidate_config_cache()
         crypto.reset_cache()
         await test_db.close()
