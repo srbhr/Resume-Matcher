@@ -1,5 +1,6 @@
 """Shared test fixtures for Resume Matcher backend tests."""
 
+import asyncio
 import copy
 import os
 import socket
@@ -187,6 +188,27 @@ def writing_loop_llm_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("app.services.writing_loop.complete_json", unavailable)
 
 
+async def drain_pdf_cleanup() -> None:
+    """Let the PDF renderer's background browser teardown finish on this loop.
+
+    Retired browsers close in background tasks, and ``close_pdf_renderer`` waits
+    for them only briefly, by design. One still running when the test's loop
+    closes is cancelled together with Playwright's pipe reader. Playwright's
+    cancellation handler then waits for an abort reply that can no longer arrive
+    (``playwright/_impl/_connection.py``), so the loop never closes and the xdist
+    worker hangs. That happened about once in 12 parallel runs, under load.
+    """
+    pdf = sys.modules.get("app.pdf")
+    if pdf is None:
+        return
+    loop = asyncio.get_running_loop()
+    owners = {task for task in pdf._background_owners if task.get_loop() is loop}
+    if not owners:
+        return
+    _, pending = await asyncio.wait(owners, timeout=30)
+    assert not pending, f"{len(pending)} PDF teardown task(s) still running after 30 s"
+
+
 @pytest.fixture(autouse=True)
 async def isolated_backend_state(
     tmp_path: Path,
@@ -221,6 +243,8 @@ async def isolated_backend_state(
     try:
         yield test_db
     finally:
+        # Torn down last, so the test's own PDF fixtures have closed the renderer.
+        await drain_pdf_cleanup()
         database_module.set_database(previous_db)
         invalidate_config_cache()
         crypto.reset_cache()
