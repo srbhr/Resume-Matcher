@@ -249,38 +249,6 @@ _LEGACY_PROVIDER_KEY_MAP: dict[str, str] = {
 }
 
 
-def _get_llm_api_key_with_fallback() -> str:
-    """Get LLM API key with fallback to config file.
-
-    Priority: Environment variable > config.json > empty string
-    """
-    import os
-
-    # First check environment variable
-    env_key = os.environ.get("LLM_API_KEY", "")
-    if env_key:
-        return env_key
-
-    # Fallback to config file based on provider
-    config_keys = get_api_keys_from_config()
-    provider = normalize_provider(os.environ.get("LLM_PROVIDER", "openai"))
-
-    # Map provider to config key
-    provider_map = {
-        "openai": "openai",
-        "azure_foundry": "azure_foundry",
-        "anthropic": "anthropic",
-        "gemini": "google",
-        "openrouter": "openrouter",
-        "deepseek": "deepseek",
-        "groq": "groq",
-        "ollama": "ollama",
-    }
-
-    config_provider = provider_map.get(provider, provider)
-    return config_keys.get(config_provider, "")
-
-
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
@@ -465,15 +433,6 @@ class Settings(BaseSettings):
     def config_path(self) -> Path:
         """Path to config storage file."""
         return self.data_dir / "config.json"
-
-    def get_effective_api_key(self) -> str:
-        """Get the effective API key with config file fallback.
-
-        Priority: Environment/settings value > config.json > empty string
-        """
-        if self.llm_api_key:
-            return self.llm_api_key
-        return _get_llm_api_key_with_fallback()
 
 
 settings = Settings()

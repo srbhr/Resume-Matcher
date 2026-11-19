@@ -3,7 +3,6 @@
 import copy
 import logging
 import secrets
-from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
@@ -11,7 +10,6 @@ from app.config import (
     clear_all_api_keys,
     delete_api_key_from_config,
     get_api_keys_from_config,
-    get_config_path,
     load_config_file,
     save_api_keys_to_config,
     save_config_file,
@@ -100,11 +98,6 @@ def _proves_key(request_key: str | None, stored_key: str) -> bool:
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
-
-
-def _get_config_path() -> Path:
-    """Get path to config storage file."""
-    return get_config_path()
 
 
 def _load_config() -> dict:

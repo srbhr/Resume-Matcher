@@ -88,7 +88,6 @@ async def test_contended_public_write_returns_503_and_can_be_retried(
     [
         "create_resume",
         "update_job",
-        "delete_job",
         "finish_processing",
         "create_improvement",
         "upsert_key",
@@ -113,8 +112,6 @@ async def test_non_endpoint_writers_translate_busy_without_partial_changes(
             await database.create_resume(content="Should not persist")
         elif operation == "update_job":
             await database.update_job(job["job_id"], {"company": "Should not persist"})
-        elif operation == "delete_job":
-            await database.delete_job(job["job_id"])
         elif operation == "finish_processing":
             await database.finish_resume_processing(
                 row["resume_id"],

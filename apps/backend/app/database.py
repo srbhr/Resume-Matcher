@@ -776,19 +776,6 @@ class Database:
             await session.commit()
             return self._job_to_dict(row)
 
-    async def delete_job(self, job_id: str) -> bool:
-        """Delete a job by ID (used to clean up an orphaned manual-add job)."""
-        async with self._write_session() as session:
-            row = await session.get(Job, job_id)
-            if row is None:
-                return False
-            await session.execute(
-                delete(TailoringPreview).where(TailoringPreview.job_id == job_id)
-            )
-            await session.delete(row)
-            await session.commit()
-            return True
-
     # -- Preview and confirmation operations --------------------------------
 
     @staticmethod

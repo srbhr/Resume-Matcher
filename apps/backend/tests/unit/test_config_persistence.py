@@ -14,7 +14,6 @@ import pytest
 import app.config as config_module
 from app.config import load_config_file, save_config_file, settings
 from app.config_cache import invalidate_config_cache, load_config
-from app.routers.config import _get_config_path
 
 
 def test_imported_config_path_is_owned_by_data_dir(
@@ -58,7 +57,7 @@ def test_legacy_config_path_monkeypatch_remains_supported(
     assert json.loads(compatibility_path.read_text()) == {"provider": "gemini"}
     assert load_config_file()["provider"] == "gemini"
     assert load_config() == {"provider": "gemini"}
-    assert _get_config_path() == compatibility_path
+    assert config_module.get_config_path() == compatibility_path
 
 
 def test_cached_config_follows_a_changed_compatibility_path(

@@ -40,20 +40,6 @@ def test_unknown_provider_is_still_rejected() -> None:
         Settings(llm_provider="Nonsense")
 
 
-def test_env_key_fallback_follows_a_capitalised_provider(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    from app.config import _get_llm_api_key_with_fallback
-
-    monkeypatch.delenv("LLM_API_KEY", raising=False)
-    monkeypatch.setenv("LLM_PROVIDER", "Gemini")
-    monkeypatch.setattr(
-        config_module, "get_api_keys_from_config", lambda: {"google": "g-key"}
-    )
-
-    assert _get_llm_api_key_with_fallback() == "g-key"
-
-
 def test_config_json_provider_is_normalised() -> None:
     path = config_module.get_config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
