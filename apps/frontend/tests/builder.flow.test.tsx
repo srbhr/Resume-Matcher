@@ -1,11 +1,19 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import DefaultLayout from '@/app/(default)/layout';
-import BuilderPage from '@/app/(default)/builder/page';
-import en from '@/messages/en.json';
 import { startMsw } from './support/msw';
 import { installDomShims, removeDomShims } from './support/dom-shims';
+import {
+  API,
+  SERVER_RESUME,
+  advance,
+  backgroundHandlers,
+  en,
+  renderBuilder,
+  resumeBody,
+  route,
+  typeName,
+} from './support/builder-page';
 
 /**
  * The builder's save rules at the page boundary: the real route, layout,
@@ -20,69 +28,10 @@ import { installDomShims, removeDomShims } from './support/dom-shims';
  *   H-02 clearing this resume's draft deletes another resume's legacy draft
  */
 
-vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams('id=res-1'),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
-  usePathname: () => '/builder',
-}));
-
-const API = '/api/v1';
-
-const SERVER_RESUME = {
-  personalInfo: { name: 'Ada Lovelace', email: 'ada@example.com' },
-  summary: 'Real summary from the server',
-  workExperience: [],
-  education: [],
-  personalProjects: [],
-  additional: {},
-};
-
-const resumeBody = (processed: unknown) => ({
-  request_id: 'req',
-  data: {
-    resume_id: 'res-1',
-    raw_resume: {
-      id: 1,
-      content: '',
-      content_type: 'md',
-      created_at: '2026-01-01T00:00:00Z',
-      processing_status: 'ready',
-    },
-    processed_resume: processed,
-    parent_id: null,
-    title: 'r',
-  },
-});
+vi.mock('next/navigation', async () => (await import('./support/navigation')).navigation);
 
 const server = startMsw(
-  http.get(`${API}/status`, () =>
-    HttpResponse.json({
-      status: 'ready',
-      llm_configured: true,
-      llm_healthy: true,
-      agent_mode: false,
-      has_master_resume: true,
-      database_stats: {
-        total_resumes: 1,
-        total_jobs: 0,
-        total_improvements: 0,
-        has_master_resume: true,
-      },
-    })
-  ),
-  http.get(`${API}/config/language`, () =>
-    HttpResponse.json({ ui_language: 'en', content_language: 'en' })
-  ),
-  // The status cache polls the provider every 10s to notice agent mode.
-  http.get(`${API}/config/llm-api-key`, () =>
-    HttpResponse.json({
-      provider: 'openai',
-      model: 'gpt-4o-mini',
-      api_key: '',
-      api_base: null,
-      reasoning_effort: null,
-    })
-  ),
+  ...backgroundHandlers(),
   http.get(`${API}/resumes`, () => HttpResponse.json(resumeBody(SERVER_RESUME)))
 );
 
@@ -116,26 +65,10 @@ function holdResumeLoad(): () => void {
   return release;
 }
 
-function renderBuilder() {
-  render(
-    <DefaultLayout>
-      <BuilderPage />
-    </DefaultLayout>
-  );
-}
-
-const advance = (ms: number) =>
-  act(async () => {
-    await vi.advanceTimersByTimeAsync(ms);
-  });
-
-function typeName(value: string) {
-  fireEvent.change(screen.getByLabelText(en.resume.personalInfo.name), { target: { value } });
-}
-
 beforeEach(() => {
   // findBy*/waitFor hang under fake timers: advance, then use getBy*.
   vi.useFakeTimers();
+  route.search = 'id=res-1';
   installDomShims();
   localStorage.clear();
   patches = [];
