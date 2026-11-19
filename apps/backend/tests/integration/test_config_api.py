@@ -510,7 +510,7 @@ class TestEncryptedApiKeys:
         assert openai["masked_key"].endswith("9999")
 
     async def test_gemini_resolves_to_google_slot(self, keys_env, client):
-        from app.config import load_config_file
+        from app.config_store import load_config_file
         from app.llm import resolve_api_key
 
         async with client:
@@ -556,7 +556,7 @@ class TestLegacyKeyMigration:
         import json
 
         import app.config as config_module
-        from app.config import get_api_keys_from_config, migrate_legacy_keys
+        from app.config_store import get_api_keys_from_config, migrate_legacy_keys
 
         # Legacy config.json: a plural map AND a single legacy api_key.
         config = {
@@ -588,7 +588,7 @@ class TestLegacyKeyMigration:
 
         # Pre-existing encrypted key for openai must NOT be clobbered.
         from app import crypto
-        from app.config import get_api_keys_from_config, migrate_legacy_keys
+        from app.config_store import get_api_keys_from_config, migrate_legacy_keys
 
         keys_env.set_api_key_ciphertext("openai", crypto.encrypt("already-stored"))
 
@@ -605,7 +605,7 @@ class TestLegacyKeyMigration:
 
     async def test_migration_noop_without_legacy(self, keys_env):
         import app.config as config_module
-        from app.config import migrate_legacy_keys
+        from app.config_store import migrate_legacy_keys
 
         # No config.json at all → no-op, no crash.
         if config_module.CONFIG_FILE_PATH.exists():

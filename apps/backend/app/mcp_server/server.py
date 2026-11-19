@@ -8,7 +8,8 @@ from contextlib import asynccontextmanager
 from mcp.server import MCPServer
 
 from app import __version__
-from app.config import migrate_legacy_keys, settings
+from app.config import settings
+from app.config_store import migrate_legacy_keys
 from app.database import db
 from app.mcp_server import tools
 from app.pdf import close_pdf_renderer

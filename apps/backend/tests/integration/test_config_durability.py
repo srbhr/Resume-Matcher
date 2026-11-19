@@ -10,12 +10,9 @@ from typing import Literal
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.config import (
-    get_api_keys_from_config,
-    get_config_path,
-    migrate_legacy_keys,
-)
+from app.config import get_config_path
 from app.config_cache import load_config
+from app.config_store import get_api_keys_from_config, migrate_legacy_keys
 from app.main import app
 
 DirectoryOperation = Literal["open", "fsync", "close"]

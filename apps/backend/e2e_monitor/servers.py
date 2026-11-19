@@ -79,7 +79,7 @@ class Servers:
     def _prepare_environment(self) -> dict[str, str]:
         from cryptography.fernet import Fernet
 
-        from app.config import load_config_file
+        from app.config_store import load_config_file
         from app.crypto import _write_secret
         from app.database import Database
         from app.llm import _PROVIDER_KEY_MAP, get_llm_config

@@ -19,12 +19,8 @@ from app.chatgpt_auth import ChatGPTNotConnectedError
 from app.chatgpt_auth import is_connected as chatgpt_is_connected
 from app.chatgpt_inference import ChatGPTPlanError, chatgpt_acompletion
 from app.claude_cli import ClaudeCliNotFoundError, claude_acompletion
-from app.config import (
-    load_config_file,
-    normalize_provider,
-    save_config_file,
-    settings,
-)
+from app.config import normalize_provider, settings
+from app.config_store import load_config_file, save_config_file
 from app.crypto import keyed_digest
 from app.host_guard import LOOPBACK_HOSTS
 from app.redaction import redact_credentials

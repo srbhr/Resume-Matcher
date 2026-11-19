@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.info("Startup data migration: %s", result)
     # Fold any legacy plaintext API keys into the encrypted store (idempotent,
     # non-clobbering), then strip them from config.json.
-    from app.config import migrate_legacy_keys
+    from app.config_store import migrate_legacy_keys
 
     migrate_legacy_keys()
 

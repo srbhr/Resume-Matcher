@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from app.config import get_api_keys_from_config, save_api_keys_to_config
+from app.config_store import get_api_keys_from_config, save_api_keys_to_config
 from app.database import Database, DatabaseBusyError
 from app.main import app
 from tests.db_helpers import hold_writer

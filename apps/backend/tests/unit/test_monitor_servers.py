@@ -15,7 +15,8 @@ from typing import Any
 import httpx
 import pytest
 
-from app.config import save_api_keys_to_config, save_config_file, settings
+from app.config import settings
+from app.config_store import save_api_keys_to_config, save_config_file
 from e2e_monitor.bundle import Bundle
 from e2e_monitor.flow import seed_master_db
 from e2e_monitor.servers import Servers

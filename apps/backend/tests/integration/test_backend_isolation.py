@@ -9,7 +9,8 @@ import pytest
 from tinydb import TinyDB
 
 from app import crypto
-from app.config import get_api_keys_from_config, settings
+from app.config import settings
+from app.config_store import get_api_keys_from_config
 from app.main import app
 
 

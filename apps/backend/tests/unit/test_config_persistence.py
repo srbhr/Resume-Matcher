@@ -12,8 +12,9 @@ from typing import Any
 import pytest
 
 import app.config as config_module
-from app.config import load_config_file, save_config_file, settings
+from app.config import settings
 from app.config_cache import invalidate_config_cache, load_config
+from app.config_store import load_config_file, save_config_file
 
 
 def test_imported_config_path_is_owned_by_data_dir(

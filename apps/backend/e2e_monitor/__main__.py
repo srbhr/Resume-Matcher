@@ -98,7 +98,7 @@ def _say(msg: str) -> None:
 
 def cmd_sweep(args: argparse.Namespace) -> int:
     ensure_enabled()
-    from app.config import load_config_file
+    from app.config_store import load_config_file
     from app.schemas import ResumeData
 
     bundle = Bundle(root=_ARTIFACTS, run_id=_run_id())
