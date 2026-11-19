@@ -10,7 +10,8 @@ all migrate the same way.
 Revision 1 is the baseline: the idempotent startup logic every earlier release
 ran (create missing tables, add the columns older releases lacked, move to the
 single-default-master index). A database written by any earlier release, or a
-new one, runs it once and is then at version 1.
+new one, runs it once and is then at version 1. Revision 2 deletes the improvement
+rows earlier releases left behind when they deleted a tailored resume.
 
 Adding a revision:
 - add the next number to ``MIGRATIONS`` and raise ``SCHEMA_VERSION`` to it;
@@ -28,7 +29,17 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Any
 
-from sqlalchemy import Column, Integer, MetaData, Table, inspect, select, text
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    Table,
+    delete,
+    exists,
+    inspect,
+    select,
+    text,
+)
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.schema import CreateColumn
 
@@ -36,7 +47,7 @@ from app.models import Base, Improvement, Resume
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Advisory-lock namespace for startup ("RM" + 1, beside the writer lock's "RM").
 PG_INIT_LOCK_NAMESPACE = 0x524D + 1
@@ -140,7 +151,27 @@ def _baseline(conn: Connection, schema: str | None) -> None:
         _baseline_sqlite(conn)
 
 
-MIGRATIONS: dict[int, Callable[[Connection, str | None], None]] = {1: _baseline}
+def _delete_orphan_improvements(conn: Connection, _schema: str | None) -> None:
+    """Revision 2: delete improvements whose tailored resume no longer exists.
+
+    Earlier releases deleted a tailored resume but kept its improvement row. Nothing
+    can show that row (every reader goes through the tailored resume, and the queue
+    worker checks that it still exists), but it holds text from the deleted resume.
+    """
+    improvements, resumes = Improvement.__table__, Resume.__table__
+    deleted = conn.execute(
+        delete(improvements).where(
+            ~exists().where(resumes.c.resume_id == improvements.c.tailored_resume_id)
+        )
+    ).rowcount
+    if deleted:
+        logger.info("Deleted %d improvement rows left by deleted resumes", deleted)
+
+
+MIGRATIONS: dict[int, Callable[[Connection, str | None], None]] = {
+    1: _baseline,
+    2: _delete_orphan_improvements,
+}
 
 
 def stored_version(conn: Connection) -> int:

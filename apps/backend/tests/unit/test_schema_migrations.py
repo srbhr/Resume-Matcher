@@ -116,6 +116,50 @@ async def test_an_unversioned_database_from_an_earlier_release_keeps_every_row(
     assert before["resumes"] == 2 and before["api_keys"] == 1
 
 
+async def test_revision_2_deletes_improvements_left_by_deleted_resumes(
+    tmp_path: Path,
+) -> None:
+    # Earlier releases deleted a tailored resume but kept its improvement row, which
+    # still holds text from the resume the user deleted.
+    path = tmp_path / "v1.db"
+    db = Database(db_path=path)
+    master = await db.create_resume(content="# A", is_master=True)
+    tailored = await db.create_resume(content="# B", parent_id=master["resume_id"])
+    job = await db.create_job("Synthetic job")
+    for original, kept_tailored in (
+        (master["resume_id"], tailored["resume_id"]),  # both resumes exist
+        ("deleted-master", tailored["resume_id"]),  # only the source was deleted
+        (master["resume_id"], "deleted-tailored"),  # the orphan
+    ):
+        await db.create_improvement(
+            original_resume_id=original,
+            tailored_resume_id=kept_tailored,
+            job_id=job["job_id"],
+            improvements=[{"text": "from the deleted resume"}],
+        )
+    await db.close()
+    engine = make_sync_engine(path)
+    try:
+        with engine.begin() as conn:
+            conn.exec_driver_sql("UPDATE schema_version SET version = 1")
+
+        assert migrate(engine) == SCHEMA_VERSION
+        with engine.connect() as conn:
+            remaining = conn.exec_driver_sql(
+                "SELECT original_resume_id, tailored_resume_id FROM improvements"
+            ).all()
+    finally:
+        engine.dispose()
+
+    assert SCHEMA_VERSION >= 2
+    assert sorted(remaining) == sorted(
+        [
+            (master["resume_id"], tailored["resume_id"]),
+            ("deleted-master", tailored["resume_id"]),
+        ]
+    )
+
+
 async def test_a_newer_database_is_refused_and_left_untouched(tmp_path: Path) -> None:
     path = tmp_path / "newer.db"
     engine = make_sync_engine(path)

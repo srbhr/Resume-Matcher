@@ -138,25 +138,41 @@ async def test_copy_sqlite_into_postgres(
     await source.close()
 
 
-async def test_startup_adds_ats_score_to_an_existing_schema(
-    make_db: Callable[[str | None], Database],
-) -> None:
-    # A schema created before improvements.ats_score existed.
+def create_pre_versioning_schema(improvement_rows: list[str]) -> str:
+    """A schema from before schema versioning, improvements.ats_score and
+    resumes.template_settings, holding tailored resume 't' and the given rows."""
     schema = f"t_{uuid4().hex[:20]}"
     engine = make_sync_engine(url=postgres_test_url(), schema=schema)
     try:
         with engine.begin() as conn:
             conn.exec_driver_sql(f'CREATE SCHEMA "{schema}"')
             conn.exec_driver_sql(
+                "CREATE TABLE resumes (resume_id TEXT PRIMARY KEY, content TEXT, "
+                "content_type TEXT, filename TEXT, is_master BOOLEAN, "
+                "is_default_master BOOLEAN NOT NULL DEFAULT false, parent_id TEXT, "
+                "processed_data JSON, processing_status TEXT, processing_token TEXT, "
+                "cover_letter TEXT, outreach_message TEXT, interview_prep TEXT, "
+                "title TEXT, original_markdown TEXT, created_at TEXT, updated_at TEXT)"
+            )
+            conn.exec_driver_sql(
+                "INSERT INTO resumes (resume_id, content) VALUES ('t', '# T')"
+            )
+            conn.exec_driver_sql(
                 "CREATE TABLE improvements (request_id TEXT PRIMARY KEY, "
                 "original_resume_id TEXT NOT NULL, tailored_resume_id TEXT NOT NULL, "
                 "job_id TEXT NOT NULL, improvements JSON, created_at TEXT)"
             )
-            conn.exec_driver_sql(
-                "INSERT INTO improvements VALUES ('r1', 'm', 't', 'j', '[]', 'now')"
-            )
+            for row in improvement_rows:
+                conn.exec_driver_sql(f"INSERT INTO improvements VALUES {row}")
     finally:
         engine.dispose()
+    return schema
+
+
+async def test_startup_adds_ats_score_to_an_existing_schema(
+    make_db: Callable[[str | None], Database],
+) -> None:
+    schema = create_pre_versioning_schema(["('r1', 'm', 't', 'j', '[]', 'now')"])
 
     database = make_db(schema)
     improvement = await database.get_improvement_by_tailored_resume("t")
@@ -164,3 +180,20 @@ async def test_startup_adds_ats_score_to_an_existing_schema(
     assert await database.set_ats_score("t", {"score": {}, "calculated_at": "now"})
     stored = await database.get_improvement_by_tailored_resume("t")
     assert stored is not None and stored["ats_score"]["calculated_at"] == "now"
+
+
+async def test_startup_deletes_improvements_left_by_deleted_resumes(
+    make_db: Callable[[str | None], Database],
+) -> None:
+    # Revision 2: 'gone' was deleted by an earlier release that kept its improvement.
+    schema = create_pre_versioning_schema(
+        [
+            "('r1', 'm', 't', 'j', '[]', 'now')",
+            "('r2', 'm', 'gone', 'j', '[\"from the deleted resume\"]', 'now')",
+        ]
+    )
+
+    database = make_db(schema)
+    assert await database.get_improvement_by_tailored_resume("gone") is None
+    kept = await database.get_improvement_by_tailored_resume("t")
+    assert kept is not None and kept["request_id"] == "r1"

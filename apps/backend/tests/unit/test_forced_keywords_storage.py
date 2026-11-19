@@ -34,6 +34,12 @@ def test_forced_keywords_column_is_added_once(tmp_path: Path) -> None:
             connection.exec_driver_sql(
                 "INSERT INTO improvements VALUES ('r1', 'm', 't', 'j', '[]', 'now')"
             )
+            # Its tailored resume exists, as in any real database; schema revision 2
+            # deletes improvements whose tailored resume was deleted.
+            connection.exec_driver_sql(
+                "CREATE TABLE resumes (resume_id TEXT PRIMARY KEY)"
+            )
+            connection.exec_driver_sql("INSERT INTO resumes VALUES ('t')")
         init_models_sync(engine)
         init_models_sync(engine)
         with engine.begin() as connection:
