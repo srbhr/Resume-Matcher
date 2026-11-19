@@ -638,6 +638,12 @@ class Database:
             await session.execute(
                 delete(TailoringPreview).where(TailoringPreview.source_id == resume_id)
             )
+            # A tailored resume's improvement row (AI change log, ATS score) is
+            # reachable only through that resume, so it goes with it. Rows where this
+            # resume is only the original stay: the tailored result outlives its master.
+            await session.execute(
+                delete(Improvement).where(Improvement.tailored_resume_id == resume_id)
+            )
             was_default = row.is_default_master
             await session.delete(row)
             if was_default:

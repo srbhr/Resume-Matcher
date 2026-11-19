@@ -1070,9 +1070,19 @@ async def test_get_resume_job_rejects_a_deleted_tailored_resume(
             },
         )
         await isolated_db.delete_resume(saved["resume_id"])
-        assert await isolated_db.get_improvement_by_tailored_resume(
-            saved["resume_id"]
-        ), "the improvement row outlives the resume"
+        # Deleting a tailored resume now deletes its improvement row, but databases
+        # written before that fix can still hold the orphan. Recreate it so the tool
+        # is still shown to check the resume itself, not just the job link.
+        assert (
+            await isolated_db.get_improvement_by_tailored_resume(saved["resume_id"])
+            is None
+        )
+        await isolated_db.create_improvement(
+            original_resume_id=master["resume_id"],
+            tailored_resume_id=saved["resume_id"],
+            job_id=job_id,
+            improvements=[],
+        )
         message = await call_error(
             mcp, "get_resume_job", {"resume_id": saved["resume_id"]}
         )

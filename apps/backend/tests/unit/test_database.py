@@ -383,6 +383,46 @@ class TestImprovements:
     async def test_lookup_missing_returns_none(self, db):
         assert await db.get_improvement_by_tailored_resume("nope") is None
 
+    async def test_deleting_a_tailored_resume_deletes_its_improvement(
+        self, db: Database
+    ) -> None:
+        # The improvement row holds the AI change log (resume text) and the ATS
+        # score; once its tailored resume is gone nothing can reach it.
+        tailored = await db.create_resume(content="# T", parent_id="master-1")
+        await db.create_improvement(
+            original_resume_id="master-1",
+            tailored_resume_id=tailored["resume_id"],
+            job_id="job-1",
+            improvements=[{"path": "summary", "new": "Private text"}],
+        )
+
+        assert await db.delete_resume(tailored["resume_id"]) is True
+
+        assert (
+            await db.get_improvement_by_tailored_resume(tailored["resume_id"]) is None
+        )
+        assert await db.get_improvement_by_job("job-1") is None
+
+    async def test_deleting_a_master_keeps_improvements_of_its_tailored_resumes(
+        self, db: Database
+    ) -> None:
+        # `original_resume_id` stays a soft reference: the tailored resume and its
+        # history outlive the master it came from.
+        master = await db.create_resume(content="# M", is_master=True)
+        tailored = await db.create_resume(content="# T", parent_id=master["resume_id"])
+        await db.create_improvement(
+            original_resume_id=master["resume_id"],
+            tailored_resume_id=tailored["resume_id"],
+            job_id="job-2",
+            improvements=[],
+        )
+
+        assert await db.delete_resume(master["resume_id"]) is True
+
+        kept = await db.get_improvement_by_tailored_resume(tailored["resume_id"])
+        assert kept is not None
+        assert kept["original_resume_id"] == master["resume_id"]
+
 
 class TestApplications:
     async def test_create_defaults_and_position(self, db):
