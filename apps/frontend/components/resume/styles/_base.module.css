@@ -42,6 +42,9 @@
 .resume-photo-header {
   --resume-photo-width: 27mm;
   position: relative;
+  /* The minimum height is the content's, so the header's bottom padding and
+     rule always come below the photo, never under it. */
+  box-sizing: content-box;
   padding-inline-end: calc(var(--resume-photo-width) + 4mm);
   min-height: calc(var(--resume-photo-width) * 45 / 35);
 }

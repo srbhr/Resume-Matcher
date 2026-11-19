@@ -84,8 +84,9 @@ for (const { id: template } of TEMPLATE_OPTIONS) {
     });
     await page.goto('/builder?id=res-1');
 
-    // The preview's visible page, not its hidden measuring copy.
-    const photo = page.locator('img[data-resume-photo]').filter({ visible: true }).first();
+    // The page the user sees, not the preview's measuring copy: that copy is
+    // inert, transparent and off screen, but Playwright still counts it visible.
+    const photo = page.locator('img[data-resume-photo]:not([inert] img)').first();
     await expect(photo).toBeVisible();
     await expect(photo).toHaveJSProperty('complete', true);
 
@@ -114,7 +115,16 @@ for (const { id: template } of TEMPLATE_OPTIONS) {
         rightGap: frame.right - box.right,
         topGap: box.top - frame.top,
         ratio: box.width / box.height,
-        headerBottomBelowPhoto: frame.bottom >= box.bottom - 0.5,
+        // Room below the photo for the header's bottom padding and rule, so it
+        // never sits on the line under the header.
+        clearOfRule: (() => {
+          const style = getComputedStyle(header);
+          // The preview is zoomed with a CSS transform: client rects are scaled,
+          // computed padding is not.
+          const scale = frame.height / header.offsetHeight;
+          const below = parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
+          return frame.bottom - below * scale - box.bottom;
+        })(),
       };
     });
 
@@ -123,6 +133,6 @@ for (const { id: template } of TEMPLATE_OPTIONS) {
     expect(Math.abs(layout.rightGap)).toBeLessThan(1);
     expect(Math.abs(layout.topGap)).toBeLessThan(1);
     expect(layout.ratio).toBeCloseTo(35 / 45, 2);
-    expect(layout.headerBottomBelowPhoto).toBe(true);
+    expect(layout.clearOfRule, 'photo overlaps the header padding or rule').toBeGreaterThan(-0.5);
   });
 }
