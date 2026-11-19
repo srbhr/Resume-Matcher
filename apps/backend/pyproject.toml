@@ -34,6 +34,7 @@ resume-matcher = "app.mcp_server.cli:main"
 dev = [
     "pytest==9.2.0",
     "pytest-asyncio==1.4.1.post1",
+    "pytest-xdist==3.8.0",
     "httpx==0.28.1",
     "respx==0.23.1",
     "ruff==0.17.3",

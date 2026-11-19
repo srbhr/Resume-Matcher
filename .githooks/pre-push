@@ -19,7 +19,9 @@
 #
 # Notes:
 #  - Both checks always run so you see ALL failures, not just the first.
-#  - The backend suite is ~8s and makes NO network/LLM calls (evals are opt-in).
+#  - The backend suite makes NO network/LLM calls (evals are opt-in). With the dev
+#    extras installed (pytest-xdist) it runs on up to 4 workers, about 40s; without
+#    them it runs serially, about 2 minutes.
 #  - The frontend vitest suite and typecheck run only when Node is on PATH (git
 #    hooks may run without nvm's node). A full `next build` is still NOT run
 #    here — it is slow, and `tsc --noEmit` covers the type surface it would.
@@ -38,8 +40,15 @@ if command -v uv >/dev/null 2>&1; then
     echo "  ✗ backend ruff check failed" >&2
     status=1
   fi
-  echo "▶ backend  : uv run pytest"
-  if ! ( cd "$REPO_ROOT/apps/backend" && uv run pytest -q -p no:cacheprovider ); then
+  # Parallel when pytest-xdist is installed. More than 4 workers is no faster: the
+  # two PDF test groups (see tests/conftest.py) set the critical path.
+  parallel=()
+  if ( cd "$REPO_ROOT/apps/backend" && uv run python -c "import xdist" ) >/dev/null 2>&1; then
+    parallel=(-n auto --maxprocesses=4 --dist loadgroup)
+  fi
+  echo "▶ backend  : uv run pytest ${parallel[*]:-}"
+  # ${a[@]+...}: bash 3.2 (macOS) treats an empty array as unbound under set -u.
+  if ! ( cd "$REPO_ROOT/apps/backend" && uv run pytest -q -p no:cacheprovider ${parallel[@]+"${parallel[@]}"} ); then
     echo "  ✗ backend tests failed" >&2
     status=1
   fi

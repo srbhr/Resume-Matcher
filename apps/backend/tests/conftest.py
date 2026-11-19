@@ -61,16 +61,38 @@ def pytest_unconfigure(config: pytest.Config) -> None:
     _TEST_DATA_DIR_CONTEXT.cleanup()
 
 
+# Test files that drive the PDF renderer. Under pytest-xdist each group runs on one
+# worker: with Chromium tests spread over many busy workers, a Playwright driver can
+# outlast the renderer's cleanup window and the worker hangs forever closing its
+# event loop (seen at -n 12 on a 12-core machine). Two groups keep the slowest
+# worker short: renderer lifecycle (module globals, timeouts) and real renders.
+_PDF_LIFECYCLE_TEST_FILES = (
+    "test_pdf_lifecycle",
+    "test_pdf_idle_close",
+    "test_pdf_retired_generations",
+)
+_PDF_RENDER_TEST_FILES = ("test_pdf_", "test_vivid_single_text_layer")
+
+
+# tryfirst: xdist reads `xdist_group` in its own collection hook, so the marker
+# must be added before that hook runs.
+@pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(
     config: pytest.Config, items: list[pytest.Item]
 ) -> None:
-    """``postgres`` tests need TEST_DATABASE_URL; ``sqlite_only`` tests skip under it."""
-    del config
+    """Skip by database backend; keep real-Chromium tests on one xdist worker."""
+    grouping = config.pluginmanager.hasplugin("xdist")
     for item in items:
         if TEST_DATABASE_URL and "sqlite_only" in item.keywords:
             item.add_marker(pytest.mark.skip(reason="SQLite-specific"))
         if not TEST_DATABASE_URL and "postgres" in item.keywords:
             item.add_marker(pytest.mark.skip(reason="TEST_DATABASE_URL not set"))
+        if not grouping:
+            continue
+        if item.path.name.startswith(_PDF_LIFECYCLE_TEST_FILES):
+            item.add_marker(pytest.mark.xdist_group("pdf-lifecycle"))
+        elif item.path.name.startswith(_PDF_RENDER_TEST_FILES):
+            item.add_marker(pytest.mark.xdist_group("pdf-render"))
 
 
 def postgres_test_url() -> str:

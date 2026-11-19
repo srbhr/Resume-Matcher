@@ -10,7 +10,9 @@ keeps `main`/`dev` green without touching contributor PRs.
 
 `pre-push` runs before every `git push` and **blocks the push if anything is red**:
 
-1. **Backend test suite** — `uv run pytest` in `apps/backend` (~8s). Deterministic;
+1. **Backend test suite** — `uv run pytest` in `apps/backend`, on up to 4 workers
+   when the dev extras (pytest-xdist) are installed (about 40s; about 2 minutes
+   serially). Deterministic;
    the LLM-as-judge evals are excluded by default (`addopts -m "not eval"`), so
    it makes **no network/LLM calls**.
 2. **Frontend locale parity** — `scripts/check_locale_parity.py` verifies every
