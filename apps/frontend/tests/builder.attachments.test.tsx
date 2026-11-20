@@ -248,6 +248,88 @@ describe('builder attachment ownership', () => {
   });
 });
 
+describe('builder attachment actions, per part', () => {
+  const PARTS = [
+    {
+      tab: 'cover-letter',
+      field: 'cover_letter',
+      regenerate: en.coverLetter.regenerate,
+      saveFailed: en.builder.alerts.coverLetterSaveFailed,
+      generateFailed: en.builder.alerts.coverLetterGenerateFailed,
+    },
+    {
+      tab: 'outreach',
+      field: 'outreach_message',
+      regenerate: en.outreach.regenerate,
+      saveFailed: en.builder.alerts.outreachSaveFailed,
+      generateFailed: en.builder.alerts.outreachGenerateFailed,
+    },
+  ] as const;
+
+  it.each(PARTS)('$tab: a failed save names its own part', async ({ tab, saveFailed }) => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    documents.a = { cover_letter: 'SERVER', outreach_message: 'SERVER' };
+    failSaves = true;
+    route.search = `id=a&tab=${tab}`;
+    renderBuilder();
+    fireEvent.change(await screen.findByDisplayValue('SERVER'), { target: { value: 'EDIT' } });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+
+    expect(await screen.findByText(saveFailed)).toBeInTheDocument();
+  });
+
+  it.each(PARTS)(
+    '$tab: a failed generation names its own part',
+    async ({ tab, generateFailed }) => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const held = holdGeneration(tab);
+      await openTab('a', tab);
+      fireEvent.click(screen.getByRole('button', { name: generateLabel(tab) }));
+      await waitFor(() => expect(held.started()).toBe(true));
+      await act(async () => {
+        held.reply.resolve(HttpResponse.json({ detail: 'model offline' }, { status: 500 }));
+      });
+
+      expect(
+        await screen.findByText(generateFailed.replace('{error}', 'model offline'))
+      ).toBeInTheDocument();
+    }
+  );
+
+  it.each(PARTS)(
+    '$tab: Generate shows progress while it runs and is ready again after',
+    async ({ tab, regenerate }) => {
+      const held = holdGeneration(tab);
+      await openTab('a', tab);
+      fireEvent.click(screen.getByRole('button', { name: generateLabel(tab) }));
+      await waitFor(() => expect(held.started()).toBe(true));
+      expect(await screen.findByRole('button', { name: en.common.generating })).toBeDisabled();
+
+      await act(async () => {
+        held.reply.resolve(HttpResponse.json({ content: 'GENERATED' }));
+      });
+
+      expect(await screen.findByDisplayValue('GENERATED')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: regenerate })).toBeEnabled();
+    }
+  );
+
+  it.each(PARTS)(
+    '$tab: asks before replacing its own text, even when the other part is empty',
+    async ({ tab, field, regenerate }) => {
+      documents.a = { [field]: 'SERVER' };
+      route.search = `id=a&tab=${tab}`;
+      renderBuilder();
+      await screen.findByDisplayValue('SERVER');
+      fireEvent.click(screen.getByRole('button', { name: regenerate }));
+
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByRole('button', { name: regenerate })).toBeInTheDocument();
+      expect(generations).toBe(0);
+    }
+  );
+});
+
 describe('builder panels', () => {
   it.each(['cover-letter', 'outreach', 'interview-prep'] as const)(
     'renders the %s generate control in the editor column and keeps the output panel empty',
