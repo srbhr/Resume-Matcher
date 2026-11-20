@@ -25,6 +25,7 @@ import {
   type ForcedKeywordInput,
   type ResumeListItem,
 } from '@/lib/api/resume';
+import { ApiError } from '@/lib/api/client';
 import { newProgressId, subscribeToProgress } from '@/lib/api/progress';
 import type { WritingReport } from '@/lib/api/writing';
 import { keywordInText, resumeKeywordText } from '@/lib/utils/keyword-matcher';
@@ -286,8 +287,12 @@ export default function TailorPage() {
   };
 
   const offerFreshPreview = (failure: unknown): boolean => {
-    if (!(failure instanceof Error) || !/preview expired|status (400|409)\b/i.test(failure.message))
-      return false;
+    // A 400 or 409 from confirm or apply-keywords means the preview no longer
+    // matches its resume and job; the server says so in words, not a status code.
+    const stale =
+      (failure instanceof ApiError && (failure.status === 400 || failure.status === 409)) ||
+      (failure instanceof Error && /preview expired/i.test(failure.message));
+    if (!stale) return false;
     invalidate();
     confirmationBusy.current = false;
     missingDiffConfirmInFlight.current = false;

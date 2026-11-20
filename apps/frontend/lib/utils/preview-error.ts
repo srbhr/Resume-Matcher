@@ -1,4 +1,4 @@
-import { DEFAULT_TIMEOUT_MS } from '@/lib/api/client';
+import { ApiError, DEFAULT_TIMEOUT_MS } from '@/lib/api/client';
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 
@@ -21,8 +21,11 @@ export function getPreviewErrorMessage(
 ): string {
   const errorMessage = err instanceof Error ? err.message : String(err ?? '');
   const normalized = errorMessage.toLowerCase();
+  // An ApiError's message is the server's own words, which needn't name the status.
+  const status = err instanceof ApiError ? err.status : undefined;
 
   if (
+    status === 401 ||
     normalized.includes('api key') ||
     normalized.includes('unauthorized') ||
     normalized.includes('authentication') ||
@@ -32,6 +35,7 @@ export function getPreviewErrorMessage(
   }
 
   if (
+    status === 429 ||
     normalized.includes('rate limit') ||
     normalized.includes('insufficient_quota') ||
     normalized.includes('429')
@@ -40,6 +44,7 @@ export function getPreviewErrorMessage(
   }
 
   if (
+    status === 504 ||
     normalized.includes('timed out') ||
     normalized.includes('timeout') ||
     normalized.includes('signal is aborted') ||

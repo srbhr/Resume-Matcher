@@ -2,6 +2,7 @@ import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TailorPage from '@/app/(default)/tailor/page';
+import { ApiError } from '@/lib/api/client';
 
 const api = vi.hoisted(() => ({
   upload: vi.fn(),
@@ -320,6 +321,26 @@ it.each(['expired locally', 'rejected by server'])(
     );
     expect(api.preview).toHaveBeenCalledTimes(2);
     expect(screen.getByRole('button', { name: 'Confirm preview' })).toBeEnabled();
+  }
+);
+
+it.each([
+  [409, 'Resume or job description changed. Please retry preview.'],
+  [400, 'Preview required before confirmation. Please run a preview first.'],
+])(
+  'offers a fresh preview when the server rejects the confirmation (%i)',
+  async (status, detail) => {
+    api.preview.mockResolvedValue(preview);
+    api.confirm.mockRejectedValueOnce(new ApiError(detail, status, detail));
+    render(<TailorPage />);
+    await act(async () => {});
+    await generate();
+    await act(async () => screen.getByRole('button', { name: 'Confirm preview' }).click());
+
+    expect(screen.getByText('tailor.errors.previewUnavailable')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'tailor.regenerateDialog.confirmLabel' })
+    ).toBeVisible();
   }
 );
 

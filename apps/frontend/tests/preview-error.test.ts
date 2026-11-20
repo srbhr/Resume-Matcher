@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ApiError } from '@/lib/api/client';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 
 /**
@@ -17,6 +18,15 @@ describe('getPreviewErrorMessage', () => {
     ['Request failed with status 401', 'tailor.errors.apiKeyError'],
   ])('maps auth failures (%s)', (message, expected) => {
     expect(getPreviewErrorMessage(new Error(message), t)).toBe(expected);
+  });
+
+  it.each([
+    [401, 'tailor.errors.apiKeyError'],
+    [429, 'tailor.errors.rateLimit'],
+    [504, 'tailor.errors.timeout:{"minutes":4}'],
+  ])('maps a server error by its status (%i) whatever its words say', (status, expected) => {
+    const err = new ApiError('Failed to preview resume. Please try again.', status);
+    expect(getPreviewErrorMessage(err, t, 240_000)).toBe(expected);
   });
 
   it.each([
