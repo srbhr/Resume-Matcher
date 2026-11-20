@@ -80,6 +80,13 @@ import {
   type ResumeSyncState,
 } from '@/lib/builder/resume-sync';
 import {
+  attachmentSync,
+  initialAttachment,
+  type AttachmentEvent,
+  type AttachmentPart,
+  type AttachmentState,
+} from '@/lib/builder/attachment-sync';
+import {
   experienceRegenerateItems,
   projectRegenerateItems,
   skillsRegenerateItem,
@@ -149,6 +156,12 @@ const buildInitialData = (t: Translate): ResumeData => ({
     awards: [],
   },
 });
+
+type Attachments = Record<AttachmentPart, AttachmentState>;
+const INITIAL_ATTACHMENTS: Attachments = {
+  coverLetter: initialAttachment,
+  outreach: initialAttachment,
+};
 
 interface ResumeBuilderProps {
   /** The user's coding agent does the AI work: AI actions show a prompt for it. */
@@ -244,26 +257,34 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     setActiveTab(getTabFromSearchParams(searchParams));
   }, [searchParams]);
 
-  // Cover letter & outreach state
-  const [coverLetter, setCoverLetter] = useState('');
-  const [outreachMessage, setOutreachMessage] = useState('');
+  // Cover letter & outreach state (lib/builder/attachment-sync.ts), one store
+  // keyed by part; the ref serves reads after an await, as for the resume.
+  const attachmentsRef = useRef<Attachments>(INITIAL_ATTACHMENTS);
+  const [attachments, setAttachments] = useState<Attachments>(INITIAL_ATTACHMENTS);
+  const dispatchAttachment = useCallback(
+    (part: AttachmentPart, event: AttachmentEvent): Attachments => {
+      attachmentsRef.current = {
+        ...attachmentsRef.current,
+        [part]: attachmentSync(attachmentsRef.current[part], event),
+      };
+      setAttachments(attachmentsRef.current);
+      return attachmentsRef.current;
+    },
+    []
+  );
+  const coverLetter = attachments.coverLetter.value;
+  const outreachMessage = attachments.outreach.value;
+  const isCoverLetterSaving = attachments.coverLetter.savesInFlight > 0;
+  const isOutreachSaving = attachments.outreach.savesInFlight > 0;
+  const hasUnsavedCoverLetter = attachments.coverLetter.unsaved;
+  const hasUnsavedOutreach = attachments.outreach.unsaved;
   const [interviewPrep, setInterviewPrep] = useState<InterviewPrepData | null>(null);
-  const [isCoverLetterSaving, setIsCoverLetterSaving] = useState(false);
-  const [isOutreachSaving, setIsOutreachSaving] = useState(false);
-  const [hasUnsavedCoverLetter, setHasUnsavedCoverLetter] = useState(false);
-  const [hasUnsavedOutreach, setHasUnsavedOutreach] = useState(false);
   const [hasCurrentAttachmentDraft, setHasCurrentAttachmentDraft] = useState(false);
   const hasCurrentRecoveryDraft =
     (!hasUnsavedChanges || hasCurrentLocalDraft) &&
     (!(hasUnsavedCoverLetter || hasUnsavedOutreach) || hasCurrentAttachmentDraft);
-  const attachmentValuesRef = useRef({ coverLetter: '', outreachMessage: '' });
-  const attachmentBaselinesRef = useRef({ coverLetter: '', outreachMessage: '' });
-  const coverLetterEditVersionRef = useRef(0);
-  const outreachEditVersionRef = useRef(0);
   const coverLetterSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const coverLetterSaveCountRef = useRef(0);
   const outreachSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const outreachSaveCountRef = useRef(0);
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
 
   // On-demand generation state
@@ -437,15 +458,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
           // prevents the preceding document's attachment from surviving a switch.
           const serverCoverLetter = data.cover_letter ?? '';
           const serverOutreachMessage = data.outreach_message ?? '';
-          setCoverLetter(serverCoverLetter);
-          setOutreachMessage(serverOutreachMessage);
-          attachmentValuesRef.current = {
-            coverLetter: serverCoverLetter,
-            outreachMessage: serverOutreachMessage,
-          };
-          attachmentBaselinesRef.current = attachmentValuesRef.current;
-          setHasUnsavedCoverLetter(false);
-          setHasUnsavedOutreach(false);
+          dispatchAttachment('coverLetter', { type: 'loaded', content: serverCoverLetter });
+          dispatchAttachment('outreach', { type: 'loaded', content: serverOutreachMessage });
           const attachmentDraft = readAttachmentDraft(resumeId);
           if (
             attachmentDraft &&
@@ -488,15 +502,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         setLastSavedData(improvedPreview);
         const contextCoverLetter = improvedCoverLetter ?? '';
         const contextOutreach = improvedOutreach ?? '';
-        setCoverLetter(contextCoverLetter);
-        setOutreachMessage(contextOutreach);
-        attachmentValuesRef.current = {
-          coverLetter: contextCoverLetter,
-          outreachMessage: contextOutreach,
-        };
-        attachmentBaselinesRef.current = attachmentValuesRef.current;
-        setHasUnsavedCoverLetter(false);
-        setHasUnsavedOutreach(false);
+        dispatchAttachment('coverLetter', { type: 'loaded', content: contextCoverLetter });
+        dispatchAttachment('outreach', { type: 'loaded', content: contextOutreach });
         setInterviewPrep(improvedInterviewPrep);
         setInterviewPrepError(null);
         // Persist to localStorage as backup
@@ -524,6 +531,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     };
   }, [
     applySavedSettings,
+    dispatchAttachment,
     dispatchSync,
     improvedData?.data?.job_id,
     improvedData?.data?.resume_id,
@@ -568,14 +576,14 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       if (!agentMode || !resumeId || ownWritesRef.current.pending > 0) return null;
       try {
         const data = await fetchResume(resumeId);
-        const baselines = attachmentBaselinesRef.current;
+        const { coverLetter, outreach } = attachmentsRef.current;
         const changed =
           part === 'resume'
             ? isResumeDataShape(data.processed_resume) &&
               !isSameResumeData(data.processed_resume, lastSavedDataRef.current)
             : part === 'coverLetter'
-              ? (data.cover_letter ?? '') !== baselines.coverLetter
-              : (data.outreach_message ?? '') !== baselines.outreachMessage;
+              ? (data.cover_letter ?? '') !== coverLetter.baseline
+              : (data.outreach_message ?? '') !== outreach.baseline;
         if (!changed || agentVersionOf(data) === dismissedAgentVersionRef.current) return null;
         return data;
       } catch (error) {
@@ -827,65 +835,48 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     setHasCurrentAttachmentDraft(false);
   };
 
-  const persistAttachmentDraft = (
-    values = attachmentValuesRef.current,
-    baselines = attachmentBaselinesRef.current
-  ) => {
+  /** Keep the browser draft of both attachments in step with the store. */
+  const persistAttachmentDraft = () => {
     if (!resumeId) return;
-    if (
-      values.coverLetter === baselines.coverLetter &&
-      values.outreachMessage === baselines.outreachMessage
-    ) {
+    const { coverLetter, outreach } = attachmentsRef.current;
+    if (coverLetter.value === coverLetter.baseline && outreach.value === outreach.baseline) {
       clearAttachmentDraft(resumeId);
       setHasCurrentAttachmentDraft(false);
       return;
     }
-    const didWrite = writeAttachmentDraft(resumeId, values.coverLetter, values.outreachMessage);
+    const didWrite = writeAttachmentDraft(resumeId, coverLetter.value, outreach.value);
     const existing = didWrite ? null : readAttachmentDraft(resumeId);
     setHasCurrentAttachmentDraft(
       didWrite ||
         Boolean(
           existing &&
-          existing.coverLetter === values.coverLetter &&
-          existing.outreachMessage === values.outreachMessage
+          existing.coverLetter === coverLetter.value &&
+          existing.outreachMessage === outreach.value
         )
     );
   };
 
   const handleCoverLetterChange = (value: string) => {
-    coverLetterEditVersionRef.current += 1;
-    const values = { ...attachmentValuesRef.current, coverLetter: value };
-    attachmentValuesRef.current = values;
-    setCoverLetter(value);
-    setHasUnsavedCoverLetter(value !== attachmentBaselinesRef.current.coverLetter);
-    persistAttachmentDraft(values);
+    dispatchAttachment('coverLetter', { type: 'changed', value });
+    persistAttachmentDraft();
   };
 
   const handleOutreachChange = (value: string) => {
-    outreachEditVersionRef.current += 1;
-    const values = { ...attachmentValuesRef.current, outreachMessage: value };
-    attachmentValuesRef.current = values;
-    setOutreachMessage(value);
-    setHasUnsavedOutreach(value !== attachmentBaselinesRef.current.outreachMessage);
-    persistAttachmentDraft(values);
+    dispatchAttachment('outreach', { type: 'changed', value });
+    persistAttachmentDraft();
   };
 
   const handleRestoreAttachmentDraft = () => {
     if (!pendingAttachmentDraftRestore) return;
-    const values = {
-      coverLetter: pendingAttachmentDraftRestore.coverLetter,
-      outreachMessage: pendingAttachmentDraftRestore.outreachMessage,
-    };
-    coverLetterEditVersionRef.current += 1;
-    outreachEditVersionRef.current += 1;
-    attachmentValuesRef.current = values;
-    setCoverLetter(values.coverLetter);
-    setOutreachMessage(values.outreachMessage);
-    setHasUnsavedCoverLetter(values.coverLetter !== attachmentBaselinesRef.current.coverLetter);
-    setHasUnsavedOutreach(
-      values.outreachMessage !== attachmentBaselinesRef.current.outreachMessage
-    );
-    persistAttachmentDraft(values);
+    dispatchAttachment('coverLetter', {
+      type: 'draftRestored',
+      value: pendingAttachmentDraftRestore.coverLetter,
+    });
+    dispatchAttachment('outreach', {
+      type: 'draftRestored',
+      value: pendingAttachmentDraftRestore.outreachMessage,
+    });
+    persistAttachmentDraft();
     setPendingAttachmentDraftRestore(null);
   };
 
@@ -895,14 +886,14 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     const serverResume = isResumeDataShape(data.processed_resume) ? data.processed_resume : null;
     const coverLetter = data.cover_letter ?? '';
     const outreachMessage = data.outreach_message ?? '';
-    const baselines = attachmentBaselinesRef.current;
+    const baselines = attachmentsRef.current;
     return {
       serverResume,
       coverLetter,
       outreachMessage,
       resume: Boolean(serverResume && !isSameResumeData(serverResume, lastSavedData)),
-      coverLetterChanged: coverLetter !== baselines.coverLetter,
-      outreachChanged: outreachMessage !== baselines.outreachMessage,
+      coverLetterChanged: coverLetter !== baselines.coverLetter.baseline,
+      outreachChanged: outreachMessage !== baselines.outreach.baseline,
       title: (data.title ?? null) !== resumeTitle,
     };
   };
@@ -921,25 +912,13 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       clearStoredResumeDraft(resumeId);
       setHasCurrentLocalDraft(false);
     }
-    const values = { ...attachmentValuesRef.current };
-    const baselines = { ...attachmentBaselinesRef.current };
     if (changes.coverLetterChanged) {
-      coverLetterEditVersionRef.current += 1;
-      values.coverLetter = changes.coverLetter;
-      baselines.coverLetter = changes.coverLetter;
-      setCoverLetter(changes.coverLetter);
-      setHasUnsavedCoverLetter(false);
+      dispatchAttachment('coverLetter', { type: 'agentApplied', content: changes.coverLetter });
     }
     if (changes.outreachChanged) {
-      outreachEditVersionRef.current += 1;
-      values.outreachMessage = changes.outreachMessage;
-      baselines.outreachMessage = changes.outreachMessage;
-      setOutreachMessage(changes.outreachMessage);
-      setHasUnsavedOutreach(false);
+      dispatchAttachment('outreach', { type: 'agentApplied', content: changes.outreachMessage });
     }
-    attachmentValuesRef.current = values;
-    attachmentBaselinesRef.current = baselines;
-    persistAttachmentDraft(values, baselines);
+    persistAttachmentDraft();
     if (changes.title) setResumeTitle(data.title ?? null);
     setAgentUpdate(null);
     setAgentAppliedAt(Date.now());
@@ -962,8 +941,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     const before = [
       ownWritesRef.current.epoch,
       syncRef.current.editVersion,
-      coverLetterEditVersionRef.current,
-      outreachEditVersionRef.current,
+      attachmentsRef.current.coverLetter.editVersion,
+      attachmentsRef.current.outreach.editVersion,
     ].join();
     agentCheckRunningRef.current = true;
     try {
@@ -971,8 +950,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       const after = [
         ownWritesRef.current.epoch,
         syncRef.current.editVersion,
-        coverLetterEditVersionRef.current,
-        outreachEditVersionRef.current,
+        attachmentsRef.current.coverLetter.editVersion,
+        attachmentsRef.current.outreach.editVersion,
       ].join();
       // An edit or save happened meanwhile: this state no longer matches the server read.
       if (!documentIsActiveRef.current || ownWritesRef.current.pending > 0 || after !== before) {
@@ -1103,27 +1082,25 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     if (!resumeId || loadingState !== 'loaded') return false;
     const activeResumeId = resumeId;
     try {
-      coverLetterSaveCountRef.current += 1;
-      setIsCoverLetterSaving(true);
+      dispatchAttachment('coverLetter', { type: 'saveStarted' });
       if (!(await agentAllowsSave('coverLetter', showFailure))) return false;
       // A prior generation or newer edit can replace the value while this save waits.
       const { savedContent, savedVersion } = await queueAttachmentWrite(
         coverLetterSaveQueueRef,
         async () => {
-          const savedContent = attachmentValuesRef.current.coverLetter;
-          const savedVersion = coverLetterEditVersionRef.current;
+          const { value: savedContent, editVersion: savedVersion } =
+            attachmentsRef.current.coverLetter;
           await updateCoverLetter(activeResumeId, savedContent);
           return { savedContent, savedVersion };
         }
       );
       if (!documentIsActiveRef.current) return false;
-      const baselines = { ...attachmentBaselinesRef.current, coverLetter: savedContent };
-      attachmentBaselinesRef.current = baselines;
-      const isStillCurrent =
-        savedVersion === coverLetterEditVersionRef.current &&
-        attachmentValuesRef.current.coverLetter === savedContent;
-      setHasUnsavedCoverLetter(!isStillCurrent);
-      persistAttachmentDraft(attachmentValuesRef.current, baselines);
+      dispatchAttachment('coverLetter', {
+        type: 'saveSucceeded',
+        content: savedContent,
+        version: savedVersion,
+      });
+      persistAttachmentDraft();
       if (showSuccess) {
         showNotification(t('builder.alerts.coverLetterSaveSuccess'), 'success');
       }
@@ -1137,10 +1114,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       }
       return false;
     } finally {
-      coverLetterSaveCountRef.current = Math.max(0, coverLetterSaveCountRef.current - 1);
-      if (documentIsActiveRef.current) {
-        setIsCoverLetterSaving(coverLetterSaveCountRef.current > 0);
-      }
+      if (documentIsActiveRef.current) dispatchAttachment('coverLetter', { type: 'saveSettled' });
     }
   };
 
@@ -1148,7 +1122,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     while (documentIsActiveRef.current) {
       await coverLetterSaveQueueRef.current;
       if (!documentIsActiveRef.current) return false;
-      if (attachmentValuesRef.current.coverLetter === attachmentBaselinesRef.current.coverLetter) {
+      const { value, baseline } = attachmentsRef.current.coverLetter;
+      if (value === baseline) {
         return true;
       }
       if (!(await handleSaveCoverLetter(false, showFailure))) {
@@ -1163,15 +1138,12 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       if (!(await flushCoverLetterForExport(false))) return false;
       await outreachSaveQueueRef.current;
       if (!documentIsActiveRef.current) return false;
-      if (
-        attachmentValuesRef.current.outreachMessage !==
-        attachmentBaselinesRef.current.outreachMessage
-      ) {
+      const { coverLetter, outreach } = attachmentsRef.current;
+      if (outreach.value !== outreach.baseline) {
         if (!(await handleSaveOutreach(false, false))) return false;
         continue;
       }
-      if (attachmentValuesRef.current.coverLetter === attachmentBaselinesRef.current.coverLetter)
-        return true;
+      if (coverLetter.value === coverLetter.baseline) return true;
     }
     return false;
   };
@@ -1220,26 +1192,24 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     if (!resumeId || loadingState !== 'loaded') return false;
     const activeResumeId = resumeId;
     try {
-      outreachSaveCountRef.current += 1;
-      setIsOutreachSaving(true);
+      dispatchAttachment('outreach', { type: 'saveStarted' });
       if (!(await agentAllowsSave('outreach', showFailure))) return false;
       const { savedContent, savedVersion } = await queueAttachmentWrite(
         outreachSaveQueueRef,
         async () => {
-          const savedContent = attachmentValuesRef.current.outreachMessage;
-          const savedVersion = outreachEditVersionRef.current;
+          const { value: savedContent, editVersion: savedVersion } =
+            attachmentsRef.current.outreach;
           await updateOutreachMessage(activeResumeId, savedContent);
           return { savedContent, savedVersion };
         }
       );
       if (!documentIsActiveRef.current) return false;
-      const baselines = { ...attachmentBaselinesRef.current, outreachMessage: savedContent };
-      attachmentBaselinesRef.current = baselines;
-      const isStillCurrent =
-        savedVersion === outreachEditVersionRef.current &&
-        attachmentValuesRef.current.outreachMessage === savedContent;
-      setHasUnsavedOutreach(!isStillCurrent);
-      persistAttachmentDraft(attachmentValuesRef.current, baselines);
+      dispatchAttachment('outreach', {
+        type: 'saveSucceeded',
+        content: savedContent,
+        version: savedVersion,
+      });
+      persistAttachmentDraft();
       if (showSuccess) {
         showNotification(t('builder.alerts.outreachSaveSuccess'), 'success');
       }
@@ -1253,8 +1223,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       }
       return false;
     } finally {
-      outreachSaveCountRef.current = Math.max(0, outreachSaveCountRef.current - 1);
-      if (documentIsActiveRef.current) setIsOutreachSaving(outreachSaveCountRef.current > 0);
+      if (documentIsActiveRef.current) dispatchAttachment('outreach', { type: 'saveSettled' });
     }
   }
 
@@ -1262,7 +1231,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const doGenerateCoverLetter = async () => {
     if (!resumeId || loadingState !== 'loaded') return;
     const activeResumeId = resumeId;
-    const startingEditVersion = coverLetterEditVersionRef.current;
+    const startingEditVersion = attachmentsRef.current.coverLetter.editVersion;
     setIsGeneratingCoverLetter(true);
     setShowRegenerateDialog(null);
     try {
@@ -1270,17 +1239,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         generateCoverLetter(activeResumeId)
       );
       if (!documentIsActiveRef.current) return;
-      attachmentBaselinesRef.current = {
-        ...attachmentBaselinesRef.current,
-        coverLetter: content,
-      };
-      // Generation persisted this baseline, but subsequent user edits retain priority.
-      if (startingEditVersion === coverLetterEditVersionRef.current) {
-        coverLetterEditVersionRef.current += 1;
-        setCoverLetter(content);
-        attachmentValuesRef.current = { ...attachmentValuesRef.current, coverLetter: content };
-      }
-      setHasUnsavedCoverLetter(attachmentValuesRef.current.coverLetter !== content);
+      dispatchAttachment('coverLetter', {
+        type: 'generated',
+        content,
+        startVersion: startingEditVersion,
+      });
       persistAttachmentDraft();
     } catch (error) {
       if (!documentIsActiveRef.current) return;
@@ -1312,7 +1275,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const doGenerateOutreach = async () => {
     if (!resumeId || loadingState !== 'loaded') return;
     const activeResumeId = resumeId;
-    const startingEditVersion = outreachEditVersionRef.current;
+    const startingEditVersion = attachmentsRef.current.outreach.editVersion;
     setIsGeneratingOutreach(true);
     setShowRegenerateDialog(null);
     try {
@@ -1320,16 +1283,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         generateOutreachMessage(activeResumeId)
       );
       if (!documentIsActiveRef.current) return;
-      attachmentBaselinesRef.current = {
-        ...attachmentBaselinesRef.current,
-        outreachMessage: content,
-      };
-      if (startingEditVersion === outreachEditVersionRef.current) {
-        outreachEditVersionRef.current += 1;
-        setOutreachMessage(content);
-        attachmentValuesRef.current = { ...attachmentValuesRef.current, outreachMessage: content };
-      }
-      setHasUnsavedOutreach(attachmentValuesRef.current.outreachMessage !== content);
+      dispatchAttachment('outreach', {
+        type: 'generated',
+        content,
+        startVersion: startingEditVersion,
+      });
       persistAttachmentDraft();
     } catch (error) {
       if (!documentIsActiveRef.current) return;
