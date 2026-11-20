@@ -104,4 +104,10 @@ describe('Swiss palette contrast (WCAG 2.2 AA)', () => {
   it('keeps the browser theme colour in sync with canvas', () => {
     expect(THEME_COLOR.toLowerCase()).toBe(token('canvas'));
   });
+
+  it('declares the palette on ::backdrop too, so older browsers dim behind a dialog', () => {
+    const css = CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const selector = css.match(/([^{};]+)\{[^}]*--sw-overlay:/)?.[1] ?? '';
+    expect(selector.split(',').map((part) => part.trim())).toEqual([':root', '::backdrop']);
+  });
 });

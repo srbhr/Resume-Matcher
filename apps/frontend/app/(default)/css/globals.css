@@ -4,8 +4,11 @@
 
 /* Swiss palette — the single source of colour (spec §4.1). Hex values (oklch in
    comments). tests/swiss-contrast.test.ts asserts WCAG 2.2 AA for every pairing
-   the UI uses; run it after any change. */
-:root {
+   the UI uses; run it after any change. Also on ::backdrop: before Chrome 122 and
+   Safari 17.4 a dialog's backdrop inherits no custom properties, so
+   backdrop:bg-overlay would have no colour there. */
+:root,
+::backdrop {
   --sw-canvas: #f0f0e8;
   --sw-white: #ffffff;
   --sw-ink: #000000;
