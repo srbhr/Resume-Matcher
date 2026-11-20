@@ -245,13 +245,17 @@ async def isolated_backend_state(
     try:
         yield test_db
     finally:
-        # Torn down last, so the test's own PDF fixtures have closed the renderer.
-        await drain_pdf_cleanup()
-        invalidate_config_cache()
-        crypto.reset_cache()
-        await test_db.close()
-        if test_db.schema:
-            drop_postgres_schema(test_db.schema)
+        try:
+            # Torn down last, so the test's own PDF fixtures have closed the renderer.
+            await drain_pdf_cleanup()
+        finally:
+            # Even when the drain times out, so the next test on this worker
+            # starts clean.
+            invalidate_config_cache()
+            crypto.reset_cache()
+            await test_db.close()
+            if test_db.schema:
+                drop_postgres_schema(test_db.schema)
 
 
 # ---------------------------------------------------------------------------
