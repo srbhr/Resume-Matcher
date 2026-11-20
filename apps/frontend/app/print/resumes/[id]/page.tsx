@@ -99,8 +99,13 @@ async function fetchResumePhoto(id: string): Promise<string | null> {
 }
 
 async function fetchResumeData(id: string, draftToken?: string): Promise<ResumeData> {
+  // A page-fit draft renders under its source resume's id, so a malformed token
+  // must fail, not fall back to measuring the saved resume.
+  if (draftToken !== undefined && !/^[a-f0-9]{32}$/.test(draftToken)) {
+    throw new Error('Malformed page-fit draft token.');
+  }
   const url =
-    draftToken && /^[a-f0-9]{32}$/.test(draftToken)
+    draftToken !== undefined
       ? `${API_BASE}/resumes/render-drafts/${draftToken}`
       : `${API_BASE}/resumes?resume_id=${encodeURIComponent(id)}`;
   const res = await fetch(url, { cache: 'no-store' });

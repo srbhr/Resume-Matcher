@@ -88,6 +88,19 @@ describe('print route page-fit drafts', () => {
     );
   });
 
+  it('renders the draft error marker, not the saved resume, for a malformed token', async () => {
+    const fetchMock = vi.fn(async (_url: string) =>
+      jsonResponse(200, { data: { processed_resume: { personalInfo: { name: 'Saved' } } } })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = await renderPrintPage('src-1', 'NOT-A-TOKEN');
+
+    expect(container.querySelector('.resume-print')).toBeNull();
+    expect(container.querySelector('[data-print-error="draft-unavailable"]')).not.toBeNull();
+    expect(fetchMock.mock.calls.some(([url]) => url.includes('resume_id='))).toBe(false);
+  });
+
   // A thrown error rendered Next's error page, which has no .resume-print, so the
   // PDF export waited out its whole deadline (about 60s) before failing.
   it('renders the error marker for a saved resume that cannot be loaded', async () => {
