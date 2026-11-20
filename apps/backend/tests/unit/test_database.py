@@ -120,6 +120,16 @@ class TestResumeCrud:
             == "data:image/jpeg;base64,AAAA"
         )
 
+    async def test_update_resume_can_set_the_deferred_photo(self, db: Database) -> None:
+        created = await db.create_resume(content="# Resume")
+        await db.update_resume(
+            created["resume_id"], {"photo": "data:image/jpeg;base64,BBBB"}
+        )
+        assert (
+            await db.get_resume_photo(created["resume_id"])
+            == "data:image/jpeg;base64,BBBB"
+        )
+
     async def test_list_resumes_returns_the_summary_fields(self, db: Database) -> None:
         created = await db.create_resume(
             content="# Resume",

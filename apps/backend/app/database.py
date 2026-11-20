@@ -514,7 +514,9 @@ class Database:
             if row is None:
                 raise ResumeNotFoundError(resume_id)
             for key, value in updates.items():
-                if hasattr(row, key):
+                # The mapper, not hasattr: reading a deferred column (photo) to
+                # test for it would lazy-load it, which an async session can't.
+                if key in Resume.__mapper__.attrs:
                     setattr(row, key, value)
                 else:
                     logger.warning("Ignoring unknown resume field on update: %s", key)
