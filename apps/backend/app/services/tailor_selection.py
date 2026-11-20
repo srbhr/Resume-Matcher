@@ -54,6 +54,7 @@ async def run_bullet_selection(
     max_per_entry: int | None,
     page_fit: PageFitSettings | None,
     max_pages: int = 1,
+    photo_resume_id: str | None = None,
 ) -> SelectionOutcome:
     scores, scoring = await score_bullets(source_data, job_description, job_keywords)
     selection = select_bullets(source_data, scores, max_per_entry)
@@ -70,7 +71,10 @@ async def run_bullet_selection(
 
         async def measure(draft: dict[str, Any]) -> int:
             return await _measure_within_budget(
-                draft, page_fit, fit_deadline=fit_deadline
+                draft,
+                page_fit,
+                fit_deadline=fit_deadline,
+                photo_resume_id=photo_resume_id,
             )
 
         fit = await fit_to_page_limit(
@@ -107,6 +111,7 @@ async def _measure_within_budget(
     data: dict[str, Any],
     page_fit: PageFitSettings,
     fit_deadline: float | None = None,
+    photo_resume_id: str | None = None,
 ) -> int:
     """Render inside the operation budget, holding back the reserve for later stages.
 
@@ -126,7 +131,9 @@ async def _measure_within_budget(
     if budget <= 0:
         raise PageMeasureError("No operation budget left to render the draft")
     try:
-        return await asyncio.wait_for(measure_page_count(data, page_fit), budget)
+        return await asyncio.wait_for(
+            measure_page_count(data, page_fit, photo_resume_id), budget
+        )
     except AIOperationDeadlineExceeded:
         raise  # a TimeoutError subclass, but it ends the operation, not just the render
     except TimeoutError as e:
@@ -135,11 +142,15 @@ async def _measure_within_budget(
 
 
 async def final_page_check(
-    data: dict[str, Any], page_fit: PageFitSettings
+    data: dict[str, Any],
+    page_fit: PageFitSettings,
+    photo_resume_id: str | None = None,
 ) -> int | None:
     """Page count of the rewritten result; None when it cannot be rendered in budget."""
     try:
-        return await _measure_within_budget(data, page_fit)
+        return await _measure_within_budget(
+            data, page_fit, photo_resume_id=photo_resume_id
+        )
     except PageMeasureError as e:
         logger.warning("Final page check skipped: %s", e)
         return None

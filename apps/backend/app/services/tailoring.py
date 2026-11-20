@@ -493,6 +493,8 @@ async def improve_preview_flow(
             max_per_entry=request.max_bullets_per_entry,
             page_fit=request.page_fit,
             max_pages=request.max_pages,
+            # The tailored copy gets the source's photo, so measure with it.
+            photo_resume_id=request.resume_id,
         )
         # The condensed, fitted source replaces the full master for every
         # downstream step so preservation contracts hold at confirm time.
@@ -676,7 +678,9 @@ async def improve_preview_flow(
         and bullet_selection.page_fit in ("fits", "trimmed")
     ):
         progress["stage"] = "final_page_check"
-        final_pages = await final_page_check(improved_data, request.page_fit)
+        final_pages = await final_page_check(
+            improved_data, request.page_fit, photo_resume_id=request.resume_id
+        )
         bullet_selection.final_check = "skipped" if final_pages is None else "ok"
         if final_pages is not None:
             bullet_selection.final_pages = final_pages

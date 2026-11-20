@@ -266,7 +266,9 @@ async def test_preview_page_fit_trims_and_reports(
     job: dict[str, Any],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         total = sum(
             len(e["description"])
             for e in data["workExperience"] + data["personalProjects"]
@@ -305,6 +307,37 @@ async def test_preview_page_fit_trims_and_reports(
     assert confirm.status_code == 200, confirm.text
 
 
+async def test_page_fit_measures_with_the_source_resume_photo(
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The tailored copy gets the source's photo, so every render measures with it."""
+    photo_ids: list[str | None] = []
+
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
+        photo_ids.append(photo_resume_id)
+        return 1
+
+    monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
+    res = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={
+            "resume_id": master["resume_id"],
+            "job_id": job["job_id"],
+            "max_bullets_per_entry": 3,
+            "page_fit": {"template": "swiss-single", "pageSize": "A4"},
+        },
+    )
+    assert res.status_code == 200, res.text
+    assert res.json()["data"]["bullet_selection"]["final_check"] == "ok"
+    assert len(photo_ids) >= 2  # the selection renders and the final check
+    assert set(photo_ids) == {master["resume_id"]}
+
+
 async def test_final_page_check_warns_when_rewrite_overflows(
     client: AsyncClient,
     master: dict[str, Any],
@@ -313,7 +346,9 @@ async def test_final_page_check_warns_when_rewrite_overflows(
 ) -> None:
     calls: list[int] = []
 
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         calls.append(1)
         # The selection phase fits; the post-rewrite check reports two pages.
         return 1 if len(calls) == 1 else 2
@@ -360,7 +395,9 @@ async def test_selection_summary_says_whether_the_final_check_ran(
     """A stale selection-phase page count must not pass for a verified final fit."""
     results = iter(renders)
 
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         pages = next(results)
         if pages == _RENDER_FAILS:
             raise PageMeasureError("renderer busy")
@@ -392,7 +429,9 @@ async def test_slow_final_render_never_fails_the_preview(
     calls: list[int] = []
     never = asyncio.Event()
 
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         calls.append(1)
         if len(calls) == 1:
             return 1  # the selection phase fits at once
@@ -976,7 +1015,9 @@ async def test_preview_with_two_page_limit_keeps_a_two_page_master_whole(
     job: dict[str, Any],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         return 2  # the full master renders on two pages
 
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
@@ -1009,7 +1050,9 @@ async def test_preview_over_the_limit_keeps_selected_bullets(
     job: dict[str, Any],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         return 3  # never fits two pages, whatever is dropped
 
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
@@ -1040,7 +1083,9 @@ async def test_final_check_compares_against_the_page_limit(
 ) -> None:
     calls: list[int] = []
 
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         calls.append(1)
         return 2 if len(calls) == 1 else 3  # fits two pages, rewrite spills to three
 
@@ -1068,7 +1113,9 @@ async def test_preview_in_cv_mode_reports_pages_without_a_page_limit(
 ) -> None:
     measured: list[int] = []
 
-    async def measure(data: dict[str, Any], fit: Any) -> int:
+    async def measure(
+        data: dict[str, Any], fit: Any, photo_resume_id: str | None = None
+    ) -> int:
         measured.append(1)
         return 3 if len(measured) == 1 else 4  # a CV runs long and the rewrite longer
 

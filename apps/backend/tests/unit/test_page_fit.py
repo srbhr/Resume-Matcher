@@ -94,6 +94,19 @@ async def test_measure_renders_draft_url_and_discards_token(
     assert page_fit.render_drafts.get(token) is None  # discarded after render
 
 
+async def test_measure_renders_under_the_photo_resume_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The print route adds the photo of the resume in its path; drafts need it too."""
+    render = AsyncMock(return_value=_pdf(1))
+    monkeypatch.setattr(page_fit, "render_resume_pdf", render)
+    await measure_page_count(
+        {"summary": "x"}, PageFitSettings(), photo_resume_id="res 1/a"
+    )
+    url = render.call_args.args[0]
+    assert "/print/resumes/res%201%2Fa?draft=" in url
+
+
 async def test_measure_fails_fast_when_the_print_page_reports_a_missing_draft(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

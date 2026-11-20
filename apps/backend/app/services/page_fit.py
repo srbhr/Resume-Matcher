@@ -6,7 +6,7 @@ import time
 from collections import OrderedDict
 from collections.abc import Callable
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from uuid import uuid4
 
 from pdfminer.pdfpage import PDFPage
@@ -83,12 +83,22 @@ def resume_print_url(resume_id: str, fit: PageFitSettings) -> str:
     return f"{settings.frontend_base_url}/print/resumes/{resume_id}?{query}"
 
 
-async def measure_page_count(data: dict[str, Any], fit: PageFitSettings) -> int:
-    """Render ``data`` with the user's print settings and return its page count."""
+async def measure_page_count(
+    data: dict[str, Any],
+    fit: PageFitSettings,
+    photo_resume_id: str | None = None,
+) -> int:
+    """Render ``data`` with the user's print settings and return its page count.
+
+    ``photo_resume_id`` is the resume whose photo the result will carry. The
+    draft renders under that resume's print path, so the print route adds its
+    photo, which changes the header's height and so the page count.
+    """
     token = render_drafts.put(data)
     try:
         query = urlencode(fit.to_query())
-        url = f"{settings.frontend_base_url}/print/resumes/draft?draft={token}&{query}"
+        path = quote(photo_resume_id, safe="") if photo_resume_id else "draft"
+        url = f"{settings.frontend_base_url}/print/resumes/{path}?draft={token}&{query}"
         margins = print_margins(fit)
         # Also wait for the print route's error marker so a missing draft fails fast.
         pdf_bytes = await render_resume_pdf(

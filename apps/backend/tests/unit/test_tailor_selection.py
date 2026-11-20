@@ -49,7 +49,9 @@ async def test_selection_with_page_fit_trims_and_warns_on_fallback(
         AsyncMock(return_value=(SCORES, "keyword_fallback")),
     )
 
-    async def measure(data: dict[str, Any], fit: PageFitSettings) -> int:
+    async def measure(
+        data: dict[str, Any], fit: PageFitSettings, photo_resume_id: str | None = None
+    ) -> int:
         return 1 if len(data["workExperience"][0]["description"]) <= 2 else 2
 
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
@@ -189,7 +191,9 @@ async def test_page_fit_stops_rendering_once_its_time_cap_is_spent(
     monkeypatch.setattr(tailor_selection, "remaining_timeout", lambda: remaining)
     renders: list[int] = []
 
-    async def measure(data: dict[str, Any], fit: PageFitSettings) -> int:
+    async def measure(
+        data: dict[str, Any], fit: PageFitSettings, photo_resume_id: str | None = None
+    ) -> int:
         bullets = len(data["workExperience"][0]["description"])
         renders.append(bullets)
         now[0] += render_cost
@@ -212,7 +216,9 @@ async def test_page_fit_stops_rendering_once_its_time_cap_is_spent(
         assert out.data["workExperience"][0]["description"] == ["b", "c", "d"]
 
 
-async def _slow_render(data: dict[str, Any], fit: PageFitSettings) -> int:
+async def _slow_render(
+    data: dict[str, Any], fit: PageFitSettings, photo_resume_id: str | None = None
+) -> int:
     await asyncio.sleep(5)
     return 2
 

@@ -79,9 +79,9 @@ function parseBoolean(value: string | undefined, defaultValue: boolean): boolean
 }
 
 /**
- * The photo of a photo CV, or null. Page-fit drafts use their resume's photo
- * too: it changes the header's height and so the page count. A photo that
- * can't load never blocks the PDF.
+ * The photo of a photo CV, or null. Page-fit drafts render under their source
+ * resume's id, so they get its photo too: it changes the header's height and so
+ * the page count. A photo that can't load never blocks the PDF.
  */
 async function fetchResumePhoto(id: string): Promise<string | null> {
   try {
