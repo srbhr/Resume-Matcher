@@ -69,8 +69,10 @@ class Resume(Base):
     template_settings: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # The resume's photo as a JPEG data URL (services/resume_photo.py); None for
     # no photo. Kept out of processed_data, which goes into LLM prompts, and out
-    # of Database._resume_to_dict, which MCP tools and the CLI print.
-    photo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # of Database._resume_to_dict, which MCP tools and the CLI print. Deferred:
+    # only the photo queries read it, so whole-row reads don't load 40-80 KB
+    # they then drop.
+    photo: Mapped[str | None] = mapped_column(Text, nullable=True, deferred=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
     updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
 

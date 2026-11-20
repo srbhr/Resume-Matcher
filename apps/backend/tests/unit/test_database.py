@@ -83,6 +83,43 @@ class TestResumeCrud:
             }
         ), columns
 
+    async def test_whole_resume_reads_leave_the_photo_to_its_own_query(
+        self, db: Database
+    ) -> None:
+        # The photo is a 40-80 KB data URL that _resume_to_dict drops anyway.
+        master = await db.create_resume_atomic_master(
+            content="# Resume", processing_status="ready"
+        )
+        await db.set_resume_photo(master["resume_id"], "data:image/jpeg;base64,AAAA")
+        statements: list[str] = []
+
+        def capture(
+            conn: Any,
+            cursor: Any,
+            statement: str,
+            params: Any,
+            context: Any,
+            executemany: bool,
+        ) -> None:
+            statements.append(statement)
+
+        engine = db._async_engine.sync_engine
+        event.listen(engine, "before_cursor_execute", capture)
+        try:
+            await db.get_resume(master["resume_id"])
+            await db.get_master_resume()
+            await db.list_master_resumes()
+        finally:
+            event.remove(engine, "before_cursor_execute", capture)
+
+        selects = [s for s in statements if re.search(r"\bFROM resumes\b", s)]
+        assert selects
+        assert not [s for s in selects if re.search(r"\bresumes\.photo\b", s)]
+        assert (
+            await db.get_resume_photo(master["resume_id"])
+            == "data:image/jpeg;base64,AAAA"
+        )
+
     async def test_list_resumes_returns_the_summary_fields(self, db: Database) -> None:
         created = await db.create_resume(
             content="# Resume",
