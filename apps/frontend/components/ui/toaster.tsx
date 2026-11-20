@@ -14,6 +14,9 @@ import { buttonClass } from './button';
  *
  * Use a toast for an outcome the user doesn't have to act on ("Resume
  * downloaded"). Keep `ConfirmDialog` for choices and for errors that offer a retry.
+ * Don't toast while a Dialog is open: the dialog is modal in the browser's top
+ * layer, so the stack sits under its backdrop and can't be clicked. Show the
+ * message in the dialog instead (an `Alert`).
  */
 export { toast };
 
