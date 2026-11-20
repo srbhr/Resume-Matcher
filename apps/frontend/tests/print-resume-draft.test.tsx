@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 vi.mock('@/components/dashboard/resume-component', () => ({
-  default: () => <div data-testid="resume" />,
+  default: ({ photo }: { photo?: string | null }) => (
+    <div data-testid="resume" data-photo={photo ?? ''} />
+  ),
 }));
 
 import PrintResumePage from '@/app/print/resumes/[id]/page';
@@ -63,6 +65,27 @@ describe('print route page-fit drafts', () => {
 
     expect(container.querySelector('.resume-print')).not.toBeNull();
     expect(container.querySelector('[data-print-error]')).toBeNull();
+  });
+
+  it('renders a draft from its token with the photo of the resume in its path', async () => {
+    // Page fit renders drafts at /print/resumes/<source id>?draft=<token>: the
+    // tailored copy gets that resume's photo, so the measurement needs it too.
+    const PHOTO = 'data:image/jpeg;base64,/9j/source';
+    const fetchMock = vi.fn(async (url: string) =>
+      url.includes('/resumes/src-1/photo')
+        ? jsonResponse(200, { photo: PHOTO })
+        : jsonResponse(200, { data: { processed_resume: { personalInfo: { name: 'Jane' } } } })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = await renderPrintPage('src-1', TOKEN);
+
+    const urls = fetchMock.mock.calls.map(([url]) => url);
+    expect(urls.some((url) => url.includes(`/resumes/render-drafts/${TOKEN}`))).toBe(true);
+    expect(urls.some((url) => url.includes('resume_id='))).toBe(false);
+    expect(container.querySelector('[data-testid="resume"]')?.getAttribute('data-photo')).toBe(
+      PHOTO
+    );
   });
 
   // A thrown error rendered Next's error page, which has no .resume-print, so the
