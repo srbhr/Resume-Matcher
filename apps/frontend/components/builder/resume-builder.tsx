@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
@@ -163,6 +163,28 @@ const INITIAL_ATTACHMENTS: Attachments = {
   outreach: initialAttachment,
 };
 
+/** What differs between the two attachments: their endpoints, names and messages. */
+const ATTACHMENT_PARTS = {
+  coverLetter: {
+    save: updateCoverLetter,
+    generate: generateCoverLetter,
+    logName: 'cover letter',
+    regenerateDialog: 'cover-letter',
+    saveSuccess: 'builder.alerts.coverLetterSaveSuccess',
+    saveFailed: 'builder.alerts.coverLetterSaveFailed',
+    generateFailed: 'builder.alerts.coverLetterGenerateFailed',
+  },
+  outreach: {
+    save: updateOutreachMessage,
+    generate: generateOutreachMessage,
+    logName: 'outreach message',
+    regenerateDialog: 'outreach',
+    saveSuccess: 'builder.alerts.outreachSaveSuccess',
+    saveFailed: 'builder.alerts.outreachSaveFailed',
+    generateFailed: 'builder.alerts.outreachGenerateFailed',
+  },
+} as const;
+
 interface ResumeBuilderProps {
   /** The user's coding agent does the AI work: AI actions show a prompt for it. */
   agentMode?: boolean;
@@ -283,14 +305,19 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const hasCurrentRecoveryDraft =
     (!hasUnsavedChanges || hasCurrentLocalDraft) &&
     (!(hasUnsavedCoverLetter || hasUnsavedOutreach) || hasCurrentAttachmentDraft);
-  const coverLetterSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const outreachSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  // Each part's saves and generations run one at a time, in order.
+  const attachmentQueuesRef = useRef<Record<AttachmentPart, Promise<void>>>({
+    coverLetter: Promise.resolve(),
+    outreach: Promise.resolve(),
+  });
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
 
   // On-demand generation state
   const [isTailoredResume, setIsTailoredResume] = useState(false);
-  const [isGeneratingCoverLetter, setIsGeneratingCoverLetter] = useState(false);
-  const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false);
+  const [generating, setGenerating] = useState<Record<AttachmentPart, boolean>>({
+    coverLetter: false,
+    outreach: false,
+  });
   const [isGeneratingInterviewPrep, setIsGeneratingInterviewPrep] = useState(false);
   const [interviewPrepError, setInterviewPrepError] = useState<string | null>(null);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState<
@@ -856,13 +883,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     );
   };
 
-  const handleCoverLetterChange = (value: string) => {
-    dispatchAttachment('coverLetter', { type: 'changed', value });
-    persistAttachmentDraft();
-  };
-
-  const handleOutreachChange = (value: string) => {
-    dispatchAttachment('outreach', { type: 'changed', value });
+  const handleAttachmentChange = (part: AttachmentPart, value: string) => {
+    dispatchAttachment(part, { type: 'changed', value });
     persistAttachmentDraft();
   };
 
@@ -1056,77 +1078,73 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     }
   };
 
-  // Cover letter handlers
-  const queueAttachmentWrite = <T,>(
-    queue: React.RefObject<Promise<void>>,
-    action: () => Promise<T>
-  ): Promise<T> => {
+  // Attachment handlers (cover letter and outreach message)
+  const queueAttachmentWrite = <T,>(part: AttachmentPart, action: () => Promise<T>): Promise<T> => {
+    const queues = attachmentQueuesRef.current;
     const operation = trackOwnWrite(
       ownWritesRef,
-      queue.current.then(() => {
+      queues[part].then(() => {
         if (!documentIsActiveRef.current) throw new DOMException('Editor closed', 'AbortError');
         return action();
       })
     );
-    queue.current = operation.then(
+    queues[part] = operation.then(
       () => undefined,
       () => undefined
     );
     return operation;
   };
 
-  const handleSaveCoverLetter = async (
+  const saveAttachment = async (
+    part: AttachmentPart,
     showSuccess = true,
     showFailure = true
   ): Promise<boolean> => {
     if (!resumeId || loadingState !== 'loaded') return false;
     const activeResumeId = resumeId;
+    const { save, logName, saveSuccess, saveFailed } = ATTACHMENT_PARTS[part];
     try {
-      dispatchAttachment('coverLetter', { type: 'saveStarted' });
-      if (!(await agentAllowsSave('coverLetter', showFailure))) return false;
+      dispatchAttachment(part, { type: 'saveStarted' });
+      if (!(await agentAllowsSave(part, showFailure))) return false;
       // A prior generation or newer edit can replace the value while this save waits.
-      const { savedContent, savedVersion } = await queueAttachmentWrite(
-        coverLetterSaveQueueRef,
-        async () => {
-          const { value: savedContent, editVersion: savedVersion } =
-            attachmentsRef.current.coverLetter;
-          await updateCoverLetter(activeResumeId, savedContent);
-          return { savedContent, savedVersion };
-        }
-      );
+      const { savedContent, savedVersion } = await queueAttachmentWrite(part, async () => {
+        const { value: savedContent, editVersion: savedVersion } = attachmentsRef.current[part];
+        await save(activeResumeId, savedContent);
+        return { savedContent, savedVersion };
+      });
       if (!documentIsActiveRef.current) return false;
-      dispatchAttachment('coverLetter', {
+      dispatchAttachment(part, {
         type: 'saveSucceeded',
         content: savedContent,
         version: savedVersion,
       });
       persistAttachmentDraft();
       if (showSuccess) {
-        showNotification(t('builder.alerts.coverLetterSaveSuccess'), 'success');
+        showNotification(t(saveSuccess), 'success');
       }
       return true;
     } catch (error) {
       if (!documentIsActiveRef.current) return false;
-      console.error('Failed to save cover letter:', error);
+      console.error(`Failed to save ${logName}:`, error);
       persistAttachmentDraft();
       if (showFailure) {
-        showNotification(t('builder.alerts.coverLetterSaveFailed'), 'danger');
+        showNotification(t(saveFailed), 'danger');
       }
       return false;
     } finally {
-      if (documentIsActiveRef.current) dispatchAttachment('coverLetter', { type: 'saveSettled' });
+      if (documentIsActiveRef.current) dispatchAttachment(part, { type: 'saveSettled' });
     }
   };
 
   const flushCoverLetterForExport = async (showFailure = true): Promise<boolean> => {
     while (documentIsActiveRef.current) {
-      await coverLetterSaveQueueRef.current;
+      await attachmentQueuesRef.current.coverLetter;
       if (!documentIsActiveRef.current) return false;
       const { value, baseline } = attachmentsRef.current.coverLetter;
       if (value === baseline) {
         return true;
       }
-      if (!(await handleSaveCoverLetter(false, showFailure))) {
+      if (!(await saveAttachment('coverLetter', false, showFailure))) {
         return false;
       }
     }
@@ -1136,11 +1154,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
   const flushAttachmentChanges = async (): Promise<boolean> => {
     while (documentIsActiveRef.current) {
       if (!(await flushCoverLetterForExport(false))) return false;
-      await outreachSaveQueueRef.current;
+      await attachmentQueuesRef.current.outreach;
       if (!documentIsActiveRef.current) return false;
       const { coverLetter, outreach } = attachmentsRef.current;
       if (outreach.value !== outreach.baseline) {
-        if (!(await handleSaveOutreach(false, false))) return false;
+        if (!(await saveAttachment('outreach', false, false))) return false;
         continue;
       }
       if (coverLetter.value === coverLetter.baseline) return true;
@@ -1187,59 +1205,18 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     }
   };
 
-  // Outreach handlers
-  async function handleSaveOutreach(showSuccess = true, showFailure = true): Promise<boolean> {
-    if (!resumeId || loadingState !== 'loaded') return false;
-    const activeResumeId = resumeId;
-    try {
-      dispatchAttachment('outreach', { type: 'saveStarted' });
-      if (!(await agentAllowsSave('outreach', showFailure))) return false;
-      const { savedContent, savedVersion } = await queueAttachmentWrite(
-        outreachSaveQueueRef,
-        async () => {
-          const { value: savedContent, editVersion: savedVersion } =
-            attachmentsRef.current.outreach;
-          await updateOutreachMessage(activeResumeId, savedContent);
-          return { savedContent, savedVersion };
-        }
-      );
-      if (!documentIsActiveRef.current) return false;
-      dispatchAttachment('outreach', {
-        type: 'saveSucceeded',
-        content: savedContent,
-        version: savedVersion,
-      });
-      persistAttachmentDraft();
-      if (showSuccess) {
-        showNotification(t('builder.alerts.outreachSaveSuccess'), 'success');
-      }
-      return true;
-    } catch (error) {
-      if (!documentIsActiveRef.current) return false;
-      console.error('Failed to save outreach message:', error);
-      persistAttachmentDraft();
-      if (showFailure) {
-        showNotification(t('builder.alerts.outreachSaveFailed'), 'danger');
-      }
-      return false;
-    } finally {
-      if (documentIsActiveRef.current) dispatchAttachment('outreach', { type: 'saveSettled' });
-    }
-  }
-
   // On-demand generation handlers
-  const doGenerateCoverLetter = async () => {
+  const doGenerateAttachment = async (part: AttachmentPart) => {
     if (!resumeId || loadingState !== 'loaded') return;
     const activeResumeId = resumeId;
-    const startingEditVersion = attachmentsRef.current.coverLetter.editVersion;
-    setIsGeneratingCoverLetter(true);
+    const { generate, logName, generateFailed } = ATTACHMENT_PARTS[part];
+    const startingEditVersion = attachmentsRef.current[part].editVersion;
+    setGenerating((current) => ({ ...current, [part]: true }));
     setShowRegenerateDialog(null);
     try {
-      const content = await queueAttachmentWrite(coverLetterSaveQueueRef, () =>
-        generateCoverLetter(activeResumeId)
-      );
+      const content = await queueAttachmentWrite(part, () => generate(activeResumeId));
       if (!documentIsActiveRef.current) return;
-      dispatchAttachment('coverLetter', {
+      dispatchAttachment(part, {
         type: 'generated',
         content,
         startVersion: startingEditVersion,
@@ -1247,73 +1224,26 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       persistAttachmentDraft();
     } catch (error) {
       if (!documentIsActiveRef.current) return;
-      console.error('Failed to generate cover letter:', error);
+      console.error(`Failed to generate ${logName}:`, error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      showNotification(
-        t('builder.alerts.coverLetterGenerateFailed', { error: errorMessage }),
-        'danger'
-      );
+      showNotification(t(generateFailed, { error: errorMessage }), 'danger');
     } finally {
-      if (documentIsActiveRef.current) setIsGeneratingCoverLetter(false);
+      if (documentIsActiveRef.current) setGenerating((current) => ({ ...current, [part]: false }));
     }
   };
 
-  const handleGenerateCoverLetter = () => {
+  const handleGenerateAttachment = (part: AttachmentPart) => {
     if (!resumeId || loadingState !== 'loaded') return;
     if (agentMode) {
-      setAgentTask('coverLetter');
+      setAgentTask(part);
       return;
     }
     // If content exists, show confirmation dialog
-    if (coverLetter) {
-      setShowRegenerateDialog('cover-letter');
+    if (attachments[part].value) {
+      setShowRegenerateDialog(ATTACHMENT_PARTS[part].regenerateDialog);
       return;
     }
-    void doGenerateCoverLetter();
-  };
-
-  const doGenerateOutreach = async () => {
-    if (!resumeId || loadingState !== 'loaded') return;
-    const activeResumeId = resumeId;
-    const startingEditVersion = attachmentsRef.current.outreach.editVersion;
-    setIsGeneratingOutreach(true);
-    setShowRegenerateDialog(null);
-    try {
-      const content = await queueAttachmentWrite(outreachSaveQueueRef, () =>
-        generateOutreachMessage(activeResumeId)
-      );
-      if (!documentIsActiveRef.current) return;
-      dispatchAttachment('outreach', {
-        type: 'generated',
-        content,
-        startVersion: startingEditVersion,
-      });
-      persistAttachmentDraft();
-    } catch (error) {
-      if (!documentIsActiveRef.current) return;
-      console.error('Failed to generate outreach message:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      showNotification(
-        t('builder.alerts.outreachGenerateFailed', { error: errorMessage }),
-        'danger'
-      );
-    } finally {
-      if (documentIsActiveRef.current) setIsGeneratingOutreach(false);
-    }
-  };
-
-  const handleGenerateOutreach = () => {
-    if (!resumeId || loadingState !== 'loaded') return;
-    if (agentMode) {
-      setAgentTask('outreach');
-      return;
-    }
-    // If content exists, show confirmation dialog
-    if (outreachMessage) {
-      setShowRegenerateDialog('outreach');
-      return;
-    }
-    void doGenerateOutreach();
+    void doGenerateAttachment(part);
   };
 
   const canGenerateInterviewPrep =
@@ -1385,9 +1315,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
 
   const handleConfirmRegenerate = () => {
     if (showRegenerateDialog === 'cover-letter') {
-      void doGenerateCoverLetter();
+      void doGenerateAttachment('coverLetter');
     } else if (showRegenerateDialog === 'outreach') {
-      void doGenerateOutreach();
+      void doGenerateAttachment('outreach');
     } else if (showRegenerateDialog === 'interview-prep') {
       void doGenerateInterviewPrep();
     }
@@ -1502,10 +1432,10 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleGenerateCoverLetter}
-                  disabled={isGeneratingCoverLetter}
+                  onClick={() => handleGenerateAttachment('coverLetter')}
+                  disabled={generating.coverLetter}
                 >
-                  {isGeneratingCoverLetter && (
+                  {generating.coverLetter && (
                     <SpinnerGap aria-hidden="true" className="animate-spin" />
                   )}
                   {t('coverLetter.regenerate')}
@@ -1527,10 +1457,10 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleGenerateOutreach}
-                disabled={isGeneratingOutreach}
+                onClick={() => handleGenerateAttachment('outreach')}
+                disabled={generating.outreach}
               >
-                {isGeneratingOutreach && <SpinnerGap aria-hidden="true" className="animate-spin" />}
+                {generating.outreach && <SpinnerGap aria-hidden="true" className="animate-spin" />}
                 {t('outreach.regenerate')}
               </Button>
             )}
@@ -1621,15 +1551,15 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                 (coverLetter ? (
                   <CoverLetterEditor
                     content={coverLetter}
-                    onChange={handleCoverLetterChange}
-                    onSave={handleSaveCoverLetter}
+                    onChange={(value) => handleAttachmentChange('coverLetter', value)}
+                    onSave={() => void saveAttachment('coverLetter')}
                     isSaving={isCoverLetterSaving}
                   />
                 ) : (
                   <GeneratePrompt
                     type="cover-letter"
-                    isGenerating={isGeneratingCoverLetter}
-                    onGenerate={handleGenerateCoverLetter}
+                    isGenerating={generating.coverLetter}
+                    onGenerate={() => handleGenerateAttachment('coverLetter')}
                     isTailoredResume={isTailoredResume}
                   />
                 ))}
@@ -1639,15 +1569,15 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                 (outreachMessage ? (
                   <OutreachEditor
                     content={outreachMessage}
-                    onChange={handleOutreachChange}
-                    onSave={handleSaveOutreach}
+                    onChange={(value) => handleAttachmentChange('outreach', value)}
+                    onSave={() => void saveAttachment('outreach')}
                     isSaving={isOutreachSaving}
                   />
                 ) : (
                   <GeneratePrompt
                     type="outreach"
-                    isGenerating={isGeneratingOutreach}
-                    onGenerate={handleGenerateOutreach}
+                    isGenerating={generating.outreach}
+                    onGenerate={() => handleGenerateAttachment('outreach')}
                     isTailoredResume={isTailoredResume}
                   />
                 ))}
