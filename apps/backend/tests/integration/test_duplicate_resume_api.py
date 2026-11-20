@@ -213,6 +213,25 @@ async def test_duplicate_rejects_missing_and_not_ready(
     assert res.json()["detail"] == "Only ready resumes can be duplicated."
 
 
+async def test_duplicate_of_a_resume_deleted_mid_request_is_not_found(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Another tab deletes the resume after duplicate has read it."""
+    master = await _master(isolated_db, "gone")
+    read_photo = isolated_db.get_resume_photo
+
+    async def delete_then_read_photo(resume_id: str) -> str | None:
+        await isolated_db.delete_resume(resume_id)
+        return await read_photo(resume_id)
+
+    monkeypatch.setattr(isolated_db, "get_resume_photo", delete_then_read_photo)
+
+    res = await client.post(f"/api/v1/resumes/{master['resume_id']}/duplicate")
+
+    assert res.status_code == 404
+    assert res.json()["detail"] == "Resume not found"
+
+
 async def test_duplicate_master_never_takes_over_stuck_default(
     client: AsyncClient, isolated_db: Database
 ) -> None:

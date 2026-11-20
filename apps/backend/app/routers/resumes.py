@@ -1535,6 +1535,12 @@ async def duplicate_resume(resume_id: str) -> DuplicateResumeResponse:
         raise HTTPException(
             status_code=409, detail="Only ready resumes can be duplicated."
         )
+    try:
+        # The copy's own photo, not the master's a tailored copy would inherit.
+        photo = await db.get_resume_photo(resume_id)
+    except ResumeNotFoundError as e:
+        # Deleted since it was read above.
+        raise HTTPException(status_code=404, detail="Resume not found") from e
 
     fields: dict[str, Any] = {
         "content": source["content"],
@@ -1548,8 +1554,7 @@ async def duplicate_resume(resume_id: str) -> DuplicateResumeResponse:
         "processing_status": "ready",
         "title": _copy_title(source),
         "template_settings": copy.deepcopy(source.get("template_settings")),
-        # The copy's own photo, not the master's a tailored copy would inherit.
-        "photo": await db.get_resume_photo(resume_id),
+        "photo": photo,
     }
     try:
         if source.get("is_master", False):
