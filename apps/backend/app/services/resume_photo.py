@@ -8,6 +8,7 @@ page's own origin, and an inlined image needs no request at all.
 
 import base64
 import io
+import struct
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
@@ -50,6 +51,11 @@ def normalize_photo(data: bytes) -> str:
         Image.DecompressionBombError,
         OSError,
         SyntaxError,
+        # Malformed EXIF: exif_transpose re-packs the tags it read, and a tag
+        # with the wrong type or count fails there.
+        struct.error,
+        TypeError,
+        ValueError,
     ) as error:
         raise UnsupportedPhotoError(str(error)) from error
 

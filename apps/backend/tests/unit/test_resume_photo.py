@@ -109,6 +109,29 @@ def test_anything_but_a_readable_jpeg_png_or_webp_is_refused(
         normalize_photo(data)
 
 
+def _jpeg_with_a_broken_exif_tag(tag_low_byte: int) -> bytes:
+    """A JPEG whose first EXIF tag id is rewritten, giving that tag a wrong type."""
+    image = Image.new("RGB", (60, 80), "red")
+    exif = image.getexif()
+    exif[0x010F] = "Cam"  # Make: ASCII; renaming it gives a numeric tag a string
+    exif[0x0112] = 6  # Orientation, so the photo is turned upright
+    data = bytearray(encode(image, "JPEG", exif=exif.tobytes()))
+    # The TIFF header is 8 bytes, the entry count 2; the first entry's tag id follows.
+    data[data.index(b"Exif\x00\x00") + 6 + 11] = tag_low_byte
+    return bytes(data)
+
+
+@pytest.mark.parametrize(
+    "tag_low_byte",
+    [0x00, 0x1A],  # ImageWidth and XResolution, each holding a string
+)
+def test_a_photo_with_malformed_exif_is_refused_not_a_server_error(
+    tag_low_byte: int,
+) -> None:
+    with pytest.raises(UnsupportedPhotoError):
+        normalize_photo(_jpeg_with_a_broken_exif_tag(tag_low_byte))
+
+
 def test_a_file_over_the_byte_limit_is_refused_before_decoding() -> None:
     with pytest.raises(PhotoTooLargeError):
         normalize_photo(b"\xff" * (MAX_PHOTO_BYTES + 1))
