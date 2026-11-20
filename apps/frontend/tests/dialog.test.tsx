@@ -162,6 +162,18 @@ describe('Dialog', () => {
     expect(opener).toHaveFocus();
   });
 
+  it.each([
+    ['while composing', { isComposing: true }],
+    ['with the IME keyCode (Safari)', { keyCode: 229 }],
+  ])('stays open on an Escape that cancels an IME candidate (%s)', (_label, init) => {
+    openDialog();
+    fireEvent.keyDown(document, { key: 'Escape', ...init });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('does not steal focus back when the close handler moved it elsewhere', () => {
     render(<ClaimingHarness />);
     const opener = screen.getByText('open');

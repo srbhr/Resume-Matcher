@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X } from '@phosphor-icons/react';
 import { AnimatePresence, m, useIsPresent, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { isImeComposing } from '@/lib/utils/keyboard';
 import { DURATION, EASE_OUT_EXPO, SPRING } from '@/lib/motion';
 import { useTranslations } from '@/lib/i18n';
 import { Button } from './button';
@@ -208,6 +209,8 @@ const DialogContent: React.FC<DialogContentProps> = ({
       if (e.key !== 'Escape' || !open || openDialogs[openDialogs.length - 1] !== idRef.current) {
         return;
       }
+      // Escape that cancels an IME candidate belongs to the text being typed.
+      if (isImeComposing(e)) return;
       // The browser's own Escape would close the dialog behind React's back.
       e.preventDefault();
       if (dismissible && !handledEscapes.has(e)) {
