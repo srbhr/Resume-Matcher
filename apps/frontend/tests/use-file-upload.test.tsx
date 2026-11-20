@@ -263,12 +263,28 @@ it('serializes batched add/remove callbacks and enforces capacity before rerende
 
 describe('upload failure messages', () => {
   it.each([
-    [422, JSON.stringify({ detail: 'Failed to parse document.' }), 'application/json'],
-    [409, 'conflict without a detail', 'text/plain'],
-    [409, JSON.stringify({ detail: '' }), 'application/json'],
+    [
+      422,
+      JSON.stringify({ detail: 'Failed to parse document.' }),
+      'application/json',
+      'Upload failed for resume.pdf. Status: 422  - Failed to parse document.',
+    ],
+    [409, 'conflict without a detail', 'text/plain', 'Upload failed for resume.pdf. Status: 409 '],
+    [
+      409,
+      JSON.stringify({ detail: '' }),
+      'application/json',
+      'Upload failed for resume.pdf. Status: 409 ',
+    ],
+    [
+      502,
+      '<!DOCTYPE html><html><body>Bad Gateway</body></html>',
+      'text/html',
+      'Upload failed for resume.pdf. Status: 502 ',
+    ],
   ])(
-    'keeps the status message for HTTP %s without a conflict reason',
-    async (status, body, contentType) => {
+    'keeps the status message for HTTP %s without a conflict reason, never the raw body',
+    async (status, body, contentType, expected) => {
       const onUploadError = vi.fn();
       vi.stubGlobal(
         'fetch',
@@ -283,9 +299,7 @@ describe('upload failure messages', () => {
       );
       act(() => result.current[1].addFiles([resumeFile()]));
       await waitFor(() => expect(onUploadError).toHaveBeenCalledTimes(1));
-      expect(onUploadError.mock.calls[0][1]).toBe(
-        `Upload failed for resume.pdf. Status: ${status}  - Server response: ${body}`
-      );
+      expect(onUploadError.mock.calls[0][1]).toBe(expected);
     }
   );
 });

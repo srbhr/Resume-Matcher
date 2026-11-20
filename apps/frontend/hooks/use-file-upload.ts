@@ -337,8 +337,9 @@ export const useFileUpload = (
           let conflictDetail: string | null = null;
           try {
             const errorText = await response.text();
+            const serverDetail = parseErrorDetail(errorText);
             // A 409 (e.g. the master limit) carries a user-facing reason in `detail`.
-            if (response.status === 409) conflictDetail = parseErrorDetail(errorText);
+            if (response.status === 409) conflictDetail = serverDetail;
             if (contentType?.includes('application/json')) {
               try {
                 const errorData: unknown = JSON.parse(errorText);
@@ -347,7 +348,9 @@ export const useFileUpload = (
                 // Malformed error bodies retain the ordinary upload failure.
               }
             }
-            errorDetail += ` - Server response: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`;
+            // The server's own words when it gave any, never the raw body: a proxy's
+            // HTML error page or a JSON envelope means nothing on an upload card.
+            if (serverDetail) errorDetail += ` - ${serverDetail}`;
           } catch (textError: unknown) {
             console.warn('Could not read error response text:', textError);
           }
