@@ -209,10 +209,10 @@ const DialogContent: React.FC<DialogContentProps> = ({
       if (e.key !== 'Escape' || !open || openDialogs[openDialogs.length - 1] !== idRef.current) {
         return;
       }
-      // Escape that cancels an IME candidate belongs to the text being typed.
-      if (isImeComposing(e)) return;
       // The browser's own Escape would close the dialog behind React's back.
       e.preventDefault();
+      // An Escape that cancels an IME candidate belongs to the text being typed.
+      if (isImeComposing(e)) return;
       if (dismissible && !handledEscapes.has(e)) {
         handledEscapes.add(e);
         onOpenChange(false);

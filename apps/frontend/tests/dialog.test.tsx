@@ -167,7 +167,9 @@ describe('Dialog', () => {
     ['with the IME keyCode (Safari)', { keyCode: 229 }],
   ])('stays open on an Escape that cancels an IME candidate (%s)', (_label, init) => {
     openDialog();
-    fireEvent.keyDown(document, { key: 'Escape', ...init });
+    // Still prevented: the browser's own Escape must not close the native dialog either.
+    const notPrevented = fireEvent.keyDown(document, { key: 'Escape', ...init });
+    expect(notPrevented).toBe(false);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: 'Escape' });
