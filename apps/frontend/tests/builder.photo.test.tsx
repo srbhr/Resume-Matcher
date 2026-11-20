@@ -9,6 +9,7 @@ import {
   SERVER_RESUME,
   advance,
   backgroundHandlers,
+  deferred,
   en,
   renderBuilder,
   resumeBody,
@@ -169,6 +170,62 @@ describe('builder: the photo of a photo CV', () => {
       expect(previewPhotos().every((src) => src === STORED)).toBe(true);
     }
   );
+
+  it("keeps the next resume's photo when an upload to the last one ends after the switch", async () => {
+    const OTHER = 'data:image/jpeg;base64,/9j/other';
+    const put = deferred();
+    serveBackend();
+    server.use(
+      http.get(`${API}/resumes/:id/photo`, ({ params }) =>
+        HttpResponse.json({ photo: params.id === 'res-2' ? OTHER : null })
+      ),
+      http.put(`${API}/resumes/:id/photo`, async () => {
+        await put.promise;
+        return HttpResponse.json({ photo: UPLOADED });
+      }),
+      http.get(`${API}/resumes`, ({ request }) =>
+        HttpResponse.json(
+          resumeBody(SERVER_RESUME, {
+            resume_id: new URL(request.url).searchParams.get('resume_id'),
+          })
+        )
+      )
+    );
+    const view = renderBuilder();
+    await advance(10);
+    await choose(nodeFile('jpeg bytes', 'me.jpg', 'image/jpeg'));
+
+    route.search = 'id=res-2';
+    view.rerender();
+    await advance(10);
+    put.resolve();
+    await advance(10);
+
+    expect(screen.getByRole('img', { name: text.previewAlt })).toHaveAttribute('src', OTHER);
+    expect(previewPhotos().every((src) => src === OTHER)).toBe(true);
+    expect(screen.getByRole('button', { name: text.change })).toBeEnabled();
+  });
+
+  it('keeps an uploaded photo when the stored one finishes loading after it', async () => {
+    const stored = deferred();
+    serveBackend();
+    server.use(
+      http.get(`${API}/resumes/:id/photo`, async () => {
+        await stored.promise;
+        return HttpResponse.json({ photo: STORED });
+      })
+    );
+    renderBuilder();
+    await advance(10);
+    await choose(nodeFile('jpeg bytes', 'me.jpg', 'image/jpeg'));
+    expect(screen.getByRole('img', { name: text.previewAlt })).toHaveAttribute('src', UPLOADED);
+
+    stored.resolve();
+    await advance(10);
+
+    expect(screen.getByRole('img', { name: text.previewAlt })).toHaveAttribute('src', UPLOADED);
+    expect(previewPhotos().every((src) => src === UPLOADED)).toBe(true);
+  });
 
   it('still edits the resume when the photo cannot be loaded', async () => {
     serveBackend();

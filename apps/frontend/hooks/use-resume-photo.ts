@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchResumePhoto } from '@/lib/api/resume';
 
 /**
@@ -11,18 +11,23 @@ import { fetchResumePhoto } from '@/lib/api/resume';
 export function useResumePhoto(resumeId: string | null | undefined) {
   // Keyed by id, so a switch never shows the previous resume's photo.
   const [loaded, setLoaded] = useState<{ id: string; photo: string | null } | null>(null);
+  // Set once an upload or removal lands, so a load that ends after it can't
+  // bring back the photo it replaced.
+  const changedRef = useRef(false);
 
   useEffect(() => {
+    changedRef.current = false;
     if (!resumeId) return;
     let cancelled = false;
+    const show = (photo: string | null) => {
+      if (!cancelled && !changedRef.current) setLoaded({ id: resumeId, photo });
+    };
     fetchResumePhoto(resumeId)
-      .then((photo) => {
-        if (!cancelled) setLoaded({ id: resumeId, photo });
-      })
+      .then(show)
       .catch((error: unknown) => {
         // A missing photo must not block editing or previewing the resume.
         console.warn('Could not load the resume photo:', error);
-        if (!cancelled) setLoaded({ id: resumeId, photo: null });
+        show(null);
       });
     return () => {
       cancelled = true;
@@ -31,7 +36,9 @@ export function useResumePhoto(resumeId: string | null | undefined) {
 
   const setPhoto = useCallback(
     (photo: string | null) => {
-      if (resumeId) setLoaded({ id: resumeId, photo });
+      if (!resumeId) return;
+      changedRef.current = true;
+      setLoaded({ id: resumeId, photo });
     },
     [resumeId]
   );
