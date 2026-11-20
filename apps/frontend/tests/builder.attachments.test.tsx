@@ -482,6 +482,65 @@ describe('builder attachment persistence', () => {
     expect(await screen.findByDisplayValue('LOCAL COVER')).toBeInTheDocument();
     expect(localStorage.getItem('resume_builder_attachment_draft:a')).toContain('LOCAL COVER');
   });
+
+  it('restores the outreach message from the same draft', async () => {
+    localStorage.setItem(
+      'resume_builder_attachment_draft:a',
+      JSON.stringify({
+        resumeId: 'a',
+        updatedAt: Date.now(),
+        coverLetter: 'SERVER COVER',
+        outreachMessage: 'LOCAL OUTREACH',
+      })
+    );
+    documents.a = { cover_letter: 'SERVER COVER', outreach_message: 'SERVER OUTREACH' };
+    route.search = 'id=a&tab=outreach';
+    renderBuilder();
+
+    expect(await screen.findByDisplayValue('SERVER OUTREACH')).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole('button', { name: en.builder.draftRecovery.restoreDraft })
+    );
+
+    expect(await screen.findByDisplayValue('LOCAL OUTREACH')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['cover-letter', 'cover_letter'],
+    ['outreach', 'outreach_message'],
+  ] as const)('%s: an unsaved edit is offered back after the page reloads', async (tab, field) => {
+    documents.a = { [field]: 'SERVER' };
+    route.search = `id=a&tab=${tab}`;
+    const view = renderBuilder();
+    fireEvent.change(await screen.findByDisplayValue('SERVER'), {
+      target: { value: 'UNSAVED EDIT' },
+    });
+    view.unmount();
+
+    renderBuilder();
+    expect(await screen.findByDisplayValue('SERVER')).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole('button', { name: en.builder.draftRecovery.restoreDraft })
+    );
+
+    expect(await screen.findByDisplayValue('UNSAVED EDIT')).toBeInTheDocument();
+    expect(saves).toEqual([]);
+  });
+
+  it.each([
+    ['cover-letter', en.builder.alerts.coverLetterSaveSuccess],
+    ['outreach', en.builder.alerts.outreachSaveSuccess],
+  ] as const)('%s: Save is ready again once a save finishes', async (tab, success) => {
+    documents.a = { cover_letter: 'SERVER', outreach_message: 'SERVER' };
+    route.search = `id=a&tab=${tab}`;
+    renderBuilder();
+    fireEvent.change(await screen.findByDisplayValue('SERVER'), { target: { value: 'EDIT' } });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+
+    expect(await screen.findByText(success)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: en.common.save })).toBeEnabled());
+    expect(screen.queryByRole('button', { name: en.common.saving })).toBeNull();
+  });
 });
 
 it('does not expose attachment state from an unusable resume response', async () => {
