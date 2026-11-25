@@ -1819,8 +1819,11 @@ class TestOutputBudgetExhausted:
     @patch("app.llm._supports_temperature", return_value=False)
     @patch("app.llm.get_router")
     async def test_anthropic_thinking_exhaustion_retries_at_low_effort(
-        self, mock_get_router, _mock_temp, _mock_json
-    ):
+        self,
+        mock_get_router: MagicMock,
+        _mock_temp: MagicMock,
+        _mock_json: MagicMock,
+    ) -> None:
         from app.llm import complete_json
 
         config = LLMConfig(provider="anthropic", model="claude-sonnet-5", api_key="k")
@@ -1844,8 +1847,11 @@ class TestOutputBudgetExhausted:
     @patch("app.llm._supports_temperature", return_value=False)
     @patch("app.llm.get_router")
     async def test_truncated_answer_reports_exhausted_budget(
-        self, mock_get_router, _mock_temp, _mock_json
-    ):
+        self,
+        mock_get_router: MagicMock,
+        _mock_temp: MagicMock,
+        _mock_json: MagicMock,
+    ) -> None:
         from app.llm import complete_json
 
         config = LLMConfig(provider="anthropic", model="claude-sonnet-5", api_key="k")
@@ -1855,14 +1861,94 @@ class TestOutputBudgetExhausted:
 
         with pytest.raises(ValueError, match=r"Output token budget \(8192\) exhausted"):
             await complete_json(prompt="Diff", max_tokens=8192, schema_type="keywords")
+        assert router.acompletion.await_count == 3
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_complete_answer_at_the_limit_is_returned(
+        self,
+        mock_get_router: MagicMock,
+        _mock_temp: MagicMock,
+        _mock_json: MagicMock,
+    ) -> None:
+        from app.llm import complete_json
+
+        config = LLMConfig(provider="anthropic", model="claude-sonnet-5", api_key="k")
+        router = self._router(_budget_response('{"ok": true}', "length", 7000))
+        mock_get_router.return_value = (router, config)
+
+        result = await complete_json(
+            prompt="Diff", max_tokens=8192, schema_type="keywords"
+        )
+
+        assert result == {"ok": True}
+        assert router.acompletion.await_count == 1
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_low_effort_sticks_after_a_stop_without_thinking(
+        self,
+        mock_get_router: MagicMock,
+        _mock_temp: MagicMock,
+        _mock_json: MagicMock,
+    ) -> None:
+        from app.llm import complete_json
+
+        config = LLMConfig(provider="anthropic", model="claude-sonnet-5", api_key="k")
+        router = self._router(
+            _budget_response(None, "length", 8192),
+            _budget_response('{"a": ', "length", 0),
+            _budget_response('{"ok": true}', "stop", 0),
+        )
+        mock_get_router.return_value = (router, config)
+
+        await complete_json(prompt="Diff", max_tokens=8192, schema_type="keywords")
+
+        assert router.acompletion.call_args_list[2].kwargs["reasoning_effort"] == "low"
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=False)
+    @patch("app.llm.get_router")
+    async def test_explicit_minimal_effort_is_not_raised(
+        self,
+        mock_get_router: MagicMock,
+        _mock_temp: MagicMock,
+        _mock_json: MagicMock,
+    ) -> None:
+        from app.llm import complete_json
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-sonnet-5",
+            api_key="k",
+            reasoning_effort="minimal",
+        )
+        router = self._router(
+            _budget_response(None, "length", 8192),
+            _budget_response('{"ok": true}', "stop", 0),
+        )
+        mock_get_router.return_value = (router, config)
+
+        await complete_json(prompt="Diff", max_tokens=8192, schema_type="keywords")
+
+        retry = router.acompletion.call_args_list[1].kwargs
+        assert retry["reasoning_effort"] == "minimal"
 
     @pytest.mark.asyncio
     @patch("app.llm._supports_json_mode", return_value=False)
     @patch("app.llm._supports_temperature", return_value=False)
     @patch("app.llm.get_router")
     async def test_effort_unchanged_when_no_thinking_was_reported(
-        self, mock_get_router, _mock_temp, _mock_json
-    ):
+        self,
+        mock_get_router: MagicMock,
+        _mock_temp: MagicMock,
+        _mock_json: MagicMock,
+    ) -> None:
         from app.llm import complete_json
 
         config = LLMConfig(provider="anthropic", model="claude-haiku-4-5", api_key="k")
@@ -1881,8 +1967,11 @@ class TestOutputBudgetExhausted:
     @patch("app.llm._supports_temperature", return_value=False)
     @patch("app.llm.get_router")
     async def test_other_providers_keep_their_effort(
-        self, mock_get_router, _mock_temp, _mock_json
-    ):
+        self,
+        mock_get_router: MagicMock,
+        _mock_temp: MagicMock,
+        _mock_json: MagicMock,
+    ) -> None:
         from app.llm import complete_json
 
         config = LLMConfig(

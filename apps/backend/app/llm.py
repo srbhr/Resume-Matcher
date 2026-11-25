@@ -743,6 +743,14 @@ def _reasoning_tokens(response: Any) -> int:
     return count if isinstance(count, int) else 0
 
 
+def _budget_exhausted_error(max_tokens: int, response: Any) -> ValueError:
+    """Name the exhausted output budget as the cause of an unusable answer."""
+    return ValueError(
+        f"Output token budget ({max_tokens}) exhausted before the JSON answer "
+        f"completed (reasoning tokens: {_reasoning_tokens(response)})"
+    )
+
+
 def _to_code_block(content: str | None, language: str = "text") -> str:
     """Wrap content in a markdown code block for client display."""
     text = (content or "").strip()
@@ -1959,8 +1967,13 @@ async def complete_json(
             # diff can use the whole budget thinking and return no text, so
             # retrying unchanged fails the same way. After thinking exhausted
             # the budget, retry at low effort: LiteLLM sends it as
-            # output_config.effort on adaptive-thinking models.
-            if thinking_exhausted_budget and config.provider == "anthropic":
+            # output_config.effort on adaptive-thinking models. Only lower the
+            # effort: an explicitly configured minimal or low stays as set.
+            if (
+                thinking_exhausted_budget
+                and config.provider == "anthropic"
+                and reasoning_effort not in ("minimal", "low")
+            ):
                 reasoning_effort = "low"
             # HY3-Free on OpenCode Zen otherwise spends much of its output
             # allocation in ``reasoning_content`` and truncates large resume
@@ -1984,40 +1997,51 @@ async def complete_json(
             # treat it as an empty completion and retry with the full budget.
             content = _extract_choice_primary_text(response.choices[0])
 
-            # A response cut at max_tokens holds no answer or a partial one.
-            # Report the cause rather than "empty" or "no JSON found".
-            if _output_budget_exhausted(response):
-                thinking_exhausted_budget = _reasoning_tokens(response) > 0
-                raise ValueError(
-                    f"Output token budget ({max_tokens}) exhausted before the "
-                    f"JSON answer completed (reasoning tokens: "
-                    f"{_reasoning_tokens(response)})"
+            # A response cut at max_tokens usually holds no answer or a partial
+            # one, but the JSON can end exactly at the limit. Parse it first and
+            # name the budget as the cause only when the answer is unusable.
+            budget_exhausted = _output_budget_exhausted(response)
+            # Sticky: a later length stop without reasoning tokens must not
+            # send the next attempt back to the default effort.
+            if budget_exhausted and _reasoning_tokens(response) > 0:
+                thinking_exhausted_budget = True
+
+            try:
+                if not content:
+                    raise ValueError("Empty response from LLM")
+
+                # Do not log response bodies: they frequently contain a resume
+                # or a job description and are therefore user-provided personal
+                # data.
+                logging.debug(
+                    "Received LLM JSON response (attempt %d, length: %d)",
+                    attempt + 1,
+                    len(content),
                 )
 
-            if not content:
-                raise ValueError("Empty response from LLM")
+                # Extract and parse JSON
+                json_str = _extract_json(content)
+                result = json.loads(json_str)
 
-            # Do not log response bodies: they frequently contain a resume or
-            # a job description and are therefore user-provided personal data.
-            logging.debug(
-                "Received LLM JSON response (attempt %d, length: %d)",
-                attempt + 1,
-                len(content),
-            )
-
-            # Extract and parse JSON
-            json_str = _extract_json(content)
-            result = json.loads(json_str)
-
-            if not isinstance(result, dict):
-                raise ValueError("Expected a JSON object")
-            if response_validator is not None:
-                result = response_validator(result)
                 if not isinstance(result, dict):
-                    raise ValueError("Response validator must return a JSON object")
+                    raise ValueError("Expected a JSON object")
+                if response_validator is not None:
+                    result = response_validator(result)
+                    if not isinstance(result, dict):
+                        raise ValueError("Response validator must return a JSON object")
+            except ValueError as e:
+                # json.JSONDecodeError is a ValueError. After a length stop the
+                # budget is the cause, so JSON mode is not blamed for it.
+                if budget_exhausted:
+                    raise _budget_exhausted_error(max_tokens, response) from e
+                raise
+
+            truncated = _appears_truncated(result, schema_type)
+            if truncated and budget_exhausted:
+                raise _budget_exhausted_error(max_tokens, response)
 
             # LLM-001: Check if parsed result appears truncated
-            if _appears_truncated(result, schema_type):
+            if truncated:
                 if attempt < retries:
                     logging.warning(
                         "Parsed JSON appears truncated (attempt %d/%d), retrying",
