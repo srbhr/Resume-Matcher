@@ -402,6 +402,31 @@ _ANTHROPIC_THINKING_BUDGETS: dict[str, int] = {
 }
 
 
+#: Providers that serve OpenAI models, whose effort levels the model map lists.
+_OPENAI_MODEL_HOSTS = frozenset({"openai", "azure_foundry", "openrouter"})
+
+
+def _model_basename(config: LLMConfig) -> str:
+    """The model name without provider or namespace prefixes, lowercased."""
+    return config.model.rsplit("/", 1)[-1].lower()
+
+
+def _effort_level_supported(config: LLMConfig, level: str) -> bool | None:
+    """The model map's answer for an effort level on an OpenAI-model host.
+
+    None when the provider is another one, the model isn't in the map, or the
+    map doesn't say.
+    """
+    if config.provider not in _OPENAI_MODEL_HOSTS:
+        return None
+    try:
+        info = _litellm().get_model_info(model=get_model_name(config))
+    except Exception:
+        return None
+    value = info.get(f"supports_{level}_reasoning_effort")
+    return value if isinstance(value, bool) else None
+
+
 def _reasoning_effort_kwarg(
     config: LLMConfig, reasoning_effort: str | None, max_tokens: int
 ) -> dict[str, str]:
@@ -418,11 +443,25 @@ def _reasoning_effort_kwarg(
     model that supports it unless asked not to, and the thinking spends the
     output budget the answer needs. ``"none"`` reaches Ollama as
     ``think: false``, which models that cannot think accept too. gpt-oss is
-    left out: it always reasons and takes only a level.
+    left out under any name (``ollama_chat/gpt-oss:20b``, ``GPT-OSS:20b``): it
+    always reasons and takes only a level.
+
+    On hosts of OpenAI models, a level the model map marks unsupported is not
+    sent (gpt-6-luna has no ``minimal``, which the gpt-5 migration stored);
+    the model then uses its default, as LiteLLM does when it knows the model.
     """
     if not reasoning_effort:
-        if config.provider == "ollama" and not config.model.startswith("gpt-oss"):
+        if config.provider == "ollama" and not _model_basename(config).startswith(
+            "gpt-oss"
+        ):
             return {"reasoning_effort": "none"}
+        return {}
+    if _effort_level_supported(config, reasoning_effort) is False:
+        logging.info(
+            "Omitting reasoning_effort=%s: %s has no such level",
+            reasoning_effort,
+            config.model,
+        )
         return {}
     if config.provider == "anthropic" and max_tokens <= (
         _ANTHROPIC_THINKING_BUDGETS.get(reasoning_effort, 0)
@@ -1192,22 +1231,16 @@ def _probe_reasoning_effort(config: LLMConfig) -> str | None:
     """The reasoning effort for the 64-token connection probe.
 
     The configured effort when the model takes it. Otherwise an OpenAI model
-    that reasons by default (gpt-6-luna defaults to medium) is asked for none
+    (on any host that serves them) that reasons by default (gpt-6-luna defaults to medium) is asked for none
     when the model map says it supports that, so the probe has room to answer.
     An effort the model refuses counts as unset: LiteLLM drops it, and the gpt-5
     migration left ``minimal`` on configs later moved to gpt-6-luna. The probe
     tests the connection, not the reasoning.
     """
     effort = config.reasoning_effort
-    if config.provider != "openai":
+    if effort and _effort_level_supported(config, effort) is not False:
         return effort
-    try:
-        info = _litellm().get_model_info(model=get_model_name(config))
-    except Exception:
-        return effort
-    if effort and info.get(f"supports_{effort}_reasoning_effort") is not False:
-        return effort
-    if info.get("supports_none_reasoning_effort") is True:
+    if _effort_level_supported(config, "none"):
         return "none"
     return effort
 
@@ -2104,7 +2137,9 @@ async def _complete_json(
                 raise
 
             truncated = _appears_truncated(result, schema_type)
-            if truncated and budget_exhausted:
+            # The last attempt keeps a parsed result that looks truncated, as
+            # before the budget check: the truncation test is a heuristic.
+            if truncated and budget_exhausted and attempt < retries:
                 raise _budget_exhausted_error(max_tokens, response)
 
             # LLM-001: Check if parsed result appears truncated

@@ -2101,3 +2101,76 @@ class TestOutputBudgetExhausted:
         await complete_json(prompt="Diff", max_tokens=8192, schema_type="keywords")
 
         assert router.acompletion.call_args_list[1].kwargs["reasoning_effort"] == "high"
+
+
+@pytest.mark.parametrize(
+    "model", ["ollama_chat/gpt-oss:20b", "ollama/gpt-oss:20b", "GPT-OSS:20b"]
+)
+def test_ollama_gpt_oss_gets_no_thinking_default_under_any_name(model: str) -> None:
+    """gpt-oss takes only a level; ``think: "none"`` is not one (Fable review)."""
+    from app.llm import _reasoning_effort_kwarg
+
+    config = LLMConfig(provider="ollama", model=model, api_key="")
+    assert _reasoning_effort_kwarg(config, None, 4096) == {}
+
+
+@pytest.mark.parametrize(
+    ("provider", "model", "effort", "expected"),
+    [
+        # gpt-6-luna has no minimal level (left on configs by the gpt-5 migration).
+        ("openai", "gpt-6-luna", "minimal", {}),
+        ("azure_foundry", "gpt-6-luna", "minimal", {}),
+        ("openai", "gpt-6-luna", "low", {"reasoning_effort": "low"}),
+        ("openai", "gpt-5-nano-2025-08-07", "minimal", {"reasoning_effort": "minimal"}),
+    ],
+)
+def test_an_effort_the_model_map_refuses_is_not_sent(
+    provider: str, model: str, effort: str, expected: dict[str, str]
+) -> None:
+    from app.llm import _reasoning_effort_kwarg
+
+    config = LLMConfig(provider=provider, model=model, api_key="k")
+    assert _reasoning_effort_kwarg(config, effort, 4096) == expected
+
+
+@pytest.mark.parametrize("effort", [None, "minimal"])
+def test_probe_asks_azure_gpt_6_luna_for_no_reasoning(effort: str | None) -> None:
+    from app.llm import _probe_reasoning_effort
+
+    config = LLMConfig(
+        provider="azure_foundry",
+        model="gpt-6-luna",
+        api_key="k",
+        reasoning_effort=effort,
+    )
+    assert _probe_reasoning_effort(config) == "none"
+
+
+@pytest.mark.asyncio
+@patch("app.llm._appears_truncated", return_value=True)
+@patch("app.llm._supports_json_mode", return_value=False)
+@patch("app.llm._supports_temperature", return_value=False)
+@patch("app.llm.get_router")
+async def test_a_parseable_answer_cut_at_the_limit_is_kept_on_the_last_attempt(
+    mock_get_router: MagicMock,
+    _mock_temp: MagicMock,
+    _mock_json: MagicMock,
+    _mock_truncated: MagicMock,
+) -> None:
+    """Before #1098 the last attempt returned a result that looked truncated;
+    the budget check made it raise instead (Fable review)."""
+    from app.llm import complete_json
+
+    config = LLMConfig(provider="ollama", model="llama3.2", api_key="")
+    router = MagicMock()
+    router.acompletion = AsyncMock(
+        side_effect=[_budget_response('{"keywords": ["Go"]}', "length", 0)] * 3
+    )
+    mock_get_router.return_value = (router, config)
+
+    result = await complete_json(
+        prompt="Extract", max_tokens=512, schema_type="keywords"
+    )
+
+    assert result == {"keywords": ["Go"]}
+    assert router.acompletion.await_count == 3
