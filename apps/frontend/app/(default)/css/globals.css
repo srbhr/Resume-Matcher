@@ -1,4 +1,8 @@
+/* ui-sdk's styles sit in the components layer, after Tailwind's base, so the
+   base reset doesn't undo them; Tailwind utilities still win over them. */
+@layer ui-sdk;
 @import 'tailwindcss';
+@import '@ui-sdk/core/web.css' layer(components);
 
 @source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
 

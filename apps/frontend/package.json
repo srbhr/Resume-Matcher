@@ -30,6 +30,8 @@
     "@tiptap/extension-underline": "3.32.2",
     "@tiptap/react": "3.32.2",
     "@tiptap/starter-kit": "3.32.2",
+    "@ui-sdk/core": "0.1.0-beta.17",
+    "@ui-sdk/react": "0.1.0-beta.17",
     "clsx": "2.1.1",
     "framer-motion": "13.5.1",
     "isomorphic-dompurify": "4.6.0",
