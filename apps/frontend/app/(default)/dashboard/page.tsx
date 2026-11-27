@@ -8,7 +8,6 @@ import { MasterResumeChoiceDialog } from '@/components/dashboard/master-resume-c
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
-import { ActionMenu } from '@/components/ui/action-menu';
 import { Button, buttonClass } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,6 +19,7 @@ import { toast } from '@/components/ui/toast';
 import { DefaultBadge } from '@/components/common/default-badge';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useTranslations } from '@/lib/i18n';
 import { formatDate, formatTimeAgo } from '@/lib/format-date';
 import { downloadBlobAsFile, sanitizeFilename } from '@/lib/utils/download';
@@ -54,6 +54,10 @@ import {
 import { ApiError } from '@/lib/api/client';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { hasMeaningfulResumeContent } from '@/lib/utils/resume-content';
+
+// The tile menu (ui-sdk's Menu) loads after the page: nobody opens it before first paint,
+// and it would otherwise add its whole popup layer to the dashboard's first-load JS.
+const ActionMenu = dynamic(() => import('@/components/ui/action-menu').then((m) => m.ActionMenu));
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 

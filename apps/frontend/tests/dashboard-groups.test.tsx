@@ -290,7 +290,7 @@ describe('dashboard tile quick actions', () => {
   it('keeps the menu button visible on touch screens, which have no hover', async () => {
     render(<DashboardPage />);
     await screen.findByText('T-one');
-    const more = within(tile('T-one')).getByRole('button', {
+    const more = await within(tile('T-one')).findByRole('button', {
       name: 'dashboard.tileActions.more:T-one',
     });
     expect(more).toHaveClass(
@@ -305,7 +305,9 @@ describe('dashboard tile quick actions', () => {
     render(<DashboardPage />);
     await screen.findByText('T-one');
     fireEvent.click(
-      within(tile('T-one')).getByRole('button', { name: 'dashboard.tileActions.more:T-one' })
+      await within(tile('T-one')).findByRole('button', {
+        name: 'dashboard.tileActions.more:T-one',
+      })
     );
     fireEvent.click(await screen.findByRole('menuitem', { name: 'dashboard.duplicate' }));
 
@@ -318,7 +320,9 @@ describe('dashboard tile quick actions', () => {
     render(<DashboardPage />);
     await screen.findByText('T-one');
     fireEvent.click(
-      within(tile('T-one')).getByRole('button', { name: 'dashboard.tileActions.more:T-one' })
+      await within(tile('T-one')).findByRole('button', {
+        name: 'dashboard.tileActions.more:T-one',
+      })
     );
     fireEvent.click(await screen.findByRole('menuitem', { name: 'common.delete' }));
 
