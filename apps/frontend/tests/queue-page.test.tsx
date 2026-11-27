@@ -110,18 +110,18 @@ describe('queue page', () => {
     parseMetadata.mockResolvedValue({ role: 'Staff Engineer', company: 'Acme', job_req_id: '' });
     addJob.mockResolvedValue(item('new', 'pending'));
     render(<QueuePage />);
-    await screen.findByText('Backend track');
+    await screen.findByText(/Backend track/);
 
     fireEvent.change(screen.getByLabelText('queue.form.jobDescriptionLabel'), {
       target: { value: JOB_DESCRIPTION },
     });
     await waitFor(() =>
-      expect((screen.getByLabelText('queue.form.roleLabel') as HTMLInputElement).value).toBe(
+      expect((screen.getByLabelText('jobInput.role') as HTMLInputElement).value).toBe(
         'Staff Engineer'
       )
     );
     expect(parseMetadata).toHaveBeenCalledWith(JOB_DESCRIPTION);
-    fireEvent.change(screen.getByLabelText('queue.form.jobReqIdLabel'), {
+    fireEvent.change(screen.getByLabelText('jobInput.jobId'), {
       target: { value: 'REQ-1' },
     });
     await act(async () => {
@@ -146,7 +146,7 @@ describe('queue page', () => {
 
   it('refuses a description too short to tailor without calling the API', async () => {
     render(<QueuePage />);
-    await screen.findByText('Backend track');
+    await screen.findByText(/Backend track/);
     fireEvent.change(screen.getByLabelText('queue.form.jobDescriptionLabel'), {
       target: { value: 'Too short' },
     });
@@ -239,7 +239,14 @@ const masterRow = (id: string, title: string, isDefault = false) => ({
   parent_id: null,
 });
 
+/** Master, intensity and cooldown are folded behind "Change"; open them once. */
+const openSettings = () => {
+  const change = screen.queryByRole('button', { name: 'tailor.changeOptions' });
+  if (change?.getAttribute('aria-expanded') === 'false') fireEvent.click(change);
+};
+
 const chooseMaster = (title: string) => {
+  openSettings();
   fireEvent.click(screen.getByRole('button', { name: /tailor\.selectResume/ }));
   fireEvent.click(screen.getByRole('option', { name: new RegExp(title) }));
 };
@@ -432,7 +439,12 @@ describe('queue actions', () => {
       fireEvent.click(within(row).getByRole('button', { name: 'queue.monitor.remove' }));
     });
     expect(screen.getByText('queue.errors.deleteInProgress')).toBeTruthy();
-    expect(await screen.findByText('queue.status.processing')).toBeTruthy();
+    // The row's own status, not the count strip's label of the same name.
+    await waitFor(() =>
+      expect(
+        within(screen.getByText('a role').closest('li')!).getByText('queue.status.processing')
+      ).toBeTruthy()
+    );
   });
 
   it('explains a failed clear and keeps the list', async () => {
@@ -460,17 +472,17 @@ describe('detected job details', () => {
       .mockResolvedValueOnce({ role: 'Staff Engineer', company: 'Acme', job_req_id: 'R1' })
       .mockResolvedValueOnce({ role: 'Designer', company: '', job_req_id: '' });
     render(<QueuePage />);
-    await screen.findByText('Backend track');
+    await screen.findByText(/Backend track/);
 
     describeJob(JOB_DESCRIPTION);
-    await waitFor(() => expect(field('queue.form.companyLabel').value).toBe('Acme'));
-    fireEvent.change(field('queue.form.roleLabel'), { target: { value: 'My title' } });
+    await waitFor(() => expect(field('jobInput.company').value).toBe('Acme'));
+    fireEvent.change(field('jobInput.role'), { target: { value: 'My title' } });
 
     describeJob('Product Designer\nWe are a small studio hiring a designer to join us.');
     await waitFor(() => expect(parseMetadata).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(field('queue.form.companyLabel').value).toBe(''));
-    expect(field('queue.form.jobReqIdLabel').value).toBe('');
-    expect(field('queue.form.roleLabel').value).toBe('My title');
+    await waitFor(() => expect(field('jobInput.company').value).toBe(''));
+    expect(field('jobInput.jobId').value).toBe('');
+    expect(field('jobInput.role').value).toBe('My title');
   });
 });
 
@@ -483,7 +495,8 @@ describe('cooldown', () => {
   ])('keeps %s within the 0-60 seconds the backend accepts', async (typed, expected) => {
     addJob.mockResolvedValue(item('new', 'pending'));
     render(<QueuePage />);
-    await screen.findByText('Backend track');
+    await screen.findByText(/Backend track/);
+    openSettings();
     fireEvent.change(screen.getByLabelText('queue.form.cooldownLabel'), {
       target: { value: typed },
     });
@@ -520,9 +533,62 @@ describe('provider status', () => {
   it('says it is checking, not that a key is missing, while the status loads', async () => {
     systemStatus.loading = true;
     render(<QueuePage />);
-    await screen.findByText('Backend track');
+    await screen.findByText(/Backend track/);
     const add = screen.getByRole('button', { name: 'common.checking' });
     expect(add).toBeDisabled();
     expect(screen.queryByText('tailor.configureApiKeyFirst')).toBeNull();
+  });
+});
+
+describe('the queue at a glance', () => {
+  it('counts waiting, running, done and failed jobs in one strip', async () => {
+    fetchQueue.mockResolvedValue([
+      item('a', 'pending'),
+      item('b', 'pending'),
+      item('c', 'processing'),
+      item('d', 'completed'),
+    ]);
+    render(<QueuePage />);
+    await screen.findByText('a role');
+    const strip = document.querySelector('dl') as HTMLElement;
+    const count = (status: string) =>
+      within(strip).getByText(`queue.status.${status}`).nextElementSibling?.textContent;
+    expect(count('pending')).toBe('2');
+    expect(count('processing')).toBe('1');
+    expect(count('completed')).toBe('1');
+    expect(count('failed')).toBe('0');
+  });
+
+  it('numbers waiting jobs from the oldest, though the list runs newest first', async () => {
+    // The API lists newest first.
+    fetchQueue.mockResolvedValue([
+      item('newest', 'pending', { created_at: '2026-10-03T10:00:00Z' }),
+      item('running', 'processing', { created_at: '2026-10-02T10:00:00Z' }),
+      item('oldest', 'pending', { created_at: '2026-10-01T10:00:00Z' }),
+    ]);
+    render(<QueuePage />);
+    const row = async (name: string) => (await screen.findByText(`${name} role`)).closest('li')!;
+    expect((await row('oldest')).firstElementChild).toHaveTextContent('01');
+    expect((await row('newest')).firstElementChild).toHaveTextContent('02');
+    // A running job has no place in line.
+    expect((await row('running')).firstElementChild).toHaveTextContent('');
+  });
+
+  it('folds master, intensity and cooldown to one line until asked', async () => {
+    render(<QueuePage />);
+    const summary = await screen.findByText(/Backend track/);
+    expect(summary).toHaveTextContent('tailor.promptOptions.keywords.label');
+    expect(screen.queryByLabelText('queue.form.cooldownLabel')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'tailor.changeOptions' }));
+    expect(screen.getByLabelText('queue.form.cooldownLabel')).toBeInTheDocument();
+  });
+
+  it('teaches the empty queue on the cross field', async () => {
+    render(<QueuePage />);
+    const title = await screen.findByText('queue.monitor.emptyTitle');
+    expect(screen.getByText('queue.monitor.emptyDescription')).toBeInTheDocument();
+    // A canvas plate over the crosses.
+    expect(title.parentElement).toHaveClass('bg-canvas');
+    expect(title.parentElement?.parentElement?.querySelector('svg')).not.toBeNull();
   });
 });

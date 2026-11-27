@@ -1583,7 +1583,6 @@
   },
   "queue": {
     "title": "定制队列",
-    "subtitle": "将职位描述加入队列，在后台逐一定制",
     "form": {
       "title": "添加职位",
       "masterDescription": "队列中的每个职位都基于这份主简历进行定制。",
@@ -1604,16 +1603,17 @@
     },
     "monitor": {
       "title": "队列",
-      "count": "职位数：{count}",
       "refresh": "刷新",
       "clearCompleted": "清除已完成",
       "clearAll": "全部清除",
       "emptyTitle": "队列中没有职位",
-      "emptyDescription": "添加职位描述即可开始定制。",
+      "emptyDescription": "还没有任务。在左侧粘贴职位描述。任务会在后台逐个定制，你可以离开此页面。",
       "untitled": "未命名职位",
       "jobId": "编号 {id}",
       "viewResume": "查看简历",
-      "remove": "从队列中移除"
+      "remove": "从队列中移除",
+      "updated": "{when}更新",
+      "cooldown": "间隔 {seconds} 秒"
     },
     "status": {
       "pending": "排队中",

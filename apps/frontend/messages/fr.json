@@ -1583,7 +1583,6 @@
   },
   "queue": {
     "title": "File d'adaptation",
-    "subtitle": "Mettez des offres en file d'attente et adaptez-les l'une après l'autre en arrière-plan",
     "form": {
       "title": "Ajouter une offre",
       "masterDescription": "Chaque offre en file est adaptée à partir de ce CV principal.",
@@ -1604,16 +1603,17 @@
     },
     "monitor": {
       "title": "File",
-      "count": "Offres : {count}",
       "refresh": "Actualiser",
       "clearCompleted": "Retirer les terminées",
       "clearAll": "Tout vider",
       "emptyTitle": "Aucune offre dans la file",
-      "emptyDescription": "Ajoutez une description de poste pour commencer l'adaptation.",
+      "emptyDescription": "Aucune offre pour l'instant. Collez une fiche de poste à gauche. Les offres sont traitées une par une en arrière-plan, et vous pouvez quitter cette page.",
       "untitled": "Poste sans titre",
       "jobId": "ID {id}",
       "viewResume": "Voir le CV",
-      "remove": "Retirer de la file"
+      "remove": "Retirer de la file",
+      "updated": "Mis à jour {when}",
+      "cooldown": "Pause {seconds} s"
     },
     "status": {
       "pending": "En attente",

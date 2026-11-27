@@ -1583,7 +1583,6 @@
   },
   "queue": {
     "title": "맞춤화 대기열",
-    "subtitle": "채용 공고를 대기열에 넣고 백그라운드에서 하나씩 맞춤화합니다",
     "form": {
       "title": "공고 추가",
       "masterDescription": "대기열의 모든 공고는 이 마스터 이력서를 바탕으로 맞춤화됩니다.",
@@ -1604,16 +1603,17 @@
     },
     "monitor": {
       "title": "대기열",
-      "count": "공고 수: {count}",
       "refresh": "새로고침",
       "clearCompleted": "완료 항목 지우기",
       "clearAll": "모두 지우기",
       "emptyTitle": "대기열에 공고가 없습니다",
-      "emptyDescription": "채용 공고를 추가하면 맞춤화를 시작합니다.",
+      "emptyDescription": "아직 작업이 없습니다. 왼쪽에 채용 공고를 붙여넣으세요. 작업은 백그라운드에서 하나씩 처리되므로 이 페이지를 떠나도 됩니다.",
       "untitled": "직무 미지정",
       "jobId": "ID {id}",
       "viewResume": "이력서 보기",
-      "remove": "대기열에서 제거"
+      "remove": "대기열에서 제거",
+      "updated": "{when} 업데이트",
+      "cooldown": "대기 {seconds}초"
     },
     "status": {
       "pending": "대기 중",

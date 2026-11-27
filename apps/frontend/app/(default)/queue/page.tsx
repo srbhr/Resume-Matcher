@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowsClockwise, SpinnerGap, Trash } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowsClockwise, SpinnerGap, Trash } from '@phosphor-icons/react';
 import {
   fetchResumeList,
   fetchJobQueue,
   addJobToQueue,
   deleteQueueItem,
   clearQueueItems,
-  parseJobMetadata,
   QueueItemInProgressError,
   type QueueItem,
   type QueueItemStatus,
@@ -19,25 +18,21 @@ import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { useTranslations } from '@/lib/i18n';
 import { formatDate } from '@/lib/format-date';
-import { cn } from '@/lib/utils';
+import { useJobDetails } from '@/hooks/use-job-details';
+import { JobInput, MIN_JOB_DESCRIPTION_LENGTH } from '@/components/jobs/job-input';
 import { Alert } from '@/components/ui/alert';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Dropdown } from '@/components/ui/dropdown';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
-import { Label, labelClass } from '@/components/ui/label';
+import { Label } from '@/components/ui/label';
 import { PageFrame } from '@/components/ui/page-frame';
-import { PageHeader } from '@/components/ui/page-header';
-import { PanelHeader } from '@/components/ui/panel-header';
 import { StatusIndicator, type StatusTone } from '@/components/ui/status-indicator';
-import { Textarea } from '@/components/ui/textarea';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
 import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import { FadePresence } from '@/components/common/presence';
 
-const MIN_JOB_DESCRIPTION_LENGTH = 50;
 const POLL_INTERVAL_MS = 2500;
-const DETECT_DELAY_MS = 300;
 // The backend accepts 0-60 seconds; typing past either end snaps to it.
 const MAX_COOLDOWN_SECONDS = 60;
 const clampCooldown = (value: number) =>
@@ -84,12 +79,15 @@ export default function QueuePage() {
 
   // Form inputs
   const [jobDescriptionInput, setJobDescriptionInput] = useState('');
-  const [roleInput, setRoleInput] = useState('');
-  const [companyInput, setCompanyInput] = useState('');
-  const [jobReqIdInput, setJobReqIdInput] = useState('');
-  // Fields the user typed into; detection only fills the others.
-  const userEdited = useRef(new Set<'role' | 'company' | 'jobReqId'>());
+  // Role, company and job ID, detected from the text (no AI call); hand edits win.
+  const jobDetails = useJobDetails(jobDescriptionInput);
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number>(5);
+  // Master, intensity and cooldown rarely change between jobs: folded to one line.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // When the list was last read, for "Updated 5s ago"; ticks so the label stays true.
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const descriptionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,51 +138,6 @@ export default function QueuePage() {
     };
   }, []);
 
-  // Detect role, company and job ID on the server's heuristics (no AI call).
-  // Detected values replace earlier detections, including with "nothing found",
-  // so a previous job's company never sticks to the next description.
-  useEffect(() => {
-    const applyDetected = (role: string, company: string, jobReqId: string) => {
-      const edited = userEdited.current;
-      if (!edited.has('role')) setRoleInput(role);
-      if (!edited.has('company')) setCompanyInput(company);
-      if (!edited.has('jobReqId')) setJobReqIdInput(jobReqId);
-    };
-    const text = jobDescriptionInput.trim();
-    if (!text) {
-      applyDetected('', '', '');
-      return;
-    }
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      try {
-        const parsed = await parseJobMetadata(text);
-        if (cancelled) return;
-        applyDetected(parsed.role, parsed.company, parsed.job_req_id);
-      } catch (err) {
-        console.error('Failed to detect job details', err);
-      }
-    }, DETECT_DELAY_MS);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [jobDescriptionInput]);
-
-  const editField = (
-    field: 'role' | 'company' | 'jobReqId',
-    value: string,
-    setValue: (value: string) => void
-  ) => {
-    setValue(value);
-    if (value.trim()) userEdited.current.add(field);
-    else userEdited.current.delete(field);
-  };
-
-  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter') e.stopPropagation();
-  };
-
   // Only the newest read may update the list; mutations also retire reads in flight.
   const queueRequest = useRef(0);
   // The master whose rows are on screen: a late answer about another one is dropped.
@@ -199,6 +152,7 @@ export default function QueuePage() {
       if (request !== queueRequest.current) return;
       setQueueItems(items);
       setQueueLoad('ready');
+      setLastUpdated(Date.now());
     } catch (err) {
       console.error('Failed to load queue', err);
       if (request === queueRequest.current) setQueueLoad('error');
@@ -263,20 +217,19 @@ export default function QueuePage() {
         selectedResumeId,
         trimmed,
         rateLimitSeconds,
-        roleInput.trim() || undefined,
-        companyInput.trim() || undefined,
-        jobReqIdInput.trim() || undefined,
+        jobDetails.role.trim() || undefined,
+        jobDetails.company.trim() || undefined,
+        jobDetails.jobReqId.trim() || undefined,
         selectedPromptId
       );
       queueRequest.current++;
       setQueueItems((prev) => [newItem, ...prev.filter((i) => i.item_id !== newItem.item_id)]);
       setJobDescriptionInput('');
-      userEdited.current.clear();
-      setRoleInput('');
-      setCompanyInput('');
-      setJobReqIdInput('');
+      jobDetails.reset();
       setQueueSuccessMessage(t('queue.form.added'));
       incrementJobs();
+      // Ready for the next posting at once.
+      descriptionRef.current?.querySelector('textarea')?.focus();
     } catch (err) {
       console.error('Failed to add job to queue', err);
       setQueueError(t('queue.errors.addFailed'));
@@ -336,18 +289,84 @@ export default function QueuePage() {
 
   const formDisabled = isAddingToQueue || !(isLlmConfigured || agentMode) || !selectedResumeId;
 
+  // Keep "Updated 5s ago" true while the page is open.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const counts = {
+    pending: queueItems.filter((i) => i.status === 'pending').length,
+    processing: queueItems.filter((i) => i.status === 'processing').length,
+    completed: queueItems.filter((i) => i.status === 'completed').length,
+    failed: queueItems.filter((i) => i.status === 'failed').length,
+  };
+  // Place in line for waiting jobs, counted from the oldest: the API lists newest first.
+  const placeInLine = new Map(
+    queueItems
+      .filter((i) => i.status === 'pending')
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .map((item, index) => [item.item_id, index + 1])
+  );
+  const master = masters.find((m) => m.resume_id === selectedResumeId);
+  const settingsSummary = [
+    resumesLoading ? t('common.loading') : master ? masterLabel(master) : t('queue.form.noMaster'),
+    t(`tailor.promptOptions.${selectedPromptId}.label`),
+    rateLimitSeconds > 0 ? t('queue.monitor.cooldown', { seconds: rateLimitSeconds }) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const updatedLabel =
+    lastUpdated === null
+      ? null
+      : t('queue.monitor.updated', {
+          when: new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
+            -Math.max(0, Math.round((now - lastUpdated) / 1000)),
+            'second'
+          ),
+        });
+
   return (
     <PageFrame ground="crosses-wide">
-      <PageHeader>
-        <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
-        <PageHeader.Title>{t('queue.title')}</PageHeader.Title>
-        <PageHeader.Subtitle>{t('queue.subtitle')}</PageHeader.Subtitle>
-      </PageHeader>
+      {/* One compact toolbar row, as on the other pages. */}
+      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-3 border-b border-ink px-6 py-3">
+        <Link
+          href="/dashboard"
+          aria-label={t('common.back')}
+          title={t('common.back')}
+          className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
+        >
+          <ArrowLeft aria-hidden="true" />
+        </Link>
+        <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
+          {t('queue.title')}
+        </h1>
+      </header>
 
-      <div className="grid gap-8 p-6 md:p-8 lg:grid-cols-2">
+      {/* Counts, drawn like the settings status strip. */}
+      <dl className="grid grid-cols-2 gap-px border-b border-ink bg-ink sm:grid-cols-4">
+        {(['pending', 'processing', 'completed', 'failed'] as const).map((status) => (
+          <div key={status} className="bg-canvas px-6 py-3">
+            <dt className="font-mono text-xs uppercase text-steel">
+              {t(`queue.status.${status}`)}
+            </dt>
+            <dd className="font-mono text-2xl font-bold tabular-nums text-ink">{counts[status]}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         {/* Add a job */}
-        <section className="space-y-4">
-          <PanelHeader tone="input" title={t('queue.form.title')} />
+        <section
+          aria-labelledby="queue-add-heading"
+          className="min-w-0 space-y-4 border-b border-ink p-6 lg:border-r lg:border-b-0"
+        >
+          <h2
+            id="queue-add-heading"
+            className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft"
+          >
+            {t('queue.form.title')}
+          </h2>
 
           {agentMode && (
             <Alert tone="info" title={t('agentPrompt.modeTitle')}>
@@ -363,119 +382,81 @@ export default function QueuePage() {
             />
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {masters.length > 1 ? (
-              <Dropdown
-                label={t('tailor.selectResume')}
-                description={t('queue.form.masterDescription')}
-                options={masters.map((m) => ({ id: m.resume_id, label: masterLabel(m) }))}
-                value={selectedResumeId}
-                onChange={setSelectedResumeId}
-                disabled={isAddingToQueue}
-              />
-            ) : (
-              <div className="space-y-1">
-                <span className={cn('block', labelClass)}>{t('tailor.selectResume')}</span>
-                <p className="text-sm text-ink-soft">{t('queue.form.masterDescription')}</p>
-                <p className="flex min-h-10 items-center font-mono text-sm font-bold break-words text-ink">
-                  {resumesLoading
-                    ? t('common.loading')
-                    : masters.length === 1
-                      ? masterLabel(masters[0])
-                      : t('queue.form.noMaster')}
-                </p>
+          <div ref={descriptionRef}>
+            <JobInput
+              id="queue-job-description"
+              value={jobDescriptionInput}
+              onChange={setJobDescriptionInput}
+              details={jobDetails}
+              showJobId
+              label={t('queue.form.jobDescriptionLabel')}
+              hint={t('queue.form.jobDescriptionHint')}
+              disabled={isAddingToQueue}
+            />
+          </div>
+
+          {/* Master, intensity and cooldown: one line, opened when they need changing. */}
+          <div className="border-y border-panel-hover py-3">
+            <div className="flex items-center justify-between gap-4">
+              <p className="min-w-0 truncate font-mono text-xs text-ink-soft">{settingsSummary}</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-expanded={settingsOpen}
+                aria-controls="queue-settings"
+                onClick={() => setSettingsOpen((open) => !open)}
+              >
+                {settingsOpen ? t('common.close') : t('tailor.changeOptions')}
+              </Button>
+            </div>
+            {settingsOpen && (
+              <div id="queue-settings" className="mt-3 space-y-4">
+                {masters.length > 1 && (
+                  <Dropdown
+                    label={t('tailor.selectResume')}
+                    options={masters.map((m) => ({ id: m.resume_id, label: masterLabel(m) }))}
+                    value={selectedResumeId}
+                    onChange={setSelectedResumeId}
+                    disabled={isAddingToQueue}
+                  />
+                )}
+                <Dropdown
+                  options={promptOptions.map((opt) => ({
+                    id: opt.id,
+                    label: t(`tailor.promptOptions.${opt.id}.label`),
+                    description: t(`tailor.promptOptions.${opt.id}.description`),
+                  }))}
+                  value={selectedPromptId}
+                  onChange={(value) => {
+                    hasUserSelectedPrompt.current = true;
+                    setSelectedPromptId(value);
+                  }}
+                  label={t('tailor.promptLabel')}
+                  disabled={isAddingToQueue || promptLoading}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="queue-cooldown">{t('queue.form.cooldownLabel')}</Label>
+                  <Input
+                    id="queue-cooldown"
+                    type="number"
+                    min={0}
+                    max={MAX_COOLDOWN_SECONDS}
+                    step={0.5}
+                    aria-describedby="queue-cooldown-hint"
+                    className="max-w-32 font-mono tabular-nums"
+                    value={rateLimitSeconds}
+                    onChange={(e) =>
+                      setRateLimitSeconds(clampCooldown(Number.parseFloat(e.target.value)))
+                    }
+                    disabled={isAddingToQueue}
+                  />
+                  <p id="queue-cooldown-hint" className="text-xs text-steel">
+                    {t('queue.form.cooldownHint')}
+                  </p>
+                </div>
               </div>
             )}
-
-            <Dropdown
-              options={promptOptions.map((opt) => ({
-                id: opt.id,
-                label: t(`tailor.promptOptions.${opt.id}.label`),
-                description: t(`tailor.promptOptions.${opt.id}.description`),
-              }))}
-              value={selectedPromptId}
-              onChange={(value) => {
-                hasUserSelectedPrompt.current = true;
-                setSelectedPromptId(value);
-              }}
-              label={t('tailor.promptLabel')}
-              description={t('tailor.promptDescription')}
-              disabled={isAddingToQueue || promptLoading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="queue-job-description">{t('queue.form.jobDescriptionLabel')}</Label>
-            <Textarea
-              id="queue-job-description"
-              aria-describedby="queue-job-description-hint"
-              placeholder={t('tailor.jobDescriptionPlaceholder')}
-              className="min-h-48 resize-none p-4"
-              value={jobDescriptionInput}
-              onChange={(e) => setJobDescriptionInput(e.target.value)}
-              onKeyDown={handleTextareaKeyDown}
-              disabled={isAddingToQueue}
-            />
-            <p id="queue-job-description-hint" className="text-sm text-ink-soft">
-              {t('queue.form.jobDescriptionHint')}
-            </p>
-          </div>
-
-          <fieldset className="space-y-3 border border-ink bg-white p-4 shadow-sw-nested">
-            <legend className={cn('px-1', labelClass)}>{t('queue.form.detectedTitle')}</legend>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1">
-                <Label htmlFor="queue-role">{t('queue.form.roleLabel')}</Label>
-                <Input
-                  id="queue-role"
-                  placeholder={t('queue.form.rolePlaceholder')}
-                  value={roleInput}
-                  onChange={(e) => editField('role', e.target.value, setRoleInput)}
-                  disabled={isAddingToQueue}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="queue-company">{t('queue.form.companyLabel')}</Label>
-                <Input
-                  id="queue-company"
-                  placeholder={t('queue.form.companyPlaceholder')}
-                  value={companyInput}
-                  onChange={(e) => editField('company', e.target.value, setCompanyInput)}
-                  disabled={isAddingToQueue}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="queue-job-id">{t('queue.form.jobReqIdLabel')}</Label>
-                <Input
-                  id="queue-job-id"
-                  placeholder={t('common.optional')}
-                  value={jobReqIdInput}
-                  onChange={(e) => editField('jobReqId', e.target.value, setJobReqIdInput)}
-                  disabled={isAddingToQueue}
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <div className="space-y-2">
-            <Label htmlFor="queue-cooldown">{t('queue.form.cooldownLabel')}</Label>
-            <Input
-              id="queue-cooldown"
-              type="number"
-              min={0}
-              max={MAX_COOLDOWN_SECONDS}
-              step={0.5}
-              aria-describedby="queue-cooldown-hint"
-              className="max-w-32 font-mono tabular-nums"
-              value={rateLimitSeconds}
-              onChange={(e) =>
-                setRateLimitSeconds(clampCooldown(Number.parseFloat(e.target.value)))
-              }
-              disabled={isAddingToQueue}
-            />
-            <p id="queue-cooldown-hint" className="text-sm text-ink-soft">
-              {t('queue.form.cooldownHint')}
-            </p>
           </div>
 
           <FadePresence show={!!queueError}>
@@ -485,30 +466,30 @@ export default function QueuePage() {
             <Alert tone="success">{queueSuccessMessage}</Alert>
           </FadePresence>
 
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={agentMode ? () => setShowAgentPrompt(true) : handleAddToQueue}
-            disabled={formDisabled || !jobDescriptionInput.trim()}
-          >
-            {isAddingToQueue ? (
-              <>
-                <SpinnerGap className="animate-spin" aria-hidden="true" />
-                {t('queue.form.adding')}
-              </>
-            ) : statusLoading ? (
-              <>
-                <SpinnerGap className="animate-spin" aria-hidden="true" />
-                {t('common.checking')}
-              </>
-            ) : agentMode ? (
-              t('agentPrompt.getPrompt')
-            ) : !isLlmConfigured ? (
-              t('tailor.configureApiKeyFirst')
-            ) : (
-              t('queue.form.submit')
-            )}
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              onClick={agentMode ? () => setShowAgentPrompt(true) : handleAddToQueue}
+              disabled={formDisabled || !jobDescriptionInput.trim()}
+            >
+              {isAddingToQueue ? (
+                <>
+                  <SpinnerGap className="animate-spin" aria-hidden="true" />
+                  {t('queue.form.adding')}
+                </>
+              ) : statusLoading ? (
+                <>
+                  <SpinnerGap className="animate-spin" aria-hidden="true" />
+                  {t('common.checking')}
+                </>
+              ) : agentMode ? (
+                t('agentPrompt.getPrompt')
+              ) : !isLlmConfigured ? (
+                t('tailor.configureApiKeyFirst')
+              ) : (
+                t('queue.form.submit')
+              )}
+            </Button>
+          </div>
           <AgentPromptDialog
             task={showAgentPrompt ? 'tailor' : null}
             resumeId={selectedResumeId}
@@ -517,37 +498,46 @@ export default function QueuePage() {
           />
         </section>
 
-        {/* Queue monitor */}
-        <section className="min-w-0 space-y-4">
-          <PanelHeader tone="output" title={t('queue.monitor.title')}>
-            <span className="font-mono text-xs tabular-nums text-steel">
-              {t('queue.monitor.count', { count: queueItems.length })}
-            </span>
-          </PanelHeader>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshingQueue}
+        {/* The queue */}
+        <section aria-labelledby="queue-list-heading" className="min-w-0 space-y-4 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <h2
+              id="queue-list-heading"
+              className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft"
             >
-              <ArrowsClockwise
-                className={isRefreshingQueue ? 'animate-spin' : undefined}
-                aria-hidden="true"
-              />
-              {t('queue.monitor.refresh')}
-            </Button>
-            {queueItems.some((i) => i.status === 'completed') && (
-              <Button variant="outline" size="sm" onClick={handleClearCompleted}>
-                {t('queue.monitor.clearCompleted')}
+              {t('queue.monitor.title')}
+            </h2>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              {updatedLabel && <span className="font-mono text-xs text-steel">{updatedLabel}</span>}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleRefresh}
+                disabled={isRefreshingQueue}
+                aria-label={t('queue.monitor.refresh')}
+                title={t('queue.monitor.refresh')}
+              >
+                <ArrowsClockwise
+                  className={isRefreshingQueue ? 'animate-spin' : undefined}
+                  aria-hidden="true"
+                />
               </Button>
-            )}
-            {queueItems.some((i) => i.status !== 'processing') && (
-              <Button variant="outline-destructive" size="sm" onClick={handleClearAll}>
-                {t('queue.monitor.clearAll')}
-              </Button>
-            )}
+              {queueItems.some((i) => i.status === 'completed') && (
+                <Button variant="link" size="sm" onClick={handleClearCompleted}>
+                  {t('queue.monitor.clearCompleted')}
+                </Button>
+              )}
+              {queueItems.some((i) => i.status !== 'processing') && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={handleClearAll}
+                >
+                  {t('queue.monitor.clearAll')}
+                </Button>
+              )}
+            </div>
           </div>
 
           <FadePresence show={!!actionError}>
@@ -578,18 +568,20 @@ export default function QueuePage() {
             ) : (
               queueLoad === 'ready' && (
                 <EmptyState
-                  variant="framed"
+                  variant="field"
                   title={t('queue.monitor.emptyTitle')}
                   description={t('queue.monitor.emptyDescription')}
+                  className="min-h-64"
                 />
               )
             )
           ) : (
-            <ul className="space-y-3">
+            <ul className="divide-y divide-ink border border-ink bg-white">
               {queueItems.map((item) => (
                 <QueueRow
                   key={item.item_id}
                   item={item}
+                  place={placeInLine.get(item.item_id)}
                   locale={locale}
                   t={t}
                   onDelete={() => handleDeleteItem(item.item_id)}
@@ -603,69 +595,77 @@ export default function QueuePage() {
   );
 }
 
+/** One job: its place in line while waiting, what it is, its status, and what to do. */
 function QueueRow({
   item,
+  place,
   locale,
   t,
   onDelete,
 }: {
   item: QueueItem;
+  /** Its place in line, counted from the oldest waiting job; only while waiting. */
+  place?: number;
   locale: string;
   t: (key: string, params?: Record<string, string | number>) => string;
   onDelete: () => void;
 }) {
   const title = item.title || item.role || t('queue.monitor.untitled');
   const failure = item.error && FAILURE_CODES.has(item.error) ? item.error : 'failed';
+  const meta = [
+    item.company,
+    item.job_req_id && t('queue.monitor.jobId', { id: item.job_req_id }),
+    formatDate(item.created_at, locale),
+  ].filter(Boolean);
   return (
-    <li className="space-y-2 border border-ink bg-white p-4 shadow-sw-nested">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="font-mono text-sm font-bold break-words text-ink">{title}</p>
-          {(item.company || item.job_req_id) && (
-            <p className="font-mono text-xs text-steel">
-              {[item.company, item.job_req_id && t('queue.monitor.jobId', { id: item.job_req_id })]
-                .filter(Boolean)
-                .join(' / ')}
-            </p>
-          )}
-        </div>
+    <li className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 p-4 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]">
+      <span
+        aria-hidden={place === undefined}
+        className="font-serif text-2xl font-bold leading-none tabular-nums text-ink"
+      >
+        {place !== undefined && String(place).padStart(2, '0')}
+      </span>
+      <div className="min-w-0 space-y-1">
+        <p className="font-mono text-sm font-bold break-words text-ink">{title}</p>
+        <p className="font-mono text-xs text-steel">{meta.join(' · ')}</p>
+        {!item.role && !item.title && (
+          <p className="truncate text-sm text-ink-soft">{item.job_description_snippet}</p>
+        )}
+        {item.status === 'failed' && (
+          <p className="text-sm text-destructive">{t(`queue.errors.item.${failure}`)}</p>
+        )}
+      </div>
+      <div className="col-start-2 flex flex-wrap items-center gap-3 sm:col-start-3 sm:row-start-1 sm:justify-end">
         <StatusIndicator tone={STATUS_TONE[item.status]}>
           {item.status === 'processing' && (
             <SpinnerGap className="mr-1 inline size-3 animate-spin" aria-hidden="true" />
           )}
           {t(`queue.status.${item.status}`)}
         </StatusIndicator>
-      </div>
-
-      <p className="truncate text-sm text-ink-soft">{item.job_description_snippet}</p>
-
-      {item.status === 'failed' && (
-        <p className="text-sm text-destructive">{t(`queue.errors.item.${failure}`)}</p>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="font-mono text-xs text-steel">{formatDate(item.created_at, locale)}</span>
-        <div className="flex items-center gap-3">
-          {item.status === 'completed' && item.tailored_resume_id && (
-            <Link
-              href={`/resumes/${item.tailored_resume_id}`}
-              className={buttonClass({ variant: 'outline', size: 'sm' })}
-            >
-              {t('queue.monitor.viewResume')}
-            </Link>
-          )}
-          {item.status !== 'processing' && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onDelete}
-              aria-label={t('queue.monitor.remove')}
-              title={t('queue.monitor.remove')}
-            >
-              <Trash aria-hidden="true" />
-            </Button>
-          )}
-        </div>
+        {item.status === 'pending' && item.rate_limit_seconds > 0 && (
+          <span className="font-mono text-xs text-steel">
+            {t('queue.monitor.cooldown', { seconds: item.rate_limit_seconds })}
+          </span>
+        )}
+        {item.status === 'completed' && item.tailored_resume_id && (
+          <Link
+            href={`/resumes/${item.tailored_resume_id}`}
+            className={buttonClass({ variant: 'outline', size: 'sm' })}
+          >
+            {t('queue.monitor.viewResume')}
+          </Link>
+        )}
+        {item.status !== 'processing' && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onDelete}
+            aria-label={t('queue.monitor.remove')}
+            title={t('queue.monitor.remove')}
+          >
+            <Trash aria-hidden="true" />
+          </Button>
+        )}
       </div>
     </li>
   );

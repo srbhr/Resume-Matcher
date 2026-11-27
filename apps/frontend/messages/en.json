@@ -1583,7 +1583,6 @@
   },
   "queue": {
     "title": "Tailoring Queue",
-    "subtitle": "Queue job descriptions and tailor them one after another in the background",
     "form": {
       "title": "Add a job",
       "masterDescription": "Every queued job is tailored from this master resume.",
@@ -1604,16 +1603,17 @@
     },
     "monitor": {
       "title": "Queue",
-      "count": "Jobs: {count}",
       "refresh": "Refresh",
       "clearCompleted": "Clear completed",
       "clearAll": "Clear all",
       "emptyTitle": "No jobs in the queue",
-      "emptyDescription": "Add a job description to start tailoring.",
+      "emptyDescription": "No jobs yet. Paste a job description on the left. Jobs are tailored one at a time in the background, and you can leave this page.",
       "untitled": "Untitled role",
       "jobId": "ID {id}",
       "viewResume": "View resume",
-      "remove": "Remove from queue"
+      "remove": "Remove from queue",
+      "updated": "Updated {when}",
+      "cooldown": "Cooldown {seconds}s"
     },
     "status": {
       "pending": "Queued",

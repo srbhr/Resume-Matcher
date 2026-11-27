@@ -1583,7 +1583,6 @@
   },
   "queue": {
     "title": "Cola de adaptación",
-    "subtitle": "Pon ofertas de empleo en cola y adáptalas una tras otra en segundo plano",
     "form": {
       "title": "Añadir una oferta",
       "masterDescription": "Cada oferta en cola se adapta a partir de este currículum maestro.",
@@ -1604,16 +1603,17 @@
     },
     "monitor": {
       "title": "Cola",
-      "count": "Ofertas: {count}",
       "refresh": "Actualizar",
       "clearCompleted": "Quitar completadas",
       "clearAll": "Vaciar todo",
       "emptyTitle": "No hay ofertas en la cola",
-      "emptyDescription": "Añade una descripción del puesto para empezar a adaptar.",
+      "emptyDescription": "Aún no hay trabajos. Pega una descripción del puesto a la izquierda. Los trabajos se personalizan de uno en uno en segundo plano, y puedes salir de esta página.",
       "untitled": "Puesto sin título",
       "jobId": "ID {id}",
       "viewResume": "Ver currículum",
-      "remove": "Quitar de la cola"
+      "remove": "Quitar de la cola",
+      "updated": "Actualizado {when}",
+      "cooldown": "Pausa {seconds} s"
     },
     "status": {
       "pending": "En cola",

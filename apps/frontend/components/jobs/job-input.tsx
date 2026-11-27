@@ -22,6 +22,9 @@ interface JobInputProps {
   details: JobDetails;
   /** The queue keeps a job ID; tailoring one job needs only role and company. */
   showJobId?: boolean;
+  /** The field's label and hint; the Tailor page's by default. */
+  label?: string;
+  hint?: string;
   disabled?: boolean;
   /** Sizes the block: the description field takes whatever height is left. */
   className?: string;
@@ -39,10 +42,14 @@ export function JobInput({
   onChange,
   details,
   showJobId = false,
+  label,
+  hint,
   disabled = false,
   className,
 }: JobInputProps) {
   const { t, locale } = useTranslations();
+  const fieldLabel = label ?? t('tailor.pasteJobDescription');
+  const fieldHint = hint ?? t('tailor.jobDescriptionHint');
   const hintId = `${id}-hint`;
   const length = value.trim().length;
   // The clipboard API exists only in secure contexts; decide after mount so the
@@ -87,7 +94,7 @@ export function JobInput({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-1">
-        <Label htmlFor={id}>{t('tailor.pasteJobDescription')}</Label>
+        <Label htmlFor={id}>{fieldLabel}</Label>
         <div className="relative flex min-h-48 flex-1">
           <Textarea
             id={id}
@@ -109,7 +116,7 @@ export function JobInput({
                 {t('jobInput.emptyTitle')}
               </p>
               <p id={hintId} className="max-w-md text-sm text-ink-soft text-pretty">
-                {t('tailor.jobDescriptionHint')}
+                {fieldHint}
               </p>
               {canPaste && !disabled && (
                 <Button
@@ -133,7 +140,7 @@ export function JobInput({
         </div>
         {value && (
           <p id={hintId} className="sr-only">
-            {t('tailor.jobDescriptionHint')}
+            {fieldHint}
           </p>
         )}
         <div className="flex justify-between gap-4 font-mono text-xs uppercase tracking-wider text-steel tabular-nums">
