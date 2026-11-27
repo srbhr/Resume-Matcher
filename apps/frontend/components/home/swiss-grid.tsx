@@ -12,9 +12,12 @@ import { APP_VERSION } from '@/lib/config/version';
 import { useTranslations } from '@/lib/i18n';
 
 export const SwissGrid = ({
+  action,
   banner,
   children,
 }: {
+  /** The page's one primary action, after the three links in the header. */
+  action?: React.ReactNode;
   /** Page-level alerts, shown inside the frame above the tiles. */
   banner?: React.ReactNode;
   children: React.ReactNode;
@@ -38,18 +41,21 @@ export const SwissGrid = ({
             <GearSix aria-hidden="true" />
             {t('nav.settings')}
           </Link>
+          {action}
         </nav>
       </PageHeader>
 
       {/* Content Grid - Scrollable area with NO padding.
           @container makes the card grid respond to the container's actual
           width, not the viewport. The Swiss frame is max-w-86rem so on
-          ultra-wide screens the cards no longer over-stretch. */}
+          ultra-wide screens the cards no longer over-stretch. Five columns
+          only from a 1280px container: narrower, a tile's title and meta
+          lines no longer fit its 5:4 shape. */}
       <div className="@container flex-1 overflow-y-auto overflow-x-hidden relative z-10">
         <h2 className="sr-only">{t('dashboard.modulesHeading')}</h2>
         {banner && <div className="space-y-4 p-6">{banner}</div>}
         <div className="p-[1.5px]">
-          <div className="grid grid-cols-1 @2xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-5 bg-ink gap-[1px] border-b border-ink">
+          <div className="grid grid-cols-1 @2xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-5 bg-ink gap-[1px] border-b border-ink">
             {children}
           </div>
         </div>

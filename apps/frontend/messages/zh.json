@@ -83,7 +83,7 @@
     "editResume": "编辑简历",
     "deleteResume": "删除简历",
     "downloadPdf": "下载PDF",
-    "tailorResume": "为职位定制",
+    "tailorResume": "定制简历",
     "modulesHeading": "简历模块",
     "masterResume": "主简历",
     "tailoredResume": "定制简历",
@@ -96,8 +96,26 @@
     "processingFailedHint": "我们无法读取此文件。请重试或上传其他文件。",
     "retrySuccess": "处理成功！",
     "retryFailed": "重试失败。请尝试上传其他文件。",
-    "createResume": "创建简历",
-    "edited": "编辑于 {date}",
+    "edited": "最后编辑：{date}",
+    "groups": {
+      "masters": "主简历 · {count} / {max}",
+      "tailored": "定制简历 · {count}"
+    },
+    "noTailored": "还没有定制简历。",
+    "filter": {
+      "all": "全部主简历"
+    },
+    "sort": {
+      "label": "排序定制简历",
+      "recent": "最近",
+      "name": "按名称"
+    },
+    "tileActions": {
+      "open": "打开 {title}",
+      "edit": "编辑 {title}",
+      "download": "将 {title} 下载为 PDF",
+      "more": "{title} 的更多操作"
+    },
     "statusLine": "状态：{status}",
     "status": {
       "checking": "检查中...",

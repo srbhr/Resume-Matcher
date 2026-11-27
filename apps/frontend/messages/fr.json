@@ -83,7 +83,7 @@
     "editResume": "Modifier le CV",
     "deleteResume": "Supprimer le CV",
     "downloadPdf": "Télécharger en PDF",
-    "tailorResume": "Personnaliser pour un poste",
+    "tailorResume": "Personnaliser un CV",
     "modulesHeading": "Modules de CV",
     "masterResume": "CV principal",
     "tailoredResume": "CV personnalisé",
@@ -96,8 +96,26 @@
     "processingFailedHint": "Impossible de lire ce fichier. Réessayez ou téléversez un autre fichier.",
     "retrySuccess": "Traitement réussi !",
     "retryFailed": "La nouvelle tentative a échoué. Essayez de téléverser un autre fichier.",
-    "createResume": "Créer un CV",
-    "edited": "Modifié le {date}",
+    "edited": "Modifié {date}",
+    "groups": {
+      "masters": "CV principaux · {count} sur {max}",
+      "tailored": "Personnalisés · {count}"
+    },
+    "noTailored": "Aucun CV personnalisé pour l'instant.",
+    "filter": {
+      "all": "Tous les CV principaux"
+    },
+    "sort": {
+      "label": "Trier les CV personnalisés",
+      "recent": "Récents",
+      "name": "A à Z"
+    },
+    "tileActions": {
+      "open": "Ouvrir {title}",
+      "edit": "Modifier {title}",
+      "download": "Télécharger {title} en PDF",
+      "more": "Plus d'actions pour {title}"
+    },
     "statusLine": "STATUT : {status}",
     "status": {
       "checking": "Vérification...",

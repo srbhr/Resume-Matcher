@@ -83,7 +83,7 @@
     "editResume": "Editar Currículum",
     "deleteResume": "Eliminar Currículum",
     "downloadPdf": "Descargar PDF",
-    "tailorResume": "Personalizar para Empleo",
+    "tailorResume": "Adaptar un currículum",
     "modulesHeading": "Módulos de currículum",
     "masterResume": "Currículum maestro",
     "tailoredResume": "Currículum personalizado",
@@ -96,8 +96,26 @@
     "processingFailedHint": "No pudimos leer este archivo. Reintenta o sube otro.",
     "retrySuccess": "¡Procesamiento completado!",
     "retryFailed": "El reintento falló. Prueba a subir otro archivo.",
-    "createResume": "Crear currículum",
     "edited": "Editado {date}",
+    "groups": {
+      "masters": "Maestros · {count} de {max}",
+      "tailored": "Personalizados · {count}"
+    },
+    "noTailored": "Aún no hay currículums personalizados.",
+    "filter": {
+      "all": "Todos los maestros"
+    },
+    "sort": {
+      "label": "Ordenar currículums personalizados",
+      "recent": "Recientes",
+      "name": "A a Z"
+    },
+    "tileActions": {
+      "open": "Abrir {title}",
+      "edit": "Editar {title}",
+      "download": "Descargar {title} en PDF",
+      "more": "Más acciones para {title}"
+    },
     "statusLine": "ESTADO: {status}",
     "status": {
       "checking": "Comprobando...",

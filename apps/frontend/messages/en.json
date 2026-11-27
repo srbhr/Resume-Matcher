@@ -83,7 +83,7 @@
     "editResume": "Edit Resume",
     "deleteResume": "Delete Resume",
     "downloadPdf": "Download PDF",
-    "tailorResume": "Tailor for Job",
+    "tailorResume": "Tailor a resume",
     "modulesHeading": "Resume modules",
     "masterResume": "Master Resume",
     "tailoredResume": "Tailored Resume",
@@ -96,8 +96,26 @@
     "processingFailedHint": "We couldn't read this file. Retry or upload a different one.",
     "retrySuccess": "Processing succeeded!",
     "retryFailed": "Retry failed. Try uploading a different file.",
-    "createResume": "Create Resume",
     "edited": "Edited {date}",
+    "groups": {
+      "masters": "Masters · {count} of {max}",
+      "tailored": "Tailored · {count}"
+    },
+    "noTailored": "No tailored resumes yet.",
+    "filter": {
+      "all": "All masters"
+    },
+    "sort": {
+      "label": "Sort tailored resumes",
+      "recent": "Recent",
+      "name": "A to Z"
+    },
+    "tileActions": {
+      "open": "Open {title}",
+      "edit": "Edit {title}",
+      "download": "Download {title} as PDF",
+      "more": "More actions for {title}"
+    },
     "statusLine": "STATUS: {status}",
     "status": {
       "checking": "Checking...",

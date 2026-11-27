@@ -83,7 +83,7 @@
     "editResume": "履歴書を編集",
     "deleteResume": "履歴書を削除",
     "downloadPdf": "PDFをダウンロード",
-    "tailorResume": "求人に合わせてカスタマイズ",
+    "tailorResume": "履歴書をカスタマイズ",
     "modulesHeading": "履歴書モジュール",
     "masterResume": "マスター履歴書",
     "tailoredResume": "カスタマイズ履歴書",
@@ -96,8 +96,26 @@
     "processingFailedHint": "このファイルを読み取れませんでした。再試行するか、別のファイルをアップロードしてください。",
     "retrySuccess": "処理に成功しました！",
     "retryFailed": "再処理に失敗しました。別のファイルをアップロードしてください。",
-    "createResume": "履歴書を作成",
-    "edited": "編集 {date}",
+    "edited": "編集: {date}",
+    "groups": {
+      "masters": "マスター · {count} / {max}",
+      "tailored": "カスタマイズ済み · {count}"
+    },
+    "noTailored": "カスタマイズ済みの履歴書はまだありません。",
+    "filter": {
+      "all": "すべてのマスター"
+    },
+    "sort": {
+      "label": "カスタマイズ済み履歴書の並べ替え",
+      "recent": "最近",
+      "name": "名前順"
+    },
+    "tileActions": {
+      "open": "{title}を開く",
+      "edit": "{title}を編集",
+      "download": "{title}をPDFでダウンロード",
+      "more": "{title}のその他の操作"
+    },
     "statusLine": "ステータス: {status}",
     "status": {
       "checking": "確認中...",

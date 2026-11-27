@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatTimeAgo } from '@/lib/format-date';
 
 describe('formatDate', () => {
   it('formats in the UI locale', () => {
@@ -74,5 +74,36 @@ describe('formatDate: date-only values', () => {
 
   it('still reads a full ISO timestamp as the instant it names', async () => {
     expect(await formatIn('America/Los_Angeles', '2025-01-02T03:00:00Z')).toBe('Jan 1, 2025');
+  });
+});
+
+describe('formatTimeAgo', () => {
+  const now = Date.parse('2026-11-27T12:00:00Z');
+
+  it('picks the largest unit that fits', () => {
+    expect(formatTimeAgo('2026-11-27T11:59:55Z', 'en', now)).toBe('5 seconds ago');
+    expect(formatTimeAgo('2026-11-27T11:30:00Z', 'en', now)).toBe('30 minutes ago');
+    expect(formatTimeAgo('2026-11-27T09:00:00Z', 'en', now)).toBe('3 hours ago');
+    expect(formatTimeAgo('2026-11-25T12:00:00Z', 'en', now)).toBe('2 days ago');
+    expect(formatTimeAgo('2026-11-13T12:00:00Z', 'en', now)).toBe('2 weeks ago');
+    expect(formatTimeAgo('2026-08-27T12:00:00Z', 'en', now)).toBe('3 months ago');
+    expect(formatTimeAgo('2024-11-27T12:00:00Z', 'en', now)).toBe('2 years ago');
+  });
+
+  it('says now for the present, and for a time after it', () => {
+    expect(formatTimeAgo(now, 'en', now)).toBe('now');
+    expect(formatTimeAgo('2026-11-27T12:00:30Z', 'en', now)).toBe('now');
+    expect(formatTimeAgo('2026-11-26T12:00:00Z', 'en', now)).toBe('yesterday');
+  });
+
+  it('speaks the UI locale', () => {
+    expect(formatTimeAgo('2026-11-25T12:00:00Z', 'es', now)).toBe('anteayer');
+    expect(formatTimeAgo('2026-11-24T12:00:00Z', 'fr', now)).toBe('il y a 3 jours');
+  });
+
+  it('returns nothing for missing or invalid input', () => {
+    expect(formatTimeAgo(null, 'en', now)).toBe('');
+    expect(formatTimeAgo('', 'en', now)).toBe('');
+    expect(formatTimeAgo('not a date', 'en', now)).toBe('');
   });
 });

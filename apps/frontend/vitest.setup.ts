@@ -111,6 +111,12 @@ if (typeof Element !== 'undefined' && !('getAnimations' in Element.prototype)) {
   Object.assign(Element.prototype, { getAnimations: () => [] });
 }
 
+// jsdom has no layout, so no scrollIntoView(). ui-sdk menus scroll the highlighted
+// item into view as the arrow keys move; here that does nothing.
+if (typeof Element !== 'undefined' && !('scrollIntoView' in Element.prototype)) {
+  Object.assign(Element.prototype, { scrollIntoView: () => {} });
+}
+
 // jsdom has HTMLDialogElement but not showModal()/close(). The Dialog primitive opens
 // as a native modal; here that only means `open`. Focus, the top layer and inertness
 // need a real browser: e2e/dialog.spec.ts checks them.

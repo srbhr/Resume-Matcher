@@ -83,7 +83,7 @@
     "editResume": "Editar Currículo",
     "deleteResume": "Excluir Currículo",
     "downloadPdf": "Baixar PDF",
-    "tailorResume": "Personalizar para Vaga",
+    "tailorResume": "Personalizar um currículo",
     "modulesHeading": "Módulos de currículo",
     "masterResume": "Currículo Principal",
     "tailoredResume": "Currículo Personalizado",
@@ -96,8 +96,26 @@
     "processingFailedHint": "Não conseguimos ler este arquivo. Tente novamente ou envie outro.",
     "retrySuccess": "Processamento concluído com sucesso!",
     "retryFailed": "A nova tentativa falhou. Tente enviar outro arquivo.",
-    "createResume": "Criar Currículo",
     "edited": "Editado {date}",
+    "groups": {
+      "masters": "Principais · {count} de {max}",
+      "tailored": "Personalizados · {count}"
+    },
+    "noTailored": "Ainda não há currículos personalizados.",
+    "filter": {
+      "all": "Todos os principais"
+    },
+    "sort": {
+      "label": "Ordenar currículos personalizados",
+      "recent": "Recentes",
+      "name": "A a Z"
+    },
+    "tileActions": {
+      "open": "Abrir {title}",
+      "edit": "Editar {title}",
+      "download": "Baixar {title} em PDF",
+      "more": "Mais ações para {title}"
+    },
     "statusLine": "STATUS: {status}",
     "status": {
       "checking": "Verificando...",

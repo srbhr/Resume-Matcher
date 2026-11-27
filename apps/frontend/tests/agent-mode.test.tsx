@@ -126,7 +126,7 @@ describe('dashboard in agent mode', () => {
     state.list.mockResolvedValue([master]);
     render(<DashboardPage />);
 
-    const create = await screen.findByRole('button', { name: 'dashboard.createResume' });
+    const create = await screen.findByRole('button', { name: 'dashboard.tailorResume' });
     await waitFor(() => expect(create).toBeEnabled());
     expect(screen.queryByText('dashboard.llmNotConfiguredTitle')).toBeNull();
 
@@ -154,7 +154,7 @@ describe('dashboard in agent mode', () => {
     try {
       state.list.mockResolvedValue([master]);
       render(<DashboardPage />);
-      await screen.findByRole('button', { name: 'dashboard.createResume' });
+      await screen.findByRole('button', { name: 'dashboard.tailorResume' });
       expect(screen.queryByText('Platform Engineer @ Acme')).toBeNull();
 
       state.list.mockResolvedValue([

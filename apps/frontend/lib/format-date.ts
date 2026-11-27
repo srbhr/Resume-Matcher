@@ -43,3 +43,47 @@ export function formatDate(
   if (Number.isNaN(date.getTime())) return '';
   return formatterFor(locale, options).format(date);
 }
+
+/** Each unit and how many of it make the next one up. */
+const TIME_AGO_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+  ['second', 60],
+  ['minute', 60],
+  ['hour', 24],
+  ['day', 7],
+  ['week', 4.348],
+  ['month', 12],
+  ['year', Number.POSITIVE_INFINITY],
+];
+
+const relativeFormatters = new Map<string, Intl.RelativeTimeFormat>();
+
+/**
+ * How long ago `value` was, in the UI locale and the largest unit that fits:
+ * "now", "5 seconds ago", "2 days ago". A time after `now` (clock skew) reads as
+ * now. Returns '' for missing or invalid input.
+ */
+export function formatTimeAgo(
+  value: string | number | Date | null | undefined,
+  locale: string,
+  now: number
+): string {
+  if (value === null || value === undefined || value === '') return '';
+  const time = toDate(value).getTime();
+  if (Number.isNaN(time)) return '';
+  let formatter = relativeFormatters.get(locale);
+  if (!formatter) {
+    try {
+      formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    } catch {
+      formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    }
+    relativeFormatters.set(locale, formatter);
+  }
+  let delta = Math.min(0, (time - now) / 1000);
+  for (const [unit, size] of TIME_AGO_UNITS) {
+    const rounded = Math.round(delta);
+    if (Math.abs(rounded) < size) return formatter.format(rounded === 0 ? 0 : rounded, unit);
+    delta /= size;
+  }
+  return '';
+}

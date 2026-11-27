@@ -8,20 +8,36 @@ import { MasterResumeChoiceDialog } from '@/components/dashboard/master-resume-c
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { ActionMenu } from '@/components/ui/action-menu';
+import { Button, buttonClass } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { Hatch } from '@/components/ui/hatch';
+import { Dropdown } from '@/components/ui/dropdown';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { StatusIndicator, type StatusTone } from '@/components/ui/status-indicator';
+import { toast } from '@/components/ui/toast';
 import { DefaultBadge } from '@/components/common/default-badge';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
 import Link from 'next/link';
 import { useTranslations } from '@/lib/i18n';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatTimeAgo } from '@/lib/format-date';
+import { downloadBlobAsFile, sanitizeFilename } from '@/lib/utils/download';
+import { DEFAULT_TEMPLATE_SETTINGS, PAGE_SIZE_INFO } from '@/lib/types/template-settings';
 import { cn } from '@/lib/utils';
 
 // Optimized Imports for Performance (No Barrel Imports)
-import { SpinnerGap, ArrowsClockwise, Plus, Gear, Warning } from '@phosphor-icons/react';
+import {
+  SpinnerGap,
+  ArrowsClockwise,
+  ArrowRight,
+  DotsThree,
+  DownloadSimple,
+  PencilSimple,
+  Plus,
+  Gear,
+  Warning,
+} from '@phosphor-icons/react';
 
 import {
   fetchResume,
@@ -29,6 +45,7 @@ import {
   deleteResume,
   retryProcessing,
   fetchJobDescription,
+  downloadResumePdf,
   setDefaultMasterResume,
   duplicateResume,
   MAX_MASTER_RESUMES,
@@ -46,7 +63,7 @@ const TILE_LINK =
   'after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-white';
 // Action tiles (initialize, add track) are one native button filling the Card.
 const TILE_BUTTON =
-  'flex flex-1 flex-col justify-between p-6 text-left md:p-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white';
+  'flex flex-1 flex-col justify-between p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white';
 // Tile highlight (owner ruling, round 2): hover, or keyboard focus anywhere inside a tile, fills
 // the tile Hyper Blue with white text. There is no ink outline: Card interactive's
 // `hover:border-ink` is overridden here so the 2px border stays transparent, and its 1px press-in
@@ -54,8 +71,11 @@ const TILE_BUTTON =
 // vanish on the fill). Inherited text turns white with the tile; anything that sets its own
 // colour (steel captions, the spinner, status squares, monogram frames) opts in below so it
 // stays AA on blue (white on primary is 6.7:1).
-// Every dashboard tile: 5:4, a fifth shorter than the square it was.
+// Every dashboard tile: 5:4, a fifth shorter than the square it was. Padded 16px (Card's
+// default is 24 to 32px), so the square, a three-line title and two meta lines fit the
+// shape at the narrowest tile any column count gives (about 255px wide, 204px tall).
 const TILE_SHAPE = 'aspect-5/4 h-full';
+const TILE_PAD = 'p-4 md:p-4';
 const TILE_FILL =
   'hover:border-transparent hover:translate-x-0 hover:translate-y-0 hover:bg-primary hover:text-white has-[:focus-visible]:z-20 has-[:focus-visible]:bg-primary has-[:focus-visible]:text-white';
 const TILE_WHITE = 'group-hover:text-white group-has-[:focus-visible]:text-white';
@@ -74,8 +94,40 @@ const STATUS_TONE: Record<ResumeListItem['processing_status'], StatusTone> = {
   pending: 'neutral',
   failed: 'error',
 };
-// Monogram fills: brand tokens only, each AA with white text (lowest: steel, 5.19:1).
-const MONOGRAM_FILLS = ['bg-primary', 'bg-ink', 'bg-success', 'bg-steel', 'bg-destructive'];
+// Quick actions on a tailored tile show on hover and keyboard focus (opacity, so Tab still
+// reaches them). The menu button also shows on touch screens, which have no hover, and
+// stays while its menu is open.
+const TILE_REVEAL =
+  'opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 focus-visible:opacity-100';
+const TILE_MENU_REVEAL = `${TILE_REVEAL} pointer-coarse:opacity-100 aria-expanded:opacity-100`;
+const TILE_ICON_ACTION = cn(buttonClass({ variant: 'ghost', size: 'icon-sm' }), TILE_GHOST_ICON);
+// A group's label row spans the grid, on the canvas between the ink rules.
+const GROUP_ROW =
+  'col-span-full flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-canvas px-6 py-3';
+const GROUP_LABEL = 'font-mono text-xs font-bold uppercase tracking-wider text-ink';
+
+/**
+ * Hatched cells that finish a group's last row (plus, with `spareRow`, one whole row more)
+ * at each column count the grid takes (SwissGrid): 2, 3, 4 and 5. One column needs none. Returns each
+ * cell's visibility classes, so a short row never leaves the ink gap colour showing.
+ */
+const GRID_COLUMNS = [
+  [2, '@2xl:block', '@2xl:hidden'],
+  [3, '@3xl:block', '@3xl:hidden'],
+  [4, '@5xl:block', '@5xl:hidden'],
+  [5, '@7xl:block', '@7xl:hidden'],
+] as const;
+function rowFillers(cells: number, spareRow = false): string[] {
+  const need = (cols: number) => ((cols - (cells % cols)) % cols) + (spareRow ? cols : 0);
+  const count = Math.max(...GRID_COLUMNS.map(([cols]) => need(cols)));
+  return Array.from({ length: count }, (_, index) =>
+    cn('hidden', ...GRID_COLUMNS.map(([cols, show, hide]) => (index < need(cols) ? show : hide)))
+  );
+}
+
+/** The template's translation key: `swiss-single` is `swissSingle`. */
+const templateKey = (template: string) =>
+  template.replace(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
 
 export default function DashboardPage() {
   const { t, locale } = useTranslations();
@@ -94,6 +146,14 @@ export default function DashboardPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isMasterChoiceDialogOpen, setIsMasterChoiceDialogOpen] = useState(false);
   const [agentTask, setAgentTask] = useState<AgentTask | null>(null);
+  // Tailored group: order, the master it was tailored from (when there are several),
+  // the tile being deleted and the tile downloading.
+  const [tailoredSort, setTailoredSort] = useState<'recent' | 'name'>('recent');
+  const [masterFilter, setMasterFilter] = useState('all');
+  const [deleteTarget, setDeleteTarget] = useState<ResumeListItem | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  // When the list last loaded: "Edited 2 days ago" counts from here, not from each render.
+  const [listLoadedAt, setListLoadedAt] = useState(0);
   // Set by "Delete and re-upload": the next completed upload replaces the deleted default.
   const [reuploadReplacesDefault, setReuploadReplacesDefault] = useState(false);
   const router = useRouter();
@@ -142,6 +202,8 @@ export default function DashboardPage() {
   const formatEditedDate = (value: string) =>
     formatDate(value, locale, { month: 'short', day: '2-digit', year: 'numeric' }) ||
     t('common.unknown');
+  const formatEditedAgo = (value: string) =>
+    formatTimeAgo(value, locale, listLoadedAt) || t('common.unknown');
 
   const adoptMasterResume = useCallback((resumeId: string | null) => {
     if (activeMasterIdRef.current !== resumeId) {
@@ -244,6 +306,7 @@ export default function DashboardPage() {
         setListError(false);
         const data = await fetchResumeList(true);
         if (!isCurrent()) return;
+        setListLoadedAt(Date.now());
         const masters = data.filter((r) => r.is_master);
         // Server truth for the shared flag Settings reads; other pages can leave it stale.
         setHasMasterResumeRef.current(masters.length > 0);
@@ -405,8 +468,8 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDuplicate = async (e: React.MouseEvent, resumeId: string) => {
-    e.stopPropagation();
+  const handleDuplicate = async (resumeId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setIsDuplicating(true);
     try {
       await duplicateResume(resumeId);
@@ -421,6 +484,39 @@ export default function DashboardPage() {
       );
     } finally {
       setIsDuplicating(false);
+    }
+  };
+
+  const confirmDeleteTailored = async () => {
+    if (!deleteTarget) return;
+    const resumeId = deleteTarget.resume_id;
+    setDeleteTarget(null);
+    try {
+      await deleteResume(resumeId);
+      decrementResumes();
+    } catch (err) {
+      console.error('Failed to delete resume:', err);
+      setActionError(t('dashboard.errors.deleteFailed'));
+    }
+    await loadTailoredResumes();
+  };
+
+  // Downloads with the tile's own saved template settings, as the viewer does.
+  const handleDownload = async (resume: ResumeListItem, title: string) => {
+    setDownloadingId(resume.resume_id);
+    try {
+      const blob = await downloadResumePdf(
+        resume.resume_id,
+        resume.template_settings ?? DEFAULT_TEMPLATE_SETTINGS,
+        locale
+      );
+      downloadBlobAsFile(blob, sanitizeFilename(title, resume.resume_id, 'resume'));
+      toast.success(t('builder.alerts.downloadSuccess'));
+    } catch (err) {
+      console.error('Failed to download resume:', err);
+      setActionError(t('builder.alerts.downloadFailed'));
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -537,25 +633,40 @@ export default function DashboardPage() {
       .join('');
   };
 
-  const hashTitle = (title: string): number => {
-    let hash = 0;
-    for (let i = 0; i < title.length; i++) {
-      hash = (hash << 5) - hash + title.charCodeAt(i);
-      hash |= 0;
-    }
-    return Math.abs(hash);
-  };
-
   const atMasterLimit = 1 + otherMasters.length >= MAX_MASTER_RESUMES;
   const showAddTrackTile =
     Boolean(masterResumeId) && !atMasterLimit && (isLlmConfigured || agentMode);
   const openMasterChoice = () =>
     agentMode ? setAgentTask('createMaster') : setIsMasterChoiceDialogOpen(true);
-  const totalCards =
-    1 + otherMasters.length + tailoredResumes.length + 1 + (showAddTrackTile ? 1 : 0);
-  const fillerCount = Math.max(0, (5 - (totalCards % 5)) % 5);
-  const extraFillerCount = 5;
+  const masterCount = (masterResumeId ? 1 : 0) + otherMasters.length;
+  const masterOptions = [
+    ...(masterResumeId
+      ? [{ id: masterResumeId, label: defaultMasterTitle || t('dashboard.masterResume') }]
+      : []),
+    ...otherMasters.map((r) => ({
+      id: r.resume_id,
+      label: r.title || r.filename || t('dashboard.masterTrack'),
+    })),
+  ];
+  // A filter on a master that has gone (deleted elsewhere) shows everything again.
+  const activeMasterFilter = masterOptions.some((o) => o.id === masterFilter)
+    ? masterFilter
+    : 'all';
+  const tailoredTitle = (resume: ResumeListItem) =>
+    resume.title || resume.jobSnippet || resume.filename || t('dashboard.tailoredResume');
+  const shownTailored = tailoredResumes
+    .filter((r) => activeMasterFilter === 'all' || r.parent_id === activeMasterFilter)
+    .sort((a, b) =>
+      tailoredSort === 'name'
+        ? tailoredTitle(a).localeCompare(tailoredTitle(b), locale)
+        : Date.parse(b.updated_at || b.created_at) - Date.parse(a.updated_at || a.created_at)
+    );
   const statusDisplay = getStatusDisplay();
+  // The default master's line shows only what needs attention; "Ready" and the brief
+  // "Checking" stay for screen readers.
+  const statusVisible = processingStatus !== 'ready' && processingStatus !== 'loading';
+  const openTailor = () => (agentMode ? setAgentTask('tailor') : router.push('/tailor'));
+  const tailorDisabled = agentMode ? !masterResumeId || !hasReadyMaster : !isTailorEnabled;
   // A failed load with nothing to show: the alert alone, no tiles (an empty account looks different).
   const emptyWithError =
     listError && !masterResumeId && otherMasters.length === 0 && tailoredResumes.length === 0;
@@ -563,6 +674,12 @@ export default function DashboardPage() {
 
   return (
     <SwissGrid
+      action={
+        <Button type="button" size="sm" onClick={openTailor} disabled={tailorDisabled}>
+          <Plus aria-hidden="true" />
+          {t('dashboard.tailorResume')}
+        </Button>
+      }
       banner={
         (listError || showLlmAlert) && (
           <>
@@ -593,6 +710,13 @@ export default function DashboardPage() {
     >
       {!emptyWithError && (
         <>
+          {/* Masters: the label row, then the default, the other tracks and Add track. */}
+          <div className={GROUP_ROW}>
+            <h2 className={GROUP_LABEL}>
+              {t('dashboard.groups.masters', { count: masterCount, max: MAX_MASTER_RESUMES })}
+            </h2>
+          </div>
+
           {/* 1. Master Resume Logic */}
           {!masterResumeId ? (
             // LLM Not Configured or Upload State
@@ -660,7 +784,7 @@ export default function DashboardPage() {
             )
           ) : (
             // Master Resume Exists
-            <Card variant="interactive" className={cn(TILE_SHAPE, TILE_FILL)}>
+            <Card variant="interactive" className={cn(TILE_SHAPE, TILE_PAD, TILE_FILL)}>
               <div className="flex-1 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-6">
                   <div
@@ -694,8 +818,12 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <CardTitle className="min-w-0 text-lg line-clamp-2">
-                    <Link href={`/resumes/${masterResumeId}`} className={TILE_LINK}>
+                  <CardTitle className="min-w-0 text-lg line-clamp-3">
+                    <Link
+                      href={`/resumes/${masterResumeId}`}
+                      title={defaultMasterTitle || undefined}
+                      className={TILE_LINK}
+                    >
                       {defaultMasterTitle || t('dashboard.masterResume')}
                     </Link>
                   </CardTitle>
@@ -705,7 +833,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-auto pt-4 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
+                  <div className={cn('flex items-center gap-2', !statusVisible && 'sr-only')}>
                     {statusDisplay.busy && (
                       <SpinnerGap
                         aria-hidden="true"
@@ -757,7 +885,7 @@ export default function DashboardPage() {
               <Card
                 key={resume.resume_id}
                 variant="interactive"
-                className={cn(TILE_SHAPE, TILE_FILL)}
+                className={cn(TILE_SHAPE, TILE_PAD, TILE_FILL)}
               >
                 <div className="flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-6">
@@ -769,18 +897,21 @@ export default function DashboardPage() {
                     >
                       <span className="font-mono font-bold">M</span>
                     </div>
-                    <StatusIndicator
-                      tone={STATUS_TONE[resume.processing_status]}
-                      className={TILE_STATUS}
-                    >
-                      {t(`dashboard.status.${resume.processing_status}`)}
-                    </StatusIndicator>
+                    {resume.processing_status !== 'ready' && (
+                      <StatusIndicator
+                        tone={STATUS_TONE[resume.processing_status]}
+                        className={TILE_STATUS}
+                      >
+                        {t(`dashboard.status.${resume.processing_status}`)}
+                      </StatusIndicator>
+                    )}
                   </div>
                   <CardTitle className="text-lg">
                     <Link
                       href={`/resumes/${resume.resume_id}`}
+                      title={title}
                       className={cn(
-                        'block font-serif text-base font-bold leading-tight mb-1 w-full line-clamp-2',
+                        'block font-serif text-base font-bold leading-tight mb-1 w-full line-clamp-3',
                         TILE_LINK
                       )}
                     >
@@ -806,7 +937,7 @@ export default function DashboardPage() {
                         className={TILE_ACTION}
                         aria-label={t('dashboard.duplicate')}
                         disabled={isDuplicating || resume.processing_status !== 'ready'}
-                        onClick={(e) => handleDuplicate(e, resume.resume_id)}
+                        onClick={(e) => handleDuplicate(resume.resume_id, e)}
                       >
                         {t('dashboard.duplicate')}
                       </Button>
@@ -837,92 +968,194 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          {/* 4. Tailored Resumes */}
-          {tailoredResumes.map((resume) => {
-            const title =
-              resume.title || resume.jobSnippet || resume.filename || t('dashboard.tailoredResume');
-            const monogramFill = MONOGRAM_FILLS[hashTitle(title) % MONOGRAM_FILLS.length];
-            return (
+          {rowFillers(1 + otherMasters.length + (showAddTrackTile ? 1 : 0)).map(
+            (visibility, index) => (
               <Card
-                key={resume.resume_id}
-                variant="interactive"
-                className={cn(TILE_SHAPE, TILE_FILL)}
+                key={`masters-filler-${index}`}
+                variant="ghost"
+                noPadding
+                className={cn(
+                  TILE_SHAPE,
+                  'pointer-events-none relative bg-canvas text-steel',
+                  visibility
+                )}
               >
-                <div className="flex-1 flex flex-col">
-                  <div className="flex justify-between items-start mb-6">
-                    <div
-                      className={cn(
-                        'size-12 border-2 border-ink text-white flex items-center justify-center',
-                        TILE_WHITE_BORDER,
-                        monogramFill
-                      )}
-                    >
-                      <span className="font-mono font-bold">{getMonogram(title)}</span>
-                    </div>
-                    <StatusIndicator
-                      tone={STATUS_TONE[resume.processing_status]}
-                      className={TILE_STATUS}
-                    >
-                      {t(`dashboard.status.${resume.processing_status}`)}
-                    </StatusIndicator>
-                  </div>
-                  <CardTitle className="text-lg">
-                    <Link
-                      href={`/resumes/${resume.resume_id}`}
-                      className={cn(
-                        'block font-serif text-base font-bold leading-tight mb-1 w-full line-clamp-2',
-                        TILE_LINK
-                      )}
-                    >
-                      {title}
-                    </Link>
-                  </CardTitle>
-                  <CardDescription
-                    className={cn('mt-auto pt-4 uppercase tabular-nums', TILE_WHITE)}
-                  >
-                    {t('dashboard.edited', {
-                      date: formatEditedDate(resume.updated_at || resume.created_at),
-                    })}
-                  </CardDescription>
-                </div>
+                <Hatch />
               </Card>
-            );
-          })}
+            )
+          )}
 
-          {/* 5. Create Tailored Resume: not a highlight target and no stretched click area. The
-              blue + button is the only control, with the Button primitive's own press-in and ring. */}
-          <Card className={TILE_SHAPE}>
-            <div className="flex-1 flex flex-col items-center justify-center text-center h-full">
-              <Button
-                type="button"
-                className="size-20"
-                onClick={() => (agentMode ? setAgentTask('tailor') : router.push('/tailor'))}
-                disabled={agentMode ? !masterResumeId || !hasReadyMaster : !isTailorEnabled}
-                aria-label={t('dashboard.createResume')}
-                title={t('dashboard.createResume')}
-              >
-                <Plus aria-hidden="true" className="size-8" />
-              </Button>
-              <p className="text-xs font-mono mt-4 uppercase text-steel">
-                {t('dashboard.createResume')}
-              </p>
-            </div>
-          </Card>
+          {/* Tailored: the label row with its order and master filter, then the tiles. */}
+          {(masterResumeId || tailoredResumes.length > 0) && (
+            <>
+              <div className={GROUP_ROW}>
+                <h2 className={GROUP_LABEL}>
+                  {t('dashboard.groups.tailored', { count: shownTailored.length })}
+                </h2>
+                {tailoredResumes.length === 0 ? (
+                  <p className="text-sm text-ink-soft">{t('dashboard.noTailored')}</p>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-4">
+                    {masterOptions.length > 1 && (
+                      <Dropdown
+                        className="w-56"
+                        options={[
+                          { id: 'all', label: t('dashboard.filter.all') },
+                          ...masterOptions,
+                        ]}
+                        value={activeMasterFilter}
+                        onChange={setMasterFilter}
+                      />
+                    )}
+                    {shownTailored.length > 1 && (
+                      <SegmentedControl
+                        size="sm"
+                        aria-label={t('dashboard.sort.label')}
+                        items={[
+                          { value: 'recent', label: t('dashboard.sort.recent') },
+                          { value: 'name', label: t('dashboard.sort.name') },
+                        ]}
+                        value={tailoredSort}
+                        onChange={setTailoredSort}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
 
-          {/* 6. Unused cells, hatched: the drafting mark for "not in use". */}
-          {Array.from({ length: fillerCount + extraFillerCount }).map((_, index) => (
-            <Card
-              key={`filler-${index}`}
-              variant="ghost"
-              noPadding
-              className={cn(
-                TILE_SHAPE,
-                'pointer-events-none relative hidden bg-canvas text-steel md:block'
-              )}
-            >
-              <Hatch />
-            </Card>
-          ))}
+              {shownTailored.map((resume) => {
+                const title = tailoredTitle(resume);
+                const edited = resume.updated_at || resume.created_at;
+                const settings = resume.template_settings ?? DEFAULT_TEMPLATE_SETTINGS;
+                const downloading = downloadingId === resume.resume_id;
+                return (
+                  <Card
+                    key={resume.resume_id}
+                    variant="interactive"
+                    className={cn(TILE_SHAPE, TILE_PAD, TILE_FILL)}
+                  >
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex justify-between items-start gap-2 mb-3">
+                        <div
+                          className={cn(
+                            'size-12 shrink-0 border-2 border-ink bg-ink text-white flex items-center justify-center',
+                            TILE_WHITE_BORDER
+                          )}
+                        >
+                          <span className="font-mono font-bold">{getMonogram(title)}</span>
+                        </div>
+                        {resume.processing_status === 'ready' ? (
+                          <div className="relative z-10 flex w-fit items-center gap-1">
+                            <Link
+                              href={`/resumes/${resume.resume_id}`}
+                              aria-label={t('dashboard.tileActions.open', { title })}
+                              title={t('dashboard.tileActions.open', { title })}
+                              className={cn(TILE_ICON_ACTION, TILE_REVEAL)}
+                            >
+                              <ArrowRight aria-hidden="true" />
+                            </Link>
+                            <Link
+                              href={`/builder?id=${resume.resume_id}`}
+                              aria-label={t('dashboard.tileActions.edit', { title })}
+                              title={t('dashboard.tileActions.edit', { title })}
+                              className={cn(TILE_ICON_ACTION, TILE_REVEAL)}
+                            >
+                              <PencilSimple aria-hidden="true" />
+                            </Link>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              className={cn(TILE_GHOST_ICON, TILE_REVEAL)}
+                              aria-label={t('dashboard.tileActions.download', { title })}
+                              title={t('dashboard.tileActions.download', { title })}
+                              disabled={downloading}
+                              onClick={() => void handleDownload(resume, title)}
+                            >
+                              {downloading ? (
+                                <SpinnerGap aria-hidden="true" className="animate-spin" />
+                              ) : (
+                                <DownloadSimple aria-hidden="true" />
+                              )}
+                            </Button>
+                            <ActionMenu
+                              label={t('dashboard.tileActions.more', { title })}
+                              items={[
+                                {
+                                  value: 'duplicate',
+                                  label: t('dashboard.duplicate'),
+                                  disabled: isDuplicating,
+                                },
+                                { value: 'delete', label: t('common.delete'), destructive: true },
+                              ]}
+                              onAction={(action) =>
+                                action === 'duplicate'
+                                  ? void handleDuplicate(resume.resume_id)
+                                  : setDeleteTarget(resume)
+                              }
+                              triggerClassName={cn(TILE_GHOST_ICON, TILE_MENU_REVEAL)}
+                            >
+                              <DotsThree aria-hidden="true" />
+                            </ActionMenu>
+                          </div>
+                        ) : (
+                          <StatusIndicator
+                            tone={STATUS_TONE[resume.processing_status]}
+                            className={TILE_STATUS}
+                          >
+                            {t(`dashboard.status.${resume.processing_status}`)}
+                          </StatusIndicator>
+                        )}
+                      </div>
+                      <CardTitle className="text-lg">
+                        <Link
+                          href={`/resumes/${resume.resume_id}`}
+                          title={title}
+                          className={cn(
+                            'block font-serif text-base font-bold leading-tight w-full line-clamp-3',
+                            TILE_LINK
+                          )}
+                        >
+                          {title}
+                        </Link>
+                      </CardTitle>
+                      <div className="mt-auto space-y-1 pt-3">
+                        <CardDescription
+                          className={cn('text-xs uppercase tabular-nums', TILE_WHITE)}
+                          title={formatEditedDate(edited)}
+                        >
+                          {t('dashboard.edited', { date: formatEditedAgo(edited) })}
+                        </CardDescription>
+                        <CardDescription className={cn('text-xs uppercase', TILE_WHITE)}>
+                          {t(`builder.formatting.templates.${templateKey(settings.template)}.name`)}
+                          {' · '}
+                          {settings.pageSize === 'A4'
+                            ? PAGE_SIZE_INFO.A4.name
+                            : t('builder.pageSize.usLetter')}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+
+              {/* Unused cells, hatched: the drafting mark for "not in use". */}
+              {rowFillers(shownTailored.length, true).map((visibility, index) => (
+                <Card
+                  key={`tailored-filler-${index}`}
+                  variant="ghost"
+                  noPadding
+                  className={cn(
+                    TILE_SHAPE,
+                    'pointer-events-none relative bg-canvas text-steel',
+                    visibility
+                  )}
+                >
+                  <Hatch />
+                </Card>
+              ))}
+            </>
+          )}
         </>
       )}
 
@@ -949,6 +1182,17 @@ export default function DashboardPage() {
         confirmLabel={t('dashboard.deleteAndReupload')}
         cancelLabel={t('confirmations.keepResumeCancelLabel')}
         onConfirm={confirmDeleteAndReupload}
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={t('confirmations.deleteResume')}
+        description={t('confirmations.deleteResumeDescription')}
+        confirmLabel={t('confirmations.deleteResumeConfirmLabel')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void confirmDeleteTailored()}
         variant="danger"
       />
 

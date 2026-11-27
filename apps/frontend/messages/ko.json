@@ -83,7 +83,7 @@
     "editResume": "이력서 편집",
     "deleteResume": "이력서 삭제",
     "downloadPdf": "PDF 다운로드",
-    "tailorResume": "채용 공고에 맞춤화",
+    "tailorResume": "이력서 맞춤화",
     "modulesHeading": "이력서 모듈",
     "masterResume": "마스터 이력서",
     "tailoredResume": "맞춤화된 이력서",
@@ -96,8 +96,26 @@
     "processingFailedHint": "이 파일을 읽을 수 없습니다. 다시 시도하거나 다른 파일을 업로드하세요.",
     "retrySuccess": "처리에 성공했습니다!",
     "retryFailed": "다시 시도에 실패했습니다. 다른 파일을 업로드해 보세요.",
-    "createResume": "이력서 만들기",
-    "edited": "{date}에 수정됨",
+    "edited": "수정: {date}",
+    "groups": {
+      "masters": "마스터 · {count}/{max}",
+      "tailored": "맞춤화됨 · {count}"
+    },
+    "noTailored": "아직 맞춤화된 이력서가 없습니다.",
+    "filter": {
+      "all": "모든 마스터"
+    },
+    "sort": {
+      "label": "맞춤화된 이력서 정렬",
+      "recent": "최근",
+      "name": "이름순"
+    },
+    "tileActions": {
+      "open": "{title} 열기",
+      "edit": "{title} 편집",
+      "download": "{title} PDF 다운로드",
+      "more": "{title} 추가 작업"
+    },
     "statusLine": "상태: {status}",
     "status": {
       "checking": "확인 중...",

@@ -419,9 +419,8 @@ describe('dashboard with several master resumes', () => {
   });
 
   describe('the Tailor entry point', () => {
-    // The only route to /tailor is the icon button on the "create resume" tile.
-    const tailorButton = () =>
-      within(screen.getByText('dashboard.createResume').parentElement!).getByRole('button');
+    // The route to /tailor is the Tailor a resume button in the header.
+    const tailorButton = () => screen.getByRole('button', { name: 'dashboard.tailorResume' });
 
     it('opens the tailor page when the default master failed but another master is ready', async () => {
       api.get.mockResolvedValue(status('failed'));

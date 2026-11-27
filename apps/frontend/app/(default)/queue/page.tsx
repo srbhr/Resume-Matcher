@@ -17,7 +17,7 @@ import {
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { useTranslations } from '@/lib/i18n';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatTimeAgo } from '@/lib/format-date';
 import { useJobDetails } from '@/hooks/use-job-details';
 import { JobInput, MIN_JOB_DESCRIPTION_LENGTH } from '@/components/jobs/job-input';
 import { Alert } from '@/components/ui/alert';
@@ -319,12 +319,7 @@ export default function QueuePage() {
   const updatedLabel =
     lastUpdated === null
       ? null
-      : t('queue.monitor.updated', {
-          when: new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
-            -Math.max(0, Math.round((now - lastUpdated) / 1000)),
-            'second'
-          ),
-        });
+      : t('queue.monitor.updated', { when: formatTimeAgo(lastUpdated, locale, now) });
 
   return (
     <PageFrame ground="crosses-wide">
