@@ -56,7 +56,6 @@ import { useStatusCache } from '@/lib/context/status-cache';
 import { Button } from '@/components/ui/button';
 import { BackLink } from '@/components/ui/back-link';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { StatusIndicator } from '@/components/ui/status-indicator';
@@ -71,6 +70,9 @@ import {
   type SettingsSection,
 } from '@/components/settings/section-nav';
 import { SideTab, SideTabs, SideTabsList, SideTabsPanel } from '@/components/ui/side-tabs';
+import { DangerZone } from '@/components/settings/danger-zone';
+import { FeaturePromptEditor } from '@/components/settings/feature-prompt-editor';
+import { LanguageSettings } from '@/components/settings/language-settings';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dropdown } from '@/components/ui/dropdown';
 import { cn } from '@/lib/utils';
@@ -84,18 +86,14 @@ import {
   Info,
   SlidersHorizontal,
   Globe,
-  Trash,
   Warning,
   ArrowSquareOut,
 } from '@phosphor-icons/react';
-import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
 import { DURATION } from '@/lib/motion';
 import { ATTACHMENT_DRAFT_STORAGE_PREFIX } from '@/lib/utils/attachment-draft-storage';
 import { INTERVIEW_PRACTICE_STORAGE_PREFIX } from '@/lib/utils/interview-practice-storage';
 import { RESUME_DRAFT_STORAGE_PREFIX, safeStorage } from '@/lib/utils/resume-draft-storage';
-import type { SupportedLanguage } from '@/lib/api/config';
-import type { Locale } from '@/i18n/config';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
@@ -295,17 +293,6 @@ export default function SettingsPage() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successMessage, setSuccessDialogMessage] = useState({ title: '', description: '' });
   const [isResetting, setIsResetting] = useState(false);
-
-  // Language settings
-  const {
-    contentLanguage,
-    uiLanguage,
-    setContentLanguage,
-    setUiLanguage,
-    languageNames,
-    supportedLanguages,
-    isLoading: languageLoading,
-  } = useLanguage();
 
   // Translations
   const { t } = useTranslations();
@@ -1474,69 +1461,22 @@ export default function SettingsPage() {
                             disabled={featureConfigLoading}
                           />
                           {enableCoverLetter && (
-                            <div className="pl-6 space-y-2">
-                              <Label htmlFor="coverLetterPrompt">
-                                {t('settings.contentGeneration.customPromptLabel')}
-                              </Label>
-                              <Textarea
-                                id="coverLetterPrompt"
-                                rows={8}
-                                aria-invalid={featurePromptError?.field === 'cover_letter_prompt'}
-                                aria-describedby={
-                                  featurePromptError?.field === 'cover_letter_prompt'
-                                    ? 'coverLetterPrompt-error'
-                                    : undefined
-                                }
-                                value={coverLetterPrompt}
-                                onChange={(e) => setCoverLetterPrompt(e.target.value)}
-                                placeholder={coverLetterDefault}
-                                className="font-mono text-xs break-words"
-                              />
-                              <p className="text-xs text-steel font-mono">
-                                {t('settings.contentGeneration.customPromptHelp')}
-                              </p>
-                              {featurePromptError?.field === 'cover_letter_prompt' && (
-                                <p
-                                  id="coverLetterPrompt-error"
-                                  role="alert"
-                                  className="text-xs text-destructive font-mono break-words"
-                                >
-                                  {t('settings.contentGeneration.customPromptErrorMissing', {
-                                    missing: featurePromptError.missing.join(', '),
-                                  })}
-                                </p>
-                              )}
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() =>
-                                    handleFeaturePromptSave(
-                                      'cover_letter_prompt',
-                                      coverLetterPrompt
-                                    )
-                                  }
-                                  disabled={featurePromptSaving === 'cover_letter_prompt'}
-                                >
-                                  {featurePromptSaving === 'cover_letter_prompt' ? (
-                                    <>
-                                      <SpinnerGap aria-hidden="true" className="animate-spin" />
-                                      {t('common.saving')}
-                                    </>
-                                  ) : (
-                                    t('common.save')
-                                  )}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => handleFeaturePromptSave('cover_letter_prompt', '')}
-                                  disabled={featurePromptSaving === 'cover_letter_prompt'}
-                                >
-                                  {t('settings.contentGeneration.customPromptResetButton')}
-                                </Button>
-                              </div>
-                            </div>
+                            <FeaturePromptEditor
+                              id="coverLetterPrompt"
+                              value={coverLetterPrompt}
+                              placeholder={coverLetterDefault}
+                              missing={
+                                featurePromptError?.field === 'cover_letter_prompt'
+                                  ? featurePromptError.missing
+                                  : null
+                              }
+                              saving={featurePromptSaving === 'cover_letter_prompt'}
+                              onChange={setCoverLetterPrompt}
+                              onSave={() =>
+                                handleFeaturePromptSave('cover_letter_prompt', coverLetterPrompt)
+                              }
+                              onReset={() => handleFeaturePromptSave('cover_letter_prompt', '')}
+                            />
                           )}
                         </div>
                         <div className="space-y-4 p-4">
@@ -1554,73 +1494,22 @@ export default function SettingsPage() {
                             disabled={featureConfigLoading}
                           />
                           {enableOutreach && (
-                            <div className="pl-6 space-y-2">
-                              <Label htmlFor="outreachPrompt">
-                                {t('settings.contentGeneration.customPromptLabel')}
-                              </Label>
-                              <Textarea
-                                id="outreachPrompt"
-                                rows={8}
-                                aria-invalid={
-                                  featurePromptError?.field === 'outreach_message_prompt'
-                                }
-                                aria-describedby={
-                                  featurePromptError?.field === 'outreach_message_prompt'
-                                    ? 'outreachPrompt-error'
-                                    : undefined
-                                }
-                                value={outreachPrompt}
-                                onChange={(e) => setOutreachPrompt(e.target.value)}
-                                placeholder={outreachDefault}
-                                className="font-mono text-xs break-words"
-                              />
-                              <p className="text-xs text-steel font-mono">
-                                {t('settings.contentGeneration.customPromptHelp')}
-                              </p>
-                              {featurePromptError?.field === 'outreach_message_prompt' && (
-                                <p
-                                  id="outreachPrompt-error"
-                                  role="alert"
-                                  className="text-xs text-destructive font-mono break-words"
-                                >
-                                  {t('settings.contentGeneration.customPromptErrorMissing', {
-                                    missing: featurePromptError.missing.join(', '),
-                                  })}
-                                </p>
-                              )}
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() =>
-                                    handleFeaturePromptSave(
-                                      'outreach_message_prompt',
-                                      outreachPrompt
-                                    )
-                                  }
-                                  disabled={featurePromptSaving === 'outreach_message_prompt'}
-                                >
-                                  {featurePromptSaving === 'outreach_message_prompt' ? (
-                                    <>
-                                      <SpinnerGap aria-hidden="true" className="animate-spin" />
-                                      {t('common.saving')}
-                                    </>
-                                  ) : (
-                                    t('common.save')
-                                  )}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() =>
-                                    handleFeaturePromptSave('outreach_message_prompt', '')
-                                  }
-                                  disabled={featurePromptSaving === 'outreach_message_prompt'}
-                                >
-                                  {t('settings.contentGeneration.customPromptResetButton')}
-                                </Button>
-                              </div>
-                            </div>
+                            <FeaturePromptEditor
+                              id="outreachPrompt"
+                              value={outreachPrompt}
+                              placeholder={outreachDefault}
+                              missing={
+                                featurePromptError?.field === 'outreach_message_prompt'
+                                  ? featurePromptError.missing
+                                  : null
+                              }
+                              saving={featurePromptSaving === 'outreach_message_prompt'}
+                              onChange={setOutreachPrompt}
+                              onSave={() =>
+                                handleFeaturePromptSave('outreach_message_prompt', outreachPrompt)
+                              }
+                              onReset={() => handleFeaturePromptSave('outreach_message_prompt', '')}
+                            />
                           )}
                         </div>
                         <div className="p-4">
@@ -1654,132 +1543,17 @@ export default function SettingsPage() {
 
                 {/* Language Settings Section */}
                 <SideTabsPanel value="language">
-                  <section className="space-y-6">
-                    <div className="flex items-center gap-2 border-b border-panel-hover pb-2">
-                      <Globe className="w-4 h-4" />
-                      <h2 className="font-serif text-xl font-bold text-ink text-balance">
-                        {t('settings.languageTitle')}
-                      </h2>
-                    </div>
-
-                    {/* UI Language */}
-                    <div className="space-y-4">
-                      <div>
-                        <h3
-                          id="ui-language-heading"
-                          className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft mb-2"
-                        >
-                          {t('settings.uiLanguage')}
-                        </h3>
-                        <p className="text-sm text-ink-soft mb-3">
-                          {t('settings.uiLanguageDescription')}
-                        </p>
-                      </div>
-
-                      <SegmentedControl
-                        aria-labelledby="ui-language-heading"
-                        className="grid grid-cols-2 md:grid-cols-4"
-                        items={supportedLanguages.map((lang) => ({
-                          value: lang,
-                          label: languageNames[lang],
-                          disabled: languageLoading,
-                        }))}
-                        value={uiLanguage}
-                        onChange={(lang) => setUiLanguage(lang as Locale)}
-                      />
-                    </div>
-
-                    {/* Content Language */}
-                    <div className="space-y-4 pt-4 border-t border-paper">
-                      <div>
-                        <h3
-                          id="content-language-heading"
-                          className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft mb-2"
-                        >
-                          {t('settings.contentLanguage')}
-                        </h3>
-                        <p className="text-sm text-ink-soft mb-3">
-                          {t('settings.contentLanguageDescription')}
-                        </p>
-                      </div>
-
-                      <SegmentedControl
-                        aria-labelledby="content-language-heading"
-                        className="grid grid-cols-2 md:grid-cols-4"
-                        items={supportedLanguages.map((lang) => ({
-                          value: lang,
-                          label: languageNames[lang],
-                          disabled: languageLoading,
-                        }))}
-                        value={contentLanguage}
-                        onChange={(lang) => setContentLanguage(lang as SupportedLanguage)}
-                      />
-                    </div>
-                  </section>
+                  <LanguageSettings />
                 </SideTabsPanel>
 
                 {/* Danger Zone */}
                 <SideTabsPanel value="danger">
-                  <section className="space-y-6">
-                    <div className="flex items-center gap-2 border-b border-destructive pb-2">
-                      <Warning className="w-4 h-4 text-destructive" />
-                      <h2 className="font-serif text-xl font-bold text-ink text-balance">
-                        {t('settings.dangerZone')}
-                      </h2>
-                    </div>
-
-                    {errorIn('danger') && (
-                      <Alert tone="error" className="break-words">
-                        {errorIn('danger')}
-                      </Alert>
-                    )}
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Clear API Keys */}
-                      <div className="border border-destructive bg-destructive-tint p-6 space-y-4">
-                        <div>
-                          <h3 className="font-serif text-lg font-bold text-ink text-balance mb-1">
-                            {t('settings.clearApiKeys')}
-                          </h3>
-                          <p className="text-xs text-ink-soft text-pretty">
-                            {t('settings.clearApiKeysDescription')}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline-destructive"
-                          className="w-full"
-                          onClick={() => setShowClearApiKeysDialog(true)}
-                          disabled={isResetting}
-                        >
-                          <Key className="w-4 h-4" />
-                          {t('settings.clearApiKeys')}
-                        </Button>
-                      </div>
-
-                      {/* Reset Database */}
-                      <div className="border border-destructive bg-destructive-tint p-6 space-y-4">
-                        <div>
-                          <h3 className="font-serif text-lg font-bold text-ink text-balance mb-1">
-                            {t('settings.resetDatabase')}
-                          </h3>
-                          <p className="text-xs text-ink-soft text-pretty">
-                            {t('settings.resetDatabaseDescription')}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          className="w-full"
-                          onClick={() => setShowResetDatabaseDialog(true)}
-                          disabled={isResetting}
-                        >
-                          <Trash className="w-4 h-4" />
-                          {t('settings.resetDatabase')}
-                        </Button>
-                      </div>
-                    </div>
-                  </section>
+                  <DangerZone
+                    error={errorIn('danger')}
+                    busy={isResetting}
+                    onClearApiKeys={() => setShowClearApiKeysDialog(true)}
+                    onResetDatabase={() => setShowResetDatabaseDialog(true)}
+                  />
                 </SideTabsPanel>
 
                 <SideTabsPanel value="about">
