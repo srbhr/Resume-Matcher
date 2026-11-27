@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'rea
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { type ResumeData } from '@/components/dashboard/resume-component';
-import { ResumeForm } from './resume-form';
 import { ResumePhotoField } from './forms/resume-photo-field';
 import { FormattingControls } from './formatting-controls';
 import { GeneratePrompt } from './generate-prompt';
@@ -102,6 +101,8 @@ import {
 // The panels of the tabs other than Resume, and the regenerate wizard, load as
 // their own chunks: they sat in /builder's first-load JS though the page opens
 // on the Resume tab.
+// The resume form brings dnd-kit; it loads while the resume is fetched.
+const ResumeForm = dynamic(() => import('./resume-form').then((m) => m.ResumeForm));
 const CoverLetterEditor = dynamic(() =>
   import('./cover-letter-editor').then((m) => m.CoverLetterEditor)
 );

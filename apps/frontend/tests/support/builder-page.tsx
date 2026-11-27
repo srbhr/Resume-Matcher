@@ -13,6 +13,7 @@ import en from '@/messages/en.json';
 // The builder loads these panels with next/dynamic. Loaded here first, each
 // dynamic import resolves from the module cache, so advance() flushes it the
 // way a fetched chunk lands in the browser.
+import '@/components/builder/resume-form';
 import '@/components/builder/cover-letter-editor';
 import '@/components/builder/outreach-editor';
 import '@/components/builder/cover-letter-preview';
