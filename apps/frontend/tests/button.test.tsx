@@ -50,6 +50,23 @@ describe('Button', () => {
     expect(buttonClass({ variant: 'outline-destructive' })).toContain('border-destructive');
   });
 
+  it('flattens a disabled filled button to panel and ink-soft, not a faded colour', () => {
+    for (const variant of ['default', 'destructive', 'success', 'warning'] as const) {
+      const classes = buttonClass({ variant }).split(' ');
+      expect(classes).toEqual(
+        expect.arrayContaining([
+          'disabled:bg-panel',
+          'disabled:text-ink-soft',
+          'disabled:opacity-100',
+          'disabled:shadow-none',
+        ])
+      );
+    }
+    // Outline buttons keep the plain fade.
+    expect(buttonClass({ variant: 'outline' })).not.toContain('disabled:bg-panel');
+    expect(buttonClass({ variant: 'outline' })).toContain('disabled:opacity-50');
+  });
+
   it('keeps disabled buttons inert', () => {
     expect(buttonClass()).toContain('disabled:pointer-events-none');
   });

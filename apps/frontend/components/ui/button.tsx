@@ -39,18 +39,40 @@ const BASE = cn(
   "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0"
 );
 
+// A filled button that can't be pressed yet goes flat: a panel fill, ink-soft text,
+// no shadow. Fading its colour instead reads as a washed-out lavender or pink, not as
+// "not yet". Outline, secondary and ghost buttons keep the plain fade.
+const FILLED_DISABLED =
+  'disabled:border-ink disabled:bg-panel disabled:text-ink-soft disabled:opacity-100 disabled:shadow-none';
+
 const PRESS =
   'shadow-sw-sm hover:translate-x-px hover:translate-y-px hover:shadow-none active:translate-x-[2px] active:translate-y-[2px]';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  default: cn('border border-ink bg-primary text-white hover:bg-primary-hover', PRESS),
-  destructive: cn('border border-ink bg-destructive text-white hover:bg-destructive-hover', PRESS),
+  default: cn(
+    'border border-ink bg-primary text-white hover:bg-primary-hover',
+    PRESS,
+    FILLED_DISABLED
+  ),
+  destructive: cn(
+    'border border-ink bg-destructive text-white hover:bg-destructive-hover',
+    PRESS,
+    FILLED_DISABLED
+  ),
   'outline-destructive': cn(
     'border border-destructive bg-canvas text-destructive hover:bg-destructive-tint',
     PRESS
   ),
-  success: cn('border border-ink bg-success text-white hover:bg-success-hover', PRESS),
-  warning: cn('border border-ink bg-warning text-ink hover:bg-warning-hover', PRESS),
+  success: cn(
+    'border border-ink bg-success text-white hover:bg-success-hover',
+    PRESS,
+    FILLED_DISABLED
+  ),
+  warning: cn(
+    'border border-ink bg-warning text-ink hover:bg-warning-hover',
+    PRESS,
+    FILLED_DISABLED
+  ),
   outline: cn('border border-ink bg-canvas text-ink hover:bg-panel', PRESS),
   secondary: cn('border border-ink bg-panel text-ink hover:bg-panel-hover', PRESS),
   ghost: 'border-none bg-transparent text-ink shadow-none hover:bg-panel active:bg-panel-hover',

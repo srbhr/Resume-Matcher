@@ -791,7 +791,6 @@
   },
   "tailor": {
     "title": "Personalizar CV",
-    "subtitle": "Optimiza tu currículum para un trabajo específico",
     "heroTitle": "Personaliza tu currículum",
     "selectResume": "Seleccionar Currículum",
     "pasteJobDescription": "Pegar Descripción del Trabajo",
@@ -903,7 +902,7 @@
       "previewUnavailable": "La vista previa caducó o el currículum original cambió. Genera una nueva vista previa antes de guardar."
     },
     "selectResumeDescription": "Las viñetas se toman de este currículum maestro.",
-    "tailoringLabel": "Personalizando:",
+    "tailoringLabel": "Currículum maestro",
     "jobDescriptionHint": "Pega la oferta completa, con responsabilidades y requisitos (mínimo 50 caracteres).",
     "steps": {
       "label": "Cómo funciona la personalización",
@@ -987,7 +986,8 @@
       "error": "No se pudieron aplicar las palabras clave. Inténtalo de nuevo.",
       "scoreChange": "Puntuación ATS {before} → {after}",
       "limitReached": "Puedes añadir hasta {max} palabras clave a un currículum."
-    }
+    },
+    "optionsTitle": "Opciones de personalización"
   },
   "settings": {
     "title": "Configuración",

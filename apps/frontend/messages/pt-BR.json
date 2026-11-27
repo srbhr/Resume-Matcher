@@ -791,7 +791,6 @@
   },
   "tailor": {
     "title": "Personalizar Currículo",
-    "subtitle": "Otimize seu currículo para uma vaga específica",
     "heroTitle": "Personalize Seu Currículo",
     "selectResume": "Selecionar Currículo",
     "pasteJobDescription": "Colar Descrição da Vaga",
@@ -903,7 +902,7 @@
       "previewUnavailable": "Esta prévia expirou ou o currículo original mudou. Gere uma nova prévia antes de salvar."
     },
     "selectResumeDescription": "Os marcadores são extraídos deste currículo principal.",
-    "tailoringLabel": "Personalizando:",
+    "tailoringLabel": "Currículo mestre",
     "jobDescriptionHint": "Cole o anúncio completo da vaga, com responsabilidades e requisitos (mínimo de 50 caracteres).",
     "steps": {
       "label": "Como funciona a personalização",
@@ -987,7 +986,8 @@
       "error": "Não foi possível aplicar as palavras-chave. Tente novamente.",
       "scoreChange": "Pontuação ATS {before} → {after}",
       "limitReached": "Você pode adicionar até {max} palavras-chave a um currículo."
-    }
+    },
+    "optionsTitle": "Opções de personalização"
   },
   "settings": {
     "title": "Configurações",

@@ -791,7 +791,6 @@
   },
   "tailor": {
     "title": "Tailor Resume",
-    "subtitle": "Optimize your resume for a specific job",
     "heroTitle": "Tailor Your Resume",
     "selectResume": "Select Resume",
     "pasteJobDescription": "Paste Job Description",
@@ -903,7 +902,7 @@
       "previewUnavailable": "This preview expired or the source resume changed. Generate a fresh preview before saving."
     },
     "selectResumeDescription": "Bullets are drawn from this master resume.",
-    "tailoringLabel": "Tailoring:",
+    "tailoringLabel": "Master resume",
     "jobDescriptionHint": "Paste the full job posting, including responsibilities and requirements (at least 50 characters).",
     "steps": {
       "label": "How tailoring works",
@@ -987,7 +986,8 @@
       "error": "Could not apply the keywords. Please try again.",
       "scoreChange": "ATS score {before} → {after}",
       "limitReached": "You can add up to {max} keywords to one resume."
-    }
+    },
+    "optionsTitle": "Tailoring options"
   },
   "settings": {
     "title": "Settings",

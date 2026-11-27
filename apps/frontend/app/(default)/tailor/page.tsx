@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label, labelClass } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { PageFrame } from '@/components/ui/page-frame';
-import { PageHeader } from '@/components/ui/page-header';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
 import { AgentPromptDialog } from '@/components/agent/agent-prompt-dialog';
 import { FadePresence } from '@/components/common/presence';
@@ -45,7 +44,7 @@ import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { ListNumbers, SpinnerGap } from '@phosphor-icons/react';
+import { ArrowLeft, ListNumbers, SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
@@ -582,18 +581,28 @@ export default function TailorPage() {
     keywords.filter((k) => !forcedKeywords.includes(k) && !keywordInText(k, previewText));
 
   return (
-    <PageFrame width="narrow" className="my-auto">
-      <PageHeader className="p-6 md:p-6">
-        <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
-        <PageHeader.Title>{t('tailor.heroTitle')}</PageHeader.Title>
-        <PageHeader.Subtitle>{t('tailor.subtitle')}</PageHeader.Subtitle>
-        <PageHeader.Actions>
-          <Link href="/queue" className={buttonClass({ variant: 'outline', size: 'sm' })}>
-            <ListNumbers aria-hidden="true" />
-            {t('nav.queue')}
-          </Link>
-        </PageHeader.Actions>
-      </PageHeader>
+    <PageFrame width="default" className="my-auto">
+      {/* One compact toolbar row, as on the viewer, tracker and settings. */}
+      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-3 border-b border-ink px-6 py-3">
+        <Link
+          href="/dashboard"
+          aria-label={t('common.back')}
+          title={t('common.back')}
+          className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
+        >
+          <ArrowLeft aria-hidden="true" />
+        </Link>
+        <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
+          {t('tailor.heroTitle')}
+        </h1>
+        <Link
+          href="/queue"
+          className={buttonClass({ variant: 'outline', size: 'sm', className: 'ml-auto' })}
+        >
+          <ListNumbers aria-hidden="true" />
+          {t('nav.queue')}
+        </Link>
+      </header>
 
       <ol
         aria-label={t('tailor.steps.label')}
@@ -628,8 +637,9 @@ export default function TailorPage() {
         })}
       </ol>
 
-      <div className="p-6">
-        <div className="space-y-3">
+      {/* The job description is the work; the options beside it tune it. */}
+      <div className="grid md:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-4 p-6">
           {agentMode && (
             <Alert tone="info" title={t('agentPrompt.modeTitle')}>
               {t('agentPrompt.tailorPageMessage')}
@@ -645,107 +655,6 @@ export default function TailorPage() {
             />
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {masters.length > 1 ? (
-              <Dropdown
-                label={t('tailor.selectResume')}
-                description={t('tailor.selectResumeDescription')}
-                options={masters.map((m) => ({ id: m.resume_id, label: masterLabel(m) }))}
-                value={masterResumeId ?? ''}
-                onChange={setMasterResumeId}
-                disabled={isLoading || promptLoading || showDiffModal}
-              />
-            ) : (
-              (masters.length === 1 || !masterResumeId) && (
-                <div className="space-y-1">
-                  <span className={cn('block', labelClass)}>{t('tailor.tailoringLabel')}</span>
-                  <p className="text-sm text-ink-soft">{t('tailor.selectResumeDescription')}</p>
-                  <p className="flex min-h-10 items-center font-mono text-sm font-bold break-words text-ink">
-                    {masters.length === 1 ? masterLabel(masters[0]) : t('common.loading')}
-                  </p>
-                </div>
-              )
-            )}
-
-            <Dropdown
-              options={
-                promptOptions.length > 0
-                  ? promptOptions.map((opt) => ({
-                      id: opt.id,
-                      label: t(`tailor.promptOptions.${opt.id}.label`),
-                      description: t(`tailor.promptOptions.${opt.id}.description`),
-                    }))
-                  : [
-                      {
-                        id: 'nudge',
-                        label: t('tailor.promptOptions.nudge.label'),
-                        description: t('tailor.promptOptions.nudge.description'),
-                      },
-                      {
-                        id: 'keywords',
-                        label: t('tailor.promptOptions.keywords.label'),
-                        description: t('tailor.promptOptions.keywords.description'),
-                      },
-                      {
-                        id: 'full',
-                        label: t('tailor.promptOptions.full.label'),
-                        description: t('tailor.promptOptions.full.description'),
-                      },
-                      {
-                        id: 'heavy',
-                        label: t('tailor.promptOptions.heavy.label'),
-                        description: t('tailor.promptOptions.heavy.description'),
-                      },
-                    ]
-              }
-              value={selectedPromptId}
-              onChange={(value) => {
-                hasUserSelectedPrompt.current = true;
-                setSelectedPromptId(value);
-              }}
-              label={t('tailor.promptLabel')}
-              description={t('tailor.promptDescription')}
-              disabled={isLoading || promptLoading}
-            />
-          </div>
-
-          <FadePresence show={selectedPromptId === 'heavy'}>
-            <Alert tone="warning">{t('tailor.heavyWarning')}</Alert>
-          </FadePresence>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Dropdown
-              options={TAILOR_PAGE_LIMITS.map((limit) => ({
-                id: String(limit ?? 'none'),
-                label: t(`tailor.length.pageLimitOptions.${limit ?? 'none'}`),
-              }))}
-              value={String(tailorLength.maxPages ?? 'none')}
-              onChange={(value) =>
-                updateTailorLength({
-                  maxPages: (value === 'none' ? null : Number(value)) as TailorPageLimit,
-                })
-              }
-              label={t('tailor.length.pageLimitLabel')}
-              description={t('tailor.length.pageLimitDescription')}
-              disabled={isLoading}
-            />
-            <Dropdown
-              options={TAILOR_BULLET_CAPS.map((cap) => ({
-                id: String(cap ?? 'all'),
-                label: t(`tailor.length.bulletOptions.${cap ?? 'all'}`),
-              }))}
-              value={String(tailorLength.maxBulletsPerEntry ?? 'all')}
-              onChange={(value) =>
-                updateTailorLength({
-                  maxBulletsPerEntry: (value === 'all' ? null : Number(value)) as TailorBulletCap,
-                })
-              }
-              label={t('tailor.length.bulletsLabel')}
-              description={t('tailor.length.bulletsDescription')}
-              disabled={isLoading}
-            />
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="job-description">{t('tailor.pasteJobDescription')}</Label>
             <div className="relative">
@@ -753,7 +662,7 @@ export default function TailorPage() {
                 id="job-description"
                 aria-describedby="job-description-hint"
                 placeholder={t('tailor.jobDescriptionPlaceholder')}
-                className="min-h-48 resize-none p-4 pb-8"
+                className="min-h-80 resize-y p-4 pb-8"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
                 onKeyDown={handleTextareaKeyDown}
@@ -821,6 +730,114 @@ export default function TailorPage() {
           )}
           {writingResult && <WritingScoreCard writing={writingResult} resume={writingResume} />}
         </div>
+
+        <aside
+          aria-labelledby="tailor-options-heading"
+          className="space-y-6 border-t border-ink bg-paper p-6 md:border-t-0 md:border-l"
+        >
+          <h2
+            id="tailor-options-heading"
+            className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft"
+          >
+            {t('tailor.optionsTitle')}
+          </h2>
+          {masters.length > 1 ? (
+            <Dropdown
+              label={t('tailor.selectResume')}
+              description={t('tailor.selectResumeDescription')}
+              options={masters.map((m) => ({ id: m.resume_id, label: masterLabel(m) }))}
+              value={masterResumeId ?? ''}
+              onChange={setMasterResumeId}
+              disabled={isLoading || promptLoading || showDiffModal}
+            />
+          ) : (
+            (masters.length === 1 || !masterResumeId) && (
+              <div className="space-y-1">
+                <span className={cn('block', labelClass)}>{t('tailor.tailoringLabel')}</span>
+                <p className="text-sm text-ink-soft">{t('tailor.selectResumeDescription')}</p>
+                <p className="flex min-h-10 items-center font-mono text-sm font-bold break-words text-ink">
+                  {masters.length === 1 ? masterLabel(masters[0]) : t('common.loading')}
+                </p>
+              </div>
+            )
+          )}
+
+          <Dropdown
+            options={
+              promptOptions.length > 0
+                ? promptOptions.map((opt) => ({
+                    id: opt.id,
+                    label: t(`tailor.promptOptions.${opt.id}.label`),
+                    description: t(`tailor.promptOptions.${opt.id}.description`),
+                  }))
+                : [
+                    {
+                      id: 'nudge',
+                      label: t('tailor.promptOptions.nudge.label'),
+                      description: t('tailor.promptOptions.nudge.description'),
+                    },
+                    {
+                      id: 'keywords',
+                      label: t('tailor.promptOptions.keywords.label'),
+                      description: t('tailor.promptOptions.keywords.description'),
+                    },
+                    {
+                      id: 'full',
+                      label: t('tailor.promptOptions.full.label'),
+                      description: t('tailor.promptOptions.full.description'),
+                    },
+                    {
+                      id: 'heavy',
+                      label: t('tailor.promptOptions.heavy.label'),
+                      description: t('tailor.promptOptions.heavy.description'),
+                    },
+                  ]
+            }
+            value={selectedPromptId}
+            onChange={(value) => {
+              hasUserSelectedPrompt.current = true;
+              setSelectedPromptId(value);
+            }}
+            label={t('tailor.promptLabel')}
+            description={t('tailor.promptDescription')}
+            disabled={isLoading || promptLoading}
+          />
+
+          <FadePresence show={selectedPromptId === 'heavy'}>
+            <Alert tone="warning">{t('tailor.heavyWarning')}</Alert>
+          </FadePresence>
+
+          <Dropdown
+            options={TAILOR_PAGE_LIMITS.map((limit) => ({
+              id: String(limit ?? 'none'),
+              label: t(`tailor.length.pageLimitOptions.${limit ?? 'none'}`),
+            }))}
+            value={String(tailorLength.maxPages ?? 'none')}
+            onChange={(value) =>
+              updateTailorLength({
+                maxPages: (value === 'none' ? null : Number(value)) as TailorPageLimit,
+              })
+            }
+            label={t('tailor.length.pageLimitLabel')}
+            description={t('tailor.length.pageLimitDescription')}
+            disabled={isLoading}
+          />
+          <Dropdown
+            options={TAILOR_BULLET_CAPS.map((cap) => ({
+              id: String(cap ?? 'all'),
+              label: t(`tailor.length.bulletOptions.${cap ?? 'all'}`),
+            }))}
+            value={String(tailorLength.maxBulletsPerEntry ?? 'all')}
+            onChange={(value) =>
+              updateTailorLength({
+                maxBulletsPerEntry: (value === 'all' ? null : Number(value)) as TailorBulletCap,
+              })
+            }
+            label={t('tailor.length.bulletsLabel')}
+            description={t('tailor.length.bulletsDescription')}
+            disabled={isLoading}
+          />
+        </aside>
       </div>
 
       <AgentPromptDialog

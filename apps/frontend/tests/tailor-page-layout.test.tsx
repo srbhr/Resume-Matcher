@@ -69,15 +69,34 @@ async function renderPage() {
 
 const generateButton = () => screen.getByRole('button', { name: 'tailor.generateTailored' });
 
-describe('tailor page: narrow centred card', () => {
-  it('sits in the narrow page frame', async () => {
+describe('tailor page: the job description beside its options', () => {
+  it('sits in the default frame under one compact header row', async () => {
     await renderPage();
-    const frame = screen
-      .getByRole('heading', { level: 1, name: 'tailor.heroTitle' })
-      .closest('.shadow-sw-lg') as HTMLElement;
-    expect(frame).not.toBeNull();
-    expect(frame.className).toMatch(/(^|\s)max-w-4xl(\s|$)/);
-    expect(frame.className).not.toContain('max-w-[86rem]');
+    const title = screen.getByRole('heading', { level: 1, name: 'tailor.heroTitle' });
+    const frame = title.closest('.shadow-sw-lg') as HTMLElement;
+    expect(frame.className).toContain('max-w-[86rem]');
+    expect(title).toHaveClass('text-2xl', 'md:text-3xl');
+    const header = title.closest('header') as HTMLElement;
+    expect(header).toHaveClass('px-6', 'py-3');
+    // Back is an arrow, named for screen readers, in the same row as the title.
+    expect(within(header).getByRole('link', { name: 'common.back' })).toHaveAttribute(
+      'href',
+      '/dashboard'
+    );
+  });
+
+  it('puts the job description and Generate in the main column, the options in a side panel', async () => {
+    await renderPage();
+    const options = screen.getByRole('complementary', { name: 'tailor.optionsTitle' });
+    const field = screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' });
+
+    expect(options).not.toContainElement(field);
+    expect(options).not.toContainElement(generateButton());
+    expect(within(options).getByText('tailor.tailoringLabel')).toBeInTheDocument();
+    expect(within(options).getByText('tailor.promptLabel')).toBeInTheDocument();
+    expect(within(options).getByText('tailor.length.pageLimitLabel')).toBeInTheDocument();
+    expect(within(options).getByText('tailor.length.bulletsLabel')).toBeInTheDocument();
+    expect(field.parentElement?.parentElement?.parentElement).toContainElement(generateButton());
   });
 
   it('shows the three steps in order, with step 1 current and nothing clickable', async () => {

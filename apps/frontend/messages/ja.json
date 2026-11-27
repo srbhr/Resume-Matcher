@@ -791,7 +791,6 @@
   },
   "tailor": {
     "title": "履歴書をカスタマイズ",
-    "subtitle": "特定の求人に合わせて履歴書を最適化",
     "heroTitle": "履歴書をカスタマイズ",
     "selectResume": "履歴書を選択",
     "pasteJobDescription": "求人内容を貼り付け",
@@ -903,7 +902,7 @@
       "previewUnavailable": "プレビューの有効期限が切れたか、元の履歴書が変更されました。保存する前に新しいプレビューを生成してください。"
     },
     "selectResumeDescription": "箇条書きはこのマスター履歴書から選ばれます。",
-    "tailoringLabel": "カスタマイズ対象：",
+    "tailoringLabel": "マスター履歴書",
     "jobDescriptionHint": "職務内容と応募要件を含む求人情報の全文を貼り付けてください（50文字以上）。",
     "steps": {
       "label": "カスタマイズの流れ",
@@ -987,7 +986,8 @@
       "error": "キーワードを反映できませんでした。もう一度お試しください。",
       "scoreChange": "ATSスコア {before} → {after}",
       "limitReached": "1つの履歴書に追加できるキーワードは最大{max}個です。"
-    }
+    },
+    "optionsTitle": "カスタマイズのオプション"
   },
   "settings": {
     "title": "設定",

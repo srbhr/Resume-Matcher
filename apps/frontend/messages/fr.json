@@ -791,7 +791,6 @@
   },
   "tailor": {
     "title": "Personnaliser le CV",
-    "subtitle": "Optimisez votre CV pour un poste spécifique",
     "heroTitle": "Personnalisez votre CV",
     "selectResume": "Sélectionner un CV",
     "pasteJobDescription": "Coller la fiche de poste",
@@ -903,7 +902,7 @@
       "previewUnavailable": "Cet aperçu a expiré ou le CV source a changé. Générez un nouvel aperçu avant de sauvegarder."
     },
     "selectResumeDescription": "Les puces sont tirées de ce CV principal.",
-    "tailoringLabel": "CV à personnaliser :",
+    "tailoringLabel": "CV principal",
     "jobDescriptionHint": "Collez la fiche de poste complète, avec les missions et les exigences (50 caractères minimum).",
     "steps": {
       "label": "Étapes de la personnalisation",
@@ -987,7 +986,8 @@
       "error": "Impossible d'appliquer les mots-clés. Veuillez réessayer.",
       "scoreChange": "Score ATS {before} → {after}",
       "limitReached": "Vous pouvez ajouter jusqu'à {max} mots-clés à un CV."
-    }
+    },
+    "optionsTitle": "Options de personnalisation"
   },
   "settings": {
     "title": "Paramètres",

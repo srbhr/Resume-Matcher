@@ -791,7 +791,6 @@
   },
   "tailor": {
     "title": "이력서 맞춤화",
-    "subtitle": "특정 채용 공고에 맞게 이력서를 최적화하세요",
     "heroTitle": "이력서 맞춤화",
     "selectResume": "이력서 선택",
     "pasteJobDescription": "채용 공고 붙여넣기",
@@ -903,7 +902,7 @@
       "previewUnavailable": "미리보기가 만료되었거나 원본 이력서가 변경되었습니다. 저장하기 전에 새 미리보기를 생성하세요."
     },
     "selectResumeDescription": "글머리 기호는 이 마스터 이력서에서 가져옵니다.",
-    "tailoringLabel": "맞춤화 대상:",
+    "tailoringLabel": "마스터 이력서",
     "jobDescriptionHint": "담당 업무와 자격 요건을 포함한 채용 공고 전문을 붙여넣으세요(50자 이상).",
     "steps": {
       "label": "맞춤화 진행 단계",
@@ -987,7 +986,8 @@
       "error": "키워드를 반영하지 못했습니다. 다시 시도해 주세요.",
       "scoreChange": "ATS 점수 {before} → {after}",
       "limitReached": "이력서 하나에 키워드를 최대 {max}개까지 추가할 수 있습니다."
-    }
+    },
+    "optionsTitle": "맞춤화 옵션"
   },
   "settings": {
     "title": "설정",

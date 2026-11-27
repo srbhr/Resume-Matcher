@@ -791,7 +791,6 @@
   },
   "tailor": {
     "title": "定制简历",
-    "subtitle": "为特定职位优化您的简历",
     "heroTitle": "定制您的简历",
     "selectResume": "选择简历",
     "pasteJobDescription": "粘贴职位描述",
@@ -903,7 +902,7 @@
       "previewUnavailable": "此预览已过期或原始简历已更改。请先生成新的预览再保存。"
     },
     "selectResumeDescription": "要点将从这份主简历中选取。",
-    "tailoringLabel": "定制对象：",
+    "tailoringLabel": "主简历",
     "jobDescriptionHint": "请粘贴完整的职位信息，包括岗位职责和任职要求（至少 50 个字符）。",
     "steps": {
       "label": "定制流程",
@@ -987,7 +986,8 @@
       "error": "无法应用关键词，请重试。",
       "scoreChange": "ATS 分数 {before} → {after}",
       "limitReached": "每份简历最多可添加 {max} 个关键词。"
-    }
+    },
+    "optionsTitle": "定制选项"
   },
   "settings": {
     "title": "设置",
