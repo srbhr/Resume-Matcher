@@ -714,7 +714,12 @@
       "applyChanges": "변경 적용",
       "checkError": "문장을 채점하지 못했습니다."
     },
-    "resizePanels": "편집기와 미리보기 크기 조절"
+    "resizePanels": "편집기와 미리보기 크기 조절",
+    "entry": {
+      "untitled": "제목 없는 항목",
+      "collapse": "{item} 접기",
+      "expand": "{item} 펼치기"
+    }
   },
   "enrichment": {
     "title": "이력서 개선",

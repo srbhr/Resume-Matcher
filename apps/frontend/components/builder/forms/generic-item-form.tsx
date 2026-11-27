@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 
-import { Copy, Plus, Trash } from '@phosphor-icons/react';
+import { Plus } from '@phosphor-icons/react';
 import type { CustomSectionItem } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
 import { SortableItemList } from '../sortable-item-list';
+import { EntryCard, entrySummary } from './entry-card';
 import { DescriptionPointsEditor, type DescriptionPatch } from './description-points-editor';
 import { duplicateById } from '@/lib/utils/reorder-items';
 
@@ -104,13 +105,6 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={handleAdd}>
-          <Plus aria-hidden="true" />
-          {finalAddLabel}
-        </Button>
-      </div>
-
       {items.length === 0 ? (
         <EmptyState
           variant="framed"
@@ -128,32 +122,18 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
           items={items}
           onReorder={onChange}
           animateItems
+          handleInside
+          className="space-y-4"
         >
-          {(item) => (
-            <div className="p-6 border border-ink bg-paper relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-16 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-steel hover:text-ink-soft"
-                onClick={() => onChange(duplicateById(items, item.id))}
-                aria-label={t('a11y.duplicateItem')}
-                title={t('a11y.duplicateItem')}
-              >
-                <Copy aria-hidden="true" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive-tint"
-                onClick={() => handleRemove(item.id)}
-                aria-label={t('a11y.removeItem')}
-                title={t('a11y.removeItem')}
-              >
-                <Trash aria-hidden="true" />
-              </Button>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">
+          {(item, _index, handle) => (
+            <EntryCard
+              title={item.title || ''}
+              summary={entrySummary(item.subtitle, item.years)}
+              handle={handle}
+              onDuplicate={() => onChange(duplicateById(items, item.id))}
+              onRemove={() => handleRemove(item.id)}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor={`${fieldId}-${item.id}-title`}>
                     {t('builder.genericItemForm.fields.title')}
@@ -213,9 +193,16 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
                 placeholder={finalDescriptionPlaceholder}
                 onChange={(patch) => handleDescriptionPatch(item.id, patch)}
               />
-            </div>
+            </EntryCard>
           )}
         </SortableItemList>
+      )}
+
+      {items.length > 0 && (
+        <Button variant="outline" size="sm" className="w-full" onClick={handleAdd}>
+          <Plus aria-hidden="true" />
+          {finalAddLabel}
+        </Button>
       )}
     </div>
   );

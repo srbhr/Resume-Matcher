@@ -22,7 +22,13 @@ const RichTextEditor = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="min-h-[100px] border border-ink bg-transparent" aria-busy="true" />
+      // The editor's own box while it loads: a toolbar band over the text area.
+      <div className="border border-ink bg-white" aria-busy="true">
+        <div className="border-b border-ink bg-panel p-1">
+          <div className="h-8" />
+        </div>
+        <div className="min-h-[60px]" />
+      </div>
     ),
   }
 );
@@ -104,39 +110,41 @@ export const DescriptionPointsEditor: React.FC<DescriptionPointsEditorProps> = (
           handleLabel={t('builder.genericItemForm.actions.reorderPoint')}
         >
           {({ text: desc, style }, idx) => (
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <RichTextEditor
-                  value={desc}
-                  onChange={(html) => handleDescriptionChange(idx, html)}
-                  placeholder={placeholder}
-                  minHeight="60px"
-                />
+            <div className="relative">
+              <RichTextEditor
+                value={desc}
+                onChange={(html) => handleDescriptionChange(idx, html)}
+                placeholder={placeholder}
+                minHeight="60px"
+              />
+              {/* The point's own controls, at the right end of the editor's toolbar band
+                  (its p-1 inside the 1px border puts them on the toolbar's row). */}
+              <div className="absolute right-1 top-1 flex gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => handleToggleDescriptionStyle(idx)}
+                  className="text-ink-soft hover:bg-panel-hover hover:text-ink"
+                  aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
+                  title={t('builder.genericItemForm.actions.togglePointStyle')}
+                >
+                  {style === 'plain' ? (
+                    <TextAlignLeft aria-hidden="true" />
+                  ) : (
+                    <ListBullets aria-hidden="true" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => handleRemoveDescription(idx)}
+                  className="text-ink-soft hover:bg-destructive-tint hover:text-destructive"
+                  aria-label={t('a11y.removeDescription')}
+                  title={t('a11y.removeDescription')}
+                >
+                  <Trash aria-hidden="true" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleToggleDescriptionStyle(idx)}
-                className="text-steel hover:text-primary self-end"
-                aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
-                title={t('builder.genericItemForm.actions.togglePointStyle')}
-              >
-                {style === 'plain' ? (
-                  <TextAlignLeft aria-hidden="true" />
-                ) : (
-                  <ListBullets aria-hidden="true" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleRemoveDescription(idx)}
-                className="text-steel hover:text-destructive self-end"
-                aria-label={t('a11y.removeDescription')}
-                title={t('a11y.removeDescription')}
-              >
-                <Trash aria-hidden="true" />
-              </Button>
             </div>
           )}
         </SortableItemList>

@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 
 import { Project } from '@/components/dashboard/resume-component';
-import { Copy, Plus, Trash, Globe } from '@phosphor-icons/react';
+import { Plus, Globe } from '@phosphor-icons/react';
 import { BrandIcon } from '@/components/ui/brand-icon';
 import { useTranslations } from '@/lib/i18n';
 import { SortableItemList } from '../sortable-item-list';
+import { EntryCard, entrySummary } from './entry-card';
 import { DescriptionPointsEditor, type DescriptionPatch } from './description-points-editor';
 import { duplicateById } from '@/lib/utils/reorder-items';
 
@@ -61,13 +62,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={handleAdd}>
-          <Plus aria-hidden="true" />
-          {t('builder.forms.projects.addProject')}
-        </Button>
-      </div>
-
       {data.length === 0 ? (
         <EmptyState
           variant="framed"
@@ -80,32 +74,23 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
           }
         />
       ) : (
-        <SortableItemList id="projects-items" items={data} onReorder={onChange} animateItems>
-          {(item) => (
-            <div className="p-6 border border-ink bg-paper relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-16 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-steel hover:text-ink-soft"
-                onClick={() => onChange(duplicateById(data, item.id))}
-                aria-label={t('a11y.duplicateItem')}
-                title={t('a11y.duplicateItem')}
-              >
-                <Copy aria-hidden="true" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive-tint"
-                onClick={() => handleRemove(item.id)}
-                aria-label={t('a11y.removeItem')}
-                title={t('a11y.removeItem')}
-              >
-                <Trash aria-hidden="true" />
-              </Button>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">
+        <SortableItemList
+          id="projects-items"
+          items={data}
+          onReorder={onChange}
+          animateItems
+          handleInside
+          className="space-y-4"
+        >
+          {(item, _index, handle) => (
+            <EntryCard
+              title={item.name || ''}
+              summary={entrySummary(item.role, item.years)}
+              handle={handle}
+              onDuplicate={() => onChange(duplicateById(data, item.id))}
+              onRemove={() => handleRemove(item.id)}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor={`${fieldId}-${item.id}-name`}>
                     {t('builder.forms.projects.fields.projectName')}
@@ -174,9 +159,16 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 placeholder={t('builder.forms.projects.placeholders.description')}
                 onChange={(patch) => handleDescriptionPatch(item.id, patch)}
               />
-            </div>
+            </EntryCard>
           )}
         </SortableItemList>
+      )}
+
+      {data.length > 0 && (
+        <Button variant="outline" size="sm" className="w-full" onClick={handleAdd}>
+          <Plus aria-hidden="true" />
+          {t('builder.forms.projects.addProject')}
+        </Button>
       )}
     </div>
   );

@@ -714,7 +714,12 @@
       "applyChanges": "Appliquer les changements",
       "checkError": "Impossible de noter la rédaction."
     },
-    "resizePanels": "Redimensionner l’éditeur et l’aperçu"
+    "resizePanels": "Redimensionner l’éditeur et l’aperçu",
+    "entry": {
+      "untitled": "Entrée sans titre",
+      "collapse": "Réduire {item}",
+      "expand": "Développer {item}"
+    }
   },
   "enrichment": {
     "title": "Amélioration du CV",

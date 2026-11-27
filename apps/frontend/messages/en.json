@@ -714,7 +714,12 @@
       "applyChanges": "Apply changes",
       "checkError": "Could not score the writing."
     },
-    "resizePanels": "Resize editor and preview"
+    "resizePanels": "Resize editor and preview",
+    "entry": {
+      "untitled": "Untitled entry",
+      "collapse": "Collapse {item}",
+      "expand": "Expand {item}"
+    }
   },
   "enrichment": {
     "title": "Resume Enhancement",

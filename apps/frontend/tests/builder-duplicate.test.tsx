@@ -135,86 +135,110 @@ describe('entry duplicate button', () => {
     expect(screen.queryByLabelText('a11y.duplicateItem')).toBeNull();
   });
 
-  it('reveals the copy button on hover like the remove button', () => {
+  it('keeps Copy and Remove visible in the entry header, not hidden until hover', () => {
     render(<EducationForm data={[{ id: 1, institution: 'X' }]} onChange={vi.fn()} />);
 
-    expect(duplicateButtons()[0].className).toContain('opacity-0');
-    expect(duplicateButtons()[0].className).toContain('group-hover:opacity-100');
+    for (const button of [duplicateButtons()[0], removeButtons()[0]]) {
+      expect(button.className).not.toContain('opacity-0');
+      expect(button).toHaveClass('h-8', 'w-8', 'text-ink-soft');
+    }
   });
 });
 
 /**
- * jsdom has no layout, so the geometry is checked from the Tailwind classes
- * instead, with every size read off the rendered buttons rather than hard-coded
- * (`Button size="icon"` is 44px, not the 36px its doc comment still claims).
- * Distances are measured from the card's right edge.
+ * Each entry opens with one header row: drag handle, the entry's name, Copy and
+ * Remove. The fields sit below it at the full width, so nothing overlaps them.
  */
-describe('entry action buttons clear each other and the form fields', () => {
-  const SPACING_PX = 4; // Tailwind's default spacing unit
-
-  /** Pixels for a spacing utility (e.g. `right-16`, `pr-24`) found in `el`'s classes. */
-  const utilityPx = (el: Element, prefix: string): number => {
-    for (const cls of el.className.split(/\s+/)) {
-      const match = cls.match(new RegExp(`^${prefix}-(\\d+(?:\\.\\d+)?)$`));
-      if (match) return Number(match[1]) * SPACING_PX;
-    }
-    throw new Error(`no ${prefix}-N class in "${el.className}"`);
-  };
-
-  const cases: Array<[string, React.ReactElement]> = [
+describe('entry header row', () => {
+  const cases: Array<[string, React.ReactElement, string]> = [
     [
       'ExperienceForm',
-      <ExperienceForm key="e" data={[{ id: 1, title: 'T', description: [] }]} onChange={vi.fn()} />,
+      <ExperienceForm
+        key="e"
+        data={[{ id: 1, title: 'Staff Engineer', company: 'Acme', years: '2021', description: [] }]}
+        onChange={vi.fn()}
+      />,
+      'Staff Engineer',
     ],
     [
       'EducationForm',
-      <EducationForm key="d" data={[{ id: 1, institution: 'X' }]} onChange={vi.fn()} />,
+      <EducationForm
+        key="d"
+        data={[{ id: 1, institution: 'MIT', degree: 'BSc' }]}
+        onChange={vi.fn()}
+      />,
+      'MIT',
     ],
     [
       'ProjectsForm',
-      <ProjectsForm key="p" data={[{ id: 1, name: 'P', description: [] }]} onChange={vi.fn()} />,
+      <ProjectsForm
+        key="p"
+        data={[{ id: 1, name: 'promptdiff', role: 'Maintainer', description: [] }]}
+        onChange={vi.fn()}
+      />,
+      'promptdiff',
     ],
     [
       'GenericItemForm',
       <GenericItemForm
         key="g"
         sectionKey="pubs"
-        items={[{ id: 1, title: 'Paper' }]}
+        items={[{ id: 1, title: 'Paper', subtitle: 'NeurIPS' }]}
         onChange={vi.fn()}
       />,
+      'Paper',
     ],
   ];
 
-  it.each(cases)('%s', (_name, form) => {
+  it.each(cases)(
+    '%s: handle, name, Copy and Remove share one row above the fields',
+    (_name, form, title) => {
+      render(form);
+      const toggle = screen.getByRole('button', { name: `builder.entry.collapse` });
+      const row = toggle.parentElement!;
+
+      expect(toggle).toHaveTextContent(title);
+      expect(row).toContainElement(screen.getByTitle('Drag to reorder'));
+      expect(row).toContainElement(duplicateButtons()[0]);
+      expect(row).toContainElement(removeButtons()[0]);
+      // The fields are below the row, not beside it.
+      expect(row.querySelector('input')).toBeNull();
+      expect(document.getElementById(toggle.getAttribute('aria-controls')!)).toContainElement(
+        screen.getAllByRole('textbox')[0]
+      );
+    }
+  );
+
+  it.each(cases)('%s: folds to its header row and a one-line summary', (_name, form) => {
     render(form);
-    const remove = removeButtons()[0];
-    const copy = duplicateButtons()[0];
-    const card = remove.closest('.group')!;
-    const fields = card.querySelector('.grid-cols-1')!;
+    const toggle = screen.getByRole('button', { name: 'builder.entry.collapse' });
+    const body = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
-    const size = utilityPx(remove, 'h'); // the box, before its hit area
-    const hit = utilityPx(remove, 'before:-inset'); // touch area added on each side
-    expect(utilityPx(copy, 'h')).toBe(size);
+    fireEvent.click(toggle);
 
-    // Copy sits left of Remove, and their touch areas do not overlap.
-    const removeRight = utilityPx(remove, 'right');
-    const copyRight = utilityPx(copy, 'right');
-    expect(copyRight - hit).toBeGreaterThanOrEqual(removeRight + size + hit);
-
-    // The first-row inputs end before Copy's touch area begins, so a click on
-    // an input can never land on a button.
-    const fieldsRight = utilityPx(card, 'p') + utilityPx(fields, 'pr');
-    expect(fieldsRight).toBeGreaterThanOrEqual(copyRight + size + hit);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAccessibleName('builder.entry.expand');
+    expect(body).not.toBeVisible();
+    expect(toggle.textContent).toMatch(/·|Acme|BSc|Maintainer|NeurIPS/);
   });
 
-  // Both buttons are transparent until hover, and `opacity: 0` also hides the
-  // button's focus ring, so keyboard focus must reveal them. jsdom computes no
-  // Tailwind styles, so this pins the class token.
-  it.each(cases)('%s: copy and remove become visible on keyboard focus', (_name, form) => {
-    render(form);
-    for (const button of [duplicateButtons()[0], removeButtons()[0]]) {
-      expect(button.className.split(/\s+/)).toContain('focus-visible:opacity-100');
-    }
+  it('names an entry with no name yet "Untitled entry"', () => {
+    render(<ProjectsForm data={[{ id: 1, name: '', description: [] }]} onChange={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'builder.entry.collapse' })).toHaveTextContent(
+      'builder.entry.untitled'
+    );
+  });
+
+  it('puts Add at the foot of the list, full width, where the next entry appears', () => {
+    const { container } = render(
+      <ProjectsForm data={[{ id: 1, name: 'A', description: [] }]} onChange={vi.fn()} />
+    );
+    const add = screen.getByRole('button', { name: 'builder.forms.projects.addProject' });
+
+    expect(add).toHaveClass('w-full');
+    expect((container.firstChild as HTMLElement).lastElementChild).toBe(add);
   });
 });
 

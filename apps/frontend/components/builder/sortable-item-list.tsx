@@ -37,8 +37,13 @@ interface SortableItemListProps<T extends ReorderableItem> {
    * stable item id: index-keyed rows (description points) would fade the wrong row.
    */
   animateItems?: boolean;
+  /**
+   * Hand each row its drag handle (the third argument) to place in its own
+   * header row, instead of drawing the handle in a strip at the row's left.
+   */
+  handleInside?: boolean;
   /** Renders one row; `index` is the item's current position in `items`. */
-  children: (item: T, index: number) => React.ReactNode;
+  children: (item: T, index: number, handle?: React.ReactNode) => React.ReactNode;
 }
 
 /**
@@ -64,6 +69,7 @@ export function SortableItemList<T extends ReorderableItem>({
   className = 'space-y-8',
   handleLabel,
   animateItems = false,
+  handleInside = false,
   children,
 }: SortableItemListProps<T>) {
   // PointerSensor covers mouse/touch; KeyboardSensor makes the handle operable
@@ -99,7 +105,9 @@ export function SortableItemList<T extends ReorderableItem>({
                 // The dnd-kit node sits inside FadeItem: dnd-kit owns its transform.
                 <FadeItem key={item.id}>
                   <DraggableListItem id={item.id} handleLabel={handleLabel}>
-                    {children(item, index)}
+                    {handleInside
+                      ? (handle: React.ReactNode) => children(item, index, handle)
+                      : children(item, index)}
                   </DraggableListItem>
                 </FadeItem>
               ))}
@@ -107,7 +115,9 @@ export function SortableItemList<T extends ReorderableItem>({
           ) : (
             items.map((item, index) => (
               <DraggableListItem key={item.id} id={item.id} handleLabel={handleLabel}>
-                {children(item, index)}
+                {handleInside
+                  ? (handle: React.ReactNode) => children(item, index, handle)
+                  : children(item, index)}
               </DraggableListItem>
             ))
           )}

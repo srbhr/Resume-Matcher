@@ -714,7 +714,12 @@
       "applyChanges": "Aplicar mudanças",
       "checkError": "Não foi possível pontuar a escrita."
     },
-    "resizePanels": "Redimensionar editor e pré-visualização"
+    "resizePanels": "Redimensionar editor e pré-visualização",
+    "entry": {
+      "untitled": "Entrada sem título",
+      "collapse": "Recolher {item}",
+      "expand": "Expandir {item}"
+    }
   },
   "enrichment": {
     "title": "Aprimoramento de Currículo",

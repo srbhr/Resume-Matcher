@@ -8,7 +8,11 @@ import { DotsSixVertical } from '@phosphor-icons/react';
 
 interface DraggableListItemProps {
   id: number;
-  children: React.ReactNode;
+  /**
+   * The row. As a function it receives the drag handle to place itself (an
+   * entry's header row); otherwise the handle sits in a strip at the left.
+   */
+  children: React.ReactNode | ((handle: React.ReactNode) => React.ReactNode);
   /** Accessible name for the drag handle. */
   handleLabel?: string;
 }
@@ -39,6 +43,25 @@ export const DraggableListItem: React.FC<DraggableListItemProps> = ({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  if (typeof children === 'function') {
+    const handle = (
+      <div
+        {...attributes}
+        {...listeners}
+        className="flex size-8 shrink-0 cursor-grab items-center justify-center text-steel transition-colors hover:text-ink active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        title={handleLabel}
+        aria-label={handleLabel}
+      >
+        <DotsSixVertical aria-hidden="true" className="size-4" />
+      </div>
+    );
+    return (
+      <div ref={setNodeRef} style={style}>
+        {children(handle)}
+      </div>
+    );
+  }
 
   return (
     <div ref={setNodeRef} style={style} className="relative">

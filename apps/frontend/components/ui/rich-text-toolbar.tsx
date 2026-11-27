@@ -50,7 +50,7 @@ export const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ editor, onLink
   ];
 
   return (
-    <div className="flex items-center gap-3 p-1 border border-ink bg-panel">
+    <div className="flex items-center gap-3 border-b border-ink bg-panel p-1">
       {tools.map((tool) => (
         <Button
           key={tool.label}

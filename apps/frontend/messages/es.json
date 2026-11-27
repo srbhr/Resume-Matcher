@@ -714,7 +714,12 @@
       "applyChanges": "Aplicar cambios",
       "checkError": "No se pudo puntuar la redacción."
     },
-    "resizePanels": "Redimensionar el editor y la vista previa"
+    "resizePanels": "Redimensionar el editor y la vista previa",
+    "entry": {
+      "untitled": "Entrada sin título",
+      "collapse": "Contraer {item}",
+      "expand": "Expandir {item}"
+    }
   },
   "enrichment": {
     "title": "Mejora del Currículum",

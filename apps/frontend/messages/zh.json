@@ -714,7 +714,12 @@
       "applyChanges": "应用修改",
       "checkError": "无法为文字评分。"
     },
-    "resizePanels": "调整编辑器与预览的大小"
+    "resizePanels": "调整编辑器与预览的大小",
+    "entry": {
+      "untitled": "未命名条目",
+      "collapse": "收起{item}",
+      "expand": "展开{item}"
+    }
   },
   "enrichment": {
     "title": "简历增强",

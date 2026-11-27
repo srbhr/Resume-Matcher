@@ -714,7 +714,12 @@
       "applyChanges": "変更を適用",
       "checkError": "文章を採点できませんでした。"
     },
-    "resizePanels": "エディターとプレビューのサイズを変更"
+    "resizePanels": "エディターとプレビューのサイズを変更",
+    "entry": {
+      "untitled": "無題の項目",
+      "collapse": "{item}を折りたたむ",
+      "expand": "{item}を展開"
+    }
   },
   "enrichment": {
     "title": "履歴書の強化",

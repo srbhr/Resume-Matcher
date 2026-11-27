@@ -44,10 +44,12 @@ describe.each(Object.entries(forms))('%s form description row', (_name, renderFo
     ]) {
       const button = screen.getByRole('button', { name });
       // Primitive size, not a call-site `h-[60px] w-8` override.
-      expect(button).toHaveClass('h-8', 'w-8', 'self-end');
+      expect(button).toHaveClass('h-8', 'w-8');
       expect(button.className).not.toContain('h-[60px]');
       // 6px of hit area per side on a 32px button needs a gap-3 between neighbours.
       expect(button.parentElement).toHaveClass('flex', 'gap-3');
+      // They sit in the editor's toolbar band (its p-1 inside the border), at the right.
+      expect(button.parentElement).toHaveClass('absolute', 'top-1', 'right-1');
     }
   });
 
