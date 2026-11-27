@@ -548,9 +548,13 @@ export default function ResumeViewerPage() {
     <PageFrame>
       {/* One compact toolbar row, as in the builder and tracker, so the sheet starts high. */}
       <PageHeader className="flex flex-wrap items-center gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print">
-        <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+        <Link
+          href="/dashboard"
+          aria-label={t('nav.backToDashboard')}
+          title={t('nav.backToDashboard')}
+          className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
+        >
           <ArrowLeft aria-hidden="true" />
-          {t('nav.backToDashboard')}
         </Link>
 
         {/* Editable title (the track name for a master): up to two lines, then clipped,
@@ -587,6 +591,7 @@ export default function ResumeViewerPage() {
                 variant="ghost"
                 size="icon-sm"
                 aria-label={t('resumeViewer.renameTitle')}
+                title={t('resumeViewer.renameTitle')}
                 className="shrink-0 text-steel hover:text-ink"
                 onClick={() => {
                   setEditingTitleValue(resumeTitle || '');
@@ -614,22 +619,14 @@ export default function ResumeViewerPage() {
           )}
         </div>
 
-        {/* One primary per region: Enhance on a master, else Edit. */}
+        {/* Edit sits above the resume itself, so it isn't repeated here. Enhance is a
+            master's one primary action. */}
         <div className="ml-auto flex flex-wrap items-center gap-3">
           {isMasterResume && (
             <Button type="button" size="sm" onClick={() => setShowEnrichmentModal(true)}>
               {t('resumeViewer.enhanceResume')}
             </Button>
           )}
-          <Button
-            type="button"
-            size="sm"
-            variant={isMasterResume ? 'outline' : 'default'}
-            onClick={handleEdit}
-          >
-            <NotePencil aria-hidden="true" />
-            {t('dashboard.editResume')}
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -670,7 +667,7 @@ export default function ResumeViewerPage() {
               settings={templateSettings}
               photo={photo}
               variant="page"
-              overflowAction={
+              action={
                 <Button type="button" variant="outline" size="sm" onClick={handleEdit}>
                   <NotePencil aria-hidden="true" />
                   {t('dashboard.editResume')}

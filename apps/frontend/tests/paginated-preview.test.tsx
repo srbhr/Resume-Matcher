@@ -86,7 +86,7 @@ describe('PaginatedPreview', () => {
           resumeData={{} as ResumeData}
           settings={DEFAULT_TEMPLATE_SETTINGS}
           variant="page"
-          overflowAction={<button type="button">Edit</button>}
+          action={<button type="button">Edit</button>}
         />
       );
     };
@@ -111,18 +111,10 @@ describe('PaginatedPreview', () => {
       expect(scale).toBeGreaterThan(0.4);
     });
 
-    it('shows the page count, and no edit option for one page', () => {
+    it('shows the page count with its action beside it, for one page too', () => {
       renderPage(1400);
 
       expect(screen.getByText('preview.pageCountSingular')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
-    });
-
-    it('offers the edit option once the resume runs past one page', () => {
-      pagination.pages = TWO_PAGES;
-      renderPage(1400);
-
-      expect(screen.getByText('preview.pageCountPlural')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
     });
   });
@@ -134,7 +126,7 @@ describe('PaginatedPreview', () => {
       <PaginatedPreview
         resumeData={{} as ResumeData}
         settings={DEFAULT_TEMPLATE_SETTINGS}
-        overflowAction={<button type="button">Edit</button>}
+        action={<button type="button">Edit</button>}
       />
     );
 

@@ -29,8 +29,8 @@ interface PaginatedPreviewProps {
    * `page` (the resume viewer): the pages alone under their count.
    */
   variant?: 'panel' | 'page';
-  /** The `page` variant shows this beside the count once the resume runs past one page. */
-  overflowAction?: React.ReactNode;
+  /** The `page` variant shows this beside the page count, above the sheet (the viewer's Edit). */
+  action?: React.ReactNode;
 }
 
 const MIN_ZOOM = 0.4;
@@ -52,7 +52,7 @@ export function PaginatedPreview({
   settings,
   photo,
   variant = 'panel',
-  overflowAction,
+  action,
 }: PaginatedPreviewProps) {
   const { t } = useTranslations();
   // Orders the CJK font fallback so the preview matches the generated PDF.
@@ -169,7 +169,7 @@ export function PaginatedPreview({
           style={{ width: mmToPx(PAGE_DIMENSIONS[settings.pageSize].width) * zoom }}
         >
           {pageCount}
-          {!isCalculating && pages.length > 1 && overflowAction}
+          {action}
         </div>
       )}
       {/* Controls bar */}

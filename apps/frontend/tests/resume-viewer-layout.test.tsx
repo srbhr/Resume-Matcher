@@ -21,10 +21,10 @@ vi.mock('@/lib/context/language-context', () => ({
 vi.mock('@/components/enrichment/enrichment-modal', () => ({ EnrichmentModal: () => null }));
 vi.mock('@/components/dashboard/resume-component', () => ({ default: () => null }));
 const preview = vi.hoisted(() => ({
-  props: null as null | { variant?: string; overflowAction?: React.ReactNode },
+  props: null as null | { variant?: string; action?: React.ReactNode },
 }));
 vi.mock('@/components/preview', () => ({
-  PaginatedPreview: (props: { variant?: string; overflowAction?: React.ReactNode }) => {
+  PaginatedPreview: (props: { variant?: string; action?: React.ReactNode }) => {
     preview.props = props;
     return null;
   },
@@ -57,14 +57,15 @@ beforeEach(() => {
 });
 
 describe('resume viewer layout', () => {
-  it('shows the page alone, offering Edit only when it runs past one page', async () => {
+  it('offers Edit once, above the resume, and not again in the header', async () => {
     mockResume({ title: 'SWE track' });
     render(<ResumeViewerPage />);
     await screen.findByRole('heading', { level: 1, name: 'SWE track' });
 
     expect(preview.props?.variant).toBe('page');
-    // The preview shows overflowAction only past one page; here it is rendered alone.
-    const { container: action } = render(<>{preview.props?.overflowAction}</>);
+    expect(screen.queryByRole('button', { name: 'dashboard.editResume' })).toBeNull();
+    // The preview shows its action beside the page count; here it is rendered alone.
+    const { container: action } = render(<>{preview.props?.action}</>);
     fireEvent.click(within(action).getByRole('button', { name: 'dashboard.editResume' }));
     expect(push).toHaveBeenCalledWith('/builder?id=r1');
   });
@@ -108,6 +109,8 @@ describe('resume viewer layout', () => {
 
     const rename = await screen.findByRole('button', { name: 'resumeViewer.renameTitle' });
     expect(rename).toHaveAttribute('type', 'button');
+    // Hovering the pencil says what it does.
+    expect(rename).toHaveAttribute('title', 'resumeViewer.renameTitle');
     expect(rename).toHaveClass('h-8', 'w-8');
     fireEvent.click(rename);
 
