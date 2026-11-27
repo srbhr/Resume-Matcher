@@ -8,7 +8,7 @@ import { MasterResumeChoiceDialog } from '@/components/dashboard/master-resume-c
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
-import { Button, buttonClass } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { Hatch } from '@/components/ui/hatch';
@@ -19,21 +19,16 @@ import { toast } from '@/components/ui/toast';
 import { DefaultBadge } from '@/components/common/default-badge';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { useTranslations } from '@/lib/i18n';
 import { formatDate, formatTimeAgo } from '@/lib/format-date';
 import { downloadBlobAsFile, sanitizeFilename } from '@/lib/utils/download';
-import { DEFAULT_TEMPLATE_SETTINGS, PAGE_SIZE_INFO } from '@/lib/types/template-settings';
+import { DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { cn } from '@/lib/utils';
 
 // Optimized Imports for Performance (No Barrel Imports)
 import {
   SpinnerGap,
   ArrowsClockwise,
-  ArrowRight,
-  DotsThree,
-  DownloadSimple,
-  PencilSimple,
   Plus,
   Gear,
   Warning,
@@ -52,68 +47,26 @@ import {
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { ApiError } from '@/lib/api/client';
-import { NothingLoaded, withFallback } from '@/components/common/lazy-fallback';
+import { TailoredTile } from '@/components/dashboard/tailored-tile';
+import {
+  STATUS_TONE,
+  TILE_ACTION,
+  TILE_BUTTON,
+  TILE_FILL,
+  TILE_GHOST_ICON,
+  TILE_LINK,
+  TILE_PAD,
+  TILE_SHAPE,
+  TILE_STATUS,
+  TILE_WHITE,
+  TILE_WHITE_BORDER,
+} from '@/components/dashboard/tile-styles';
+import { visibleTailored } from '@/lib/dashboard/tailored-list';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { hasMeaningfulResumeContent } from '@/lib/utils/resume-content';
 
-// The tile menu (ui-sdk's Menu) loads after the page: nobody opens it before first paint,
-// and it would otherwise add its whole popup layer to the dashboard's first-load JS.
-// If its code fails to load, the tile keeps its other actions and the menu is left out.
-const ActionMenu = dynamic(() =>
-  withFallback(
-    import('@/components/ui/action-menu').then((m) => m.ActionMenu),
-    'Tile menu',
-    NothingLoaded
-  )
-);
-
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 
-// Stretched link: its ::after covers the whole tile, so the tile navigates by mouse and
-// keyboard. Tile action buttons sit above it (z-10) and stay outside the link.
-const TILE_LINK =
-  'after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-white';
-// Action tiles (initialize, add track) are one native button filling the Card.
-const TILE_BUTTON =
-  'flex flex-1 flex-col justify-between p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white';
-// Tile highlight (owner ruling, round 2): hover, or keyboard focus anywhere inside a tile, fills
-// the tile Hyper Blue with white text. There is no ink outline: Card interactive's
-// `hover:border-ink` is overridden here so the 2px border stays transparent, and its 1px press-in
-// is cancelled. Focus adds a 2px inset white ring on the link or button (a primary ring would
-// vanish on the fill). Inherited text turns white with the tile; anything that sets its own
-// colour (steel captions, the spinner, status squares, monogram frames) opts in below so it
-// stays AA on blue (white on primary is 6.7:1).
-// Every dashboard tile: 5:4, a fifth shorter than the square it was. Padded 16px (Card's
-// default is 24 to 32px), so the square, a three-line title and two meta lines fit the
-// shape at the narrowest tile any column count gives (about 255px wide, 204px tall).
-const TILE_SHAPE = 'aspect-5/4 h-full';
-const TILE_PAD = 'p-4 md:p-4';
-const TILE_FILL =
-  'hover:border-transparent hover:translate-x-0 hover:translate-y-0 hover:bg-primary hover:text-white has-[:focus-visible]:z-20 has-[:focus-visible]:bg-primary has-[:focus-visible]:text-white';
-const TILE_WHITE = 'group-hover:text-white group-has-[:focus-visible]:text-white';
-const TILE_WHITE_BORDER = 'group-hover:border-white group-has-[:focus-visible]:border-white';
-// StatusIndicator (components/ui) colours its square and label itself, so the tile reaches in.
-const TILE_STATUS =
-  'group-hover:[&>span:first-child]:bg-white group-hover:[&>span:last-child]:text-white group-has-[:focus-visible]:[&>span:first-child]:bg-white group-has-[:focus-visible]:[&>span:last-child]:text-white';
-// The ghost retry icon is ink: white on blue, and a darker blue (not panel) under the pointer.
-const TILE_GHOST_ICON = `${TILE_WHITE} group-hover:hover:bg-primary-hover group-hover:active:bg-primary-hover focus-visible:ring-white`;
-// Tile action buttons (Set as default, Duplicate, Retry, Delete) float above the stretched link.
-// Focusing one fills its tile blue, where the Button primitive's primary ring would vanish.
-const TILE_ACTION = 'z-10 focus-visible:ring-white';
-const STATUS_TONE: Record<ResumeListItem['processing_status'], StatusTone> = {
-  ready: 'ready',
-  processing: 'active',
-  pending: 'neutral',
-  failed: 'error',
-};
-// Quick actions on a tailored tile show on hover and keyboard focus (opacity, so Tab still
-// reaches them). While hidden they take no pointer events, so a tap on a touch screen, which
-// has no hover, opens the tile instead of an action nobody can see. The menu button also
-// shows on touch screens, and stays while its menu is open.
-const TILE_REVEAL =
-  'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-has-[:focus-visible]:pointer-events-auto group-has-[:focus-visible]:opacity-100 focus-visible:opacity-100';
-const TILE_MENU_REVEAL = `${TILE_REVEAL} pointer-coarse:pointer-events-auto pointer-coarse:opacity-100 aria-expanded:pointer-events-auto aria-expanded:opacity-100`;
-const TILE_ICON_ACTION = cn(buttonClass({ variant: 'ghost', size: 'icon-sm' }), TILE_GHOST_ICON);
 // A group's label row spans the grid, on the canvas between the ink rules.
 const GROUP_ROW =
   'col-span-full flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-canvas px-6 py-3';
@@ -137,10 +90,6 @@ function rowFillers(cells: number, spareRow = false): string[] {
     cn('hidden', ...GRID_COLUMNS.map(([cols, show, hide]) => (index < need(cols) ? show : hide)))
   );
 }
-
-/** The template's translation key: `swiss-single` is `swissSingle`. */
-const templateKey = (template: string) =>
-  template.replace(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
 
 export default function DashboardPage() {
   const { t, locale } = useTranslations();
@@ -638,14 +587,6 @@ export default function DashboardPage() {
     }
   };
 
-  const getMonogram = (title: string): string => {
-    const words = title.split(/\s+/).filter((w) => /^[a-zA-Z]/.test(w));
-    return words
-      .slice(0, 3)
-      .map((w) => w.charAt(0).toUpperCase())
-      .join('');
-  };
-
   const atMasterLimit = 1 + otherMasters.length >= MAX_MASTER_RESUMES;
   const showAddTrackTile =
     Boolean(masterResumeId) && !atMasterLimit && (isLlmConfigured || agentMode);
@@ -667,13 +608,12 @@ export default function DashboardPage() {
     : 'all';
   const tailoredTitle = (resume: ResumeListItem) =>
     resume.title || resume.jobSnippet || resume.filename || t('dashboard.tailoredResume');
-  const shownTailored = tailoredResumes
-    .filter((r) => activeMasterFilter === 'all' || r.parent_id === activeMasterFilter)
-    .sort((a, b) =>
-      tailoredSort === 'name'
-        ? tailoredTitle(a).localeCompare(tailoredTitle(b), locale)
-        : Date.parse(b.updated_at || b.created_at) - Date.parse(a.updated_at || a.created_at)
-    );
+  const shownTailored = visibleTailored(tailoredResumes, {
+    master: activeMasterFilter,
+    sort: tailoredSort,
+    titleOf: tailoredTitle,
+    locale,
+  });
   const statusDisplay = getStatusDisplay();
   // The default master's line shows only what needs attention; "Ready" and the brief
   // "Checking" stay for screen readers.
@@ -1039,123 +979,20 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {shownTailored.map((resume) => {
-                const title = tailoredTitle(resume);
-                const edited = resume.updated_at || resume.created_at;
-                const settings = resume.template_settings ?? DEFAULT_TEMPLATE_SETTINGS;
-                const downloading = downloadingId === resume.resume_id;
-                return (
-                  <Card
-                    key={resume.resume_id}
-                    variant="interactive"
-                    className={cn(TILE_SHAPE, TILE_PAD, TILE_FILL)}
-                  >
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex justify-between items-start gap-2 mb-3">
-                        <div
-                          className={cn(
-                            'size-12 shrink-0 border-2 border-ink bg-ink text-white flex items-center justify-center',
-                            TILE_WHITE_BORDER
-                          )}
-                        >
-                          <span className="font-mono font-bold">{getMonogram(title)}</span>
-                        </div>
-                        {resume.processing_status === 'ready' ? (
-                          // The row itself takes no taps until revealed, so on a touch screen
-                          // the tile opens wherever the hidden actions sit.
-                          <div className="pointer-events-none relative z-10 flex w-fit items-center gap-1 group-hover:pointer-events-auto group-has-[:focus-visible]:pointer-events-auto">
-                            <Link
-                              href={`/resumes/${resume.resume_id}`}
-                              aria-label={t('dashboard.tileActions.open', { title })}
-                              title={t('dashboard.tileActions.open', { title })}
-                              className={cn(TILE_ICON_ACTION, TILE_REVEAL)}
-                            >
-                              <ArrowRight aria-hidden="true" />
-                            </Link>
-                            <Link
-                              href={`/builder?id=${resume.resume_id}`}
-                              aria-label={t('dashboard.tileActions.edit', { title })}
-                              title={t('dashboard.tileActions.edit', { title })}
-                              className={cn(TILE_ICON_ACTION, TILE_REVEAL)}
-                            >
-                              <PencilSimple aria-hidden="true" />
-                            </Link>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              className={cn(TILE_GHOST_ICON, TILE_REVEAL)}
-                              aria-label={t('dashboard.tileActions.download', { title })}
-                              title={t('dashboard.tileActions.download', { title })}
-                              disabled={downloading}
-                              onClick={() => void handleDownload(resume, title)}
-                            >
-                              {downloading ? (
-                                <SpinnerGap aria-hidden="true" className="animate-spin" />
-                              ) : (
-                                <DownloadSimple aria-hidden="true" />
-                              )}
-                            </Button>
-                            <ActionMenu
-                              label={t('dashboard.tileActions.more', { title })}
-                              items={[
-                                {
-                                  value: 'duplicate',
-                                  label: t('dashboard.duplicate'),
-                                  disabled: isDuplicating,
-                                },
-                                { value: 'delete', label: t('common.delete'), destructive: true },
-                              ]}
-                              onAction={(action) =>
-                                action === 'duplicate'
-                                  ? void handleDuplicate(resume.resume_id)
-                                  : setDeleteTarget(resume)
-                              }
-                              triggerClassName={cn(TILE_GHOST_ICON, TILE_MENU_REVEAL)}
-                            >
-                              <DotsThree aria-hidden="true" />
-                            </ActionMenu>
-                          </div>
-                        ) : (
-                          <StatusIndicator
-                            tone={STATUS_TONE[resume.processing_status]}
-                            className={TILE_STATUS}
-                          >
-                            {t(`dashboard.status.${resume.processing_status}`)}
-                          </StatusIndicator>
-                        )}
-                      </div>
-                      <CardTitle className="text-lg">
-                        <Link
-                          href={`/resumes/${resume.resume_id}`}
-                          title={title}
-                          className={cn(
-                            'block font-serif text-base font-bold leading-tight w-full line-clamp-3',
-                            TILE_LINK
-                          )}
-                        >
-                          {title}
-                        </Link>
-                      </CardTitle>
-                      <div className="mt-auto space-y-1 pt-3">
-                        <CardDescription
-                          className={cn('text-xs uppercase tabular-nums', TILE_WHITE)}
-                          title={formatEditedDate(edited)}
-                        >
-                          {t('dashboard.edited', { date: formatEditedAgo(edited) })}
-                        </CardDescription>
-                        <CardDescription className={cn('text-xs uppercase', TILE_WHITE)}>
-                          {t(`builder.formatting.templates.${templateKey(settings.template)}.name`)}
-                          {' · '}
-                          {settings.pageSize === 'A4'
-                            ? PAGE_SIZE_INFO.A4.name
-                            : t('builder.pageSize.usLetter')}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
+              {shownTailored.map((resume) => (
+                <TailoredTile
+                  key={resume.resume_id}
+                  resume={resume}
+                  title={tailoredTitle(resume)}
+                  editedAgo={formatEditedAgo(resume.updated_at || resume.created_at)}
+                  editedDate={formatEditedDate(resume.updated_at || resume.created_at)}
+                  downloading={downloadingId === resume.resume_id}
+                  duplicateDisabled={isDuplicating}
+                  onDownload={() => void handleDownload(resume, tailoredTitle(resume))}
+                  onDuplicate={() => void handleDuplicate(resume.resume_id)}
+                  onDelete={() => setDeleteTarget(resume)}
+                />
+              ))}
 
               {/* Unused cells, hatched: the drafting mark for "not in use". */}
               {rowFillers(shownTailored.length, true).map((visibility, index) => (
