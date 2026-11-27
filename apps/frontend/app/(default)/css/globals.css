@@ -1,8 +1,10 @@
-/* ui-sdk's styles sit in the components layer, after Tailwind's base, so the
-   base reset doesn't undo them; Tailwind utilities still win over them. */
+/* ui-sdk's styles go in the components layer, after Tailwind's base, so the
+   base reset doesn't undo them; Tailwind utilities still win over them.
+   web.css is about 12.6 KB gzip of render-blocking CSS, so it isn't imported
+   until the first components/ui wrapper uses ui-sdk. Then add, after
+   tailwindcss:  @import '@ui-sdk/core/web.css' layer(components); */
 @layer ui-sdk;
 @import 'tailwindcss';
-@import '@ui-sdk/core/web.css' layer(components);
 
 /* web.css also styles every a, hr, code and kbd, and a focused link's outline,
    and in the components layer those rules beat Tailwind's base reset: links
