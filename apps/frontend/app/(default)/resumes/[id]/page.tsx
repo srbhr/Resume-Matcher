@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusIndicator } from '@/components/ui/status-indicator';
-import { toast } from '@/components/ui/toaster';
+import { toast } from '@/components/ui/toast';
 import { DefaultBadge } from '@/components/common/default-badge';
 import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
 import { PaginatedPreview } from '@/components/preview';

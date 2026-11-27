@@ -21,7 +21,7 @@ import { StatusIndicator } from '@/components/ui/status-indicator';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Alert } from '@/components/ui/alert';
 import { ConfirmDialog, type ConfirmDialogProps } from '@/components/ui/confirm-dialog';
-import { toast } from '@/components/ui/toaster';
+import { toast } from '@/components/ui/toast';
 import {
   DownloadSimple,
   FloppyDisk,

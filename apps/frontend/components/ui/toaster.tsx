@@ -8,8 +8,9 @@ import { buttonClass } from './button';
 /**
  * Non-blocking notifications. Call `toast.success(message)` (or `.error`,
  * `.warning`, `.info`) from anywhere under the `(default)` layout, which mounts
- * one `<Toaster />` (through `LazyToaster`). Import `toast` from here, not from
- * `sonner`, so toasts keep one home. The styling lives on the mounted Toaster, so
+ * one `<Toaster />` (through `LazyToaster`). Pages import `toast` from `./toast`,
+ * which loads sonner on the first toast, never from `sonner` or from here (that
+ * would put sonner in their first-load JS), so toasts keep one home. The styling lives on the mounted Toaster, so
  * it applies to every toast; never mount sonner's own `<Toaster />` beside it.
  *
  * Use a toast for an outcome the user doesn't have to act on ("Resume
