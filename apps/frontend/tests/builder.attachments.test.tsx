@@ -942,3 +942,19 @@ describe('builder attachments in agent mode', () => {
     expect(generations).toBe(0);
   });
 });
+
+describe('builder header', () => {
+  it('names the document it edits and makes Download the one primary', async () => {
+    route.search = 'id=a';
+    renderBuilder();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Synthetic @ Example' })
+    ).toBeInTheDocument();
+    const download = screen.getByRole('button', { name: en.common.download });
+    expect(download).toHaveClass('bg-primary');
+    const header = download.closest('header') as HTMLElement;
+    expect(header.querySelectorAll('button.bg-primary, a.bg-primary')).toHaveLength(1);
+    // No "// edit mode" caption.
+    expect(within(header).queryByText(/^\/\//)).toBeNull();
+  });
+});

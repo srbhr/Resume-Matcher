@@ -110,3 +110,29 @@ describe('RetroTabs', () => {
     expect(onChange).toHaveBeenCalledWith('b');
   });
 });
+
+describe('RetroTabs groups', () => {
+  it('sets a group that startsGroup apart in its own bar, in one tablist the arrows cross', () => {
+    const onTabChange = vi.fn();
+    render(
+      <RetroTabs
+        aria-label="Output"
+        activeTab="doc"
+        onTabChange={onTabChange}
+        tabs={[
+          { id: 'doc', label: 'Doc' },
+          { id: 'check', label: 'Check', startsGroup: true },
+        ]}
+      />
+    );
+    const list = screen.getByRole('tablist', { name: 'Output' });
+    const [docBar, checkBar] = Array.from(list.children);
+    expect(list.children).toHaveLength(2);
+    expect(docBar).toHaveClass('border', 'border-ink', 'bg-ink');
+    expect(checkBar).toContainElement(screen.getByRole('tab', { name: 'Check' }));
+    expect(list).toHaveClass('gap-2');
+
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Doc' }), { key: 'ArrowRight' });
+    expect(onTabChange).toHaveBeenLastCalledWith('check');
+  });
+});

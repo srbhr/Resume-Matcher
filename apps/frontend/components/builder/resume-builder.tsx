@@ -1371,8 +1371,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       {/* Main Container */}
       <div className="w-full h-full border border-ink bg-canvas shadow-sw-lg flex flex-col">
         {/* Header: one compact toolbar row (owner F2, builder only) */}
-        <PageHeader className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+        <PageHeader className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print lg:flex-nowrap">
+          {/* From lg one row: the title takes what the actions leave and truncates. */}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 lg:flex-1 lg:flex-nowrap">
             <Button
               variant="outline"
               size="icon-sm"
@@ -1383,10 +1384,11 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
             >
               <ArrowLeft aria-hidden="true" />
             </Button>
-            <PageHeader.Title className="text-2xl leading-tight md:text-3xl">
-              {t('nav.builder')}
+            {/* The document being edited, not the tool: its title, cut to one line. */}
+            <PageHeader.Title className="min-w-0 truncate text-nowrap text-xl leading-tight md:text-2xl">
+              <span title={resumeTitle || undefined}>{resumeTitle || t('nav.builder')}</span>
             </PageHeader.Title>
-            <span role="status">
+            <span role="status" className="shrink-0">
               {resumeSaveStatus && (
                 <StatusIndicator tone={resumeSaveStatus.tone} live={false}>
                   {resumeSaveStatus.label}
@@ -1395,7 +1397,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 lg:shrink-0 lg:flex-nowrap">
             {/* Community links: quiet ghost actions, left of the tab's own actions */}
             <CommunityLinks variant="builder" />
 
@@ -1419,7 +1421,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                   <ArrowCounterClockwise aria-hidden="true" />
                   {t('common.reset')}
                 </Button>
+                {/* Saving is a status beside the title; Download is the one primary. */}
                 <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleSave}
                   disabled={!resumeId || isSaving || loadingState !== 'loaded'}
@@ -1433,12 +1437,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                         ? t('builder.autoSave.saveNow')
                         : t('builder.autoSave.savedButton')}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownload}
-                  disabled={!resumeId || isDownloading}
-                >
+                <Button size="sm" onClick={handleDownload} disabled={!resumeId || isDownloading}>
                   <DownloadSimple aria-hidden="true" />
                   {isDownloading ? t('common.generating') : t('common.download')}
                 </Button>
@@ -1767,10 +1766,12 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                       label: t('builder.previewTabs.outreach'),
                       disabled: !outreachMessage,
                     },
+                    // Documents, then a gap, then the checks run on them.
                     {
                       id: 'interview-prep',
                       label: t('builder.previewTabs.interviewPrep'),
                       disabled: !isTailoredResume,
+                      startsGroup: true,
                     },
                     {
                       id: 'jd-match',
