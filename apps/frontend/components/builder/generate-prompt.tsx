@@ -15,6 +15,8 @@ export interface GeneratePromptProps {
   onGenerate: () => void;
   /** Whether this is a tailored resume (has job context) */
   isTailoredResume: boolean;
+  /** field: the prompt on a plate over the cross field, a surface waiting for work */
+  variant?: 'plain' | 'field';
   /** Additional class names */
   className?: string;
 }
@@ -24,6 +26,7 @@ export function GeneratePrompt({
   isGenerating,
   onGenerate,
   isTailoredResume,
+  variant = 'plain',
   className,
 }: GeneratePromptProps) {
   const { t } = useTranslations();
@@ -53,6 +56,7 @@ export function GeneratePrompt({
 
   return (
     <EmptyState
+      variant={variant}
       className={className}
       title={t('builder.generatePrompt.generateTitle', { title })}
       description={

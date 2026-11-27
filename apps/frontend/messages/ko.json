@@ -1565,6 +1565,7 @@
   "interviewPrep": {
     "title": "면접 준비",
     "regenerate": "다시 생성",
+    "regenerateDescription": "면접 준비를 새 질문으로 바꿉니다. 연습 완료 표시와 메모가 초기화됩니다.",
     "unavailableTitle": "면접 준비를 사용할 수 없음",
     "loadingContextDescription": "생성 전에 이 맞춤화된 이력서의 채용 공고 맥락을 확인하는 중입니다.",
     "missingContextDescription": "이 맞춤화된 이력서에는 면접 준비 자료를 생성하는 데 필요한 저장된 채용 공고 맥락이 없습니다. 채용 공고와 함께 이력서를 다시 맞춤화한 후 이 기능을 사용하세요.",
@@ -1574,11 +1575,27 @@
     "whyItMatters": "중요한 이유",
     "preparationSuggestion": "준비 제안",
     "sections": {
-      "roleFit": "직무 적합도 분석",
       "resumeQuestions": "이력서 기반 질문",
-      "projectFollowUps": "프로젝트 후속 질문",
-      "skillGaps": "역량 격차",
-      "talkingPoints": "핵심 포인트"
+      "projectFollowUps": "프로젝트 후속 질문"
+    },
+    "brief": {
+      "preparingFor": "준비 대상",
+      "lookingFor": "찾고 있는 역량",
+      "fullDescription": "채용 공고 전문",
+      "strong": "강점",
+      "prepare": "준비할 부분",
+      "points": "강조할 포인트",
+      "pending": "면접 준비를 생성하면 강점, 준비할 부분, 강조할 포인트를 볼 수 있습니다."
+    },
+    "practice": {
+      "title": "연습",
+      "progress": "{total}개 중 {done}개 연습 완료",
+      "localNote": "연습 완료 표시와 메모는 이 브라우저에만 저장됩니다.",
+      "practised": "연습 완료",
+      "showPoints": "답변 포인트 보기",
+      "hidePoints": "답변 포인트 숨기기",
+      "notes": "메모",
+      "notesLabel": "이 질문에 대한 메모"
     }
   },
   "queue": {

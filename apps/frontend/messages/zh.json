@@ -1565,6 +1565,7 @@
   "interviewPrep": {
     "title": "面试准备",
     "regenerate": "重新生成",
+    "regenerateDescription": "这会用新问题替换面试准备内容。已练习标记和笔记将被重置。",
     "unavailableTitle": "面试准备不可用",
     "loadingContextDescription": "正在检查这份定制简历的职位上下文，然后才能生成面试准备。",
     "missingContextDescription": "这份定制简历缺少生成面试准备所需的已保存职位上下文。请使用职位描述重新定制简历后再使用此流程。",
@@ -1574,11 +1575,27 @@
     "whyItMatters": "为什么重要",
     "preparationSuggestion": "准备建议",
     "sections": {
-      "roleFit": "岗位匹配分析",
       "resumeQuestions": "基于简历的问题",
-      "projectFollowUps": "项目追问",
-      "skillGaps": "技能差距",
-      "talkingPoints": "沟通要点"
+      "projectFollowUps": "项目追问"
+    },
+    "brief": {
+      "preparingFor": "准备目标",
+      "lookingFor": "他们在找什么",
+      "fullDescription": "完整职位描述",
+      "strong": "你的优势",
+      "prepare": "需要准备的地方",
+      "points": "要表达的要点",
+      "pending": "生成面试准备后，可查看你的优势、需要准备的地方和要表达的要点。"
+    },
+    "practice": {
+      "title": "练习",
+      "progress": "已练习 {done} / {total}",
+      "localNote": "已练习标记和笔记仅保存在此浏览器中。",
+      "practised": "已练习",
+      "showPoints": "显示回答要点",
+      "hidePoints": "隐藏回答要点",
+      "notes": "笔记",
+      "notesLabel": "此问题的笔记"
     }
   },
   "queue": {

@@ -1565,6 +1565,7 @@
   "interviewPrep": {
     "title": "Preparación de entrevista",
     "regenerate": "Regenerar",
+    "regenerateDescription": "Esto reemplaza la preparación de la entrevista con preguntas nuevas. Tus marcas de practicada y tus notas se reinician.",
     "unavailableTitle": "Preparación no disponible",
     "loadingContextDescription": "Comprobando el contexto del puesto para este currículum adaptado antes de generar.",
     "missingContextDescription": "Este currículum adaptado no tiene el contexto del puesto guardado que se necesita para generar preparación de entrevista. Vuelve a adaptar el currículum con una descripción del puesto.",
@@ -1574,11 +1575,27 @@
     "whyItMatters": "Por qué importa",
     "preparationSuggestion": "Sugerencia de preparación",
     "sections": {
-      "roleFit": "Análisis de encaje",
       "resumeQuestions": "Preguntas basadas en el currículum",
-      "projectFollowUps": "Seguimiento de proyectos",
-      "skillGaps": "Brechas de habilidades",
-      "talkingPoints": "Puntos clave"
+      "projectFollowUps": "Seguimiento de proyectos"
+    },
+    "brief": {
+      "preparingFor": "Preparación para",
+      "lookingFor": "Lo que buscan",
+      "fullDescription": "Descripción completa del puesto",
+      "strong": "Tus puntos fuertes",
+      "prepare": "Qué preparar",
+      "points": "Puntos a destacar",
+      "pending": "Genera la preparación de la entrevista para ver tus puntos fuertes, qué preparar y los puntos a destacar."
+    },
+    "practice": {
+      "title": "Práctica",
+      "progress": "{done} de {total} practicadas",
+      "localNote": "Las marcas de practicada y las notas se guardan solo en este navegador.",
+      "practised": "Practicada",
+      "showPoints": "Mostrar puntos de respuesta",
+      "hidePoints": "Ocultar puntos de respuesta",
+      "notes": "Notas",
+      "notesLabel": "Tus notas para esta pregunta"
     }
   },
   "queue": {

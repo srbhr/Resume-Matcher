@@ -83,6 +83,7 @@ import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
 import { DURATION } from '@/lib/motion';
 import { ATTACHMENT_DRAFT_STORAGE_PREFIX } from '@/lib/utils/attachment-draft-storage';
+import { INTERVIEW_PRACTICE_STORAGE_PREFIX } from '@/lib/utils/interview-practice-storage';
 import { RESUME_DRAFT_STORAGE_PREFIX, safeStorage } from '@/lib/utils/resume-draft-storage';
 import type { SupportedLanguage } from '@/lib/api/config';
 import type { Locale } from '@/i18n/config';
@@ -737,7 +738,8 @@ export default function SettingsPage() {
           .filter(
             (key) =>
               key.startsWith(RESUME_DRAFT_STORAGE_PREFIX) ||
-              key.startsWith(ATTACHMENT_DRAFT_STORAGE_PREFIX)
+              key.startsWith(ATTACHMENT_DRAFT_STORAGE_PREFIX) ||
+              key.startsWith(INTERVIEW_PRACTICE_STORAGE_PREFIX)
           )
           .forEach((key) => safeStorage.remove(key));
       } catch {

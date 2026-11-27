@@ -92,6 +92,7 @@ import {
 import { AgentPromptDialog, type AgentTask } from '@/components/agent/agent-prompt-dialog';
 import { useAgentRefresh } from '@/hooks/use-agent-refresh';
 import { clearResumeWizardCompletion } from '@/lib/utils/resume-wizard-storage';
+import { clearInterviewPractice } from '@/lib/utils/interview-practice-storage';
 import {
   clearAttachmentDraft,
   readAttachmentDraft,
@@ -115,6 +116,7 @@ const OutreachPreview = dynamic(() => import('./outreach-preview').then((m) => m
 const InterviewPrepView = dynamic(() =>
   import('./interview-prep-view').then((m) => m.InterviewPrepView)
 );
+const InterviewBrief = dynamic(() => import('./interview-prep-view').then((m) => m.InterviewBrief));
 const JDComparisonView = dynamic(() =>
   import('./jd-comparison-view').then((m) => m.JDComparisonView)
 );
@@ -1282,6 +1284,8 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
     try {
       const content = await generateInterviewPrep(activeResumeId);
       if (!documentIsActiveRef.current) return;
+      // New questions: the old practised marks and notes no longer apply.
+      clearInterviewPractice(activeResumeId);
       setInterviewPrep(content);
     } catch (error) {
       if (!documentIsActiveRef.current) return;
@@ -1601,12 +1605,15 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                     />
                   ))}
 
-                {/* Interview Prep: generate controls here, the output renders on the right */}
+                {/* Interview Prep: the brief here, practice on the right */}
                 {activeTab === 'interview-prep' &&
-                  (interviewPrep ? (
-                    <p className="max-w-[60ch] text-sm text-ink-soft text-pretty">
-                      {t('builder.generatePrompt.interviewPrepFooter')}
-                    </p>
+                  (interviewPrep || canGenerateInterviewPrep ? (
+                    <InterviewBrief
+                      title={resumeTitle}
+                      keywords={jobKeywords}
+                      jobDescription={jobDescription}
+                      prep={interviewPrep}
+                    />
                   ) : (
                     <InterviewPrepView
                       interviewPrep={null}
@@ -1820,9 +1827,9 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                     nothingYet
                   ))}
 
-                {/* Interview Prep Output */}
+                {/* Interview Prep: practice, or the prompt to generate it */}
                 {activeTab === 'interview-prep' &&
-                  (interviewPrep ? (
+                  (interviewPrep || canGenerateInterviewPrep ? (
                     <InterviewPrepView
                       interviewPrep={interviewPrep}
                       isGenerating={isGeneratingInterviewPrep}
@@ -1831,6 +1838,7 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
                       isTailoredResume={isTailoredResume}
                       canGenerate={canGenerateInterviewPrep}
                       unavailableMessage={interviewPrepUnavailableMessage}
+                      resumeId={resumeId}
                     />
                   ) : (
                     nothingYet
@@ -1877,9 +1885,13 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         title={t('builder.regenerateDialog.title', {
           title: regenerateDialogContentTitle,
         })}
-        description={t('builder.regenerateDialog.description', {
-          title: regenerateDialogContentTitle,
-        })}
+        description={
+          showRegenerateDialog === 'interview-prep'
+            ? t('interviewPrep.regenerateDescription')
+            : t('builder.regenerateDialog.description', {
+                title: regenerateDialogContentTitle,
+              })
+        }
         confirmLabel={regenerateDialogConfirmLabel}
         cancelLabel={t('common.cancel')}
         variant="warning"

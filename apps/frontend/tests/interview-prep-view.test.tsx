@@ -1,14 +1,20 @@
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { InterviewPrepView } from '@/components/builder/interview-prep-view';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { InterviewBrief, InterviewPrepView } from '@/components/builder/interview-prep-view';
 import type { InterviewPrepData } from '@/components/common/resume_previewer_context';
+import {
+  clearInterviewPractice,
+  readInterviewPractice,
+} from '@/lib/utils/interview-practice-storage';
 
 vi.mock('@/lib/i18n', () => ({
   useTranslations: () => ({
-    t: (key: string, params?: Record<string, string>) =>
-      params?.title ? `${key} ${params.title}` : key,
+    t: (key: string, params?: Record<string, string | number>) =>
+      params ? `${key} ${Object.values(params).join(' ')}` : key,
   }),
 }));
+
+afterEach(() => localStorage.clear());
 
 const interviewPrep: InterviewPrepData = {
   role_fit_analysis: ['Backend API experience fits the role.'],
@@ -89,33 +95,40 @@ describe('InterviewPrepView', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('renders generated interview prep sections', () => {
+  it('splits the prep: the brief holds fit, gaps and points; practice holds only questions', () => {
     render(
-      <InterviewPrepView
-        interviewPrep={interviewPrep}
-        isGenerating={false}
-        onGenerate={vi.fn()}
-        isTailoredResume
-      />
+      <>
+        <section aria-label="brief">
+          <InterviewBrief title={null} keywords={null} jobDescription={null} prep={interviewPrep} />
+        </section>
+        <section aria-label="practice">
+          <InterviewPrepView
+            interviewPrep={interviewPrep}
+            isGenerating={false}
+            onGenerate={vi.fn()}
+            isTailoredResume
+          />
+        </section>
+      </>
     );
 
-    expect(screen.getByText('Backend API experience fits the role.')).toBeInTheDocument();
-    expect(screen.getByText('How did you build the API?')).toBeInTheDocument();
+    const brief = screen.getByRole('region', { name: 'brief' });
+    const practice = screen.getByRole('region', { name: 'practice' });
+    expect(within(brief).getByText('Backend API experience fits the role.')).toBeInTheDocument();
+    expect(within(brief).getByText('Kubernetes')).toBeInTheDocument();
+    expect(within(brief).getByText('Connect API work to the role.')).toBeInTheDocument();
+
+    expect(within(practice).getByText('How did you build the API?')).toBeInTheDocument();
     expect(
-      screen.getByText('What tradeoffs did you make in the matcher project?')
+      within(practice).getByText('What tradeoffs did you make in the matcher project?')
     ).toBeInTheDocument();
-    expect(screen.getByText('Kubernetes')).toBeInTheDocument();
-    expect(screen.getByText('Connect API work to the role.')).toBeInTheDocument();
+    expect(within(practice).queryByText('Backend API experience fits the role.')).toBeNull();
+    expect(within(practice).queryByText('Kubernetes')).toBeNull();
   });
 
   it('marks list items with ink squares, not blue', () => {
     const { container } = render(
-      <InterviewPrepView
-        interviewPrep={interviewPrep}
-        isGenerating={false}
-        onGenerate={vi.fn()}
-        isTailoredResume
-      />
+      <InterviewBrief title={null} keywords={null} jobDescription={null} prep={interviewPrep} />
     );
 
     const markers = container.querySelectorAll('li > span[aria-hidden="true"]');
@@ -138,6 +151,191 @@ describe('InterviewPrepView', () => {
     );
 
     expect(screen.getByText('interviewPrep.missingContextDescription')).toBeInTheDocument();
-    expect(screen.getByText('Backend API experience fits the role.')).toBeInTheDocument();
+    expect(screen.getByText('How did you build the API?')).toBeInTheDocument();
+  });
+
+  it('keeps answer points closed until asked for', () => {
+    render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+      />
+    );
+    expect(screen.queryByText('Discuss resume-grounded API work.')).toBeNull();
+
+    const [show] = screen.getAllByRole('button', { name: 'interviewPrep.practice.showPoints' });
+    expect(show).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(show);
+
+    expect(screen.getByText('Discuss resume-grounded API work.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'interviewPrep.practice.hidePoints' })
+    ).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('counts practised questions and keeps marks and notes in this browser', () => {
+    const { unmount } = render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+        resumeId="r1"
+      />
+    );
+    expect(screen.getByText('interviewPrep.practice.progress 0 2')).toBeInTheDocument();
+    expect(screen.getByText('interviewPrep.practice.localNote')).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getAllByRole('checkbox', { name: 'interviewPrep.practice.practised' })[0]
+    );
+    expect(screen.getByText('interviewPrep.practice.progress 1 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'interviewPrep.practice.notes' })[1]);
+    fireEvent.change(screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' }), {
+      target: { value: 'Lead with the cache.' },
+    });
+
+    expect(readInterviewPractice('r1')).toEqual({
+      practised: ['resume:How did you build the API?'],
+      notes: {
+        'project:What tradeoffs did you make in the matcher project?': 'Lead with the cache.',
+      },
+    });
+
+    // A new visit reads them back.
+    unmount();
+    render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+        resumeId="r1"
+      />
+    );
+    expect(screen.getByText('interviewPrep.practice.progress 1 2')).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('checkbox', { name: 'interviewPrep.practice.practised' })[0]
+    ).toBeChecked();
+    expect(screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' })).toHaveValue(
+      'Lead with the cache.'
+    );
+  });
+
+  it('starts a regenerated set clean once its stored practice is cleared', () => {
+    localStorage.setItem(
+      'resume_interview_practice:r1',
+      JSON.stringify({ practised: ['resume:How did you build the API?'], notes: {} })
+    );
+    const { rerender } = render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+        resumeId="r1"
+      />
+    );
+    expect(screen.getByText('interviewPrep.practice.progress 1 2')).toBeInTheDocument();
+
+    // What the builder does on a successful regenerate: clear, then set the new prep.
+    clearInterviewPractice('r1');
+    rerender(
+      <InterviewPrepView
+        interviewPrep={{ ...interviewPrep }}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+        resumeId="r1"
+      />
+    );
+    expect(screen.getByText('interviewPrep.practice.progress 0 2')).toBeInTheDocument();
+  });
+
+  it('keeps a stored note open while its text is cleared', () => {
+    localStorage.setItem(
+      'resume_interview_practice:r1',
+      JSON.stringify({ practised: [], notes: { 'resume:How did you build the API?': 'Old' } })
+    );
+    render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+        resumeId="r1"
+      />
+    );
+    const note = screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' });
+    fireEvent.change(note, { target: { value: '' } });
+    expect(screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' })).toHaveValue(
+      ''
+    );
+    expect(readInterviewPractice('r1').notes).toEqual({});
+  });
+
+  it('stores nothing without a resume ID', () => {
+    render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+      />
+    );
+    fireEvent.click(
+      screen.getAllByRole('checkbox', { name: 'interviewPrep.practice.practised' })[0]
+    );
+    expect(screen.getByText('interviewPrep.practice.progress 1 2')).toBeInTheDocument();
+    expect(localStorage.length).toBe(0);
+  });
+
+  it('puts the generate prompt on the cross field once the job context is ready', () => {
+    const { container } = render(
+      <InterviewPrepView
+        interviewPrep={null}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+      />
+    );
+    expect(container.querySelector('svg pattern')).not.toBeNull();
+  });
+});
+
+describe('InterviewBrief', () => {
+  it('names the job, lists its keywords and keeps the description closed', () => {
+    const { container } = render(
+      <InterviewBrief
+        title="Backend Engineer @ Acme"
+        keywords={['Python', 'Kubernetes']}
+        jobDescription="We build APIs."
+        prep={null}
+      />
+    );
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Backend Engineer @ Acme' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Python')).toBeInTheDocument();
+    const details = container.querySelector('details') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(within(details).getByText('We build APIs.')).toBeInTheDocument();
+    // Before generation the brief says what generating adds.
+    expect(screen.getByText('interviewPrep.brief.pending')).toBeInTheDocument();
+  });
+});
+
+describe('interview practice storage', () => {
+  it('reads unreadable or malformed data as empty', () => {
+    localStorage.setItem('resume_interview_practice:bad', '{not json');
+    expect(readInterviewPractice('bad')).toEqual({ practised: [], notes: {} });
+    localStorage.setItem(
+      'resume_interview_practice:odd',
+      JSON.stringify({ practised: [1, 'a'], notes: { x: 2, y: 'b' } })
+    );
+    expect(readInterviewPractice('odd')).toEqual({ practised: ['a'], notes: { y: 'b' } });
   });
 });

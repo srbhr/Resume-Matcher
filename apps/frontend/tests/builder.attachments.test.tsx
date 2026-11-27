@@ -331,7 +331,7 @@ describe('builder attachment actions, per part', () => {
 });
 
 describe('builder panels', () => {
-  it.each(['cover-letter', 'outreach', 'interview-prep'] as const)(
+  it.each(['cover-letter', 'outreach'] as const)(
     'renders the %s generate control in the editor column and keeps the output panel empty',
     async (tab) => {
       await openTab('a', tab);
@@ -348,6 +348,71 @@ describe('builder panels', () => {
       expect(within(output).getByText(en.builder.panels.nothingYet)).toBeInTheDocument();
     }
   );
+
+  it('sets the interview brief in the editor column and the generate prompt in the output panel', async () => {
+    await openTab('a', 'interview-prep');
+
+    const generate = screen.getAllByRole('button', { name: generateLabel('interview-prep') });
+    expect(generate).toHaveLength(1);
+    const output = screen.getByRole('tabpanel');
+    expect(output).toContainElement(generate[0]);
+    // The brief (what you are preparing for) sits before the tab strip.
+    const pending = screen.getByText(en.interviewPrep.brief.pending);
+    expect(output).not.toContainElement(pending);
+    expect(
+      screen.getByRole('tablist').compareDocumentPosition(pending) &
+        Node.DOCUMENT_POSITION_PRECEDING
+    ).toBeTruthy();
+  });
+});
+
+describe('builder interview practice', () => {
+  const prep = (question: string) => ({
+    role_fit_analysis: [],
+    resume_questions: [{ question, focus_area: 'Focus', suggested_answer_points: [] }],
+    project_follow_ups: [],
+    skill_gaps: [],
+    talking_points: [],
+  });
+
+  it('warns that practised marks reset, and clears them once a regenerate succeeds', async () => {
+    documents.a = { interview_prep: prep('OLD QUESTION') };
+    localStorage.setItem(
+      'resume_interview_practice:a',
+      JSON.stringify({ practised: ['resume:OLD QUESTION'], notes: {} })
+    );
+    route.search = 'id=a&tab=interview-prep';
+    renderBuilder();
+    await screen.findByText('OLD QUESTION');
+    // The stored marks load after the first paint.
+    await waitFor(() =>
+      expect(
+        screen.getByRole('checkbox', { name: en.interviewPrep.practice.practised })
+      ).toBeChecked()
+    );
+
+    const held = holdGeneration('interview-prep');
+    // Regenerate waits for the job context.
+    const regenerate = screen.getByRole('button', { name: en.interviewPrep.regenerate });
+    await waitFor(() => expect(regenerate).toBeEnabled());
+    fireEvent.click(regenerate);
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(en.interviewPrep.regenerateDescription)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: en.interviewPrep.regenerate }));
+    await waitFor(() => expect(held.started()).toBe(true));
+    // Still stored while the request runs: a failed regenerate keeps the marks.
+    expect(localStorage.getItem('resume_interview_practice:a')).not.toBeNull();
+
+    await act(async () => {
+      held.reply.resolve(HttpResponse.json({ interview_prep: prep('NEW QUESTION') }));
+    });
+
+    await screen.findByText('NEW QUESTION');
+    expect(localStorage.getItem('resume_interview_practice:a')).toBeNull();
+    expect(
+      screen.getByRole('checkbox', { name: en.interviewPrep.practice.practised })
+    ).not.toBeChecked();
+  });
 });
 
 describe('builder preview tabs', () => {

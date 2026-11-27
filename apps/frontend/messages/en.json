@@ -1565,6 +1565,7 @@
   "interviewPrep": {
     "title": "Interview Prep",
     "regenerate": "Regenerate",
+    "regenerateDescription": "This replaces the interview prep with new questions. Your practised marks and notes reset.",
     "unavailableTitle": "Interview Prep Not Available",
     "loadingContextDescription": "Checking the job context for this tailored resume before generation.",
     "missingContextDescription": "This tailored resume does not have the saved job context required to generate interview preparation. Re-tailor the resume with a job description to use this workflow.",
@@ -1574,11 +1575,27 @@
     "whyItMatters": "Why it matters",
     "preparationSuggestion": "Preparation suggestion",
     "sections": {
-      "roleFit": "Role-Fit Analysis",
       "resumeQuestions": "Resume-Based Questions",
-      "projectFollowUps": "Project Follow-Ups",
-      "skillGaps": "Skill Gaps",
-      "talkingPoints": "Talking Points"
+      "projectFollowUps": "Project Follow-Ups"
+    },
+    "brief": {
+      "preparingFor": "Preparing for",
+      "lookingFor": "What they are looking for",
+      "fullDescription": "Full job description",
+      "strong": "Where you are strong",
+      "prepare": "Where to prepare",
+      "points": "Points to make",
+      "pending": "Generate the interview prep to see where you are strong, where to prepare and the points to make."
+    },
+    "practice": {
+      "title": "Practice",
+      "progress": "{done} of {total} practised",
+      "localNote": "Practised marks and notes are saved in this browser only.",
+      "practised": "Practised",
+      "showPoints": "Show answer points",
+      "hidePoints": "Hide answer points",
+      "notes": "Notes",
+      "notesLabel": "Your notes for this question"
     }
   },
   "queue": {

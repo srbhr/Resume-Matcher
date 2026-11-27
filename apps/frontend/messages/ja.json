@@ -1565,6 +1565,7 @@
   "interviewPrep": {
     "title": "面接準備",
     "regenerate": "再生成",
+    "regenerateDescription": "面接準備を新しい質問で置き換えます。練習済みの印とメモはリセットされます。",
     "unavailableTitle": "面接準備は利用できません",
     "loadingContextDescription": "生成前に、このカスタマイズ済み履歴書の求人コンテキストを確認しています。",
     "missingContextDescription": "このカスタマイズ済み履歴書には、面接準備の生成に必要な保存済み求人コンテキストがありません。求人内容で履歴書を再度カスタマイズしてください。",
@@ -1574,11 +1575,27 @@
     "whyItMatters": "重要な理由",
     "preparationSuggestion": "準備の提案",
     "sections": {
-      "roleFit": "職務適合分析",
       "resumeQuestions": "履歴書ベースの質問",
-      "projectFollowUps": "プロジェクト深掘り質問",
-      "skillGaps": "スキルギャップ",
-      "talkingPoints": "話すべき要点"
+      "projectFollowUps": "プロジェクト深掘り質問"
+    },
+    "brief": {
+      "preparingFor": "対象",
+      "lookingFor": "求められていること",
+      "fullDescription": "求人票の全文",
+      "strong": "あなたの強み",
+      "prepare": "準備すべき点",
+      "points": "伝えるべきポイント",
+      "pending": "面接準備を生成すると、あなたの強み、準備すべき点、伝えるべきポイントが表示されます。"
+    },
+    "practice": {
+      "title": "練習",
+      "progress": "{total}問中{done}問を練習済み",
+      "localNote": "練習済みの印とメモはこのブラウザにのみ保存されます。",
+      "practised": "練習済み",
+      "showPoints": "回答のポイントを表示",
+      "hidePoints": "回答のポイントを隠す",
+      "notes": "メモ",
+      "notesLabel": "この質問のメモ"
     }
   },
   "queue": {

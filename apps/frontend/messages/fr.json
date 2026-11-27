@@ -1565,6 +1565,7 @@
   "interviewPrep": {
     "title": "Préparation à l'entretien",
     "regenerate": "Régénérer",
+    "regenerateDescription": "Cela remplace la préparation à l'entretien par de nouvelles questions. Vos marques « pratiquée » et vos notes sont réinitialisées.",
     "unavailableTitle": "Préparation à l'entretien non disponible",
     "loadingContextDescription": "Vérification du contexte du poste pour ce CV personnalisé avant la génération.",
     "missingContextDescription": "Ce CV personnalisé ne dispose pas du contexte de poste enregistré nécessaire pour générer la préparation à l'entretien. Personnalisez à nouveau le CV avec une fiche de poste pour utiliser ce flux.",
@@ -1574,11 +1575,27 @@
     "whyItMatters": "Pourquoi c'est important",
     "preparationSuggestion": "Suggestion de préparation",
     "sections": {
-      "roleFit": "Analyse d'adéquation au poste",
       "resumeQuestions": "Questions basées sur le CV",
-      "projectFollowUps": "Questions de suivi sur les projets",
-      "skillGaps": "Écarts de compétences",
-      "talkingPoints": "Arguments clés"
+      "projectFollowUps": "Questions de suivi sur les projets"
+    },
+    "brief": {
+      "preparingFor": "Préparation pour",
+      "lookingFor": "Ce qu'ils recherchent",
+      "fullDescription": "Description complète du poste",
+      "strong": "Vos points forts",
+      "prepare": "À préparer",
+      "points": "Points à faire valoir",
+      "pending": "Générez la préparation à l'entretien pour voir vos points forts, ce qu'il faut préparer et les points à faire valoir."
+    },
+    "practice": {
+      "title": "Entraînement",
+      "progress": "{done} sur {total} pratiquées",
+      "localNote": "Les marques et les notes sont enregistrées uniquement dans ce navigateur.",
+      "practised": "Pratiquée",
+      "showPoints": "Afficher les éléments de réponse",
+      "hidePoints": "Masquer les éléments de réponse",
+      "notes": "Notes",
+      "notesLabel": "Vos notes pour cette question"
     }
   },
   "queue": {

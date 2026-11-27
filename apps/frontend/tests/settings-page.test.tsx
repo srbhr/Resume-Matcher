@@ -16,6 +16,7 @@ const api = vi.hoisted(() => ({
   setContentLanguage: vi.fn(),
   fetchChatGptStatus: vi.fn(),
   fetchChatGptModels: vi.fn(),
+  resetDatabase: vi.fn(),
   unavailable: () => Promise.reject(new Error('not under test')),
 }));
 // Module-level so the page's load effect (deps: [t]) runs once.
@@ -71,6 +72,7 @@ vi.mock('@/lib/api/config', async (importOriginal) => {
     updateFeaturePrompts: api.updateFeaturePrompts,
     fetchPromptConfig: api.unavailable,
     fetchFeaturePrompts: api.unavailable,
+    resetDatabase: api.resetDatabase,
   };
 });
 
@@ -587,6 +589,21 @@ describe('settings page (Swiss sweep)', () => {
       );
     expect(dangerCards).toHaveLength(2);
     for (const heading of dangerCards) expect(heading).toHaveClass('font-serif', 'text-ink');
+  });
+
+  it('clears drafts and interview practice from this browser on Reset database', async () => {
+    api.resetDatabase.mockResolvedValue(undefined);
+    localStorage.setItem('resume_interview_practice:r1', '{"practised":["resume:Q"],"notes":{}}');
+    localStorage.setItem('unrelated_key', 'kept');
+    await renderLoaded();
+    openSection('settings.dangerZone');
+    fireEvent.click(screen.getByRole('button', { name: 'settings.resetDatabase' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.reset' }));
+
+    await waitFor(() => expect(api.resetDatabase).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(localStorage.getItem('resume_interview_practice:r1')).toBeNull());
+    expect(localStorage.getItem('unrelated_key')).toBe('kept');
+    localStorage.removeItem('unrelated_key');
   });
 
   it('fills a wide, full-height frame and keeps the open section at a readable width', async () => {
