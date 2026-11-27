@@ -29,10 +29,14 @@ describe('FormattingControls', () => {
     });
     expect(group).toContainElement(selected);
     expect(selected).toHaveAttribute('aria-checked', 'true');
-    // Every tile wraps its name inside the same fixed-width column (owner F3).
+    // The tiles fill the panel's width; each name area is two lines tall, so they match.
+    expect(group).toHaveClass('grid');
     for (const radio of screen.getAllByRole('radio').filter((r) => group.contains(r))) {
-      expect(radio.firstElementChild).toHaveClass('w-24');
+      expect(radio.firstElementChild?.lastElementChild).toHaveClass('min-h-10');
     }
+    // Selection is the ink name band, not a double outline.
+    expect(selected.firstElementChild?.lastElementChild).toHaveClass('bg-ink', 'text-white');
+    expect(selected).not.toHaveClass('outline-2');
 
     fireEvent.click(
       screen.getByRole('radio', { name: 'builder.formatting.templates.modernTwoColumn.name' })
@@ -86,7 +90,7 @@ describe('FormattingControls', () => {
   it('sets spacing levels and page size through radio groups', () => {
     const onChange = renderControls();
     const sectionSpacing = screen.getByRole('radiogroup', {
-      name: 'builder.formatting.spacingSection:',
+      name: 'builder.formatting.spacingSection',
     });
     const level = Array.from(sectionSpacing.querySelectorAll('[role="radio"]')).find(
       (radio) => radio.textContent === '5'
@@ -124,5 +128,49 @@ describe('FormattingControls', () => {
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ compactMode: !DEFAULT_TEMPLATE_SETTINGS.compactMode })
     );
+  });
+
+  it('edits margins with a slider and an mm field that hold the same value', () => {
+    const onChange = vi.fn();
+    render(
+      <FormattingControls
+        settings={{
+          ...DEFAULT_TEMPLATE_SETTINGS,
+          margins: { top: 10, bottom: 12, left: 10, right: 10 },
+        }}
+        onChange={onChange}
+      />
+    );
+    const field = screen.getByRole('spinbutton', { name: 'builder.formatting.margin.bottom (mm)' });
+    expect(field).toHaveValue(12);
+    expect(screen.getByRole('slider', { name: 'builder.formatting.margin.bottom' })).toHaveValue(
+      '12'
+    );
+
+    fireEvent.change(field, { target: { value: '40' } });
+    // Held to the 25mm maximum.
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ margins: expect.objectContaining({ bottom: 25 }) })
+    );
+  });
+
+  it('links the four margins: one slider then sets every side', () => {
+    const onChange = renderControls();
+    // The default margins match, so "same on all sides" starts on.
+    const linked = screen.getByRole('switch', { name: 'builder.formatting.marginsLinked' });
+    expect(linked).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.change(screen.getByRole('slider', { name: 'builder.formatting.margin.all' }), {
+      target: { value: '15' },
+    });
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ margins: { top: 15, bottom: 15, left: 15, right: 15 } })
+    );
+  });
+
+  it('says which way the spacing scales run', () => {
+    renderControls();
+    expect(screen.getAllByText('builder.formatting.tight')).toHaveLength(3);
+    expect(screen.getAllByText('builder.formatting.loose')).toHaveLength(3);
   });
 });

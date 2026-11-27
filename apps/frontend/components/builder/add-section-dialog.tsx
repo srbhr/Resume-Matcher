@@ -112,8 +112,8 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
             <Label id={`${fieldId}-type`} className="block">
               {t('builder.customSections.sectionTypeLabel')}
             </Label>
+            {/* Selection is an ink fill (the house rule); the description follows it to white. */}
             <SegmentedControl
-              variant="outline"
               aria-labelledby={`${fieldId}-type`}
               className="grid grid-cols-1 gap-2"
               value={sectionType}
@@ -121,9 +121,17 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
               items={sectionTypes.map((item) => ({
                 value: item.type,
                 label: (
-                  <span className="flex flex-col items-start gap-1 text-left normal-case tracking-normal">
+                  <span className="flex flex-col items-start gap-1 py-2 text-left normal-case tracking-normal">
                     <span className="font-sans text-sm font-medium">{item.label}</span>
-                    <span className="font-mono text-xs text-ink-soft">{item.description}</span>
+                    <span
+                      className={
+                        sectionType === item.type
+                          ? 'font-mono text-xs text-white'
+                          : 'font-mono text-xs text-ink-soft'
+                      }
+                    >
+                      {item.description}
+                    </span>
                   </span>
                 ),
               }))}

@@ -29,11 +29,11 @@ describe('SegmentedControl', () => {
     expect(screen.getByRole('radio', { name: 'Letter' })).toHaveAttribute('tabindex', '-1');
   });
 
-  it('keeps the outline variant selection outline when the selected item has keyboard focus', () => {
+  it('draws tile options as single-bordered white tiles that leave the selection to their label', () => {
     render(
       <SegmentedControl
         aria-label="Template"
-        variant="outline"
+        variant="tile"
         value="a"
         onChange={() => {}}
         items={[
@@ -43,14 +43,11 @@ describe('SegmentedControl', () => {
       />
     );
     const selected = screen.getByRole('radio', { name: 'Single' });
-    expect(selected).toHaveClass('outline-2', 'outline-ink');
-    // focus-visible:outline-none would set outline-style: none and erase the selection outline.
-    expect(selected).not.toHaveClass('focus-visible:outline-none');
-    // The focus ring moves out past the 2px outline so both stay visible.
-    expect(selected).toHaveClass('focus-visible:ring-offset-4');
-    expect(screen.getByRole('radio', { name: 'Two column' })).toHaveClass(
-      'focus-visible:outline-none'
-    );
+    expect(selected).toHaveAttribute('aria-checked', 'true');
+    // One 1px border, no double outline and no fill: the label draws the selection band.
+    expect(selected).toHaveClass('border', 'border-ink', 'bg-white', 'p-0');
+    expect(selected).not.toHaveClass('outline-2', 'bg-ink');
+    expect(screen.getByRole('radio', { name: 'Two column' })).toHaveClass('hover:bg-panel');
   });
 
   it('keeps the tab stop on an enabled option when the selected one is disabled', () => {

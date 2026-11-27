@@ -500,12 +500,13 @@
         "top": "Superior",
         "bottom": "Inferior",
         "left": "Izquierdo",
-        "right": "Derecho"
+        "right": "Derecho",
+        "all": "Todos los lados"
       },
       "spacing": "Espaciado",
-      "spacingSection": "Sección",
-      "spacingItems": "Elementos",
-      "spacingLines": "Líneas",
+      "spacingSection": "Entre secciones",
+      "spacingItems": "Entre entradas",
+      "spacingLines": "Interlineado",
       "fontSize": "Tamaño de fuente",
       "baseFontSize": "Base",
       "headerScale": "Encabezados",
@@ -529,7 +530,11 @@
       "effectiveHeaderFont": "Fuente de encabezados",
       "effectiveBodyFont": "Fuente del cuerpo",
       "compactHint": "El modo compacto reduce el espaciado y el interlineado. Los márgenes y la fuente base se mantienen.",
-      "resetDefaults": "Restablecer valores"
+      "resetDefaults": "Restablecer valores",
+      "tight": "Compacto",
+      "loose": "Amplio",
+      "resetMargins": "Restablecer márgenes",
+      "marginsLinked": "Igual en todos los lados"
     },
     "personalInfoForm": {
       "placeholders": {

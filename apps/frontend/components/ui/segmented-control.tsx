@@ -14,8 +14,11 @@ export interface SegmentedControlProps<T extends string> {
   items: SegmentedItem<T>[];
   value: T;
   onChange: (value: T) => void;
-  /** fill: selected = ink fill (text options). outline: selected = 2px ink outline (thumbnails). */
-  variant?: 'fill' | 'outline';
+  /**
+   * fill: selected = ink fill (text options). tile: a white tile with no padding of its
+   * own, whose label shows the selection itself (the template tiles' ink name band).
+   */
+  variant?: 'fill' | 'tile';
   size?: 'sm' | 'default';
   className?: string;
   'aria-label'?: string;
@@ -72,10 +75,6 @@ export function SegmentedControl<T extends string>({
     <div role="radiogroup" {...aria} className={cn('flex flex-wrap gap-2', className)}>
       {items.map((item, index) => {
         const selected = item.value === value;
-        // outline-none sets outline-style: none, which would erase the 2px selection
-        // outline under focus, so a selected outline item keeps its outline and the
-        // focus ring moves out past it instead.
-        const keepsOutline = variant === 'outline' && selected;
         return (
           <button
             key={item.value}
@@ -93,16 +92,14 @@ export function SegmentedControl<T extends string>({
             className={cn(
               'rounded-none border border-ink font-mono uppercase tracking-wider transition-colors',
               'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-              keepsOutline ? 'focus-visible:ring-offset-4' : 'focus-visible:outline-none',
+              'focus-visible:outline-none',
               'disabled:cursor-not-allowed disabled:opacity-50',
               size === 'sm' ? 'min-h-8 px-3 text-xs' : 'min-h-10 px-4 text-sm',
+              variant === 'tile' && 'px-0',
               variant === 'fill' &&
                 (selected ? 'bg-ink text-white' : 'bg-white text-ink hover:bg-panel'),
-              variant === 'outline' &&
-                cn(
-                  'bg-white p-2 text-ink',
-                  selected ? 'outline-2 outline-offset-2 outline-ink' : 'hover:bg-panel'
-                )
+              variant === 'tile' &&
+                cn('overflow-hidden bg-white p-0 text-ink', !selected && 'hover:bg-panel')
             )}
           >
             {item.label}

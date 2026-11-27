@@ -470,12 +470,13 @@
         "top": "위",
         "bottom": "아래",
         "left": "왼쪽",
-        "right": "오른쪽"
+        "right": "오른쪽",
+        "all": "모든 면"
       },
       "spacing": "간격",
-      "spacingSection": "섹션",
-      "spacingItems": "항목",
-      "spacingLines": "줄",
+      "spacingSection": "섹션 사이",
+      "spacingItems": "항목 사이",
+      "spacingLines": "줄 간격",
       "fontSize": "글꼴 크기",
       "baseFontSize": "기본",
       "headerScale": "제목",
@@ -499,7 +500,11 @@
       "effectiveHeaderFont": "제목 글꼴",
       "effectiveBodyFont": "본문 글꼴",
       "compactHint": "컴팩트 모드는 간격과 줄 높이를 좁힙니다. 여백과 기본 글꼴 크기는 그대로 유지됩니다.",
-      "resetDefaults": "기본값으로 재설정"
+      "resetDefaults": "기본값으로 재설정",
+      "tight": "좁게",
+      "loose": "넓게",
+      "resetMargins": "여백 초기화",
+      "marginsLinked": "모든 면 동일하게"
     },
     "personalInfoForm": {
       "placeholders": {

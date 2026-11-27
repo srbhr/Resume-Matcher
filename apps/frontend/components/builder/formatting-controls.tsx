@@ -4,6 +4,8 @@ import React, { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
+import { RangeSlider } from '@/components/ui/range-slider';
+import { cn } from '@/lib/utils';
 import { CaretDown, CaretUp, ArrowCounterClockwise } from '@phosphor-icons/react';
 import {
   type TemplateSettings,
@@ -70,6 +72,16 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
 
   const handlePageSizeChange = (pageSize: PageSize) => {
     onChange({ ...settings, pageSize });
+  };
+
+  // "Same on all sides" starts on when the four margins already match.
+  const [marginsLinked, setMarginsLinked] = useState(() => {
+    const { top, bottom, left, right } = settings.margins;
+    return top === bottom && top === left && top === right;
+  });
+
+  const handleAllMarginsChange = (value: number) => {
+    onChange({ ...settings, margins: { top: value, bottom: value, left: value, right: value } });
   };
 
   const handleMarginChange = (key: keyof TemplateSettings['margins'], value: number) => {
@@ -169,6 +181,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     [t]
   );
 
+  const spacingEnds: [string, string] = [
+    t('builder.formatting.tight'),
+    t('builder.formatting.loose'),
+  ];
+
   const getFontLabel = (font: HeaderFontFamily | BodyFontFamily) => {
     if (font === 'sans-serif') return t('builder.formatting.fontNames.sans');
     if (font === 'serif') return t('builder.formatting.fontNames.serif');
@@ -200,7 +217,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
 
       {/* Expandable Content */}
       {isExpanded && (
-        <div id={contentId} className="border-t border-ink p-4 space-y-6">
+        <div id={contentId} className="@container border-t border-ink p-4 space-y-6">
           {/* Template Selection */}
           <div>
             <h4
@@ -209,30 +226,38 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
             >
               {t('builder.formatting.template')}
             </h4>
+            {/* Tiles fill the panel's width (no dead strip), at least 6.5rem each. The
+                selected tile's name sits on an ink band; every name area is two lines
+                tall, so the tiles match. */}
             <SegmentedControl
-              variant="outline"
+              variant="tile"
               size="sm"
               aria-labelledby={`${contentId}-template`}
-              className="gap-3"
+              className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3"
               value={settings.template}
               onChange={handleTemplateChange}
-              items={TEMPLATE_OPTIONS.map((template) => ({
-                value: template.id,
-                title: templateLabels[template.id].description,
-                label: (
-                  // Fixed-width tile (owner F3): every tile matches the thumbnail and
-                  // the name wraps onto at most two balanced lines.
-                  <span className="flex w-24 flex-col items-center gap-2">
-                    <TemplateThumbnail
-                      type={template.id}
-                      isActive={settings.template === template.id}
-                    />
-                    <span className="flex min-h-8 items-center justify-center whitespace-normal text-balance text-center font-bold leading-tight">
-                      {templateLabels[template.id].name}
+              items={TEMPLATE_OPTIONS.map((template) => {
+                const selected = settings.template === template.id;
+                return {
+                  value: template.id,
+                  title: templateLabels[template.id].description,
+                  label: (
+                    <span className="flex w-full flex-col">
+                      <span className="flex justify-center p-2">
+                        <TemplateThumbnail type={template.id} isActive={selected} />
+                      </span>
+                      <span
+                        className={cn(
+                          'flex min-h-10 items-center justify-center border-t border-ink px-1 text-center font-bold leading-tight whitespace-normal text-balance',
+                          selected && 'bg-ink text-white'
+                        )}
+                      >
+                        {templateLabels[template.id].name}
+                      </span>
                     </span>
-                  </span>
-                ),
-              }))}
+                  ),
+                };
+              })}
             />
           </div>
 
@@ -302,30 +327,50 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
 
           {/* Margins Section */}
           <div>
-            <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
-              {t('builder.formatting.margins')}
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <MarginSlider
-                label={t('builder.formatting.margin.top')}
-                value={settings.margins.top}
-                onChange={(v) => handleMarginChange('top', v)}
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft">
+                {t('builder.formatting.margins')}
+              </h4>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto px-0"
+                onClick={() =>
+                  onChange({ ...settings, margins: { ...DEFAULT_TEMPLATE_SETTINGS.margins } })
+                }
+              >
+                {t('builder.formatting.resetMargins')}
+              </Button>
+            </div>
+            <div className="space-y-3">
+              <ToggleSwitch
+                variant="inline"
+                label={t('builder.formatting.marginsLinked')}
+                checked={marginsLinked}
+                onCheckedChange={(linked) => {
+                  setMarginsLinked(linked);
+                  // Linking takes the top margin for every side.
+                  if (linked) handleAllMarginsChange(settings.margins.top);
+                }}
               />
-              <MarginSlider
-                label={t('builder.formatting.margin.bottom')}
-                value={settings.margins.bottom}
-                onChange={(v) => handleMarginChange('bottom', v)}
-              />
-              <MarginSlider
-                label={t('builder.formatting.margin.left')}
-                value={settings.margins.left}
-                onChange={(v) => handleMarginChange('left', v)}
-              />
-              <MarginSlider
-                label={t('builder.formatting.margin.right')}
-                value={settings.margins.right}
-                onChange={(v) => handleMarginChange('right', v)}
-              />
+              {marginsLinked ? (
+                <MarginSlider
+                  label={t('builder.formatting.margin.all')}
+                  value={settings.margins.top}
+                  onChange={handleAllMarginsChange}
+                />
+              ) : (
+                <div className="grid grid-cols-1 gap-x-6 gap-y-3 @md:grid-cols-2">
+                  {(['top', 'bottom', 'left', 'right'] as const).map((side) => (
+                    <MarginSlider
+                      key={side}
+                      label={t(`builder.formatting.margin.${side}`)}
+                      value={settings.margins[side]}
+                      onChange={(v) => handleMarginChange(side, v)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -339,16 +384,19 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 label={t('builder.formatting.spacingSection')}
                 value={settings.spacing.section}
                 onChange={(v) => handleSpacingChange('section', v)}
+                ends={spacingEnds}
               />
               <SpacingSelector
                 label={t('builder.formatting.spacingItems')}
                 value={settings.spacing.item}
                 onChange={(v) => handleSpacingChange('item', v)}
+                ends={spacingEnds}
               />
               <SpacingSelector
                 label={t('builder.formatting.spacingLines')}
                 value={settings.spacing.lineHeight}
                 onChange={(v) => handleSpacingChange('lineHeight', v)}
+                ends={spacingEnds}
               />
             </div>
           </div>
@@ -373,9 +421,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               <div className="flex items-center gap-2">
                 <span
                   id={`${contentId}-header-font`}
-                  className="font-mono text-xs w-16 text-ink-soft"
+                  className="w-32 shrink-0 font-mono text-xs text-ink-soft"
                 >
-                  {t('builder.formatting.headerFontFamily')}:
+                  {t('builder.formatting.headerFontFamily')}
                 </span>
                 <SegmentedControl
                   size="sm"
@@ -395,9 +443,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               <div className="flex items-center gap-2">
                 <span
                   id={`${contentId}-body-font`}
-                  className="font-mono text-xs w-16 text-ink-soft"
+                  className="w-32 shrink-0 font-mono text-xs text-ink-soft"
                 >
-                  {t('builder.formatting.bodyFontFamily')}:
+                  {t('builder.formatting.bodyFontFamily')}
                 </span>
                 <SegmentedControl
                   size="sm"
@@ -505,7 +553,8 @@ const FONT_PREVIEW: Record<HeaderFontFamily, string> = {
 /**
  * Margin Slider Component
  *
- * Range input for margin values (5-25mm)
+ * One margin: label, slider and a number field in mm that edit the same value
+ * (5-25mm). Typing past either end is held to it.
  */
 interface MarginSliderProps {
   label: string;
@@ -513,23 +562,42 @@ interface MarginSliderProps {
   onChange: (value: number) => void;
 }
 
+const MARGIN_MIN = 5;
+const MARGIN_MAX = 25;
+
 const MarginSlider: React.FC<MarginSliderProps> = ({ label, value, onChange }) => {
-  const inputId = useId();
+  const sliderId = useId();
+  const clamp = (n: number) => Math.min(MARGIN_MAX, Math.max(MARGIN_MIN, Math.round(n)));
   return (
-    <div className="flex items-center gap-2">
-      <label htmlFor={inputId} className="font-mono text-xs w-12 text-ink-soft">
-        {label}:
+    <div className="flex items-center gap-3">
+      <label htmlFor={sliderId} className="w-16 shrink-0 font-mono text-xs text-ink-soft">
+        {label}
       </label>
-      <input
-        id={inputId}
-        type="range"
-        min={5}
-        max={25}
+      <RangeSlider
+        id={sliderId}
+        min={MARGIN_MIN}
+        max={MARGIN_MAX}
         value={value}
         onChange={(e) => onChange(Number.parseInt(e.target.value, 10))}
-        className="w-full accent-ink"
       />
-      <span className="font-mono text-xs w-6 text-right text-ink-soft tabular-nums">{value}</span>
+      <span className="flex shrink-0 items-center gap-1">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={MARGIN_MIN}
+          max={MARGIN_MAX}
+          value={value}
+          aria-label={`${label} (mm)`}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (e.target.value !== '' && Number.isFinite(n)) onChange(clamp(n));
+          }}
+          className="h-8 w-12 border border-ink bg-white px-1 text-right font-mono text-xs tabular-nums text-ink focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+        />
+        <span aria-hidden="true" className="font-mono text-xs text-steel">
+          mm
+        </span>
+      </span>
     </div>
   );
 };
@@ -537,34 +605,48 @@ const MarginSlider: React.FC<MarginSliderProps> = ({ label, value, onChange }) =
 /**
  * Spacing Selector Component
  *
- * Segmented control for selecting spacing levels (1-5)
+ * Segmented control for selecting levels 1-5, with optional captions at the two
+ * ends ("Tight" ... "Loose") saying which way the scale runs.
  */
 interface SpacingSelectorProps {
   label: string;
   value: SpacingLevel;
   onChange: (value: SpacingLevel) => void;
+  ends?: [string, string];
 }
 
 const SPACING_LEVELS: SpacingLevel[] = [1, 2, 3, 4, 5];
 
-const SpacingSelector: React.FC<SpacingSelectorProps> = ({ label, value, onChange }) => {
+const SpacingSelector: React.FC<SpacingSelectorProps> = ({ label, value, onChange, ends }) => {
   const labelId = useId();
   return (
-    <div className="flex items-center gap-2">
-      <span id={labelId} className="font-mono text-xs w-16 text-ink-soft">
-        {label}:
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span id={labelId} className="w-32 shrink-0 font-mono text-xs text-ink-soft">
+        {label}
       </span>
-      <SegmentedControl
-        size="sm"
-        className="gap-1"
-        aria-labelledby={labelId}
-        value={String(value)}
-        onChange={(level) => onChange(Number(level) as SpacingLevel)}
-        items={SPACING_LEVELS.map((level) => ({
-          value: String(level),
-          label: <span className="tabular-nums">{level}</span>,
-        }))}
-      />
+      <span className="flex items-center gap-2">
+        {ends && (
+          <span aria-hidden="true" className="font-mono text-xs text-steel">
+            {ends[0]}
+          </span>
+        )}
+        <SegmentedControl
+          size="sm"
+          className="gap-1"
+          aria-labelledby={labelId}
+          value={String(value)}
+          onChange={(level) => onChange(Number(level) as SpacingLevel)}
+          items={SPACING_LEVELS.map((level) => ({
+            value: String(level),
+            label: <span className="tabular-nums">{level}</span>,
+          }))}
+        />
+        {ends && (
+          <span aria-hidden="true" className="font-mono text-xs text-steel">
+            {ends[1]}
+          </span>
+        )}
+      </span>
     </div>
   );
 };

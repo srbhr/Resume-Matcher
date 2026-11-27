@@ -505,12 +505,13 @@
         "top": "Superior",
         "bottom": "Inferior",
         "left": "Esquerda",
-        "right": "Direita"
+        "right": "Direita",
+        "all": "Todos os lados"
       },
       "spacing": "Espaçamento",
-      "spacingSection": "Seção",
-      "spacingItems": "Itens",
-      "spacingLines": "Linhas",
+      "spacingSection": "Entre seções",
+      "spacingItems": "Entre entradas",
+      "spacingLines": "Altura da linha",
       "fontSize": "Tamanho da Fonte",
       "baseFontSize": "Base",
       "headerScale": "Cabeçalhos",
@@ -529,7 +530,11 @@
       "effectiveHeaderFont": "Fonte do Cabeçalho",
       "effectiveBodyFont": "Fonte do Corpo",
       "compactHint": "O modo compacto reduz espaçamento e altura da linha. Margens e tamanho de fonte base permanecem literais.",
-      "resetDefaults": "Restaurar Padrões"
+      "resetDefaults": "Restaurar Padrões",
+      "tight": "Justo",
+      "loose": "Amplo",
+      "resetMargins": "Redefinir margens",
+      "marginsLinked": "Igual em todos os lados"
     },
     "personalInfoForm": {
       "placeholders": {

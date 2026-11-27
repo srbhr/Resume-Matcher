@@ -500,11 +500,12 @@
         "top": "上",
         "bottom": "下",
         "left": "左",
-        "right": "右"
+        "right": "右",
+        "all": "すべての辺"
       },
       "spacing": "間隔",
-      "spacingSection": "セクション",
-      "spacingItems": "項目",
+      "spacingSection": "セクション間",
+      "spacingItems": "項目間",
       "spacingLines": "行間",
       "fontSize": "フォントサイズ",
       "baseFontSize": "本文",
@@ -529,7 +530,11 @@
       "effectiveHeaderFont": "見出しフォント",
       "effectiveBodyFont": "本文フォント",
       "compactHint": "コンパクトモードでは間隔と行間が詰まります。余白と本文フォントサイズは維持されます。",
-      "resetDefaults": "デフォルトに戻す"
+      "resetDefaults": "デフォルトに戻す",
+      "tight": "狭い",
+      "loose": "広い",
+      "resetMargins": "余白をリセット",
+      "marginsLinked": "すべての辺を同じにする"
     },
     "personalInfoForm": {
       "placeholders": {

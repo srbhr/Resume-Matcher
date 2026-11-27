@@ -500,12 +500,13 @@
         "top": "上",
         "bottom": "下",
         "left": "左",
-        "right": "右"
+        "right": "右",
+        "all": "四边"
       },
       "spacing": "间距",
-      "spacingSection": "板块",
-      "spacingItems": "条目",
-      "spacingLines": "行距",
+      "spacingSection": "章节间距",
+      "spacingItems": "条目间距",
+      "spacingLines": "行高",
       "fontSize": "字号",
       "baseFontSize": "正文",
       "headerScale": "标题",
@@ -529,7 +530,11 @@
       "effectiveHeaderFont": "标题字体",
       "effectiveBodyFont": "正文字体",
       "compactHint": "紧凑模式会收紧间距与行高；页边距与正文字号保持不变。",
-      "resetDefaults": "恢复默认设置"
+      "resetDefaults": "恢复默认设置",
+      "tight": "紧凑",
+      "loose": "宽松",
+      "resetMargins": "重置页边距",
+      "marginsLinked": "四边相同"
     },
     "personalInfoForm": {
       "placeholders": {
