@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useLanguage } from '@/lib/context/language-context';
-import { getMessages as getMessagesForLocale, type Messages } from './messages';
+import { useLocaleMessages } from './client-messages';
+import type { Messages } from './messages';
 import { applyParams, getNestedValue } from './utils';
 
 /**
@@ -14,7 +15,7 @@ import { applyParams, getNestedValue } from './utils';
  */
 export function useTranslations() {
   const { uiLanguage } = useLanguage();
-  const messages = useMemo(() => getMessagesForLocale(uiLanguage), [uiLanguage]);
+  const messages = useLocaleMessages(uiLanguage);
 
   /**
    * Translate a key to the current language

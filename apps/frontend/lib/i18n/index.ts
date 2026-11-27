@@ -2,7 +2,8 @@
  * Internationalization utilities
  *
  * Simple JSON-based translations without external dependencies.
- * Messages are imported statically and selected based on current UI language.
+ * The browser has English up front and loads the current UI language on demand
+ * (client-messages.ts); the server's translate() reads every locale statically.
  */
 
 export { useTranslations, type Messages } from './translations';

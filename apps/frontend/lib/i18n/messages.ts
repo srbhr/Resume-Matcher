@@ -1,3 +1,8 @@
+/**
+ * Every locale, statically: for the server (print pages, lib/i18n/server.ts) and
+ * tests. Client code takes only the `Messages` type from here; it loads messages
+ * through client-messages.ts, so other languages stay out of the shared chunk.
+ */
 import type { Locale } from '@/i18n/config';
 
 import en from '@/messages/en.json';
