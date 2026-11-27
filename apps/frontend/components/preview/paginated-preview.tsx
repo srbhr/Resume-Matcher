@@ -11,6 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
+import { Hatch } from '@/components/ui/hatch';
+import { cn } from '@/lib/utils';
 import { PageContainer } from './page-container';
 import { usePagination } from './use-pagination';
 import { PAGE_DIMENSIONS, mmToPx, getContentAreaPx } from '@/lib/constants/page-dimensions';
@@ -140,7 +142,13 @@ export function PaginatedPreview({
   const pageCount = (
     <div className="flex items-center gap-2 text-ink-soft">
       <FileText aria-hidden="true" className="size-4" />
-      <span className="font-mono text-xs uppercase tabular-nums">
+      <span
+        className={cn(
+          'font-mono text-xs uppercase tabular-nums',
+          // On the viewer's hatch the label needs a canvas backing; the panel's toolbar is solid.
+          variant === 'page' && '-mx-1 bg-canvas px-1'
+        )}
+      >
         {isCalculating
           ? t('preview.calculating')
           : pages.length === 1
@@ -216,10 +224,7 @@ export function PaginatedPreview({
       )}
 
       {/* Scrollable preview area */}
-      <div
-        ref={containerRef}
-        className={isPanel ? 'flex-1 overflow-auto bg-panel-hover p-8' : 'relative'}
-      >
+      <div ref={containerRef} className={isPanel ? 'flex-1 overflow-auto bg-canvas' : 'relative'}>
         {/* Hidden measurement container - renders content at actual size */}
         <div
           ref={measurementRef}
@@ -246,14 +251,22 @@ export function PaginatedPreview({
           />
         </div>
 
-        {/* Visible pages */}
-        <div className="flex flex-col items-center gap-4">
+        {/* Visible pages. In the panel they sit on a quiet hatch that grows with them;
+            the viewer page hatches its own body instead. */}
+        <div
+          className={
+            isPanel
+              ? 'relative isolate flex min-h-full flex-col items-center gap-4 p-8'
+              : 'flex flex-col items-center gap-4'
+          }
+        >
+          {isPanel && <Hatch className="-z-10 text-panel-hover" />}
           {pages.map((page, index) => (
             <React.Fragment key={page.pageNumber}>
               {index > 0 && (
                 <div className="flex items-center gap-2 py-2">
                   <div aria-hidden="true" className="h-px w-8 bg-steel" />
-                  <span className="font-mono text-xs text-ink-soft uppercase tracking-wider">
+                  <span className="bg-canvas px-1 font-mono text-xs text-ink-soft uppercase tracking-wider">
                     {t('preview.pageBreak')}
                   </span>
                   <div aria-hidden="true" className="h-px w-8 bg-steel" />

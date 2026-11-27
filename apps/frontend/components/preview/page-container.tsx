@@ -136,11 +136,13 @@ export function PageContainer({
         className="flex justify-between gap-4 font-mono text-xs uppercase tracking-wider tabular-nums text-steel"
         style={{ width: pageWidthPx * scale }}
       >
-        <span>
+        <span className="-mx-1 bg-canvas px-1">
           {pageSize === 'LETTER' ? t('builder.pageSize.usLetter') : pageSize} · {pageDims.width} ×{' '}
           {pageDims.height} mm
         </span>
-        <span>{t('preview.pageOfTotal', { page: pageNumber, total: totalPages })}</span>
+        <span className="-mx-1 bg-canvas px-1">
+          {t('preview.pageOfTotal', { page: pageNumber, total: totalPages })}
+        </span>
       </p>
     </div>
   );

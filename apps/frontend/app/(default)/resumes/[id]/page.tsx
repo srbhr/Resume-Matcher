@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button, buttonClass } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Hatch } from '@/components/ui/hatch';
 import { Input } from '@/components/ui/input';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
@@ -658,7 +659,9 @@ export default function ResumeViewerPage() {
         </div>
       </PageHeader>
 
-      <div className="px-8 py-6 md:px-12 md:py-8">
+      {/* The sheet sits on a quiet hatch; only buttons and backed labels sit on it. */}
+      <div className="relative isolate px-8 py-6 md:px-12 md:py-8">
+        <Hatch className="-z-10 text-panel-hover" />
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
           <div className="no-print w-full max-w-[250mm]">
