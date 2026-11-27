@@ -34,7 +34,9 @@
     "keysCleared": "APIキーが正常にクリアされました",
     "databaseReset": "データベースが正常にリセットされました",
     "popupBlocked": "ポップアップがブロックされました。ポップアップを許可するか、次のURLを手動で開いてください: {url}",
-    "resumeDeleted": "この履歴書は削除されました。別の履歴書をアップロードするか選択してください。"
+    "resumeDeleted": "この履歴書は削除されました。別の履歴書をアップロードするか選択してください。",
+    "on": "オン",
+    "off": "オフ"
   },
   "home": {
     "brandLine1": "履歴書",
@@ -63,7 +65,8 @@
     "backToDashboard": "ダッシュボードに戻る",
     "goToSettings": "設定へ",
     "applicationTracker": "応募トラッカー",
-    "queue": "カスタマイズキュー"
+    "queue": "カスタマイズキュー",
+    "primary": "移動先"
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -508,10 +511,10 @@
       "spacingItems": "項目間",
       "spacingLines": "行間",
       "fontSize": "フォントサイズ",
-      "baseFontSize": "本文",
-      "headerScale": "見出し",
-      "headerFontFamily": "見出し",
-      "bodyFontFamily": "本文",
+      "baseFontSize": "基本サイズ",
+      "headerScale": "見出しサイズ",
+      "headerFontFamily": "見出しフォント",
+      "bodyFontFamily": "本文フォント",
       "fontNames": {
         "serif": "セリフ",
         "sans": "サンセリフ",
@@ -521,7 +524,6 @@
       "compactMode": "コンパクトモード",
       "contactIcons": "連絡先アイコン",
       "effectiveOutput": "適用結果",
-      "effectiveMargins": "余白（mm）：上{top} 下{bottom} 左{left} 右{right}",
       "effectiveSectionGap": "セクション間隔",
       "effectiveItemGap": "項目間隔",
       "effectiveLineHeight": "行間",
@@ -977,7 +979,6 @@
   },
   "settings": {
     "title": "設定",
-    "subtitle": "設定をカスタマイズ",
     "aiProvider": "AIプロバイダー",
     "aiProviderDescription": "履歴書分析に使用するAIプロバイダーを選択",
     "apiKey": "APIキー",
@@ -1224,7 +1225,7 @@
     "titlePlaceholder": "履歴書のタイトルを入力...",
     "downloadFailedTitle": "ダウンロードに失敗しました",
     "renameFailedTitle": "名前の変更に失敗しました",
-    "renameTitle": "履歴書の名前を変更",
+    "renameTitle": "タイトルを編集",
     "defaultBadge": "デフォルトのマスター",
     "setDefault": "デフォルトのマスターに設定",
     "setDefaultSuccess": "このマスターがカスタマイズのデフォルトになりました。",
@@ -1665,17 +1666,5 @@
       "title": "文章を改善",
       "prompt": "Resume Matcher を使って履歴書 {resumeId} の文章を改善してください：文章ラウンドを2回行い（各行を基準で評価し、事実をすべて残したまま弱い行を書き直し、確認する）、保存してください。"
     }
-  },
-  "commandPalette": {
-    "title": "Resume Matcher を検索",
-    "placeholder": "ページへ移動、または履歴書を開く…",
-    "empty": "一致する項目はありません。",
-    "goTo": "移動",
-    "resumes": "履歴書",
-    "untitled": "無題の履歴書",
-    "master": "マスター",
-    "footer": "↑↓ で移動 · Enter で開く · Esc で閉じる",
-    "search": "検索",
-    "applications": "応募"
   }
 }

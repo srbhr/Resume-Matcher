@@ -4,7 +4,6 @@ import { LanguageProvider } from '@/lib/context/language-context';
 import { LocalizedErrorBoundary } from '@/components/common/error-boundary';
 import { MotionProvider } from '@/components/common/motion-provider';
 import { LazyToaster } from '@/components/ui/lazy-toaster';
-import { CommandPaletteLauncher } from '@/components/common/command-palette-launcher';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +17,6 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
           </LocalizedErrorBoundary>
         </ResumePreviewProvider>
         <LazyToaster />
-        <CommandPaletteLauncher />
       </LanguageProvider>
     </StatusCacheProvider>
   );

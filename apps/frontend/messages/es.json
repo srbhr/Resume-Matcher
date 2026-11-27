@@ -34,7 +34,9 @@
     "keysCleared": "Claves API borradas con éxito",
     "databaseReset": "Base de datos restablecida con éxito",
     "popupBlocked": "Se bloqueó la ventana emergente. Permite las ventanas emergentes o abre manualmente esta URL: {url}",
-    "resumeDeleted": "Este currículum se eliminó. Sube o selecciona otro."
+    "resumeDeleted": "Este currículum se eliminó. Sube o selecciona otro.",
+    "on": "Sí",
+    "off": "No"
   },
   "home": {
     "brandLine1": "Currículum",
@@ -63,7 +65,8 @@
     "backToDashboard": "Volver al Panel",
     "goToSettings": "Ir a Configuración",
     "applicationTracker": "Seguimiento de candidaturas",
-    "queue": "Cola de adaptación"
+    "queue": "Cola de adaptación",
+    "primary": "Ir a"
   },
   "dashboard": {
     "title": "Panel",
@@ -508,10 +511,10 @@
       "spacingItems": "Entre entradas",
       "spacingLines": "Interlineado",
       "fontSize": "Tamaño de fuente",
-      "baseFontSize": "Base",
-      "headerScale": "Encabezados",
-      "headerFontFamily": "Encabezados",
-      "bodyFontFamily": "Cuerpo",
+      "baseFontSize": "Tamaño base",
+      "headerScale": "Tamaño de títulos",
+      "headerFontFamily": "Fuente de títulos",
+      "bodyFontFamily": "Fuente del cuerpo",
       "fontNames": {
         "serif": "Serif",
         "sans": "Sans",
@@ -521,7 +524,6 @@
       "compactMode": "Modo compacto",
       "contactIcons": "Iconos de contacto",
       "effectiveOutput": "Salida efectiva",
-      "effectiveMargins": "Márgenes (mm): S{top} I{bottom} Izq{left} Der{right}",
       "effectiveSectionGap": "Espacio entre secciones",
       "effectiveItemGap": "Espacio entre elementos",
       "effectiveLineHeight": "Interlineado",
@@ -977,7 +979,6 @@
   },
   "settings": {
     "title": "Configuración",
-    "subtitle": "Configura tus preferencias",
     "aiProvider": "Proveedor de IA",
     "aiProviderDescription": "Selecciona tu proveedor de IA preferido para el análisis de CV",
     "apiKey": "Clave API",
@@ -1224,7 +1225,7 @@
     "titlePlaceholder": "Ingrese el título del currículum...",
     "downloadFailedTitle": "Error de descarga",
     "renameFailedTitle": "Error al cambiar el nombre",
-    "renameTitle": "Renombrar currículum",
+    "renameTitle": "Editar título",
     "defaultBadge": "Maestro predeterminado",
     "setDefault": "Establecer como maestro predeterminado",
     "setDefaultSuccess": "Este maestro ahora es el predeterminado para la personalización.",
@@ -1665,17 +1666,5 @@
       "title": "Mejorar la redacción",
       "prompt": "Usa Resume Matcher para mejorar la redacción del currículum {resumeId}: haz dos rondas de redacción (revisa cada línea con la rúbrica, reescribe las débiles conservando cada hecho, verifica) y guarda."
     }
-  },
-  "commandPalette": {
-    "title": "Buscar en Resume Matcher",
-    "placeholder": "Ir a una página o abrir un currículum…",
-    "empty": "No hay coincidencias.",
-    "goTo": "Ir a",
-    "resumes": "Currículums",
-    "untitled": "Currículum sin título",
-    "master": "Maestro",
-    "footer": "↑↓ para moverte · Intro para abrir · Esc para cerrar",
-    "search": "Buscar",
-    "applications": "Candidaturas"
   }
 }

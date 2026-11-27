@@ -22,23 +22,12 @@ describe('SwissGrid', () => {
     expect(brand.closest('.font-mono')).toContainElement(version);
   });
 
-  it('keeps the header calm: one bordered search, then quiet links', () => {
-    render(<SwissGrid>{null}</SwissGrid>);
-
-    const search = screen.getByRole('button', { name: /commandPalette\.search/ });
-    expect(search).toHaveClass('border', 'border-ink', 'bg-white');
-    expect(search).toHaveAttribute('aria-keyshortcuts', 'Meta+K Control+K');
-    for (const name of ['nav.queue', 'nav.applicationTracker', 'nav.settings']) {
-      const link = screen.getByRole('link', { name });
-      expect(link).toHaveClass('border-none', 'shadow-none');
-      expect(link.parentElement).toBe(search.parentElement);
-    }
-  });
-
-  it('puts the queue, tracker and a gear settings button in the header, not a footer', () => {
+  it('offers the queue, tracker and settings as labelled buttons in the header, with no search', () => {
     render(<SwissGrid>{null}</SwissGrid>);
 
     const header = screen.getByRole('heading', { level: 1 }).closest('header');
+    const nav = screen.getByRole('navigation', { name: 'nav.primary' });
+    expect(header).toContainElement(nav);
     for (const [name, href] of [
       ['nav.queue', '/queue'],
       ['nav.applicationTracker', '/tracker'],
@@ -46,13 +35,13 @@ describe('SwissGrid', () => {
     ]) {
       const link = screen.getByRole('link', { name });
       expect(link).toHaveAttribute('href', href);
-      expect(header).toContainElement(link);
+      // A visible name beside its icon, in the outline button style.
+      expect(link).toHaveTextContent(name);
+      expect(link.querySelector('svg')).not.toBeNull();
+      expect(link).toHaveClass('border', 'border-ink', 'shadow-sw-sm');
+      expect(link.parentElement).toBe(nav);
     }
-    // Settings is an icon button: named for screen readers, no visible label.
-    const settings = screen.getByRole('link', { name: 'nav.settings' });
-    expect(settings.querySelector('svg')).not.toBeNull();
-    expect(settings).toHaveTextContent('');
-    expect(settings).toHaveAttribute('title', 'nav.settings');
+    expect(screen.queryByRole('button', { name: /search/i })).toBeNull();
   });
 
   it('names the tile region with its own heading, and has no page subtitle', () => {

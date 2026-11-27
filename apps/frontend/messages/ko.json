@@ -34,7 +34,9 @@
     "keysCleared": "API 키가 성공적으로 삭제되었습니다",
     "databaseReset": "데이터베이스가 성공적으로 초기화되었습니다",
     "popupBlocked": "팝업이 차단되었습니다. 팝업을 허용하거나 다음 URL을 직접 열어주세요: {url}",
-    "resumeDeleted": "이 이력서는 삭제되었습니다. 다른 이력서를 업로드하거나 선택하세요."
+    "resumeDeleted": "이 이력서는 삭제되었습니다. 다른 이력서를 업로드하거나 선택하세요.",
+    "on": "켬",
+    "off": "끔"
   },
   "home": {
     "brandLine1": "Resume",
@@ -63,7 +65,8 @@
     "backToDashboard": "대시보드로 돌아가기",
     "goToSettings": "설정으로 이동",
     "applicationTracker": "지원 현황 트래커",
-    "queue": "맞춤화 대기열"
+    "queue": "맞춤화 대기열",
+    "primary": "이동"
   },
   "dashboard": {
     "title": "대시보드",
@@ -478,10 +481,10 @@
       "spacingItems": "항목 사이",
       "spacingLines": "줄 간격",
       "fontSize": "글꼴 크기",
-      "baseFontSize": "기본",
-      "headerScale": "제목",
-      "headerFontFamily": "제목",
-      "bodyFontFamily": "본문",
+      "baseFontSize": "기본 크기",
+      "headerScale": "제목 크기",
+      "headerFontFamily": "제목 글꼴",
+      "bodyFontFamily": "본문 글꼴",
       "fontNames": {
         "serif": "세리프",
         "sans": "산세리프",
@@ -491,7 +494,6 @@
       "compactMode": "컴팩트 모드",
       "contactIcons": "연락처 아이콘",
       "effectiveOutput": "적용된 출력",
-      "effectiveMargins": "여백 (mm): 위{top} 아래{bottom} 왼{left} 오{right}",
       "effectiveSectionGap": "섹션 간격",
       "effectiveItemGap": "항목 간격",
       "effectiveLineHeight": "줄 간격",
@@ -977,7 +979,6 @@
   },
   "settings": {
     "title": "설정",
-    "subtitle": "환경설정을 구성하세요",
     "aiProvider": "AI 제공업체",
     "aiProviderDescription": "이력서 분석에 사용할 AI 제공업체를 선택하세요",
     "apiKey": "API 키",
@@ -1224,7 +1225,7 @@
     "titlePlaceholder": "이력서 제목을 입력하세요...",
     "downloadFailedTitle": "다운로드 실패",
     "renameFailedTitle": "이름 변경 실패",
-    "renameTitle": "이력서 이름 변경",
+    "renameTitle": "제목 편집",
     "defaultBadge": "기본 마스터",
     "setDefault": "기본 마스터로 설정",
     "setDefaultSuccess": "이 마스터가 이제 맞춤화의 기본 마스터입니다.",
@@ -1665,17 +1666,5 @@
       "title": "문장 개선",
       "prompt": "Resume Matcher로 이력서 {resumeId}의 문장을 개선해 줘: 문장 라운드를 두 번 진행하고(모든 줄을 기준에 따라 평가하고, 모든 사실을 유지한 채 약한 줄을 다시 쓰고, 확인), 저장해 줘."
     }
-  },
-  "commandPalette": {
-    "title": "Resume Matcher 검색",
-    "placeholder": "페이지로 이동하거나 이력서 열기…",
-    "empty": "일치하는 항목이 없습니다.",
-    "goTo": "이동",
-    "resumes": "이력서",
-    "untitled": "제목 없는 이력서",
-    "master": "마스터",
-    "footer": "↑↓ 이동 · Enter 열기 · Esc 닫기",
-    "search": "검색",
-    "applications": "지원"
   }
 }

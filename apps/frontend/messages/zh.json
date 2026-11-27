@@ -34,7 +34,9 @@
     "keysCleared": "API密钥已成功清除",
     "databaseReset": "数据库已成功重置",
     "popupBlocked": "弹窗被阻止。请允许弹窗或手动打开此链接：{url}",
-    "resumeDeleted": "此简历已被删除。请上传或选择另一份简历。"
+    "resumeDeleted": "此简历已被删除。请上传或选择另一份简历。",
+    "on": "开",
+    "off": "关"
   },
   "home": {
     "brandLine1": "简历",
@@ -63,7 +65,8 @@
     "backToDashboard": "返回仪表板",
     "goToSettings": "前往设置",
     "applicationTracker": "申请追踪",
-    "queue": "定制队列"
+    "queue": "定制队列",
+    "primary": "前往"
   },
   "dashboard": {
     "title": "仪表板",
@@ -508,8 +511,8 @@
       "spacingItems": "条目间距",
       "spacingLines": "行高",
       "fontSize": "字号",
-      "baseFontSize": "正文",
-      "headerScale": "标题",
+      "baseFontSize": "基础字号",
+      "headerScale": "标题字号",
       "headerFontFamily": "标题字体",
       "bodyFontFamily": "正文字体",
       "fontNames": {
@@ -521,7 +524,6 @@
       "compactMode": "紧凑模式",
       "contactIcons": "联系方式图标",
       "effectiveOutput": "生效预览",
-      "effectiveMargins": "页边距（mm）：上{top} 下{bottom} 左{left} 右{right}",
       "effectiveSectionGap": "板块间距",
       "effectiveItemGap": "条目间距",
       "effectiveLineHeight": "行高",
@@ -977,7 +979,6 @@
   },
   "settings": {
     "title": "设置",
-    "subtitle": "配置您的偏好",
     "aiProvider": "AI 供应商",
     "aiProviderDescription": "选择您首选的AI供应商进行简历分析",
     "apiKey": "API 密钥",
@@ -1224,7 +1225,7 @@
     "titlePlaceholder": "输入简历标题...",
     "downloadFailedTitle": "下载失败",
     "renameFailedTitle": "重命名失败",
-    "renameTitle": "重命名简历",
+    "renameTitle": "编辑标题",
     "defaultBadge": "默认主简历",
     "setDefault": "设为默认主简历",
     "setDefaultSuccess": "此主简历现已成为定制时的默认主简历。",
@@ -1665,17 +1666,5 @@
       "title": "改进文字",
       "prompt": "用 Resume Matcher 改进简历 {resumeId} 的文字：进行两轮文字修改（按评分标准评审每一行，在保留所有事实的前提下改写薄弱的行，然后核对），再保存。"
     }
-  },
-  "commandPalette": {
-    "title": "搜索 Resume Matcher",
-    "placeholder": "前往页面或打开简历…",
-    "empty": "没有匹配项。",
-    "goTo": "前往",
-    "resumes": "简历",
-    "untitled": "未命名简历",
-    "master": "主简历",
-    "footer": "↑↓ 移动 · Enter 打开 · Esc 关闭",
-    "search": "搜索",
-    "applications": "申请"
   }
 }

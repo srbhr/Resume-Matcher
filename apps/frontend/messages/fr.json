@@ -34,7 +34,9 @@
     "keysCleared": "Clés API supprimées avec succès",
     "databaseReset": "Base de données réinitialisée avec succès",
     "popupBlocked": "Fenêtre contextuelle bloquée. Veuillez autoriser les fenêtres contextuelles ou ouvrir cette URL manuellement : {url}",
-    "resumeDeleted": "Ce CV a été supprimé. Importez ou sélectionnez un autre CV."
+    "resumeDeleted": "Ce CV a été supprimé. Importez ou sélectionnez un autre CV.",
+    "on": "Oui",
+    "off": "Non"
   },
   "home": {
     "brandLine1": "Resume",
@@ -63,7 +65,8 @@
     "backToDashboard": "Retour au tableau de bord",
     "goToSettings": "Accéder aux paramètres",
     "applicationTracker": "Suivi des candidatures",
-    "queue": "File d'adaptation"
+    "queue": "File d'adaptation",
+    "primary": "Aller à"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -508,10 +511,10 @@
       "spacingItems": "Entre les entrées",
       "spacingLines": "Interligne",
       "fontSize": "Taille de police",
-      "baseFontSize": "Base",
-      "headerScale": "En-têtes",
-      "headerFontFamily": "En-têtes",
-      "bodyFontFamily": "Corps",
+      "baseFontSize": "Taille de base",
+      "headerScale": "Taille des titres",
+      "headerFontFamily": "Police des titres",
+      "bodyFontFamily": "Police du corps",
       "fontNames": {
         "serif": "Serif",
         "sans": "Sans",
@@ -521,7 +524,6 @@
       "compactMode": "Mode compact",
       "contactIcons": "Icônes de contact",
       "effectiveOutput": "Sortie effective",
-      "effectiveMargins": "Marges (mm) : H{top} B{bottom} G{left} D{right}",
       "effectiveSectionGap": "Espacement des sections",
       "effectiveItemGap": "Espacement des éléments",
       "effectiveLineHeight": "Interligne",
@@ -977,7 +979,6 @@
   },
   "settings": {
     "title": "Paramètres",
-    "subtitle": "Configurez vos préférences",
     "aiProvider": "Fournisseur d'IA",
     "aiProviderDescription": "Sélectionnez votre fournisseur d'IA préféré pour l'analyse de CV",
     "apiKey": "Clé API",
@@ -1224,7 +1225,7 @@
     "titlePlaceholder": "Saisissez le titre du CV...",
     "downloadFailedTitle": "Échec du téléchargement",
     "renameFailedTitle": "Échec du renommage",
-    "renameTitle": "Renommer le CV",
+    "renameTitle": "Modifier le titre",
     "defaultBadge": "CV principal par défaut",
     "setDefault": "Définir comme CV principal par défaut",
     "setDefaultSuccess": "Ce CV principal est désormais celui utilisé par défaut pour la personnalisation.",
@@ -1665,17 +1666,5 @@
       "title": "Améliorer la rédaction",
       "prompt": "Utilise Resume Matcher pour améliorer la rédaction du CV {resumeId} : fais deux tours de rédaction (relis chaque ligne selon la grille, réécris les plus faibles en gardant chaque fait, vérifie), puis enregistre."
     }
-  },
-  "commandPalette": {
-    "title": "Rechercher dans Resume Matcher",
-    "placeholder": "Aller à une page ou ouvrir un CV…",
-    "empty": "Aucun résultat.",
-    "goTo": "Aller à",
-    "resumes": "CV",
-    "untitled": "CV sans titre",
-    "master": "Principal",
-    "footer": "↑↓ pour naviguer · Entrée pour ouvrir · Échap pour fermer",
-    "search": "Rechercher",
-    "applications": "Candidatures"
   }
 }

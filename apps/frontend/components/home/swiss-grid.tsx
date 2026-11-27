@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { GearSix, ListNumbers, MagnifyingGlass, SquaresFour } from '@phosphor-icons/react';
-import { openCommandPalette } from '@/components/common/command-palette-launcher';
+import { GearSix, ListNumbers, SquaresFour } from '@phosphor-icons/react';
 import { CommunityLinks } from '@/components/common/community-links';
 import { buttonClass } from '@/components/ui/button';
 import { PageFrame } from '@/components/ui/page-frame';
@@ -21,47 +20,25 @@ export const SwissGrid = ({
   children: React.ReactNode;
 }) => {
   const { t } = useTranslations();
-  // Ctrl K until mounted, so server and client render the same; then the Mac key.
-  const [modKey, setModKey] = useState('Ctrl');
-  useEffect(() => {
-    if (/Mac|iPhone|iPad/.test(navigator.platform)) setModKey('⌘');
-  }, []);
-
   return (
     <PageFrame height="screen">
       <PageHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <PageHeader.Title>{t('nav.dashboard')}</PageHeader.Title>
-        {/* One field-like search, then quiet links: one bordered element, not five. */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={openCommandPalette}
-            aria-keyshortcuts="Meta+K Control+K"
-            className="flex h-10 w-full items-center gap-2 border border-ink bg-white px-3 text-left text-sm text-steel hover:border-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary sm:w-64"
-          >
-            <MagnifyingGlass aria-hidden="true" className="size-4 shrink-0 text-ink" />
-            <span className="min-w-0 flex-1 truncate">{t('commandPalette.search')}…</span>
-            <kbd aria-hidden="true" className="border border-ink px-1 font-mono text-xs text-ink">
-              {modKey} K
-            </kbd>
-          </button>
-          <Link href="/queue" className={buttonClass({ variant: 'ghost' })}>
+        {/* Where to go next: three labelled buttons, each an icon and a name. */}
+        <nav aria-label={t('nav.primary')} className="flex flex-wrap items-center gap-3">
+          <Link href="/queue" className={buttonClass({ variant: 'outline', size: 'sm' })}>
             <ListNumbers aria-hidden="true" />
             {t('nav.queue')}
           </Link>
-          <Link href="/tracker" className={buttonClass({ variant: 'ghost' })}>
+          <Link href="/tracker" className={buttonClass({ variant: 'outline', size: 'sm' })}>
             <SquaresFour aria-hidden="true" />
             {t('nav.applicationTracker')}
           </Link>
-          <Link
-            href="/settings"
-            aria-label={t('nav.settings')}
-            title={t('nav.settings')}
-            className={buttonClass({ variant: 'ghost', size: 'icon', className: 'h-10 w-10' })}
-          >
+          <Link href="/settings" className={buttonClass({ variant: 'outline', size: 'sm' })}>
             <GearSix aria-hidden="true" />
+            {t('nav.settings')}
           </Link>
-        </div>
+        </nav>
       </PageHeader>
 
       {/* Content Grid - Scrollable area with NO padding.

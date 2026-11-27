@@ -34,7 +34,9 @@
     "keysCleared": "API keys cleared successfully",
     "databaseReset": "Database reset successfully",
     "popupBlocked": "Popup blocked. Please allow popups or open this URL manually: {url}",
-    "resumeDeleted": "This resume was deleted. Upload or select another resume."
+    "resumeDeleted": "This resume was deleted. Upload or select another resume.",
+    "on": "On",
+    "off": "Off"
   },
   "home": {
     "brandLine1": "Resume",
@@ -63,7 +65,8 @@
     "backToDashboard": "Back to Dashboard",
     "goToSettings": "Go to Settings",
     "applicationTracker": "Application Tracker",
-    "queue": "Tailoring Queue"
+    "queue": "Tailoring Queue",
+    "primary": "Go to"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -508,10 +511,10 @@
       "spacingItems": "Between entries",
       "spacingLines": "Line height",
       "fontSize": "Font Size",
-      "baseFontSize": "Base",
-      "headerScale": "Headers",
-      "headerFontFamily": "Headers",
-      "bodyFontFamily": "Body",
+      "baseFontSize": "Base size",
+      "headerScale": "Heading size",
+      "headerFontFamily": "Heading font",
+      "bodyFontFamily": "Body font",
       "fontNames": {
         "serif": "Serif",
         "sans": "Sans",
@@ -521,7 +524,6 @@
       "compactMode": "Compact Mode",
       "contactIcons": "Contact Icons",
       "effectiveOutput": "Effective Output",
-      "effectiveMargins": "Margins (mm): T{top} B{bottom} L{left} R{right}",
       "effectiveSectionGap": "Section Gap",
       "effectiveItemGap": "Item Gap",
       "effectiveLineHeight": "Line Height",
@@ -977,7 +979,6 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Configure your preferences",
     "aiProvider": "AI Provider",
     "aiProviderDescription": "Select your preferred AI provider for resume analysis",
     "apiKey": "API Key",
@@ -1224,7 +1225,7 @@
     "titlePlaceholder": "Enter resume title...",
     "downloadFailedTitle": "Download Failed",
     "renameFailedTitle": "Rename Failed",
-    "renameTitle": "Rename resume",
+    "renameTitle": "Edit title",
     "defaultBadge": "Default master",
     "setDefault": "Set as default master",
     "setDefaultSuccess": "This master is now the default for tailoring.",
@@ -1665,17 +1666,5 @@
       "title": "Improve the writing",
       "prompt": "Use Resume Matcher to improve the writing of resume {resumeId}: run two writing rounds (critique every line against the rubric, rewrite the weak ones keeping every fact, verify), then save."
     }
-  },
-  "commandPalette": {
-    "title": "Search Resume Matcher",
-    "placeholder": "Go to a page or open a resume…",
-    "empty": "Nothing matches.",
-    "goTo": "Go to",
-    "resumes": "Resumes",
-    "untitled": "Untitled resume",
-    "master": "Master",
-    "footer": "↑↓ to move · Enter to open · Esc to close",
-    "search": "Search",
-    "applications": "Applications"
   }
 }

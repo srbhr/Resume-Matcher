@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   DndContext,
@@ -34,7 +34,6 @@ import { CardDetailModal } from './card-detail-modal';
 import { ManualAddApplicationDialog } from './manual-add-application-dialog';
 import { planMove } from './reorder';
 import { ManageColumnsDialog } from './manage-columns-dialog';
-import { OpenCardFromUrl } from './open-card-from-url';
 import {
   readHiddenStatuses,
   toggleHiddenStatus,
@@ -318,10 +317,6 @@ export function KanbanBoard() {
           </div>
         </nav>
       )}
-
-      <Suspense fallback={null}>
-        <OpenCardFromUrl onOpen={setOpenCardId} />
-      </Suspense>
 
       <CardDetailModal
         applicationId={openCardId}
