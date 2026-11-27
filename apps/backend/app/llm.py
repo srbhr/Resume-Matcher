@@ -280,10 +280,9 @@ def _normalize_api_base(
     if provider == "gemini" and base.endswith("/v1"):
         base = base[: -len("/v1")].rstrip("/")
 
-    # OpenRouter base is https://openrouter.ai/api/v1. LiteLLM appends /v1
-    # internally, so strip it to avoid /v1/v1.
-    if provider == "openrouter" and base.endswith("/v1"):
-        base = base[: -len("/v1")].rstrip("/")
+    # OpenRouter's LiteLLM handler appends /chat/completions but does not
+    # add the /v1 path segment. Preserve the complete API base
+    # (https://openrouter.ai/api/v1) or requests incorrectly hit /api/chat/completions.
 
     # Ollama doesn't use /v1 paths. Strip common suffixes users might paste:
     # /v1, /api/chat, /api/generate
