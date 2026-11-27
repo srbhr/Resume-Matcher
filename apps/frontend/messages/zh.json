@@ -791,9 +791,9 @@
   },
   "tailor": {
     "title": "定制简历",
-    "heroTitle": "定制您的简历",
+    "heroTitle": "定制",
     "selectResume": "选择简历",
-    "pasteJobDescription": "粘贴职位描述",
+    "pasteJobDescription": "职位描述",
     "pasteJobDescriptionBelow": "在下方粘贴职位描述",
     "jobDescriptionPlaceholder": "在此粘贴职位描述...",
     "promptLabel": "匹配强度",
@@ -904,12 +904,6 @@
     "selectResumeDescription": "要点将从这份主简历中选取。",
     "tailoringLabel": "主简历",
     "jobDescriptionHint": "请粘贴完整的职位信息，包括岗位职责和任职要求（至少 50 个字符）。",
-    "steps": {
-      "label": "定制流程",
-      "paste": "粘贴职位描述",
-      "generate": "生成预览",
-      "review": "查看更改并保存"
-    },
     "selectionSummary": "已保留 {total} 条要点中的 {kept} 条（每个职位或项目最多 {max} 条）",
     "selectionSummaryAll": "保留了 {total} 条要点中的 {kept} 条",
     "pageFit": {
@@ -987,7 +981,14 @@
       "scoreChange": "ATS 分数 {before} → {after}",
       "limitReached": "每份简历最多可添加 {max} 个关键词。"
     },
-    "optionsTitle": "定制选项"
+    "optionsTitle": "定制选项",
+    "queued": "已添加到定制队列。",
+    "addToQueue": "加入队列",
+    "changeOptions": "更改",
+    "blocked": {
+      "noJob": "请先粘贴职位描述",
+      "noMaster": "正在加载主简历"
+    }
   },
   "settings": {
     "title": "设置",
@@ -1678,5 +1679,16 @@
       "title": "改进文字",
       "prompt": "用 Resume Matcher 改进简历 {resumeId} 的文字：进行两轮文字修改（按评分标准评审每一行，在保留所有事实的前提下改写薄弱的行，然后核对），再保存。"
     }
+  },
+  "jobInput": {
+    "role": "职位",
+    "rolePlaceholder": "例如：前端工程师",
+    "company": "公司",
+    "companyPlaceholder": "例如：Stripe",
+    "jobId": "职位编号",
+    "emptyTitle": "粘贴职位描述",
+    "paste": "从剪贴板粘贴",
+    "pasteFailed": "无法读取剪贴板。请使用 Cmd+V 或 Ctrl+V 粘贴。",
+    "minimum": "至少 {min}"
   }
 }

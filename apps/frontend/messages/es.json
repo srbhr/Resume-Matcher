@@ -791,9 +791,9 @@
   },
   "tailor": {
     "title": "Personalizar CV",
-    "heroTitle": "Personaliza tu currículum",
+    "heroTitle": "Personalizar",
     "selectResume": "Seleccionar Currículum",
-    "pasteJobDescription": "Pegar Descripción del Trabajo",
+    "pasteJobDescription": "Descripción del puesto",
     "pasteJobDescriptionBelow": "Pega la descripción del trabajo abajo",
     "jobDescriptionPlaceholder": "Pega la descripción del trabajo aquí...",
     "promptLabel": "Intensidad de ajuste",
@@ -904,12 +904,6 @@
     "selectResumeDescription": "Las viñetas se toman de este currículum maestro.",
     "tailoringLabel": "Currículum maestro",
     "jobDescriptionHint": "Pega la oferta completa, con responsabilidades y requisitos (mínimo 50 caracteres).",
-    "steps": {
-      "label": "Cómo funciona la personalización",
-      "paste": "Pega la descripción del trabajo",
-      "generate": "Genera una vista previa",
-      "review": "Revisa los cambios y guarda"
-    },
     "selectionSummary": "Viñetas conservadas: {kept} de {total} (hasta {max} por puesto o proyecto)",
     "selectionSummaryAll": "Se conservaron {kept} de {total} puntos",
     "pageFit": {
@@ -987,7 +981,14 @@
       "scoreChange": "Puntuación ATS {before} → {after}",
       "limitReached": "Puedes añadir hasta {max} palabras clave a un currículum."
     },
-    "optionsTitle": "Opciones de personalización"
+    "optionsTitle": "Opciones de personalización",
+    "queued": "Añadido a la cola de personalización.",
+    "addToQueue": "Añadir a la cola",
+    "changeOptions": "Cambiar",
+    "blocked": {
+      "noJob": "Primero pega una descripción del puesto",
+      "noMaster": "Cargando tu currículum maestro"
+    }
   },
   "settings": {
     "title": "Configuración",
@@ -1678,5 +1679,16 @@
       "title": "Mejorar la redacción",
       "prompt": "Usa Resume Matcher para mejorar la redacción del currículum {resumeId}: haz dos rondas de redacción (revisa cada línea con la rúbrica, reescribe las débiles conservando cada hecho, verifica) y guarda."
     }
+  },
+  "jobInput": {
+    "role": "Puesto",
+    "rolePlaceholder": "p. ej. Ingeniero frontend",
+    "company": "Empresa",
+    "companyPlaceholder": "p. ej. Stripe",
+    "jobId": "ID de la oferta",
+    "emptyTitle": "Pega la descripción del puesto",
+    "paste": "Pegar del portapapeles",
+    "pasteFailed": "No se pudo leer el portapapeles. Pega con Cmd+V o Ctrl+V.",
+    "minimum": "Mín. {min}"
   }
 }

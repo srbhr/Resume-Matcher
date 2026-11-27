@@ -791,9 +791,9 @@
   },
   "tailor": {
     "title": "이력서 맞춤화",
-    "heroTitle": "이력서 맞춤화",
+    "heroTitle": "맞춤화",
     "selectResume": "이력서 선택",
-    "pasteJobDescription": "채용 공고 붙여넣기",
+    "pasteJobDescription": "채용 공고",
     "pasteJobDescriptionBelow": "아래에 채용 공고를 붙여넣으세요",
     "jobDescriptionPlaceholder": "채용 공고를 여기에 붙여넣으세요...",
     "promptLabel": "맞춤화 강도",
@@ -904,12 +904,6 @@
     "selectResumeDescription": "글머리 기호는 이 마스터 이력서에서 가져옵니다.",
     "tailoringLabel": "마스터 이력서",
     "jobDescriptionHint": "담당 업무와 자격 요건을 포함한 채용 공고 전문을 붙여넣으세요(50자 이상).",
-    "steps": {
-      "label": "맞춤화 진행 단계",
-      "paste": "채용 공고 붙여넣기",
-      "generate": "미리보기 생성",
-      "review": "변경 사항 검토 후 저장"
-    },
     "selectionSummary": "글머리 기호 {total}개 중 {kept}개 유지 (직무 또는 프로젝트당 최대 {max}개)",
     "selectionSummaryAll": "{total}개 중 {kept}개 항목 유지",
     "pageFit": {
@@ -987,7 +981,14 @@
       "scoreChange": "ATS 점수 {before} → {after}",
       "limitReached": "이력서 하나에 키워드를 최대 {max}개까지 추가할 수 있습니다."
     },
-    "optionsTitle": "맞춤화 옵션"
+    "optionsTitle": "맞춤화 옵션",
+    "queued": "맞춤화 대기열에 추가했습니다.",
+    "addToQueue": "대기열에 추가",
+    "changeOptions": "변경",
+    "blocked": {
+      "noJob": "먼저 채용 공고를 붙여넣으세요",
+      "noMaster": "마스터 이력서를 불러오는 중"
+    }
   },
   "settings": {
     "title": "설정",
@@ -1678,5 +1679,16 @@
       "title": "문장 개선",
       "prompt": "Resume Matcher로 이력서 {resumeId}의 문장을 개선해 줘: 문장 라운드를 두 번 진행하고(모든 줄을 기준에 따라 평가하고, 모든 사실을 유지한 채 약한 줄을 다시 쓰고, 확인), 저장해 줘."
     }
+  },
+  "jobInput": {
+    "role": "직무",
+    "rolePlaceholder": "예: 프론트엔드 엔지니어",
+    "company": "회사",
+    "companyPlaceholder": "예: Stripe",
+    "jobId": "공고 ID",
+    "emptyTitle": "채용 공고를 붙여넣으세요",
+    "paste": "클립보드에서 붙여넣기",
+    "pasteFailed": "클립보드를 읽을 수 없습니다. Cmd+V 또는 Ctrl+V로 붙여넣으세요.",
+    "minimum": "최소 {min}"
   }
 }

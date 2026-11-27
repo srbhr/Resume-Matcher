@@ -791,9 +791,9 @@
   },
   "tailor": {
     "title": "Personnaliser le CV",
-    "heroTitle": "Personnalisez votre CV",
+    "heroTitle": "Personnaliser",
     "selectResume": "Sélectionner un CV",
-    "pasteJobDescription": "Coller la fiche de poste",
+    "pasteJobDescription": "Fiche de poste",
     "pasteJobDescriptionBelow": "Collez la fiche de poste ci-dessous",
     "jobDescriptionPlaceholder": "Collez la fiche de poste ici...",
     "promptLabel": "Intensité de personnalisation",
@@ -904,12 +904,6 @@
     "selectResumeDescription": "Les puces sont tirées de ce CV principal.",
     "tailoringLabel": "CV principal",
     "jobDescriptionHint": "Collez la fiche de poste complète, avec les missions et les exigences (50 caractères minimum).",
-    "steps": {
-      "label": "Étapes de la personnalisation",
-      "paste": "Collez la fiche de poste",
-      "generate": "Générez un aperçu",
-      "review": "Vérifiez et enregistrez"
-    },
     "selectionSummary": "Puces conservées : {kept} sur {total} (jusqu'à {max} par poste ou projet)",
     "selectionSummaryAll": "{kept} puces conservées sur {total}",
     "pageFit": {
@@ -987,7 +981,14 @@
       "scoreChange": "Score ATS {before} → {after}",
       "limitReached": "Vous pouvez ajouter jusqu'à {max} mots-clés à un CV."
     },
-    "optionsTitle": "Options de personnalisation"
+    "optionsTitle": "Options de personnalisation",
+    "queued": "Ajouté à la file de personnalisation.",
+    "addToQueue": "Ajouter à la file",
+    "changeOptions": "Modifier",
+    "blocked": {
+      "noJob": "Collez d'abord une fiche de poste",
+      "noMaster": "Chargement de votre CV principal"
+    }
   },
   "settings": {
     "title": "Paramètres",
@@ -1678,5 +1679,16 @@
       "title": "Améliorer la rédaction",
       "prompt": "Utilise Resume Matcher pour améliorer la rédaction du CV {resumeId} : fais deux tours de rédaction (relis chaque ligne selon la grille, réécris les plus faibles en gardant chaque fait, vérifie), puis enregistre."
     }
+  },
+  "jobInput": {
+    "role": "Poste",
+    "rolePlaceholder": "ex. Ingénieur frontend",
+    "company": "Entreprise",
+    "companyPlaceholder": "ex. Stripe",
+    "jobId": "ID de l'offre",
+    "emptyTitle": "Collez la fiche de poste",
+    "paste": "Coller depuis le presse-papiers",
+    "pasteFailed": "Impossible de lire le presse-papiers. Collez avec Cmd+V ou Ctrl+V.",
+    "minimum": "Min. {min}"
   }
 }

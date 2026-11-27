@@ -791,9 +791,9 @@
   },
   "tailor": {
     "title": "Personalizar Currículo",
-    "heroTitle": "Personalize Seu Currículo",
+    "heroTitle": "Personalizar",
     "selectResume": "Selecionar Currículo",
-    "pasteJobDescription": "Colar Descrição da Vaga",
+    "pasteJobDescription": "Descrição da vaga",
     "pasteJobDescriptionBelow": "Cole a Descrição da Vaga Abaixo",
     "jobDescriptionPlaceholder": "Cole a descrição da vaga aqui...",
     "promptLabel": "Intensidade de personalização",
@@ -904,12 +904,6 @@
     "selectResumeDescription": "Os marcadores são extraídos deste currículo principal.",
     "tailoringLabel": "Currículo mestre",
     "jobDescriptionHint": "Cole o anúncio completo da vaga, com responsabilidades e requisitos (mínimo de 50 caracteres).",
-    "steps": {
-      "label": "Como funciona a personalização",
-      "paste": "Cole a descrição da vaga",
-      "generate": "Gere uma prévia",
-      "review": "Revise as alterações e salve"
-    },
     "selectionSummary": "{kept} de {total} marcadores mantidos (até {max} por cargo ou projeto)",
     "selectionSummaryAll": "{kept} de {total} tópicos mantidos",
     "pageFit": {
@@ -987,7 +981,14 @@
       "scoreChange": "Pontuação ATS {before} → {after}",
       "limitReached": "Você pode adicionar até {max} palavras-chave a um currículo."
     },
-    "optionsTitle": "Opções de personalização"
+    "optionsTitle": "Opções de personalização",
+    "queued": "Adicionado à fila de personalização.",
+    "addToQueue": "Adicionar à fila",
+    "changeOptions": "Alterar",
+    "blocked": {
+      "noJob": "Cole primeiro a descrição da vaga",
+      "noMaster": "Carregando seu currículo mestre"
+    }
   },
   "settings": {
     "title": "Configurações",
@@ -1678,5 +1679,16 @@
       "title": "Melhorar a escrita",
       "prompt": "Use o Resume Matcher para melhorar a escrita do currículo {resumeId}: faça duas rodadas de escrita (avalie cada linha pela rubrica, reescreva as fracas mantendo cada fato, verifique) e salve."
     }
+  },
+  "jobInput": {
+    "role": "Cargo",
+    "rolePlaceholder": "ex.: Engenheiro frontend",
+    "company": "Empresa",
+    "companyPlaceholder": "ex.: Stripe",
+    "jobId": "ID da vaga",
+    "emptyTitle": "Cole a descrição da vaga",
+    "paste": "Colar da área de transferência",
+    "pasteFailed": "Não foi possível ler a área de transferência. Cole com Cmd+V ou Ctrl+V.",
+    "minimum": "Mín. {min}"
   }
 }

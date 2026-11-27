@@ -110,7 +110,7 @@ async function renderPage() {
 }
 
 async function fillJobDescriptionAndGenerate() {
-  fireEvent.change(screen.getByRole('textbox'), {
+  fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
     target: { value: 'A software engineer role building useful tools with Python and SQL.' },
   });
   await act(async () => screen.getByRole('button', { name: 'tailor.generateTailored' }).click());
@@ -200,7 +200,7 @@ describe('tailor page master picker', () => {
   it('keeps Generate disabled until a source master is resolved', async () => {
     api.list.mockReturnValue(new Promise(() => {})); // the resume list never arrives
     await renderPage();
-    fireEvent.change(screen.getByRole('textbox'), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
       target: { value: 'A software engineer role building useful tools with Python and SQL.' },
     });
     expect(screen.getByRole('button', { name: 'tailor.generateTailored' })).toBeDisabled();
@@ -266,10 +266,11 @@ describe('tailor page pinned preview source', () => {
     await renderPage();
     await fillJobDescriptionAndGenerate();
     expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, expect.anything());
-    const picker = screen.getByRole('button', { name: PICKER_NAME });
-    expect(picker).toBeDisabled();
+    // While the preview runs, the progress list takes the options' place: no picker to change.
+    expect(screen.queryByRole('button', { name: PICKER_NAME })).toBeNull();
     await act(async () => resolvePreview(PREVIEW_RESULT));
-    expect(picker).toBeDisabled(); // still locked while the diff modal is open
+    // Back once the preview is in, but locked while the diff modal is open.
+    expect(screen.getByRole('button', { name: PICKER_NAME, hidden: true })).toBeDisabled();
     await confirmDiff();
     expect(api.confirm).toHaveBeenCalledWith(expect.objectContaining({ resume_id: 'm1' }));
   });
@@ -336,7 +337,9 @@ describe('tailor page in agent mode', () => {
       expect(screen.queryByText('tailor.noApiKeyMessage')).toBeNull();
 
       const job = 'A software engineer role building useful tools with Python and SQL.';
-      fireEvent.change(screen.getByRole('textbox'), { target: { value: job } });
+      fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+        target: { value: job },
+      });
       await act(async () => screen.getByRole('button', { name: 'agentPrompt.getPrompt' }).click());
 
       expect(screen.getByRole('dialog', { name: 'agentPrompt.tailor.title' })).toBeInTheDocument();

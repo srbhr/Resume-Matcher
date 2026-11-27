@@ -115,7 +115,7 @@ beforeEach(() => {
 });
 
 async function generate() {
-  fireEvent.change(screen.getByRole('textbox'), {
+  fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
     target: { value: 'A software engineer role building useful tools with Python and SQL.' },
   });
   await act(async () => screen.getByRole('button', { name: 'tailor.generateTailored' }).click());
@@ -241,6 +241,12 @@ it.each(['Close preview', 'Reject preview'])(
     fireEvent.click(screen.getByRole('button', { name: dismiss }));
     expect(screen.queryByRole('button', { name: 'Confirm preview' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'tailor.atsScore.title' })).toBeInTheDocument();
+    // The scores take the options' place; the options fold to one line, and open again.
+    expect(screen.queryByText('tailor.promptLabel')).toBeNull();
+    const change = screen.getByRole('button', { name: 'tailor.changeOptions' });
+    expect(change).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(change);
+    expect(screen.getByText('tailor.promptLabel')).toBeInTheDocument();
   }
 );
 
@@ -353,6 +359,8 @@ it('names the job description field with a visible label and keeps the counter o
   expect(label).toHaveTextContent('tailor.pasteJobDescription');
   // A visible label, not a hidden aria-label.
   expect(field).not.toHaveAttribute('aria-label');
-  // Room under the last line for the absolutely positioned character counter.
-  expect(field.className).toMatch(/(^|\s)pb-8(\s|$)/);
+  // The counter sits under the field, not over its last line.
+  const counter = screen.getByText('tailor.charactersCount');
+  expect(field.contains(counter)).toBe(false);
+  expect(field.parentElement?.contains(counter)).toBe(false);
 });

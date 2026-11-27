@@ -791,9 +791,9 @@
   },
   "tailor": {
     "title": "Tailor Resume",
-    "heroTitle": "Tailor Your Resume",
+    "heroTitle": "Tailor",
     "selectResume": "Select Resume",
-    "pasteJobDescription": "Paste Job Description",
+    "pasteJobDescription": "Job description",
     "pasteJobDescriptionBelow": "Paste Job Description Below",
     "jobDescriptionPlaceholder": "Paste the job description here...",
     "promptLabel": "Tailoring intensity",
@@ -839,7 +839,7 @@
     "noApiKeyMessage": "> No API key configured. Resume tailoring requires an LLM provider.",
     "configureApiKey": "Configure API Key",
     "configureApiKeyFirst": "Configure API Key First",
-    "charactersCount": "{count} chars",
+    "charactersCount": "{count} characters",
     "matchScore": "Match Score",
     "suggestions": "Suggestions",
     "keywords": "Keywords to Include",
@@ -904,12 +904,6 @@
     "selectResumeDescription": "Bullets are drawn from this master resume.",
     "tailoringLabel": "Master resume",
     "jobDescriptionHint": "Paste the full job posting, including responsibilities and requirements (at least 50 characters).",
-    "steps": {
-      "label": "How tailoring works",
-      "paste": "Paste the job description",
-      "generate": "Generate a preview",
-      "review": "Review the changes and save"
-    },
     "selectionSummary": "Kept {kept} of {total} bullets (up to {max} per job or project)",
     "selectionSummaryAll": "Kept {kept} of {total} bullets",
     "pageFit": {
@@ -987,7 +981,14 @@
       "scoreChange": "ATS score {before} → {after}",
       "limitReached": "You can add up to {max} keywords to one resume."
     },
-    "optionsTitle": "Tailoring options"
+    "optionsTitle": "Tailoring options",
+    "queued": "Added to the tailoring queue.",
+    "addToQueue": "Add to queue",
+    "changeOptions": "Change",
+    "blocked": {
+      "noJob": "Paste a job description first",
+      "noMaster": "Loading your master resume"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -1678,5 +1679,16 @@
       "title": "Improve the writing",
       "prompt": "Use Resume Matcher to improve the writing of resume {resumeId}: run two writing rounds (critique every line against the rubric, rewrite the weak ones keeping every fact, verify), then save."
     }
+  },
+  "jobInput": {
+    "role": "Role",
+    "rolePlaceholder": "e.g. Frontend Engineer",
+    "company": "Company",
+    "companyPlaceholder": "e.g. Stripe",
+    "jobId": "Job ID",
+    "emptyTitle": "Paste the job description",
+    "paste": "Paste from clipboard",
+    "pasteFailed": "Couldn't read the clipboard. Paste with Cmd+V or Ctrl+V.",
+    "minimum": "Min {min}"
   }
 }

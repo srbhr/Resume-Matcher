@@ -7,6 +7,7 @@ import type { ResumeListItem } from '@/lib/api/resume';
 
 const api = vi.hoisted(() => ({
   list: vi.fn(),
+  addToQueue: vi.fn(),
   push: vi.fn(),
   llmConfigured: true,
 }));
@@ -14,7 +15,10 @@ const router = { push: api.push, back: vi.fn() };
 const t = (key: string) => key;
 vi.mock('next/navigation', () => ({ useRouter: () => router }));
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t, locale: 'en' }) }));
+vi.mock('@/components/ui/toast', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/api/resume', () => ({
+  addJobToQueue: api.addToQueue,
+  parseJobMetadata: async () => ({ role: 'Platform Engineer', company: 'Acme', job_req_id: '' }),
   uploadJobDescriptions: vi.fn(),
   previewImproveResume: vi.fn(),
   confirmImproveResume: vi.fn(),
@@ -69,50 +73,102 @@ async function renderPage() {
 
 const generateButton = () => screen.getByRole('button', { name: 'tailor.generateTailored' });
 
-describe('tailor page: the job description beside its options', () => {
-  it('sits in the default frame under one compact header row', async () => {
-    await renderPage();
+describe('tailor page: a portrait card on the cross field', () => {
+  it('is a full-height card on the crosses, under one compact header row', async () => {
+    const { container } = await renderPage();
     const title = screen.getByRole('heading', { level: 1, name: 'tailor.heroTitle' });
     const frame = title.closest('.shadow-sw-lg') as HTMLElement;
-    expect(frame.className).toContain('max-w-[86rem]');
-    expect(title).toHaveClass('text-2xl', 'md:text-3xl');
+    expect(frame).toHaveClass('max-w-[42rem]', 'md:h-full');
+    // The field of crosses behind the card, from md up.
+    const ground = (container.firstChild as HTMLElement).querySelector(':scope > svg');
+    expect(ground).toHaveClass('md:block');
     const header = title.closest('header') as HTMLElement;
-    expect(header).toHaveClass('px-6', 'py-3');
-    // Back is an arrow, named for screen readers, in the same row as the title.
     expect(within(header).getByRole('link', { name: 'common.back' })).toHaveAttribute(
       'href',
       '/dashboard'
     );
   });
 
-  it('puts the job description and Generate in the main column, the options in a side panel', async () => {
+  it('has no steps strip: there is only this page and the review', async () => {
     await renderPage();
-    const options = screen.getByRole('complementary', { name: 'tailor.optionsTitle' });
-    const field = screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' });
-
-    expect(options).not.toContainElement(field);
-    expect(options).not.toContainElement(generateButton());
-    expect(within(options).getByText('tailor.tailoringLabel')).toBeInTheDocument();
-    expect(within(options).getByText('tailor.promptLabel')).toBeInTheDocument();
-    expect(within(options).getByText('tailor.length.pageLimitLabel')).toBeInTheDocument();
-    expect(within(options).getByText('tailor.length.bulletsLabel')).toBeInTheDocument();
-    expect(field.parentElement?.parentElement?.parentElement).toContainElement(generateButton());
+    expect(screen.queryByRole('list', { name: /steps/ })).toBeNull();
   });
 
-  it('shows the three steps in order, with step 1 current and nothing clickable', async () => {
+  it('runs top to bottom: the job, the options, then the action bar', async () => {
     await renderPage();
-    const strip = screen.getByRole('list', { name: 'tailor.steps.label' });
-    const steps = within(strip).getAllByRole('listitem');
-    expect(steps.map((step) => step.textContent)).toEqual([
-      '1tailor.steps.paste',
-      '2tailor.steps.generate',
-      '3tailor.steps.review',
-    ]);
-    expect(steps[0]).toHaveAttribute('aria-current', 'step');
-    expect(steps[1]).not.toHaveAttribute('aria-current');
-    expect(steps[2]).not.toHaveAttribute('aria-current');
-    expect(within(strip).queryAllByRole('button')).toHaveLength(0);
-    expect(within(strip).queryAllByRole('link')).toHaveLength(0);
+    const field = screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' });
+    const options = screen.getByRole('region', { name: 'tailor.optionsTitle' });
+    const follows = (a: Node, b: Node) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(field, options)).toBe(true);
+    expect(follows(options, generateButton())).toBe(true);
+    for (const label of [
+      'tailor.tailoringLabel',
+      'tailor.promptLabel',
+      'tailor.length.pageLimitLabel',
+      'tailor.length.bulletsLabel',
+    ]) {
+      expect(within(options).getByText(label)).toBeInTheDocument();
+    }
+    // One line of help, for the chosen intensity only.
+    expect(
+      within(options).getByText('tailor.promptOptions.keywords.description')
+    ).toBeInTheDocument();
+    expect(within(options).queryByText('tailor.length.pageLimitDescription')).toBeNull();
+  });
+
+  it('fills role and company from the pasted job, without an AI call', async () => {
+    await renderPage();
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    });
+    expect(screen.getByRole('textbox', { name: 'jobInput.role' })).toHaveValue('Platform Engineer');
+    expect(screen.getByRole('textbox', { name: 'jobInput.company' })).toHaveValue('Acme');
+  });
+
+  it('says why Generate is grey, beside it', async () => {
+    await renderPage();
+    expect(generateButton()).toBeDisabled();
+    expect(screen.getByText('tailor.blocked.noJob')).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
+    expect(screen.queryByText('tailor.blocked.noJob')).toBeNull();
+  });
+
+  it('hands the job to the queue, then clears the field for the next one', async () => {
+    api.addToQueue.mockResolvedValue({});
+    await renderPage();
+    const field = screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' });
+    fireEvent.change(field, { target: { value: JOB } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'tailor.addToQueue' }));
+    });
+
+    expect(api.addToQueue).toHaveBeenCalledWith(
+      'm1',
+      JOB,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'keywords'
+    );
+    expect(field).toHaveValue('');
+  });
+
+  it('keeps the 50-character rule for the queue too', async () => {
+    await renderPage();
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: 'Too short' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'tailor.addToQueue' }));
+    expect(api.addToQueue).not.toHaveBeenCalled();
+    expect(screen.getByText('tailor.errors.jobDescriptionTooShort')).toBeInTheDocument();
   });
 
   it('offers the tailoring queue from the header as a link, not a nested button', async () => {
@@ -141,7 +197,9 @@ describe('tailor page: the job description beside its options', () => {
     await renderPage();
     const line = screen.getByText('tailor.tailoringLabel').parentElement as HTMLElement;
     expect(within(line).getByText('common.loading')).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: JOB } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
     expect(generateButton()).toBeDisabled();
   });
 
@@ -159,15 +217,21 @@ describe('tailor page: Generate enablement is unchanged', () => {
   it('is disabled while the job description is empty or blank, enabled once filled', async () => {
     await renderPage();
     expect(generateButton()).toBeDisabled();
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: '   \n ' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: '   \n ' },
+    });
     expect(generateButton()).toBeDisabled();
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: JOB } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
     expect(generateButton()).toBeEnabled();
   });
 
   it('stays enabled for a short description (the 50-character rule runs on click)', async () => {
     await renderPage();
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Too short' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: 'Too short' },
+    });
     expect(generateButton()).toBeEnabled();
     fireEvent.click(generateButton());
     expect(screen.getByText('tailor.errors.jobDescriptionTooShort')).toBeInTheDocument();
@@ -176,7 +240,9 @@ describe('tailor page: Generate enablement is unchanged', () => {
   it('is disabled and says why when no LLM is configured', async () => {
     api.llmConfigured = false;
     await renderPage();
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: JOB } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
     expect(screen.getByRole('button', { name: 'tailor.configureApiKeyFirst' })).toBeDisabled();
   });
 });
