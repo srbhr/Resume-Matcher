@@ -1,16 +1,7 @@
 import React from 'react';
-import {
-  ResumeSingleColumn,
-  ResumeTwoColumn,
-  ResumeModern,
-  ResumeModernTwoColumn,
-  ResumeLatex,
-  ResumeClean,
-  ResumeVivid,
-  ResumeVividSingle,
-  ResumeModernDeedy,
-  ResumeDeedy,
-} from '@/components/resume';
+import dynamic from 'next/dynamic';
+// The default template ships with the page, so it server-renders and paints at once.
+import { ResumeSingleColumn } from '@/components/resume/resume-single-column';
 import {
   type TemplateSettings,
   type TemplateType,
@@ -44,6 +35,38 @@ import '@fontsource/noto-sans-mono/400.css';
 import '@fontsource/noto-sans-mono/600.css';
 import '@fontsource/noto-sans-mono/700.css';
 import '@fontsource/noto-sans-mono/800.css';
+
+// The other templates load when a resume uses them: all ten were in the
+// first-load JS of /builder and /resumes/[id]. The preview re-measures pages when
+// one arrives (usePagination observes the measured copy). Print pages render on
+// the server, where next/dynamic doesn't split server code.
+const ResumeTwoColumn = dynamic(() =>
+  import('@/components/resume/resume-two-column').then((m) => m.ResumeTwoColumn)
+);
+const ResumeModern = dynamic(() =>
+  import('@/components/resume/resume-modern').then((m) => m.ResumeModern)
+);
+const ResumeModernTwoColumn = dynamic(() =>
+  import('@/components/resume/resume-modern-two-column').then((m) => m.ResumeModernTwoColumn)
+);
+const ResumeLatex = dynamic(() =>
+  import('@/components/resume/resume-latex').then((m) => m.ResumeLatex)
+);
+const ResumeClean = dynamic(() =>
+  import('@/components/resume/resume-clean').then((m) => m.ResumeClean)
+);
+const ResumeVivid = dynamic(() =>
+  import('@/components/resume/resume-vivid').then((m) => m.ResumeVivid)
+);
+const ResumeVividSingle = dynamic(() =>
+  import('@/components/resume/resume-vivid-single').then((m) => m.ResumeVividSingle)
+);
+const ResumeModernDeedy = dynamic(() =>
+  import('@/components/resume/resume-modern-deedy').then((m) => m.ResumeModernDeedy)
+);
+const ResumeDeedy = dynamic(() =>
+  import('@/components/resume/resume-deedy').then((m) => m.ResumeDeedy)
+);
 
 export interface PersonalInfo {
   name?: string;
