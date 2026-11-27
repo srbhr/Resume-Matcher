@@ -36,8 +36,9 @@ const MAX_ZOOM = 1.5;
 // Opening zoom, and the ceiling for fit-to-width: a view with room for the page at this
 // size opens at it, a narrower one fits the page to its width.
 const DEFAULT_ZOOM = { panel: 0.85, page: 1.05 } as const;
-// Width fit-to-width leaves free: the panel's 24px padding a side; the page's shadow.
-const RESERVED_WIDTH = { panel: 48, page: 16 } as const;
+// Width fit-to-width leaves free: the panel's 32px padding a side; in the page
+// variant, the 24px a side the sheet's trim marks reach past its edge.
+const RESERVED_WIDTH = { panel: 64, page: 48 } as const;
 const ZOOM_STEP = 0.1;
 
 /**
@@ -156,7 +157,7 @@ export function PaginatedPreview({
       {!isPanel && (
         // As wide as the shown page, so the count lines up with its right edge.
         <div
-          className="mx-auto flex max-w-full items-center justify-end gap-4 pb-4"
+          className="mx-auto flex max-w-full items-center justify-end gap-4 pb-8"
           style={{ width: mmToPx(PAGE_DIMENSIONS[settings.pageSize].width) * zoom }}
         >
           {pageCount}
@@ -217,7 +218,7 @@ export function PaginatedPreview({
       {/* Scrollable preview area */}
       <div
         ref={containerRef}
-        className={isPanel ? 'flex-1 overflow-auto bg-panel-hover p-6' : 'relative'}
+        className={isPanel ? 'flex-1 overflow-auto bg-panel-hover p-8' : 'relative'}
       >
         {/* Hidden measurement container - renders content at actual size */}
         <div

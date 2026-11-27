@@ -4,6 +4,15 @@ import React from 'react';
 import { type PageSize, type MarginSettings } from '@/lib/types/template-settings';
 import { PAGE_DIMENSIONS, mmToPx } from '@/lib/constants/page-dimensions';
 import { useTranslations } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
+
+/** One pair of marks per corner, anchored on the sheet's outer corner (the border is 1px). */
+const TRIM_MARKS = [
+  { anchor: '-left-px -top-px', horizontal: 'right-3 top-0', vertical: 'bottom-3 left-0' },
+  { anchor: '-right-px -top-px', horizontal: 'left-3 top-0', vertical: 'bottom-3 right-0' },
+  { anchor: '-bottom-px -left-px', horizontal: 'bottom-0 right-3', vertical: 'left-0 top-3' },
+  { anchor: '-bottom-px -right-px', horizontal: 'bottom-0 left-3', vertical: 'right-0 top-3' },
+];
 
 interface PageContainerProps {
   pageSize: PageSize;
@@ -57,14 +66,28 @@ export function PageContainer({
     <div className="relative flex flex-col items-center">
       {/* Page wrapper with scale transform */}
       <div
-        className="relative bg-white border-2 border-ink shadow-sw-card origin-top"
+        className="relative bg-white border border-ink shadow-sw-card origin-top"
         style={{
           width: pageWidthPx,
           height: pageHeightPx,
           transform: `scale(${scale})`,
-          marginBottom: `${pageHeightPx * scale - pageHeightPx + 16}px`,
+          // 32px clears the trim marks (12px off the edge, 12px long) before the slug line.
+          marginBottom: `${pageHeightPx * scale - pageHeightPx + 32}px`,
         }}
       >
+        {/* Trim marks: where the paper ends. Kept 1px and 12px at every zoom. */}
+        {TRIM_MARKS.map((mark) => (
+          <span
+            key={mark.anchor}
+            aria-hidden="true"
+            className={cn('pointer-events-none absolute size-0', mark.anchor)}
+            style={{ transform: `scale(${1 / scale})` }}
+          >
+            <span className={cn('absolute h-px w-3 bg-ink', mark.horizontal)} />
+            <span className={cn('absolute h-3 w-px bg-ink', mark.vertical)} />
+          </span>
+        ))}
+
         {/* Margin guides overlay */}
         {showMarginGuides && (
           <div
@@ -106,15 +129,19 @@ export function PageContainer({
             {children}
           </div>
         </div>
-
-        {/* Page number indicator */}
-        <div
-          className="absolute bottom-2 right-3 font-mono text-xs text-steel uppercase tracking-wider tabular-nums"
-          style={{ transform: `scale(${1 / scale})`, transformOrigin: 'bottom right' }}
-        >
-          {t('preview.pageOfTotal', { page: pageNumber, total: totalPages })}
-        </div>
       </div>
+
+      {/* Slug line: ours, outside the sheet, so everything on the sheet is the resume. */}
+      <p
+        className="flex justify-between gap-4 font-mono text-xs uppercase tracking-wider tabular-nums text-steel"
+        style={{ width: pageWidthPx * scale }}
+      >
+        <span>
+          {pageSize === 'LETTER' ? t('builder.pageSize.usLetter') : pageSize} · {pageDims.width} ×{' '}
+          {pageDims.height} mm
+        </span>
+        <span>{t('preview.pageOfTotal', { page: pageNumber, total: totalPages })}</span>
+      </p>
     </div>
   );
 }

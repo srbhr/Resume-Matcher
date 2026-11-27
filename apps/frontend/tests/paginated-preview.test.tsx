@@ -28,8 +28,8 @@ vi.mock('@/components/dashboard/resume-component', () => ({
   default: () => <a href="https://example.com">Portfolio</a>,
 }));
 
-// The scroll area is padded by 24px a side, so fit-to-width reserves 48px.
-const PANEL_PADDING = 48;
+// The scroll area is padded by 32px a side, so fit-to-width reserves 64px.
+const PANEL_PADDING = 64;
 
 describe('PaginatedPreview', () => {
   afterEach(() => {

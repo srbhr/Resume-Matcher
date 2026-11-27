@@ -355,7 +355,9 @@ function HighlightedText({ text, keywords }: { text: string; keywords: KeywordLi
             className={
               forced.has(segment.text.toLowerCase())
                 ? 'bg-primary text-white px-1'
-                : 'bg-highlight text-ink px-1'
+                : // A marker-pen band on the lower part of the line: a thick underline
+                  // pulled up behind the glyphs. No padding, so the words keep their spacing.
+                  'bg-transparent text-ink underline decoration-highlight decoration-[0.62em] underline-offset-[-0.38em] [text-decoration-skip-ink:none]'
             }
           >
             {segment.text}

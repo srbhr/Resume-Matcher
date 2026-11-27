@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
+import { Hatch } from '@/components/ui/hatch';
 import { StatusIndicator, type StatusTone } from '@/components/ui/status-indicator';
 import { DefaultBadge } from '@/components/common/default-badge';
 import { LlmSetupAlert } from '@/components/common/llm-setup-alert';
@@ -75,7 +76,6 @@ const STATUS_TONE: Record<ResumeListItem['processing_status'], StatusTone> = {
 };
 // Monogram fills: brand tokens only, each AA with white text (lowest: steel, 5.19:1).
 const MONOGRAM_FILLS = ['bg-primary', 'bg-ink', 'bg-success', 'bg-steel', 'bg-destructive'];
-const FILLER_FILLS = ['bg-panel', 'bg-panel-hover', 'bg-panel-hover', 'bg-panel'];
 
 export default function DashboardPage() {
   const { t, locale } = useTranslations();
@@ -909,27 +909,19 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          {/* 6. Fillers */}
-          {Array.from({ length: fillerCount }).map((_, index) => (
+          {/* 6. Unused cells, hatched: the drafting mark for "not in use". */}
+          {Array.from({ length: fillerCount + extraFillerCount }).map((_, index) => (
             <Card
               key={`filler-${index}`}
               variant="ghost"
               noPadding
-              className={cn(TILE_SHAPE, 'hidden md:block bg-canvas opacity-50 pointer-events-none')}
-            />
-          ))}
-
-          {Array.from({ length: extraFillerCount }).map((_, index) => (
-            <Card
-              key={`extra-filler-${index}`}
-              variant="ghost"
-              noPadding
               className={cn(
                 TILE_SHAPE,
-                'hidden md:block opacity-70 pointer-events-none',
-                FILLER_FILLS[index % FILLER_FILLS.length]
+                'pointer-events-none relative hidden bg-canvas text-steel md:block'
               )}
-            />
+            >
+              <Hatch />
+            </Card>
           ))}
         </>
       )}
