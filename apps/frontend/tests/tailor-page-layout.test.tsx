@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TailorPage from '@/app/(default)/tailor/page';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
@@ -122,10 +122,12 @@ describe('tailor page: a portrait card on the cross field', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
       target: { value: JOB },
     });
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
-    });
-    expect(screen.getByRole('textbox', { name: 'jobInput.role' })).toHaveValue('Platform Engineer');
+    // Detection runs after a short debounce: wait for its result, not a fixed time.
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'jobInput.role' })).toHaveValue(
+        'Platform Engineer'
+      )
+    );
     expect(screen.getByRole('textbox', { name: 'jobInput.company' })).toHaveValue('Acme');
   });
 
