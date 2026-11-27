@@ -1195,7 +1195,7 @@ async def update_resume_endpoint(
     if not existing:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    updated_data = resume_data.model_dump()
+    updated_data = normalize_resume_data(resume_data.model_dump())
     updated_content = json.dumps(updated_data, indent=2)
 
     updated = await db.update_resume(

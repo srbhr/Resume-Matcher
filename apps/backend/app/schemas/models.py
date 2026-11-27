@@ -507,12 +507,63 @@ DEFAULT_SECTION_META: list[dict[str, Any]] = [
     },
 ]
 
+_DEFAULT_SECTION_KEYS = frozenset(meta["key"] for meta in DEFAULT_SECTION_META)
+
+
+def _custom_section_display_name(key: str) -> str:
+    """Readable name for a customSections key, e.g. "volunteer_work"."""
+    spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", key)
+    words = re.split(r"[\s_-]+", spaced.strip())
+    return " ".join(word[:1].upper() + word[1:] for word in words if word) or key
+
+
+def _sync_custom_section_meta(
+    section_meta: list[Any], custom_sections: dict[str, Any]
+) -> list[Any]:
+    """Give every custom section a non-default metadata entry.
+
+    The parser fills customSections but not sectionMeta, and API clients
+    that leave out isDefault get True. Templates only render custom
+    sections whose metadata exists with isDefault False. Entries that
+    aren't objects are left for schema validation to reject.
+    """
+    synced = [
+        {**meta, "isDefault": False}
+        if isinstance(meta, dict)
+        and meta.get("isDefault", True)
+        and meta.get("key") not in _DEFAULT_SECTION_KEYS
+        else meta
+        for meta in section_meta
+    ]
+    entries = [meta for meta in synced if isinstance(meta, dict)]
+    known_keys = {meta.get("key") for meta in entries}
+    orders = [meta.get("order") for meta in entries]
+    next_order = max((o for o in orders if isinstance(o, int)), default=0) + 1
+    for key, section in custom_sections.items():
+        section_type = section.get("sectionType") if isinstance(section, dict) else None
+        if key in known_keys or key in _DEFAULT_SECTION_KEYS or not section_type:
+            continue
+        synced.append(
+            {
+                "id": key,
+                "key": key,
+                "displayName": _custom_section_display_name(key),
+                "sectionType": section_type,
+                "isDefault": False,
+                "isVisible": True,
+                "order": next_order,
+            }
+        )
+        next_order += 1
+    return synced
+
 
 def normalize_resume_data(data: dict[str, Any]) -> dict[str, Any]:
     """Ensure resume data has section metadata (migration helper).
 
     This function is used for lazy migration of existing resumes
-    that don't have sectionMeta or customSections fields.
+    that don't have sectionMeta or customSections fields, and adds
+    the missing metadata for custom sections.
     """
     if not data.get("sectionMeta"):
         # Use deepcopy to avoid shared mutable reference bug
@@ -520,6 +571,12 @@ def normalize_resume_data(data: dict[str, Any]) -> dict[str, Any]:
         data["sectionMeta"] = copy.deepcopy(DEFAULT_SECTION_META)
     if "customSections" not in data:
         data["customSections"] = {}
+    if isinstance(data["sectionMeta"], list) and isinstance(
+        data["customSections"], dict
+    ):
+        data["sectionMeta"] = _sync_custom_section_meta(
+            data["sectionMeta"], data["customSections"]
+        )
     return data
 
 
