@@ -16,6 +16,10 @@ vi.mock('@/lib/i18n', () => ({
 
 afterEach(() => localStorage.clear());
 
+// Each control is named with its question, so they can be told apart.
+const PRACTISED_API = 'interviewPrep.practice.practised How did you build the API?';
+const NOTES = /^interviewPrep\.practice\.notesLabel: /;
+
 const interviewPrep: InterviewPrepData = {
   role_fit_analysis: ['Backend API experience fits the role.'],
   resume_questions: [
@@ -188,13 +192,11 @@ describe('InterviewPrepView', () => {
     expect(screen.getByText('interviewPrep.practice.progress 0 2')).toBeInTheDocument();
     expect(screen.getByText('interviewPrep.practice.localNote')).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getAllByRole('checkbox', { name: 'interviewPrep.practice.practised' })[0]
-    );
+    fireEvent.click(screen.getByRole('checkbox', { name: PRACTISED_API }));
     expect(screen.getByText('interviewPrep.practice.progress 1 2')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'interviewPrep.practice.notes' })[1]);
-    fireEvent.change(screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: NOTES }), {
       target: { value: 'Lead with the cache.' },
     });
 
@@ -217,12 +219,8 @@ describe('InterviewPrepView', () => {
       />
     );
     expect(screen.getByText('interviewPrep.practice.progress 1 2')).toBeInTheDocument();
-    expect(
-      screen.getAllByRole('checkbox', { name: 'interviewPrep.practice.practised' })[0]
-    ).toBeChecked();
-    expect(screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' })).toHaveValue(
-      'Lead with the cache.'
-    );
+    expect(screen.getByRole('checkbox', { name: PRACTISED_API })).toBeChecked();
+    expect(screen.getByRole('textbox', { name: NOTES })).toHaveValue('Lead with the cache.');
   });
 
   it('starts a regenerated set clean once its stored practice is cleared', () => {
@@ -269,12 +267,79 @@ describe('InterviewPrepView', () => {
         resumeId="r1"
       />
     );
-    const note = screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' });
+    const note = screen.getByRole('textbox', { name: NOTES });
     fireEvent.change(note, { target: { value: '' } });
-    expect(screen.getByRole('textbox', { name: 'interviewPrep.practice.notesLabel' })).toHaveValue(
-      ''
-    );
+    expect(screen.getByRole('textbox', { name: NOTES })).toHaveValue('');
     expect(readInterviewPractice('r1').notes).toEqual({});
+  });
+
+  it('names each control with its question, so a list of controls tells them apart', () => {
+    render(
+      <InterviewPrepView
+        interviewPrep={interviewPrep}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+        resumeId="r1"
+      />
+    );
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'interviewPrep.practice.practised What tradeoffs did you make in the matcher project?',
+      })
+    ).toBeInTheDocument();
+    const [notes] = screen.getAllByRole('button', { name: 'interviewPrep.practice.notes' });
+    expect(notes).toHaveAccessibleDescription('How did you build the API?');
+    fireEvent.click(notes);
+    expect(
+      screen.getByRole('textbox', {
+        name: 'interviewPrep.practice.notesLabel: How did you build the API?',
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('keeps a mark and a note for each of two identical questions', () => {
+    const repeated: InterviewPrepData = {
+      ...interviewPrep,
+      resume_questions: [interviewPrep.resume_questions[0], interviewPrep.resume_questions[0]],
+    };
+    render(
+      <InterviewPrepView
+        interviewPrep={repeated}
+        isGenerating={false}
+        onGenerate={vi.fn()}
+        isTailoredResume
+        resumeId="r1"
+      />
+    );
+    const [first, second] = screen.getAllByRole('checkbox', { name: PRACTISED_API });
+    fireEvent.click(second);
+
+    expect(first).not.toBeChecked();
+    expect(second).toBeChecked();
+    expect(screen.getByText('interviewPrep.practice.progress 1 3')).toBeInTheDocument();
+    expect(readInterviewPractice('r1').practised).toEqual(['resume:How did you build the API?#2']);
+  });
+
+  it('says so when this browser will not save the marks and notes', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    try {
+      render(
+        <InterviewPrepView
+          interviewPrep={interviewPrep}
+          isGenerating={false}
+          onGenerate={vi.fn()}
+          isTailoredResume
+          resumeId="r1"
+        />
+      );
+      fireEvent.click(screen.getByRole('checkbox', { name: PRACTISED_API }));
+      expect(screen.getByRole('status')).toHaveTextContent('interviewPrep.practice.saveFailed');
+    } finally {
+      setItem.mockRestore();
+    }
   });
 
   it('stores nothing without a resume ID', () => {
@@ -286,9 +351,7 @@ describe('InterviewPrepView', () => {
         isTailoredResume
       />
     );
-    fireEvent.click(
-      screen.getAllByRole('checkbox', { name: 'interviewPrep.practice.practised' })[0]
-    );
+    fireEvent.click(screen.getByRole('checkbox', { name: PRACTISED_API }));
     expect(screen.getByText('interviewPrep.practice.progress 1 2')).toBeInTheDocument();
     expect(localStorage.length).toBe(0);
   });

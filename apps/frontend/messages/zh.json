@@ -1626,7 +1626,8 @@
       "showPoints": "显示回答要点",
       "hidePoints": "隐藏回答要点",
       "notes": "笔记",
-      "notesLabel": "此问题的笔记"
+      "notesLabel": "此问题的笔记",
+      "saveFailed": "此浏览器没有保存你的标记和笔记，离开页面后它们会丢失。"
     }
   },
   "queue": {

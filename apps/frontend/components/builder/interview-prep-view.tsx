@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
 import {
   EMPTY_PRACTICE,
-  practiceKey,
+  practiceKeys,
   readInterviewPractice,
   writeInterviewPractice,
   type InterviewPractice,
@@ -180,6 +180,7 @@ function QuestionRow({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
           <p
+            id={`${id}-question`}
             className={cn(
               'font-serif text-base font-bold leading-snug text-ink',
               practised && 'text-ink-soft'
@@ -194,13 +195,15 @@ function QuestionRow({
           )}
         </div>
         <label className="flex shrink-0 cursor-pointer items-center gap-2 font-mono text-xs uppercase tracking-wide text-ink">
+          {/* Named with its question, so a list of the page's controls tells them apart. */}
           <input
             type="checkbox"
             checked={practised}
             onChange={(e) => onPractised(e.target.checked)}
+            aria-labelledby={`${id}-practised ${id}-question`}
             className="size-4 accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           />
-          {t('interviewPrep.practice.practised')}
+          <span id={`${id}-practised`}>{t('interviewPrep.practice.practised')}</span>
         </label>
       </div>
 
@@ -210,6 +213,7 @@ function QuestionRow({
             type="button"
             aria-expanded={showPoints}
             aria-controls={`${id}-points`}
+            aria-describedby={`${id}-question`}
             onClick={() => setShowPoints((open) => !open)}
             className="font-mono text-xs uppercase tracking-wide text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
@@ -222,6 +226,7 @@ function QuestionRow({
           type="button"
           aria-expanded={showNotes}
           aria-controls={`${id}-notes`}
+          aria-describedby={`${id}-question`}
           onClick={() => setNotesOpen(!showNotes)}
           className="font-mono text-xs uppercase tracking-wide text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
@@ -240,7 +245,7 @@ function QuestionRow({
       {showNotes && (
         <Textarea
           id={`${id}-notes`}
-          aria-label={t('interviewPrep.practice.notesLabel')}
+          aria-label={`${t('interviewPrep.practice.notesLabel')}: ${item.question}`}
           value={note}
           onChange={(e) => {
             // Keep the field open while its text is cleared.
@@ -275,6 +280,51 @@ interface InterviewPrepViewProps {
  * generate, on the cross field. After it, only the questions, in two groups, each
  * with its answer points closed (try first), a Practised mark and a note.
  */
+/**
+ * One resume's practice marks and notes, kept in this browser for the questions
+ * on screen (`keys`) only, so none outlive a regenerated set. Read after mount
+ * (the server render has no storage), and again when the questions change: a
+ * regenerate clears the stored marks first.
+ */
+function useInterviewPractice(
+  resumeId: string | null | undefined,
+  keys: readonly string[],
+  questions: unknown
+) {
+  const [practice, setPractice] = React.useState<InterviewPractice>(EMPTY_PRACTICE);
+  const [saveFailed, setSaveFailed] = React.useState(false);
+
+  React.useEffect(() => {
+    setPractice(resumeId ? readInterviewPractice(resumeId) : EMPTY_PRACTICE);
+  }, [resumeId, questions]);
+
+  const save = (next: InterviewPractice) => {
+    const kept: InterviewPractice = {
+      practised: next.practised.filter((key) => keys.includes(key)),
+      notes: Object.fromEntries(
+        Object.entries(next.notes).filter(([key, note]) => note && keys.includes(key))
+      ),
+    };
+    setPractice(kept);
+    if (resumeId) setSaveFailed(!writeInterviewPractice(resumeId, kept));
+  };
+
+  return {
+    practice,
+    saveFailed,
+    done: keys.filter((key) => practice.practised.includes(key)).length,
+    setPractised: (key: string, value: boolean) =>
+      save({
+        ...practice,
+        practised: value
+          ? [...practice.practised.filter((k) => k !== key), key]
+          : practice.practised.filter((k) => k !== key),
+      }),
+    setNote: (key: string, value: string) =>
+      save({ ...practice, notes: { ...practice.notes, [key]: value } }),
+  };
+}
+
 export function InterviewPrepView({
   interviewPrep,
   isGenerating,
@@ -287,14 +337,35 @@ export function InterviewPrepView({
   className,
 }: InterviewPrepViewProps) {
   const { t } = useTranslations();
-  const [practice, setPractice] = React.useState<InterviewPractice>(EMPTY_PRACTICE);
-
-  // Read after mount: the server render has no storage.
-  // Read after mount (the server render has no storage), and again when the
-  // questions change: a regenerate clears the stored marks first.
-  React.useEffect(() => {
-    setPractice(resumeId ? readInterviewPractice(resumeId) : EMPTY_PRACTICE);
-  }, [resumeId, interviewPrep]);
+  const groups: Array<{
+    key: string;
+    title: string;
+    items: InterviewPrepQuestion[];
+    keys: string[];
+  }> = [
+    {
+      key: 'resume',
+      title: t('interviewPrep.sections.resumeQuestions'),
+      items: interviewPrep?.resume_questions ?? [],
+    },
+    {
+      key: 'project',
+      title: t('interviewPrep.sections.projectFollowUps'),
+      items: interviewPrep?.project_follow_ups ?? [],
+    },
+  ].map((group) => ({
+    ...group,
+    keys: practiceKeys(
+      group.key,
+      group.items.map((q) => q.question)
+    ),
+  }));
+  const allKeys = groups.flatMap((g) => g.keys);
+  const { practice, saveFailed, done, setPractised, setNote } = useInterviewPractice(
+    resumeId,
+    allKeys,
+    interviewPrep
+  );
 
   if (!interviewPrep) {
     const ready = isTailoredResume && canGenerate;
@@ -323,33 +394,6 @@ export function InterviewPrepView({
     );
   }
 
-  const groups: Array<{ key: string; title: string; items: InterviewPrepQuestion[] }> = [
-    {
-      key: 'resume',
-      title: t('interviewPrep.sections.resumeQuestions'),
-      items: interviewPrep.resume_questions,
-    },
-    {
-      key: 'project',
-      title: t('interviewPrep.sections.projectFollowUps'),
-      items: interviewPrep.project_follow_ups,
-    },
-  ];
-  const allKeys = groups.flatMap((g) => g.items.map((q) => practiceKey(g.key, q.question)));
-  const done = allKeys.filter((key) => practice.practised.includes(key)).length;
-
-  // Stores only marks and notes for the questions on screen, so none outlive them.
-  const update = (next: InterviewPractice) => {
-    const kept: InterviewPractice = {
-      practised: next.practised.filter((key) => allKeys.includes(key)),
-      notes: Object.fromEntries(
-        Object.entries(next.notes).filter(([key, note]) => note && allKeys.includes(key))
-      ),
-    };
-    setPractice(kept);
-    if (resumeId) writeInterviewPractice(resumeId, kept);
-  };
-
   return (
     <div className={cn('space-y-6 p-6', className)}>
       {error && <Alert tone="error">{error}</Alert>}
@@ -369,6 +413,11 @@ export function InterviewPrepView({
           </p>
         </div>
         <p className="text-xs text-steel">{t('interviewPrep.practice.localNote')}</p>
+        {saveFailed && (
+          <p role="status" className="text-xs text-warning-text">
+            {t('interviewPrep.practice.saveFailed')}
+          </p>
+        )}
       </div>
 
       {groups
@@ -378,7 +427,7 @@ export function InterviewPrepView({
             <h3 className={LABEL}>{group.title}</h3>
             <ul className="divide-y divide-ink border border-ink bg-white">
               {group.items.map((item, index) => {
-                const key = practiceKey(group.key, item.question);
+                const key = group.keys[index];
                 return (
                   <QuestionRow
                     key={key}
@@ -386,17 +435,8 @@ export function InterviewPrepView({
                     item={item}
                     practised={practice.practised.includes(key)}
                     note={practice.notes[key] ?? ''}
-                    onPractised={(value) =>
-                      update({
-                        ...practice,
-                        practised: value
-                          ? [...practice.practised.filter((k) => k !== key), key]
-                          : practice.practised.filter((k) => k !== key),
-                      })
-                    }
-                    onNote={(value) =>
-                      update({ ...practice, notes: { ...practice.notes, [key]: value } })
-                    }
+                    onPractised={(value) => setPractised(key, value)}
+                    onNote={(value) => setNote(key, value)}
                   />
                 );
               })}

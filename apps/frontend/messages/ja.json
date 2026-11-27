@@ -1626,7 +1626,8 @@
       "showPoints": "回答のポイントを表示",
       "hidePoints": "回答のポイントを隠す",
       "notes": "メモ",
-      "notesLabel": "この質問のメモ"
+      "notesLabel": "この質問のメモ",
+      "saveFailed": "このブラウザーはチェックとメモを保存していません。ページを離れると消えます。"
     }
   },
   "queue": {

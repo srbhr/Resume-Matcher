@@ -1626,7 +1626,8 @@
       "showPoints": "Afficher les éléments de réponse",
       "hidePoints": "Masquer les éléments de réponse",
       "notes": "Notes",
-      "notesLabel": "Vos notes pour cette question"
+      "notesLabel": "Vos notes pour cette question",
+      "saveFailed": "Ce navigateur n'enregistre pas vos coches et vos notes : elles disparaîtront quand vous partirez."
     }
   },
   "queue": {

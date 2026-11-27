@@ -1626,7 +1626,8 @@
       "showPoints": "Mostrar pontos da resposta",
       "hidePoints": "Ocultar pontos da resposta",
       "notes": "Notas",
-      "notesLabel": "Suas notas para esta pergunta"
+      "notesLabel": "Suas notas para esta pergunta",
+      "saveFailed": "Este navegador não está salvando suas marcações e notas, então elas serão perdidas quando você sair."
     }
   },
   "queue": {

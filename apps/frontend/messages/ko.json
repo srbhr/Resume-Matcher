@@ -1626,7 +1626,8 @@
       "showPoints": "답변 포인트 보기",
       "hidePoints": "답변 포인트 숨기기",
       "notes": "메모",
-      "notesLabel": "이 질문에 대한 메모"
+      "notesLabel": "이 질문에 대한 메모",
+      "saveFailed": "이 브라우저가 표시와 메모를 저장하지 않으므로, 페이지를 떠나면 사라집니다."
     }
   },
   "queue": {

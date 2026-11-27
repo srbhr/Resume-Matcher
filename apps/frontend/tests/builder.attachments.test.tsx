@@ -387,7 +387,9 @@ describe('builder interview practice', () => {
     // The stored marks load after the first paint.
     await waitFor(() =>
       expect(
-        screen.getByRole('checkbox', { name: en.interviewPrep.practice.practised })
+        screen.getByRole('checkbox', {
+          name: `${en.interviewPrep.practice.practised} OLD QUESTION`,
+        })
       ).toBeChecked()
     );
 
@@ -410,8 +412,39 @@ describe('builder interview practice', () => {
     await screen.findByText('NEW QUESTION');
     expect(localStorage.getItem('resume_interview_practice:a')).toBeNull();
     expect(
-      screen.getByRole('checkbox', { name: en.interviewPrep.practice.practised })
+      screen.getByRole('checkbox', {
+        name: `${en.interviewPrep.practice.practised} NEW QUESTION`,
+      })
     ).not.toBeChecked();
+  });
+
+  it('keeps the practised marks when a regenerate fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    documents.a = { interview_prep: prep('OLD QUESTION') };
+    const stored = JSON.stringify({ practised: ['resume:OLD QUESTION'], notes: {} });
+    localStorage.setItem('resume_interview_practice:a', stored);
+    route.search = 'id=a&tab=interview-prep';
+    renderBuilder();
+    const practised = `${en.interviewPrep.practice.practised} OLD QUESTION`;
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: practised })).toBeChecked());
+
+    const held = holdGeneration('interview-prep');
+    const regenerate = screen.getByRole('button', { name: en.interviewPrep.regenerate });
+    await waitFor(() => expect(regenerate).toBeEnabled());
+    fireEvent.click(regenerate);
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: en.interviewPrep.regenerate }));
+    await waitFor(() => expect(held.started()).toBe(true));
+
+    await act(async () => {
+      held.reply.resolve(new HttpResponse(null, { status: 500 }));
+    });
+
+    // The old questions stay, and so do their marks, in storage and on screen.
+    await waitFor(() => expect(regenerate).toBeEnabled());
+    expect(localStorage.getItem('resume_interview_practice:a')).toBe(stored);
+    expect(screen.getByRole('checkbox', { name: practised })).toBeChecked();
   });
 });
 

@@ -7,6 +7,7 @@ import type { ResumeData } from '@/components/dashboard/resume-component';
 import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
 import { clearResumeWizardCompletion } from '@/lib/utils/resume-wizard-storage';
+import { clearInterviewPractice } from '@/lib/utils/interview-practice-storage';
 import {
   API_BASE,
   DEFAULT_TIMEOUT_MS,
@@ -421,6 +422,8 @@ export async function deleteResume(resumeId: string): Promise<void> {
   const res = await apiDelete(`/resumes/${encodeURIComponent(resumeId)}`);
   if (!res.ok) throw await apiError(res, `Failed to delete resume (status ${res.status}).`);
   clearResumeWizardCompletion(resumeId);
+  // Its practice notes are the user's own text; they go with the resume.
+  clearInterviewPractice(resumeId);
 }
 
 /**

@@ -1626,7 +1626,8 @@
       "showPoints": "Show answer points",
       "hidePoints": "Hide answer points",
       "notes": "Notes",
-      "notesLabel": "Your notes for this question"
+      "notesLabel": "Your notes for this question",
+      "saveFailed": "This browser isn't saving your marks and notes, so they will be gone when you leave."
     }
   },
   "queue": {
