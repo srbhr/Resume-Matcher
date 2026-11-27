@@ -150,7 +150,7 @@ class TestNormalizeApiBase:
             == "https://openrouter.ai/api/v1"
         )
 
-    def test_openrouter_strips_only_trailing_slash(self):
+    def test_openrouter_strips_only_trailing_slash(self) -> None:
         assert (
             _normalize_api_base("openrouter", "https://openrouter.ai/api/v1/")
             == "https://openrouter.ai/api/v1"
