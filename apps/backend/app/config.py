@@ -153,6 +153,12 @@ class Settings(BaseSettings):
             return "openai"
         return normalize_provider(v)
 
+    @field_validator("frontend_base_url", mode="after")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Every caller appends ``/print/...``; ``http://host:3000/`` gave ``//``."""
+        return v.strip().rstrip("/")
+
     @field_validator("log_llm", mode="before")
     @classmethod
     def normalize_log_llm_level(cls, v: Any) -> str:
