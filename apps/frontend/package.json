@@ -19,7 +19,6 @@
     "report:first-load": "node scripts/first-load-report.mjs"
   },
   "dependencies": {
-    "@base-ui/react": "1.9.0",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
@@ -33,7 +32,6 @@
     "@tiptap/starter-kit": "3.32.2",
     "@ui-sdk/core": "0.1.0-beta.17",
     "@ui-sdk/react": "0.1.0-beta.17",
-    "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "framer-motion": "13.5.1",
     "isomorphic-dompurify": "4.6.0",
@@ -42,7 +40,6 @@
     "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "shadcn": "4.23.1",
     "sonner": "2.0.8",
     "tailwind-merge": "3.7.0"
   },
