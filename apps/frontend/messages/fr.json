@@ -1252,6 +1252,14 @@
           "tooLarge": "Cette photo dépasse 5 Mo. Choisissez-en une plus légère.",
           "unsupported": "Utilisez une photo JPEG, PNG ou WebP.",
           "failed": "Impossible d'enregistrer la photo. Veuillez réessayer."
+        },
+        "crop": {
+          "title": "Recadrer votre photo",
+          "hint": "Faites glisser la photo pour placer votre visage dans le cadre, puis zoomez pour l’ajuster.",
+          "zoom": "Zoom",
+          "rotate": "Pivoter d’un quart de tour",
+          "apply": "Utiliser la photo",
+          "cancel": "Annuler"
         }
       }
     },

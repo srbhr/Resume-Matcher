@@ -1252,6 +1252,14 @@
           "tooLarge": "That photo is over 5 MB. Choose a smaller one.",
           "unsupported": "Use a JPEG, PNG or WebP photo.",
           "failed": "Couldn't save the photo. Please try again."
+        },
+        "crop": {
+          "title": "Crop your photo",
+          "hint": "Drag the photo to place your face in the frame, and zoom to fit.",
+          "zoom": "Zoom",
+          "rotate": "Rotate a quarter turn",
+          "apply": "Use photo",
+          "cancel": "Cancel"
         }
       }
     },

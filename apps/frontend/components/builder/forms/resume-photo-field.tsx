@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api/client';
@@ -11,6 +12,19 @@ import {
   uploadResumePhoto,
 } from '@/lib/api/resume';
 import { useTranslations } from '@/lib/i18n';
+
+// The crop dialog (ui-sdk's Image Cropper and Dialog) loads when a photo is chosen.
+const PhotoCropDialog = dynamic(
+  () => import('@/components/ui/photo-crop-dialog').then((m) => m.PhotoCropDialog),
+  { ssr: false }
+);
+
+/** The templates show the photo at 35:45; 600 px wide is sharp in a PDF. */
+const PHOTO_ASPECT = 35 / 45;
+const PHOTO_WIDTH = 600;
+
+/** Browsers that can't decode an image for cropping upload the original. */
+const canCrop = (): boolean => typeof createImageBitmap === 'function';
 
 interface ResumePhotoFieldProps {
   resumeId: string;
@@ -29,6 +43,7 @@ export const ResumePhotoField: React.FC<ResumePhotoFieldProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cropping, setCropping] = useState<File | null>(null);
 
   const handleFile = async (file: File | undefined) => {
     if (inputRef.current) inputRef.current.value = '';
@@ -41,6 +56,15 @@ export const ResumePhotoField: React.FC<ResumePhotoFieldProps> = ({
       setError(t('resume.personalInfo.photo.errors.tooLarge'));
       return;
     }
+    setError(null);
+    if (canCrop()) {
+      setCropping(file);
+      return;
+    }
+    await upload(file);
+  };
+
+  const upload = async (file: File) => {
     setError(null);
     setBusy(true);
     try {
@@ -131,6 +155,27 @@ export const ResumePhotoField: React.FC<ResumePhotoFieldProps> = ({
           )}
         </div>
       </div>
+      {cropping && (
+        <PhotoCropDialog
+          file={cropping}
+          aspectRatio={PHOTO_ASPECT}
+          outputWidth={PHOTO_WIDTH}
+          labels={{
+            title: t('resume.personalInfo.photo.crop.title'),
+            hint: t('resume.personalInfo.photo.crop.hint'),
+            imageAlt: t('resume.personalInfo.photo.previewAlt'),
+            zoom: t('resume.personalInfo.photo.crop.zoom'),
+            rotate: t('resume.personalInfo.photo.crop.rotate'),
+            apply: t('resume.personalInfo.photo.crop.apply'),
+            cancel: t('resume.personalInfo.photo.crop.cancel'),
+          }}
+          onCancel={() => setCropping(null)}
+          onCropped={(cropped) => {
+            setCropping(null);
+            void upload(cropped);
+          }}
+        />
+      )}
     </div>
   );
 };

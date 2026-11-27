@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { startMsw } from './support/msw';
@@ -15,6 +15,8 @@ import {
   resumeBody,
   route,
 } from './support/builder-page';
+// Loaded here first, so the photo field's dynamic import resolves from the cache.
+import '@/components/ui/photo-crop-dialog';
 
 /**
  * The photo of a photo CV in the builder: added, changed and removed from the
@@ -225,6 +227,27 @@ describe('builder: the photo of a photo CV', () => {
 
     expect(screen.getByRole('img', { name: text.previewAlt })).toHaveAttribute('src', UPLOADED);
     expect(previewPhotos().every((src) => src === UPLOADED)).toBe(true);
+  });
+
+  it('asks for a crop first where the browser can crop, and Cancel uploads nothing', async () => {
+    // jsdom can't decode images; a browser that can gets the crop dialog.
+    vi.stubGlobal('createImageBitmap', vi.fn());
+    serveBackend();
+    renderBuilder();
+    await advance(10);
+
+    await choose(nodeFile('jpeg bytes', 'me.jpg', 'image/jpeg'));
+
+    await advance(10);
+    const dialog = screen.getByRole('dialog', { name: text.crop.title });
+    expect(within(dialog).getByRole('slider', { name: text.crop.zoom })).toBeInTheDocument();
+    // Nothing to crop until the image has loaded, which jsdom never does.
+    expect(within(dialog).getByRole('button', { name: text.crop.apply })).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole('button', { name: text.crop.cancel }));
+    await advance(10);
+
+    expect(screen.queryByRole('dialog', { name: text.crop.title })).toBeNull();
+    expect(photoCalls).not.toContain('PUT');
   });
 
   it('still edits the resume when the photo cannot be loaded', async () => {

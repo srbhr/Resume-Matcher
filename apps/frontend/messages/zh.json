@@ -1252,6 +1252,14 @@
           "tooLarge": "照片超过 5 MB，请选择更小的照片。",
           "unsupported": "请使用 JPEG、PNG 或 WebP 格式的照片。",
           "failed": "无法保存照片，请重试。"
+        },
+        "crop": {
+          "title": "裁剪照片",
+          "hint": "拖动照片，让面部位于框内，并缩放到合适大小。",
+          "zoom": "缩放",
+          "rotate": "旋转 90 度",
+          "apply": "使用照片",
+          "cancel": "取消"
         }
       }
     },

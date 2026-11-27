@@ -1252,6 +1252,14 @@
           "tooLarge": "La foto supera los 5 MB. Elige una más pequeña.",
           "unsupported": "Usa una foto JPEG, PNG o WebP.",
           "failed": "No se pudo guardar la foto. Inténtalo de nuevo."
+        },
+        "crop": {
+          "title": "Recorta tu foto",
+          "hint": "Arrastra la foto para situar tu cara en el marco y usa el zoom para ajustarla.",
+          "zoom": "Zoom",
+          "rotate": "Girar un cuarto de vuelta",
+          "apply": "Usar foto",
+          "cancel": "Cancelar"
         }
       }
     },
