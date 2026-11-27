@@ -14,9 +14,10 @@ vi.mock('@/lib/i18n', () => ({
   useTranslations: () => ({ t: (key: string) => key, locale: 'en' }),
 }));
 
-// The shadow rule: a paper sheet gets the card shadow, every box inside the page gets the
-// translucent nested shadow, and nothing nested keeps a solid ink shadow.
-const SOLID_INK = ['shadow-sw-sm', 'shadow-sw-default', 'shadow-sw-card', 'shadow-sw-lg'];
+// The shadow rule: every box inside the page, paper sheets included, gets the translucent
+// nested shadow, and nothing nested keeps a solid ink shadow. (The resume sheet's edge is
+// carried by its trim marks, not by a heavy shadow competing with the page frame's.)
+const SOLID_INK = ['shadow-sw-sm', 'shadow-sw-default', 'shadow-sw-lg', 'shadow-sw-xl'];
 
 const expectNested = (el: HTMLElement) => {
   expect(el).toHaveClass('shadow-sw-nested');
@@ -24,12 +25,12 @@ const expectNested = (el: HTMLElement) => {
 };
 
 const expectSheet = (el: HTMLElement) => {
-  expect(el).toHaveClass('shadow-sw-card');
-  for (const other of ['shadow-sw-default', 'shadow-sw-nested']) expect(el).not.toHaveClass(other);
+  expect(el).toHaveClass('bg-white', 'border-ink');
+  expectNested(el);
 };
 
 describe('paper sheets', () => {
-  it('draws the cover letter with the sheet shadow', () => {
+  it('draws the cover letter as a white sheet with the nested shadow', () => {
     const { container } = render(<CoverLetterPreview content="Dear team" personalInfo={{}} />);
     expectSheet(container.firstChild as HTMLElement);
   });
@@ -39,7 +40,7 @@ describe('paper sheets', () => {
     expectNested(container.firstChild as HTMLElement);
   });
 
-  it('keeps the resume sheet on the sheet shadow', () => {
+  it('draws the resume sheet as a white sheet with the nested shadow', () => {
     const { container } = render(
       <PageContainer
         pageSize="A4"

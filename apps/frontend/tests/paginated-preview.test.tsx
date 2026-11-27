@@ -91,7 +91,7 @@ describe('PaginatedPreview', () => {
       );
     };
     const sheetScale = (container: HTMLElement) =>
-      (container.querySelector('.shadow-sw-card') as HTMLElement).style.transform;
+      (container.querySelector('.bg-white.border-ink') as HTMLElement).style.transform;
 
     it('shows the pages at 105%, with no zoom or margin controls and no grey panel', () => {
       const { container } = renderPage(1400);

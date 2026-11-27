@@ -21,7 +21,7 @@ const parse = (value: string) => {
 
 describe('Swiss shadow tokens', () => {
   it('defines the solid roles and the nested role', () => {
-    expect(Object.keys(shadows).sort()).toEqual(['card', 'default', 'lg', 'nested', 'sm', 'xl']);
+    expect(Object.keys(shadows).sort()).toEqual(['default', 'lg', 'nested', 'sm', 'xl']);
   });
 
   it('never blurs or spreads a shadow', () => {
@@ -33,7 +33,7 @@ describe('Swiss shadow tokens', () => {
   });
 
   it('keeps floating and pressable roles solid ink and the nested role translucent ink', () => {
-    for (const name of ['sm', 'default', 'lg', 'xl', 'card']) {
+    for (const name of ['sm', 'default', 'lg', 'xl']) {
       expect(parse(shadows[name]).colour).toBe('#000000');
     }
     expect(parse(shadows.nested)).toEqual({
