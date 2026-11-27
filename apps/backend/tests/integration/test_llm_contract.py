@@ -21,6 +21,8 @@ which respx can intercept. We also flush litellm's in-memory client cache so a
 client built under the aiohttp transport in an earlier test can't be reused.
 """
 
+import json
+
 import httpx
 import pytest
 import respx
@@ -264,6 +266,30 @@ class TestOllamaTransport:
 
         assert out == {"required_skills": ["Go"], "keywords": ["k8s"]}
         assert chat_route.called
+
+    @respx.mock
+    async def test_a_thinking_model_is_asked_not_to_think(self):
+        """Ollama thinks by default when ``think`` is left out (qwen3.x,
+        gemma4), and the thinking uses up the answer's output budget."""
+        respx.post("http://localhost:11434/api/show").mock(
+            return_value=httpx.Response(200, json=_ollama_show_response())
+        )
+        chat_route = respx.post("http://ollama.test:11434/api/chat").mock(
+            return_value=httpx.Response(
+                200, json=_ollama_chat_response('{"keywords": ["Go"]}')
+            )
+        )
+
+        cfg = LLMConfig(
+            provider="ollama",
+            model="qwen3.6:27b",
+            api_key="",
+            api_base="http://ollama.test:11434",
+        )
+        await complete_json("Extract", config=cfg, schema_type="keywords")
+
+        sent = json.loads(chat_route.calls.last.request.content)
+        assert sent["think"] is False
 
 
 # ---------------------------------------------------------------------------

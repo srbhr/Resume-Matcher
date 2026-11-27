@@ -413,8 +413,16 @@ def _reasoning_effort_kwarg(
     probe, short cover-letter calls) is rejected with "`max_tokens` must be
     greater than `thinking.budget_tokens`". Such a call cannot hold the thinking
     anyway, so it runs without it. Other providers pass the effort through.
+
+    With no effort set, Ollama still gets one: it turns thinking on for every
+    model that supports it unless asked not to, and the thinking spends the
+    output budget the answer needs. ``"none"`` reaches Ollama as
+    ``think: false``, which models that cannot think accept too. gpt-oss is
+    left out: it always reasons and takes only a level.
     """
     if not reasoning_effort:
+        if config.provider == "ollama" and not config.model.startswith("gpt-oss"):
+            return {"reasoning_effort": "none"}
         return {}
     if config.provider == "anthropic" and max_tokens <= (
         _ANTHROPIC_THINKING_BUDGETS.get(reasoning_effort, 0)

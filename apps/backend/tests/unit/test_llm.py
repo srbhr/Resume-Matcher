@@ -1788,3 +1788,71 @@ class TestMaxTokensRejectionFallback:
         assert result == "Hello"
         assert router.acompletion.await_count == 2
         assert router.acompletion.call_args.kwargs["max_completion_tokens"] == 2048
+
+
+class TestOllamaThinkingDefault:
+    """Ollama turns thinking on for any model that supports it when a request
+    leaves ``think`` out (qwen3.x, gemma4). Thinking spends the same output
+    budget as the answer, so the 64-token health probe returned only thinking
+    text and structured calls came back empty or cut off. With no effort set,
+    requests ask for no thinking: ``reasoning_effort="none"``, which LiteLLM
+    sends to Ollama as ``think: false``. Ollama rejects ``think`` only when it
+    is true on a model that cannot think, so false is safe for every model.
+    """
+
+    @pytest.mark.parametrize(
+        ("provider", "model", "effort", "expected"),
+        [
+            ("ollama", "qwen3.6:27b", None, {"reasoning_effort": "none"}),
+            ("ollama", "llama3.2", "", {"reasoning_effort": "none"}),
+            # An effort the user chose still decides.
+            ("ollama", "qwen3.6:27b", "low", {"reasoning_effort": "low"}),
+            ("ollama", "qwen3.6:27b", "minimal", {"reasoning_effort": "minimal"}),
+            # gpt-oss always reasons; Ollama takes only a level for it.
+            ("ollama", "gpt-oss:20b", None, {}),
+            # Other providers keep omitting the parameter.
+            ("openai_compatible", "qwen3.6:27b", None, {}),
+            ("openai", "gpt-5-nano-2025-08-07", None, {}),
+        ],
+    )
+    def test_effort_kwarg(self, provider, model, effort, expected) -> None:
+        from app.llm import _reasoning_effort_kwarg
+
+        config = LLMConfig(provider=provider, model=model, api_key="")
+        assert _reasoning_effort_kwarg(config, effort, 4096) == expected
+
+    @pytest.mark.asyncio
+    async def test_health_probe_asks_ollama_not_to_think(self) -> None:
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="ollama",
+            model="qwen3.6:27b",
+            api_key="",
+            api_base="http://localhost:11434",
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            await check_llm_health(config)
+
+        assert acompletion.call_args.kwargs["reasoning_effort"] == "none"
+
+    @pytest.mark.asyncio
+    async def test_json_call_asks_ollama_not_to_think(self, monkeypatch) -> None:
+        from app import llm
+
+        config = LLMConfig(
+            provider="ollama",
+            model="qwen3.6:27b",
+            api_key="",
+            api_base="http://localhost:11434",
+        )
+        monkeypatch.setattr(llm, "get_llm_config", lambda: config)
+        acompletion = AsyncMock(return_value=_text_response('{"ok": true}'))
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await llm.complete_json("Return JSON.")
+
+        assert result == {"ok": True}
+        assert acompletion.call_args.kwargs["reasoning_effort"] == "none"
