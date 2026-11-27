@@ -337,7 +337,7 @@ export default function QueuePage() {
   const formDisabled = isAddingToQueue || !(isLlmConfigured || agentMode) || !selectedResumeId;
 
   return (
-    <PageFrame>
+    <PageFrame ground="crosses-wide">
       <PageHeader>
         <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
         <PageHeader.Title>{t('queue.title')}</PageHeader.Title>

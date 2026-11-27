@@ -21,7 +21,7 @@ export const SwissGrid = ({
 }) => {
   const { t } = useTranslations();
   return (
-    <PageFrame height="screen">
+    <PageFrame height="screen" ground="crosses-wide">
       <PageHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <PageHeader.Title>{t('nav.dashboard')}</PageHeader.Title>
         {/* Where to go next: three labelled buttons, each an icon and a name. */}

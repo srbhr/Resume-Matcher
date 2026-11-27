@@ -491,7 +491,7 @@ export default function ResumeViewerPage() {
 
   if (loading) {
     return (
-      <PageFrame>
+      <PageFrame ground="crosses-wide">
         <div className="flex items-center gap-3 p-8 md:p-12">
           <SpinnerGap aria-hidden="true" className="size-6 animate-spin text-primary" />
           <StatusIndicator tone="active">{t('resumeViewer.loading')}</StatusIndicator>
@@ -506,7 +506,7 @@ export default function ResumeViewerPage() {
 
     return (
       <>
-        <PageFrame>
+        <PageFrame ground="crosses-wide">
           <div className="flex max-w-2xl flex-col gap-6 p-8 md:p-12">
             <Alert tone={isProcessing ? 'info' : isFailed ? 'warning' : 'error'}>
               {error || t('resumeViewer.resumeNotFound')}
@@ -545,7 +545,7 @@ export default function ResumeViewerPage() {
   }
 
   return (
-    <PageFrame>
+    <PageFrame ground="crosses-wide">
       {/* One compact toolbar row, as in the builder and tracker, so the sheet starts high. */}
       <PageHeader className="flex flex-wrap items-center gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print">
         <Link

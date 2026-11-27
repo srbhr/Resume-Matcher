@@ -822,7 +822,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageFrame width="wide" height="screen-md" className="md:h-full">
+      <PageFrame width="wide" height="screen-md" ground="crosses-wide" className="md:h-full">
         {/* One compact toolbar row, as on the tracker: Settings is a working view. */}
         <header className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3 border-b border-ink px-6 py-3">
           <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'sm' })}>
