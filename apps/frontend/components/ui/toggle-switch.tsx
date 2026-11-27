@@ -1,15 +1,13 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /**
- * Swiss International Style Toggle Switch Component
- *
- * Design Principles:
- * - Square thumb and track; the row label toggles the switch
- * - High contrast states
- * - Clear label and description
+ * Swiss toggle: the row's label (sentence case, with an optional description)
+ * and a switch that spells its state out, an "Off | On" pair whose live half is
+ * filled ink. Clicking the label or either half flips it.
  */
 
 export interface ToggleSwitchProps {
@@ -31,7 +29,9 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   variant = 'card',
   className,
 }) => {
+  const { t } = useTranslations();
   const switchId = React.useId();
+  const half = 'flex h-full items-center px-2 transition-colors';
   return (
     <div
       className={cn(
@@ -42,9 +42,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
       )}
     >
       <label htmlFor={switchId} className={cn('min-w-0 flex-1', !disabled && 'cursor-pointer')}>
-        <span className="block font-mono text-sm font-bold uppercase tracking-wider text-ink">
-          {label}
-        </span>
+        <span className="block font-sans text-sm font-medium text-ink">{label}</span>
         {description && (
           <span className="mt-1 block font-sans text-xs text-steel">{description}</span>
         )}
@@ -57,19 +55,25 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
         disabled={disabled}
         onClick={() => !disabled && onCheckedChange(!checked)}
         className={cn(
-          'relative inline-flex h-6 w-12 shrink-0 items-center border-2 border-ink transition-colors',
+          'inline-flex h-8 shrink-0 items-stretch border border-ink bg-white font-mono text-xs uppercase tracking-wider',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-          'disabled:cursor-not-allowed',
-          checked ? 'bg-ink' : 'bg-panel'
+          'disabled:cursor-not-allowed'
         )}
       >
         <span
           aria-hidden="true"
-          className={cn(
-            'pointer-events-none block h-4 w-4 border border-ink bg-white transition-transform',
-            checked ? 'translate-x-6' : 'translate-x-1'
-          )}
-        />
+          data-state={checked ? 'idle' : 'live'}
+          className={cn(half, !checked ? 'bg-ink text-white' : 'text-steel')}
+        >
+          {t('common.off')}
+        </span>
+        <span
+          aria-hidden="true"
+          data-state={checked ? 'live' : 'idle'}
+          className={cn(half, 'border-l border-ink', checked ? 'bg-ink text-white' : 'text-steel')}
+        >
+          {t('common.on')}
+        </span>
       </button>
     </div>
   );

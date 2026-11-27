@@ -192,6 +192,24 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     return t('builder.formatting.fontNames.mono');
   };
 
+  const { top, bottom, left, right } = settings.margins;
+  const effectiveRows: Array<[string, string]> = [
+    [
+      t('builder.formatting.margins'),
+      `${t('builder.formatting.margin.top')} ${top} · ${t('builder.formatting.margin.bottom')} ${bottom} · ${t('builder.formatting.margin.left')} ${left} · ${t('builder.formatting.margin.right')} ${right}`,
+    ],
+    [t('builder.formatting.effectiveSectionGap'), formatRem(sectionGapRem)],
+    [t('builder.formatting.effectiveItemGap'), formatRem(itemGapRem)],
+    [t('builder.formatting.effectiveLineHeight'), lineHeightValue.toFixed(2)],
+    [t('builder.formatting.effectiveBaseFont'), FONT_SIZE_MAP[settings.fontSize.base]],
+    [
+      t('builder.formatting.effectiveHeaderScale'),
+      `${HEADER_SCALE_MAP[settings.fontSize.headerScale]}x`,
+    ],
+    [t('builder.formatting.effectiveHeaderFont'), getFontLabel(settings.fontSize.headerFont)],
+    [t('builder.formatting.effectiveBodyFont'), getFontLabel(settings.fontSize.bodyFont)],
+  ];
+
   return (
     <div className="border border-ink bg-white shadow-sw-nested">
       {/* Header - Always Visible */}
@@ -487,51 +505,34 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
 
           {/* Reset Button */}
           <div className="pt-2 border-t border-paper space-y-3">
-            <div>
-              <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft mb-2">
+            {/* The numbers the settings produce, for whoever wants them: closed until
+                asked for, then a two-column table. */}
+            <details className="group border border-ink bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider text-ink-soft hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
                 {t('builder.formatting.effectiveOutput')}
-              </h4>
-              <div className="font-mono text-xs text-ink-soft space-y-1 tabular-nums">
-                <div title={t('builder.formatting.margins')}>
-                  {t('builder.formatting.effectiveMargins', {
-                    top: settings.margins.top,
-                    bottom: settings.margins.bottom,
-                    left: settings.margins.left,
-                    right: settings.margins.right,
-                  })}
-                </div>
-                <div>
-                  {t('builder.formatting.effectiveSectionGap')}: {formatRem(sectionGapRem)}
-                </div>
-                <div>
-                  {t('builder.formatting.effectiveItemGap')}: {formatRem(itemGapRem)}
-                </div>
-                <div>
-                  {t('builder.formatting.effectiveLineHeight')}: {lineHeightValue.toFixed(2)}
-                </div>
-                <div>
-                  {t('builder.formatting.effectiveBaseFont')}:{' '}
-                  {FONT_SIZE_MAP[settings.fontSize.base]}
-                </div>
-                <div>
-                  {t('builder.formatting.effectiveHeaderScale')}:{' '}
-                  {HEADER_SCALE_MAP[settings.fontSize.headerScale]}x
-                </div>
-                <div>
-                  {t('builder.formatting.effectiveHeaderFont')}:{' '}
-                  {getFontLabel(settings.fontSize.headerFont)}
-                </div>
-                <div>
-                  {t('builder.formatting.effectiveBodyFont')}:{' '}
-                  {getFontLabel(settings.fontSize.bodyFont)}
-                </div>
-              </div>
+                <CaretDown
+                  aria-hidden="true"
+                  className="size-4 text-steel transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <table className="w-full border-t border-ink font-mono text-xs tabular-nums">
+                <tbody>
+                  {effectiveRows.map(([label, value]) => (
+                    <tr key={label} className="border-t border-panel-hover first:border-t-0">
+                      <th scope="row" className="px-3 py-2 text-left font-normal text-ink-soft">
+                        {label}
+                      </th>
+                      <td className="px-3 py-2 text-right text-ink">{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               {settings.compactMode && (
-                <div className="font-mono text-xs text-steel mt-2">
+                <p className="border-t border-ink px-3 py-2 font-mono text-xs text-steel">
                   {t('builder.formatting.compactHint')}
-                </div>
+                </p>
               )}
-            </div>
+            </details>
             <Button variant="outline" size="sm" onClick={handleReset} className="w-full">
               <ArrowCounterClockwise aria-hidden="true" />
               {t('builder.formatting.resetDefaults')}

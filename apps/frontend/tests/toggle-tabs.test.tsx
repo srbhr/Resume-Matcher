@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { RetroTabs } from '@/components/ui/retro-tabs';
 
+vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));
+
 describe('ToggleSwitch', () => {
   it('toggles when the row label is clicked', () => {
     const onChange = vi.fn();
@@ -27,16 +29,28 @@ describe('ToggleSwitch', () => {
     expect(screen.getByRole('switch', { name: 'Inline' })).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('fills the track with ink when on and the panel tone when off', () => {
+  it('spells its state out: the live half of Off | On is filled ink, never blue', () => {
     const { rerender } = render(
       <ToggleSwitch checked onCheckedChange={vi.fn()} label="Show photo" />
     );
-    const toggle = screen.getByRole('switch');
-    expect(toggle).toHaveClass('bg-ink');
-    expect(toggle).not.toHaveClass('bg-primary');
+    const toggle = screen.getByRole('switch', { name: 'Show photo' });
+    const [off, on] = Array.from(toggle.children);
+    expect(off).toHaveTextContent('common.off');
+    expect(on).toHaveTextContent('common.on');
+    expect(on).toHaveClass('bg-ink', 'text-white');
+    expect(off).not.toHaveClass('bg-ink');
+    expect(toggle.className).not.toContain('bg-primary');
+
     rerender(<ToggleSwitch checked={false} onCheckedChange={vi.fn()} label="Show photo" />);
-    expect(screen.getByRole('switch')).toHaveClass('bg-panel');
-    expect(screen.getByRole('switch')).not.toHaveClass('bg-ink');
+    expect(off).toHaveClass('bg-ink', 'text-white');
+    expect(on).not.toHaveClass('bg-ink');
+  });
+
+  it('labels the row in sentence case, not the mono uppercase face', () => {
+    render(<ToggleSwitch checked onCheckedChange={vi.fn()} label="Compact mode" />);
+    const label = screen.getByText('Compact mode');
+    expect(label).toHaveClass('font-sans', 'text-sm');
+    expect(label).not.toHaveClass('uppercase', 'font-mono');
   });
 });
 

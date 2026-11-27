@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FormattingControls } from '@/components/builder/formatting-controls';
 import { DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
@@ -172,5 +172,21 @@ describe('FormattingControls', () => {
     renderControls();
     expect(screen.getAllByText('builder.formatting.tight')).toHaveLength(3);
     expect(screen.getAllByText('builder.formatting.loose')).toHaveLength(3);
+  });
+
+  it('keeps the effective output closed until asked for, then shows it as a table', () => {
+    renderControls();
+    const summary = screen.getByText('builder.formatting.effectiveOutput');
+    const details = summary.closest('details') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+
+    fireEvent.click(summary);
+
+    expect(details.open).toBe(true);
+    const rows = within(details).getAllByRole('row');
+    expect(rows).toHaveLength(8);
+    expect(within(rows[3]).getByRole('rowheader')).toHaveTextContent(
+      'builder.formatting.effectiveLineHeight'
+    );
   });
 });
