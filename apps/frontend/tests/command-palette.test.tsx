@@ -77,6 +77,18 @@ describe('command palette', () => {
     expect(push).toHaveBeenCalledWith('/settings');
   });
 
+  it('matches what was typed as written, not letters scattered across a title', async () => {
+    const dialog = await openPalette();
+    await within(dialog).findByText('Platform Engineer @ Acme');
+    const search = within(dialog).getByRole('combobox', { name: 'commandPalette.title' });
+
+    // P-f-m appear in order in "Platform", but nobody typing "pfm" means it.
+    fireEvent.change(search, { target: { value: 'pfm' } });
+
+    expect(within(dialog).queryAllByRole('option')).toEqual([]);
+    expect(within(dialog).getByText('commandPalette.empty')).toBeInTheDocument();
+  });
+
   it('lists the resumes, titled or by file name, and opens the one chosen', async () => {
     const dialog = await openPalette();
 

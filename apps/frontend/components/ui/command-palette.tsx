@@ -66,6 +66,9 @@ export function CommandPalette({
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <Command
           loop
+          // Fuzzy matching (the default) keeps a long title whose letters merely
+          // appear in order, so unrelated text still listed resumes.
+          filter="contains"
           className="w-full border-0 bg-transparent"
           onAction={(value) => {
             onOpenChange(false);
