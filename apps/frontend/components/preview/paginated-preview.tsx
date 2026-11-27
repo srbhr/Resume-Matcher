@@ -154,7 +154,11 @@ export function PaginatedPreview({
   return (
     <div className={isPanel ? 'flex flex-col h-full overflow-hidden' : 'flex flex-col'}>
       {!isPanel && (
-        <div className="flex items-center justify-end gap-4 pb-4">
+        // As wide as the shown page, so the count lines up with its right edge.
+        <div
+          className="mx-auto flex max-w-full items-center justify-end gap-4 pb-4"
+          style={{ width: mmToPx(PAGE_DIMENSIONS[settings.pageSize].width) * zoom }}
+        >
           {pageCount}
           {!isCalculating && pages.length > 1 && overflowAction}
         </div>
