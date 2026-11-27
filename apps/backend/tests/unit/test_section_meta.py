@@ -232,3 +232,15 @@ def test_added_meta_goes_after_decimal_orders() -> None:
     meta = _meta_by_key(normalize_resume_data(data))
 
     assert meta["publications"]["order"] == int(highest) + 1
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf"), 1e999])
+def test_a_non_finite_order_is_ignored(bad: float) -> None:
+    data = _parsed_resume()
+    data["sectionMeta"] = copy.deepcopy(DEFAULT_SECTION_META)
+    data["sectionMeta"][0]["order"] = bad
+    highest = max(meta["order"] for meta in DEFAULT_SECTION_META[1:])
+
+    meta = _meta_by_key(normalize_resume_data(data))
+
+    assert meta["publications"]["order"] == highest + 1

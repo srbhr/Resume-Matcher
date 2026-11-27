@@ -1,6 +1,7 @@
 """Pydantic models matching frontend expectations."""
 
 import copy
+import math
 import re
 from enum import Enum
 from typing import Any, Literal
@@ -542,12 +543,14 @@ def _sync_custom_section_meta(
     # The builder acts on sections by id, and data written through the API can
     # store an id that differs from its key, so an added id must be unused.
     used_ids = {meta["id"] for meta in entries if isinstance(meta.get("id"), str)}
-    # Raw stored rows can carry decimal orders (6.0); bool is not an order.
+    # Raw stored rows can carry decimal orders (6.0); bool is not an order, and
+    # NaN or infinity can't be turned into one (schema validation rejects them).
     orders = [
         meta.get("order")
         for meta in entries
         if isinstance(meta.get("order"), (int, float))
         and not isinstance(meta.get("order"), bool)
+        and math.isfinite(meta.get("order"))
     ]
     next_order = int(max(orders, default=0)) + 1
     for key, section in custom_sections.items():
