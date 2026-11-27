@@ -713,7 +713,8 @@
       "discard": "放弃",
       "applyChanges": "应用修改",
       "checkError": "无法为文字评分。"
-    }
+    },
+    "resizePanels": "调整编辑器与预览的大小"
   },
   "enrichment": {
     "title": "简历增强",

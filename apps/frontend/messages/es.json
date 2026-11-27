@@ -713,7 +713,8 @@
       "discard": "Descartar",
       "applyChanges": "Aplicar cambios",
       "checkError": "No se pudo puntuar la redacción."
-    }
+    },
+    "resizePanels": "Redimensionar el editor y la vista previa"
   },
   "enrichment": {
     "title": "Mejora del Currículum",

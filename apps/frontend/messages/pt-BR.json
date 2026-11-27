@@ -713,7 +713,8 @@
       "discard": "Descartar",
       "applyChanges": "Aplicar mudanças",
       "checkError": "Não foi possível pontuar a escrita."
-    }
+    },
+    "resizePanels": "Redimensionar editor e pré-visualização"
   },
   "enrichment": {
     "title": "Aprimoramento de Currículo",

@@ -713,7 +713,8 @@
       "discard": "Discard",
       "applyChanges": "Apply changes",
       "checkError": "Could not score the writing."
-    }
+    },
+    "resizePanels": "Resize editor and preview"
   },
   "enrichment": {
     "title": "Resume Enhancement",

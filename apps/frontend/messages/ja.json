@@ -713,7 +713,8 @@
       "discard": "破棄",
       "applyChanges": "変更を適用",
       "checkError": "文章を採点できませんでした。"
-    }
+    },
+    "resizePanels": "エディターとプレビューのサイズを変更"
   },
   "enrichment": {
     "title": "履歴書の強化",

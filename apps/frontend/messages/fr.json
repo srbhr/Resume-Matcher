@@ -713,7 +713,8 @@
       "discard": "Ignorer",
       "applyChanges": "Appliquer les changements",
       "checkError": "Impossible de noter la rédaction."
-    }
+    },
+    "resizePanels": "Redimensionner l’éditeur et l’aperçu"
   },
   "enrichment": {
     "title": "Amélioration du CV",

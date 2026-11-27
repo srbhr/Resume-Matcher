@@ -89,6 +89,22 @@ if (typeof HTMLElement !== 'undefined' && !('showPopover' in HTMLElement.prototy
   });
 }
 
+// jsdom has no matchMedia. No query matches, as on a narrow screen: the builder
+// keeps its plain two-column grid instead of switching to the resizable split.
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+  window.matchMedia = (query: string): MediaQueryList =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}
+
 // jsdom has no Web Animations API. ui-sdk waits for a closing part's animations
 // before unmounting it; with none running, it unmounts at once.
 if (typeof Element !== 'undefined' && !('getAnimations' in Element.prototype)) {

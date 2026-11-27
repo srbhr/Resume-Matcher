@@ -713,7 +713,8 @@
       "discard": "버리기",
       "applyChanges": "변경 적용",
       "checkError": "문장을 채점하지 못했습니다."
-    }
+    },
+    "resizePanels": "편집기와 미리보기 크기 조절"
   },
   "enrichment": {
     "title": "이력서 개선",
