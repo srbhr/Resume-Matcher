@@ -36,7 +36,6 @@ const renderers: Record<string, () => void> = {
       <ApplicationCard
         application={application}
         selected={false}
-        sharedResume={false}
         onToggleSelect={vi.fn()}
         onOpen={vi.fn()}
       />

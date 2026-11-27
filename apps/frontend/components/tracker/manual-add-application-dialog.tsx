@@ -19,18 +19,25 @@ import { Dropdown } from '@/components/ui/dropdown';
 import { Alert } from '@/components/ui/alert';
 import { useTranslations } from '@/lib/i18n';
 import { fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
-import { createApplication, type ApplicationStatus } from '@/lib/api/tracker';
+import {
+  APPLICATION_STATUS_ORDER,
+  createApplication,
+  type ApplicationStatus,
+} from '@/lib/api/tracker';
 
 interface ManualAddApplicationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  /** The stage the dialog opens on; a column's Add passes its own. */
+  initialStatus?: ApplicationStatus;
 }
 
 export function ManualAddApplicationDialog({
   open,
   onOpenChange,
   onCreated,
+  initialStatus = 'applied',
 }: ManualAddApplicationDialogProps) {
   const { t } = useTranslations();
   const [resumes, setResumes] = useState<ResumeListItem[]>([]);
@@ -41,6 +48,11 @@ export function ManualAddApplicationDialog({
   const [status, setStatus] = useState<ApplicationStatus>('applied');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Each opening starts on the stage it was opened from.
+  useEffect(() => {
+    if (open) setStatus(initialStatus);
+  }, [open, initialStatus]);
 
   useEffect(() => {
     if (!open) return;
@@ -149,10 +161,12 @@ export function ManualAddApplicationDialog({
 
           <Dropdown
             label={t('tracker.manualAdd.status')}
-            options={[
-              { id: 'applied', label: t('tracker.columns.applied') },
-              { id: 'saved', label: t('tracker.columns.saved') },
-            ]}
+            // Every stage, so a column's own Add (and a past application already at
+            // interview) can start where it belongs.
+            options={APPLICATION_STATUS_ORDER.map((stage) => ({
+              id: stage,
+              label: t(`tracker.columns.${stage}`),
+            }))}
             value={status}
             onChange={(value) => setStatus(value as ApplicationStatus)}
           />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   DndContext,
@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useReducedMotion } from 'motion/react';
-import { ArrowLeft, Plus, Gear, SpinnerGap, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { ArrowLeft, Plus, Gear, SpinnerGap } from '@phosphor-icons/react';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -34,6 +34,7 @@ import { CardDetailModal } from './card-detail-modal';
 import { ManualAddApplicationDialog } from './manual-add-application-dialog';
 import { planMove } from './reorder';
 import { ManageColumnsDialog } from './manage-columns-dialog';
+import { OpenCardFromUrl } from './open-card-from-url';
 import {
   readHiddenStatuses,
   toggleHiddenStatus,
@@ -61,6 +62,8 @@ export function KanbanBoard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [manualAddOpen, setManualAddOpen] = useState(false);
+  // The stage a column's own Add button preselects in the dialog.
+  const [addStatus, setAddStatus] = useState<ApplicationStatus>('applied');
   const [manageOpen, setManageOpen] = useState(false);
   const [hiddenStatuses, setHiddenStatuses] = useState<Set<ApplicationStatus>>(() =>
     readHiddenStatuses()
@@ -76,12 +79,10 @@ export function KanbanBoard() {
     writeHiddenStatuses(next);
   };
 
-  // Horizontal-scroll affordance: the seven stages overflow the canvas, so we
-  // track whether more columns sit off-screen and surface controls + a stage
-  // rail so no section is ever silently lost beyond the edge.
+  // The columns share the board's width and only scroll sideways when they can't
+  // all fit. Then a stage rail (one chip per stage) is the way across.
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [overflows, setOverflows] = useState(false);
 
   const load = async () => {
     try {
@@ -111,43 +112,18 @@ export function KanbanBoard() {
     [hiddenStatuses]
   );
 
-  // Master resume ids that back more than one card → "shared resume" badge.
-  const sharedResumeIds = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const card of allCards) {
-      if (card.master_resume_id) {
-        counts.set(card.master_resume_id, (counts.get(card.master_resume_id) ?? 0) + 1);
-      }
-    }
-    return new Set([...counts.entries()].filter(([, n]) => n > 1).map(([id]) => id));
-  }, [allCards]);
-
   const isEmpty = allCards.length === 0;
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Board width is driven by the seven fixed-width columns, so we only need to
-    // (re)attach when the board appears — not on every card-list change.
-    const sync = () => {
-      setCanScrollLeft(el.scrollLeft > 4);
-      setCanScrollRight(Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 4);
-    };
+    // Overflow depends on the board's width and the visible stage count, not on
+    // the cards, so re-check on resize and when stages are hidden or shown.
+    const sync = () => setOverflows(el.scrollWidth - el.clientWidth > 4);
     sync();
-    el.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('resize', sync);
-    return () => {
-      el.removeEventListener('scroll', sync);
-      window.removeEventListener('resize', sync);
-    };
-  }, [loading, isEmpty]);
-
-  const scrollByColumn = (direction: 1 | -1) => {
-    scrollRef.current?.scrollBy({
-      left: direction * 320,
-      behavior: reducedMotion ? 'auto' : 'smooth',
-    });
-  };
+    return () => window.removeEventListener('resize', sync);
+  }, [loading, isEmpty, hiddenStatuses]);
 
   const scrollToColumn = (status: ApplicationStatus) => {
     scrollRef.current?.querySelector<HTMLElement>(`[data-column="${status}"]`)?.scrollIntoView({
@@ -213,7 +189,10 @@ export function KanbanBoard() {
     }
   };
 
-  const showScrollControls = !isEmpty && (canScrollLeft || canScrollRight);
+  const openAdd = (status: ApplicationStatus) => {
+    setAddStatus(status);
+    setManualAddOpen(true);
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -241,31 +220,7 @@ export function KanbanBoard() {
             <Gear aria-hidden="true" />
             {t('tracker.manage')}
           </Button>
-          {showScrollControls && (
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                aria-label={t('tracker.scroll.prev')}
-                onClick={() => scrollByColumn(-1)}
-                disabled={!canScrollLeft}
-              >
-                <CaretLeft aria-hidden="true" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                aria-label={t('tracker.scroll.next')}
-                onClick={() => scrollByColumn(1)}
-                disabled={!canScrollRight}
-              >
-                <CaretRight aria-hidden="true" />
-              </Button>
-            </div>
-          )}
-          <Button type="button" size="sm" onClick={() => setManualAddOpen(true)}>
+          <Button type="button" size="sm" onClick={() => openAdd('applied')}>
             <Plus aria-hidden="true" />
             {t('tracker.addApplication')}
           </Button>
@@ -309,12 +264,20 @@ export function KanbanBoard() {
             collisionDetection={closestCorners}
             onDragEnd={handleDragEnd}
           >
-            <div ref={scrollRef} className="flex min-h-0 flex-1 overflow-x-auto">
+            {/* Every stage shares the width, 12rem at the least, so all seven fit
+                from about 1400px; narrower, the board scrolls sideways. */}
+            <div
+              ref={scrollRef}
+              className="grid min-h-0 flex-1 overflow-x-auto"
+              style={{
+                gridTemplateColumns: `repeat(${visibleStatuses.length}, minmax(12rem, 1fr))`,
+              }}
+            >
               {visibleStatuses.map((status, index) => (
                 <div
                   key={status}
                   data-column={status}
-                  className={`flex ${
+                  className={`flex min-h-0 min-w-0 ${
                     index < visibleStatuses.length - 1 ? 'border-r border-ink' : ''
                   }`}
                 >
@@ -322,9 +285,9 @@ export function KanbanBoard() {
                     status={status}
                     applications={columns[status]}
                     selectedIds={selectedIds}
-                    sharedResumeIds={sharedResumeIds}
                     onToggleSelect={toggleSelect}
                     onOpen={setOpenCardId}
+                    onAdd={openAdd}
                   />
                 </div>
               ))}
@@ -333,16 +296,13 @@ export function KanbanBoard() {
         )}
       </div>
 
-      {/* Stage rail — an always-visible map of every stage (with counts) so
-          off-screen sections are never lost; click a stage to jump to it. */}
-      {!isEmpty && (
-        <div className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-ink bg-paper px-6 py-2 md:px-8">
-          {canScrollRight && (
-            <span className="flex shrink-0 items-center gap-1 font-mono text-xs font-bold uppercase tracking-wide text-primary">
-              {t('tracker.scroll.hint')}
-              <CaretRight aria-hidden="true" className="size-4" />
-            </span>
-          )}
+      {/* Stage rail: only when some stages sit off-screen. One chip per stage, with
+          its count; a chip scrolls its stage into view. */}
+      {!isEmpty && overflows && (
+        <nav
+          aria-label={t('tracker.scroll.rail')}
+          className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-ink bg-paper px-6 py-2 md:px-8"
+        >
           <div className="flex items-center gap-2">
             {visibleStatuses.map((status) => (
               <button
@@ -356,8 +316,12 @@ export function KanbanBoard() {
               </button>
             ))}
           </div>
-        </div>
+        </nav>
       )}
+
+      <Suspense fallback={null}>
+        <OpenCardFromUrl onOpen={setOpenCardId} />
+      </Suspense>
 
       <CardDetailModal
         applicationId={openCardId}
@@ -371,6 +335,7 @@ export function KanbanBoard() {
       <ManualAddApplicationDialog
         open={manualAddOpen}
         onOpenChange={setManualAddOpen}
+        initialStatus={addStatus}
         onCreated={load}
       />
 

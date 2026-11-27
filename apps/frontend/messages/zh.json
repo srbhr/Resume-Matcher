@@ -1456,9 +1456,7 @@
       "close": "完成"
     },
     "scroll": {
-      "prev": "向左滚动",
-      "next": "向右滚动",
-      "hint": "滚动查看更多阶段"
+      "rail": "阶段"
     },
     "title": "申请追踪",
     "subtitle": "追踪每份定制简历在求职流程中的进展。",
@@ -1471,7 +1469,9 @@
       "interview": "面试",
       "accepted": "已录用",
       "rejected": "已拒绝",
-      "empty": "这里还没有内容"
+      "empty": "将申请拖放到这里",
+      "add": "添加",
+      "addTo": "添加到{stage}"
     },
     "empty": {
       "title": "暂无申请",
@@ -1480,9 +1480,10 @@
     "card": {
       "companyUnknown": "未知公司",
       "roleUnknown": "未命名职位",
-      "sharedResume": "共享简历",
       "selectAria": "选择申请",
-      "dragAria": "拖动以重新排序"
+      "dragAria": "拖动以重新排序",
+      "appliedAgo": "{when}投递",
+      "viewResume": "查看简历"
     },
     "modal": {
       "jobDescription": "职位描述",
@@ -1663,6 +1664,7 @@
     "untitled": "未命名简历",
     "master": "主简历",
     "footer": "↑↓ 移动 · Enter 打开 · Esc 关闭",
-    "search": "搜索"
+    "search": "搜索",
+    "applications": "申请"
   }
 }

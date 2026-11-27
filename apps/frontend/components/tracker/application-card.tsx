@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useReducedMotion } from 'motion/react';
-import { DotsSixVertical, Stack } from '@phosphor-icons/react';
+import { DotsSixVertical, FileText } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useTranslations } from '@/lib/i18n';
 import { formatDate } from '@/lib/format-date';
 import type { Application } from '@/lib/api/tracker';
-import { isFollowUpDue } from '@/lib/tracker-follow-up';
+import { daysSinceApplied, isFollowUpDue } from '@/lib/tracker-follow-up';
+import { cn } from '@/lib/utils';
 
 /** The house control focus ring, offset against the white card. */
 const FOCUS_RING =
@@ -19,15 +21,26 @@ const FOCUS_RING =
 interface ApplicationCardProps {
   application: Application;
   selected: boolean;
-  sharedResume: boolean;
+  /** Any card on the board is selected: every checkbox shows, not just on hover. */
+  selectionActive?: boolean;
   onToggleSelect: (id: string) => void;
   onOpen: (id: string) => void;
+}
+
+/** "Applied 52 days ago", in the UI language; the exact date goes in a tooltip. */
+function appliedAgo(
+  days: number,
+  locale: string,
+  t: (key: string, p?: Record<string, string>) => string
+) {
+  const when = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-days, 'day');
+  return t('tracker.card.appliedAgo', { when });
 }
 
 export function ApplicationCard({
   application,
   selected,
-  sharedResume,
+  selectionActive = false,
   onToggleSelect,
   onOpen,
 }: ApplicationCardProps) {
@@ -48,58 +61,80 @@ export function ApplicationCard({
 
   const company = application.company?.trim();
   const role = application.role?.trim();
+  const days = daysSinceApplied(application.applied_at, now);
+  const showCheckbox = selected || selectionActive;
 
   return (
-    <div ref={setNodeRef} style={style} className="transition-opacity">
+    <div ref={setNodeRef} style={style} className="group transition-opacity">
       <Card variant="raised" noPadding className={`p-3 ${selected ? 'ring-2 ring-ink' : ''}`}>
         <div className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={() => onToggleSelect(application.application_id)}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={t('tracker.card.selectAria')}
-            className={`mt-1 size-4 shrink-0 accent-ink ${FOCUS_RING}`}
-          />
-
-          <button
-            type="button"
-            onClick={() => onOpen(application.application_id)}
-            className={`min-w-0 flex-1 text-left ${FOCUS_RING}`}
-          >
-            <p className="truncate text-sm font-semibold text-ink">
-              {company || t('tracker.card.companyUnknown')}
-            </p>
-            <p className="truncate font-mono text-xs text-ink-soft">
-              {role || t('tracker.card.roleUnknown')}
-            </p>
-            {application.applied_at && (
-              <p className="mt-1 font-mono text-xs uppercase tracking-wide text-steel tabular-nums">
-                {formatDate(application.applied_at, locale)}
+          <div className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => onOpen(application.application_id)}
+              className={`block w-full text-left ${FOCUS_RING}`}
+            >
+              <p className="truncate text-sm font-semibold text-ink">
+                {company || t('tracker.card.companyUnknown')}
               </p>
+              <p className="line-clamp-2 font-mono text-xs text-ink-soft">
+                {role || t('tracker.card.roleUnknown')}
+              </p>
+              {days !== null && application.applied_at && (
+                <p
+                  className="mt-1 font-mono text-xs text-steel tabular-nums"
+                  title={formatDate(application.applied_at, locale)}
+                >
+                  {appliedAgo(days, locale, t)}
+                </p>
+              )}
+              {isFollowUpDue(application, now) && (
+                <StatusIndicator tone="warning" live={false} className="mt-1 flex">
+                  {t('tracker.followUp.due')}
+                </StatusIndicator>
+              )}
+            </button>
+            {application.resume_id && (
+              <Link
+                href={`/resumes/${application.resume_id}`}
+                className={cn(
+                  'mt-1 inline-flex items-center gap-1 whitespace-nowrap font-mono text-xs text-primary underline-offset-2 hover:underline',
+                  FOCUS_RING
+                )}
+              >
+                <FileText aria-hidden="true" className="size-4 shrink-0" />
+                {t('tracker.card.viewResume')}
+              </Link>
             )}
-            {isFollowUpDue(application, now) && (
-              <StatusIndicator tone="warning" live={false} className="mt-1 flex">
-                {t('tracker.followUp.due')}
-              </StatusIndicator>
-            )}
-            {sharedResume && (
-              <span className="mt-1 inline-flex items-center gap-1 border border-ink bg-paper px-1 font-mono text-xs uppercase text-ink-soft">
-                <Stack aria-hidden="true" className="size-4" />
-                {t('tracker.card.sharedResume')}
-              </span>
-            )}
-          </button>
+          </div>
 
-          <button
-            type="button"
-            className={`mt-1 shrink-0 cursor-grab text-steel transition-colors hover:text-ink active:cursor-grabbing ${FOCUS_RING}`}
-            aria-label={t('tracker.card.dragAria')}
-            {...attributes}
-            {...listeners}
-          >
-            <DotsSixVertical aria-hidden="true" className="size-4" />
-          </button>
+          {/* Card controls, stacked at the right edge so the text keeps the width. */}
+          <div className="flex shrink-0 flex-col items-center gap-2">
+            <button
+              type="button"
+              className={`cursor-grab text-steel transition-colors hover:text-ink active:cursor-grabbing ${FOCUS_RING}`}
+              aria-label={t('tracker.card.dragAria')}
+              {...attributes}
+              {...listeners}
+            >
+              <DotsSixVertical aria-hidden="true" className="size-4" />
+            </button>
+            {/* Shown on hover, on keyboard focus, and on every card once one is
+                selected; always where there is no hover (touch). */}
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={() => onToggleSelect(application.application_id)}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={t('tracker.card.selectAria')}
+              className={cn(
+                'size-4 accent-ink transition-opacity',
+                FOCUS_RING,
+                !showCheckbox &&
+                  'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100'
+              )}
+            />
+          </div>
         </div>
       </Card>
     </div>

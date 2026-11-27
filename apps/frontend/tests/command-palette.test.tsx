@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import type { Application } from '@/lib/api/tracker';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CommandPaletteLauncher,
@@ -45,6 +46,21 @@ vi.mock('@/lib/api/resume', () => ({
     },
   ]),
 }));
+vi.mock('@/lib/api/tracker', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api/tracker')>();
+  const columns = Object.fromEntries(
+    actual.APPLICATION_STATUS_ORDER.map((s) => [s, [] as Partial<Application>[]])
+  );
+  columns.interview = [
+    {
+      application_id: 'a7',
+      company: 'Harbor Ledger',
+      role: 'Backend Engineer',
+      status: 'interview',
+    },
+  ];
+  return { ...actual, listApplications: vi.fn(async () => ({ columns })) };
+});
 
 const ctrlK = (target: Window | Element = window) =>
   act(() => {
@@ -97,6 +113,16 @@ describe('command palette', () => {
     fireEvent.click(within(dialog).getByText('Platform Engineer @ Acme'));
 
     expect(push).toHaveBeenCalledWith('/resumes/r1');
+  });
+
+  it('lists tracked applications with their stage, and opens the card on the tracker', async () => {
+    const dialog = await openPalette();
+
+    const row = await within(dialog).findByText('Harbor Ledger · Backend Engineer');
+    expect(within(dialog).getByText('tracker.columns.interview')).toBeInTheDocument();
+    fireEvent.click(row);
+
+    expect(push).toHaveBeenCalledWith('/tracker?open=a7');
   });
 
   it('leaves Ctrl+K to a handler that already used it (the editor inserts a link)', async () => {

@@ -62,6 +62,23 @@ describe('ManualAddApplicationDialog', () => {
       screen.getByRole('button', { name: 'tracker.manualAdd.status tracker.columns.applied' })
     ).toHaveAttribute('aria-haspopup', 'listbox');
   });
+
+  it('opens on the stage of the column whose Add was pressed', async () => {
+    render(
+      <ManualAddApplicationDialog
+        open
+        onOpenChange={vi.fn()}
+        onCreated={vi.fn()}
+        initialStatus="interview"
+      />
+    );
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'tracker.manualAdd.status tracker.columns.interview',
+      })
+    ).toBeInTheDocument();
+  });
 });
 
 describe('ManualAddApplicationDialog feedback', () => {

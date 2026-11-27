@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KanbanBoard } from '@/components/tracker/kanban-board';
 import {
@@ -9,7 +9,11 @@ import {
 } from '@/lib/api/tracker';
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => '/tracker',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 vi.mock('@/lib/api/tracker', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api/tracker')>();
@@ -79,17 +83,56 @@ describe('KanbanBoard header', () => {
     expect(add.parentElement).toHaveClass('ml-auto');
   });
 
-  it('keeps the scroll controls at the compact h-8 size', async () => {
-    // Make the board overflow so the prev/next controls render.
+  const card = { application_id: 'a1', company: 'Acme', role: 'Engineer' } as Application;
+
+  it('shows no stage rail or scroll buttons when every stage fits', async () => {
+    vi.mocked(listApplications).mockResolvedValue({ columns: columnsWith([card]) });
+
+    render(<KanbanBoard />);
+    await screen.findByText('Acme');
+
+    expect(screen.queryByRole('navigation', { name: 'tracker.scroll.rail' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /scroll/i })).toBeNull();
+  });
+
+  it('offers one way across when stages overflow: the stage rail, with counts', async () => {
     vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(2000);
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(500);
-    const card = { application_id: 'a1', company: 'Acme', role: 'Engineer' } as Application;
     vi.mocked(listApplications).mockResolvedValue({ columns: columnsWith([card]) });
 
     render(<KanbanBoard />);
 
-    for (const name of ['tracker.scroll.prev', 'tracker.scroll.next']) {
-      expect(await screen.findByRole('button', { name })).toHaveClass('h-8', 'w-8');
-    }
+    const rail = await screen.findByRole('navigation', { name: 'tracker.scroll.rail' });
+    expect(within(rail).getAllByRole('button')).toHaveLength(APPLICATION_STATUS_ORDER.length);
+    expect(within(rail).getByRole('button', { name: /tracker\.columns\.saved/ })).toHaveTextContent(
+      '1'
+    );
+    expect(screen.queryByRole('button', { name: /scroll/i })).toBeNull();
+  });
+
+  it('lays the stages out as a grid that shares the width, 12rem each at the least', async () => {
+    vi.mocked(listApplications).mockResolvedValue({ columns: columnsWith([card]) });
+
+    const { container } = render(<KanbanBoard />);
+    await screen.findByText('Acme');
+
+    const board = container.querySelector('[data-column="saved"]')?.parentElement as HTMLElement;
+    expect(board).toHaveClass('grid', 'overflow-x-auto');
+    expect(board.style.gridTemplateColumns).toBe(
+      `repeat(${APPLICATION_STATUS_ORDER.length}, minmax(12rem, 1fr))`
+    );
+  });
+
+  it('marks the outcome stages: Accepted green, Rejected red, the rest ink', async () => {
+    vi.mocked(listApplications).mockResolvedValue({ columns: columnsWith([card]) });
+
+    render(<KanbanBoard />);
+    await screen.findByText('Acme');
+    const square = (stage: string) =>
+      screen.getByRole('heading', { name: `tracker.columns.${stage}` }).previousElementSibling;
+
+    expect(square('accepted')).toHaveClass('bg-success');
+    expect(square('rejected')).toHaveClass('bg-destructive');
+    expect(square('applied')).toHaveClass('bg-ink');
   });
 });

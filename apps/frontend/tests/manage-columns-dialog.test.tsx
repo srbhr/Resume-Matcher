@@ -14,6 +14,8 @@ import { TRACKER_HIDDEN_STATUSES_KEY } from '@/lib/utils/tracker-column-visibili
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/tracker',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock('@/lib/i18n', () => ({

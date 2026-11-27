@@ -2,9 +2,18 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Gear, ListNumbers, Target, SquaresFour, House } from '@phosphor-icons/react';
+import {
+  Briefcase,
+  FileText,
+  Gear,
+  ListNumbers,
+  Target,
+  SquaresFour,
+  House,
+} from '@phosphor-icons/react';
 import { CommandPalette, type PaletteGroup } from '@/components/ui/command-palette';
 import { fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
+import { APPLICATION_STATUS_ORDER, listApplications, type Application } from '@/lib/api/tracker';
 import { useTranslations } from '@/lib/i18n';
 
 interface CommandPaletteContentProps {
@@ -17,6 +26,7 @@ export function CommandPaletteContent({ open, onOpenChange }: CommandPaletteCont
   const { t } = useTranslations();
   const router = useRouter();
   const [resumes, setResumes] = useState<ResumeListItem[] | null>(null);
+  const [applications, setApplications] = useState<Application[] | null>(null);
 
   // Read the list each time the palette opens, so a new or renamed resume shows.
   useEffect(() => {
@@ -28,6 +38,13 @@ export function CommandPaletteContent({ open, onOpenChange }: CommandPaletteCont
       })
       .catch((error: unknown) => {
         console.warn('Command palette: could not load resumes.', error);
+      });
+    listApplications()
+      .then(({ columns }) => {
+        if (!cancelled) setApplications(APPLICATION_STATUS_ORDER.flatMap((s) => columns[s] ?? []));
+      })
+      .catch((error: unknown) => {
+        console.warn('Command palette: could not load applications.', error);
       });
     return () => {
       cancelled = true;
@@ -77,8 +94,22 @@ export function CommandPaletteContent({ open, onOpenChange }: CommandPaletteCont
           icon: <FileText aria-hidden="true" className={icon} />,
         })),
       },
+      {
+        // Opens the card on the tracker (OpenCardFromUrl reads ?open=).
+        label: t('commandPalette.applications'),
+        commands: (applications ?? []).map((application) => {
+          const company = application.company?.trim() || t('tracker.card.companyUnknown');
+          const role = application.role?.trim();
+          return {
+            value: `/tracker?open=${application.application_id}`,
+            label: role ? `${company} · ${role}` : company,
+            hint: t(`tracker.columns.${application.status}`),
+            icon: <Briefcase aria-hidden="true" className={icon} />,
+          };
+        }),
+      },
     ];
-  }, [resumes, t]);
+  }, [resumes, applications, t]);
 
   return (
     <CommandPalette

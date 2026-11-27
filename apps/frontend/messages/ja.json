@@ -1456,9 +1456,7 @@
       "close": "完了"
     },
     "scroll": {
-      "prev": "左へスクロール",
-      "next": "右へスクロール",
-      "hint": "スクロールして他のステージを表示"
+      "rail": "ステージ"
     },
     "title": "応募トラッカー",
     "subtitle": "各カスタマイズ済み履歴書の選考状況を管理します。",
@@ -1471,7 +1469,9 @@
       "interview": "面接",
       "accepted": "内定",
       "rejected": "不採用",
-      "empty": "まだ何もありません"
+      "empty": "ここに応募をドロップ",
+      "add": "追加",
+      "addTo": "{stage}に追加"
     },
     "empty": {
       "title": "応募はまだありません",
@@ -1480,9 +1480,10 @@
     "card": {
       "companyUnknown": "会社名不明",
       "roleUnknown": "役職名なし",
-      "sharedResume": "共有された履歴書",
       "selectAria": "応募を選択",
-      "dragAria": "ドラッグして並べ替え"
+      "dragAria": "ドラッグして並べ替え",
+      "appliedAgo": "{when}に応募",
+      "viewResume": "履歴書を見る"
     },
     "modal": {
       "jobDescription": "求人内容",
@@ -1663,6 +1664,7 @@
     "untitled": "無題の履歴書",
     "master": "マスター",
     "footer": "↑↓ で移動 · Enter で開く · Esc で閉じる",
-    "search": "検索"
+    "search": "検索",
+    "applications": "応募"
   }
 }

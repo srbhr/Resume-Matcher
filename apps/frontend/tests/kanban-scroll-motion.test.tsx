@@ -5,7 +5,11 @@ import { KanbanBoard } from '@/components/tracker/kanban-board';
 import { APPLICATION_STATUS_ORDER, type Application } from '@/lib/api/tracker';
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => '/tracker',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 vi.mock('@/lib/api/tracker', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api/tracker')>();
@@ -21,10 +25,14 @@ describe('KanbanBoard stage jump', () => {
 
   beforeEach(() => {
     Element.prototype.scrollIntoView = scrollIntoView;
+    // The stage rail only shows when the stages overflow the board.
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(2000);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(500);
   });
   afterEach(() => {
     scrollIntoView.mockClear();
     vi.mocked(useReducedMotion).mockReturnValue(false);
+    vi.restoreAllMocks();
   });
 
   const jump = async () => {

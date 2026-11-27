@@ -1456,9 +1456,7 @@
       "close": "Listo"
     },
     "scroll": {
-      "prev": "Desplazar a la izquierda",
-      "next": "Desplazar a la derecha",
-      "hint": "Desplázate para ver más etapas"
+      "rail": "Etapas"
     },
     "title": "Seguimiento de candidaturas",
     "subtitle": "Controla en qué punto está cada currículum adaptado de tu proceso.",
@@ -1471,7 +1469,9 @@
       "interview": "Entrevista",
       "accepted": "Aceptado",
       "rejected": "Rechazado",
-      "empty": "Aún no hay nada aquí"
+      "empty": "Suelta una candidatura aquí",
+      "add": "Añadir",
+      "addTo": "Añadir a {stage}"
     },
     "empty": {
       "title": "Aún no hay candidaturas",
@@ -1480,9 +1480,10 @@
     "card": {
       "companyUnknown": "Empresa desconocida",
       "roleUnknown": "Puesto sin título",
-      "sharedResume": "Currículum compartido",
       "selectAria": "Seleccionar candidatura",
-      "dragAria": "Arrastra para reordenar"
+      "dragAria": "Arrastra para reordenar",
+      "appliedAgo": "Enviada {when}",
+      "viewResume": "Ver currículum"
     },
     "modal": {
       "jobDescription": "Descripción del empleo",
@@ -1663,6 +1664,7 @@
     "untitled": "Currículum sin título",
     "master": "Maestro",
     "footer": "↑↓ para moverte · Intro para abrir · Esc para cerrar",
-    "search": "Buscar"
+    "search": "Buscar",
+    "applications": "Candidaturas"
   }
 }

@@ -1456,9 +1456,7 @@
       "close": "Done"
     },
     "scroll": {
-      "prev": "Scroll left",
-      "next": "Scroll right",
-      "hint": "Scroll for more stages"
+      "rail": "Stages"
     },
     "title": "Application Tracker",
     "subtitle": "Track where each tailored resume stands in your pipeline.",
@@ -1471,7 +1469,9 @@
       "interview": "Interview",
       "accepted": "Accepted",
       "rejected": "Rejected",
-      "empty": "Nothing here yet"
+      "empty": "Drop an application here",
+      "add": "Add",
+      "addTo": "Add to {stage}"
     },
     "empty": {
       "title": "No applications yet",
@@ -1480,9 +1480,10 @@
     "card": {
       "companyUnknown": "Unknown company",
       "roleUnknown": "Untitled role",
-      "sharedResume": "Shared resume",
       "selectAria": "Select application",
-      "dragAria": "Drag to reorder"
+      "dragAria": "Drag to reorder",
+      "appliedAgo": "Applied {when}",
+      "viewResume": "View resume"
     },
     "modal": {
       "jobDescription": "Job Description",
@@ -1663,6 +1664,7 @@
     "untitled": "Untitled resume",
     "master": "Master",
     "footer": "↑↓ to move · Enter to open · Esc to close",
-    "search": "Search"
+    "search": "Search",
+    "applications": "Applications"
   }
 }

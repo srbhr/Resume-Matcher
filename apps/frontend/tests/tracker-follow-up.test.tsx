@@ -102,7 +102,6 @@ describe('ApplicationCard follow-up marker', () => {
       <ApplicationCard
         application={application}
         selected={false}
-        sharedResume={false}
         onToggleSelect={vi.fn()}
         onOpen={vi.fn()}
       />

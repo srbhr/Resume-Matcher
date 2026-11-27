@@ -1456,9 +1456,7 @@
       "close": "Terminé"
     },
     "scroll": {
-      "prev": "Faire défiler à gauche",
-      "next": "Faire défiler à droite",
-      "hint": "Faites défiler pour voir d'autres étapes"
+      "rail": "Étapes"
     },
     "title": "Suivi des candidatures",
     "subtitle": "Suivez l'avancement de chaque CV personnalisé dans votre pipeline.",
@@ -1471,7 +1469,9 @@
       "interview": "Entretien",
       "accepted": "Accepté",
       "rejected": "Refusé",
-      "empty": "Rien ici pour l'instant"
+      "empty": "Déposez une candidature ici",
+      "add": "Ajouter",
+      "addTo": "Ajouter à {stage}"
     },
     "empty": {
       "title": "Aucune candidature pour l'instant",
@@ -1480,9 +1480,10 @@
     "card": {
       "companyUnknown": "Entreprise inconnue",
       "roleUnknown": "Poste sans titre",
-      "sharedResume": "CV partagé",
       "selectAria": "Sélectionner la candidature",
-      "dragAria": "Faire glisser pour réorganiser"
+      "dragAria": "Faire glisser pour réorganiser",
+      "appliedAgo": "Postulé {when}",
+      "viewResume": "Voir le CV"
     },
     "modal": {
       "jobDescription": "Fiche de poste",
@@ -1663,6 +1664,7 @@
     "untitled": "CV sans titre",
     "master": "Principal",
     "footer": "↑↓ pour naviguer · Entrée pour ouvrir · Échap pour fermer",
-    "search": "Rechercher"
+    "search": "Rechercher",
+    "applications": "Candidatures"
   }
 }

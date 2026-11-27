@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-export type PanelTone = 'input' | 'output' | 'neutral';
+export type PanelTone = 'input' | 'output' | 'neutral' | 'success' | 'destructive';
 
 const SQUARE: Record<PanelTone, string> = {
   input: 'bg-primary',
   output: 'bg-success',
   neutral: 'bg-ink',
+  success: 'bg-success',
+  destructive: 'bg-destructive',
 };
 
 /** Swiss panel header: role square + mono caption, optional right-hand actions. Server-safe. */

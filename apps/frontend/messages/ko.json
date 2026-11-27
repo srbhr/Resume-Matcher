@@ -1456,9 +1456,7 @@
       "close": "완료"
     },
     "scroll": {
-      "prev": "왼쪽으로 스크롤",
-      "next": "오른쪽으로 스크롤",
-      "hint": "더 많은 단계를 보려면 스크롤하세요"
+      "rail": "단계"
     },
     "title": "지원 현황 트래커",
     "subtitle": "각 맞춤화된 이력서가 지원 파이프라인에서 어느 단계에 있는지 추적하세요.",
@@ -1471,7 +1469,9 @@
       "interview": "면접",
       "accepted": "합격",
       "rejected": "불합격",
-      "empty": "아직 항목이 없습니다"
+      "empty": "여기에 지원서를 놓으세요",
+      "add": "추가",
+      "addTo": "{stage}에 추가"
     },
     "empty": {
       "title": "아직 지원 내역이 없습니다",
@@ -1480,9 +1480,10 @@
     "card": {
       "companyUnknown": "회사명 미상",
       "roleUnknown": "직무명 없음",
-      "sharedResume": "공유된 이력서",
       "selectAria": "지원 선택",
-      "dragAria": "드래그하여 순서 변경"
+      "dragAria": "드래그하여 순서 변경",
+      "appliedAgo": "{when} 지원",
+      "viewResume": "이력서 보기"
     },
     "modal": {
       "jobDescription": "채용 공고",
@@ -1663,6 +1664,7 @@
     "untitled": "제목 없는 이력서",
     "master": "마스터",
     "footer": "↑↓ 이동 · Enter 열기 · Esc 닫기",
-    "search": "검색"
+    "search": "검색",
+    "applications": "지원"
   }
 }
