@@ -8,25 +8,31 @@ vi.mock('@/lib/i18n', () => ({
 }));
 
 describe('SwissGrid', () => {
-  it('shows the app version beside the brand name in the header, in the label face', () => {
+  it('shows the app version beside the brand name in the bottom strip, in the label face', () => {
     render(<SwissGrid>{null}</SwissGrid>);
 
     const version = screen.getByText(`v${APP_VERSION}`);
     expect(version).toHaveClass('text-steel');
     const brand = screen.getByText('Resume Matcher');
     expect(version.parentElement).toBe(brand.parentElement);
-    expect(brand.closest('header')).not.toBeNull();
-    // The brand line sets the label face for the name and the version alike.
+    expect(brand.closest('header')).toBeNull();
+    expect(brand.closest('.border-t')).toContainElement(
+      screen.getByRole('link', { name: 'community.follow' })
+    );
     expect(brand.closest('.font-mono')).toContainElement(version);
   });
 
-  it('keeps the header to one row on wide screens: brand line and buttons together', () => {
+  it('keeps the header calm: one bordered search, then quiet links', () => {
     render(<SwissGrid>{null}</SwissGrid>);
 
-    const row = screen.getByRole('link', { name: 'nav.queue' }).parentElement;
-    expect(row).toContainElement(screen.getByText('Resume Matcher'));
-    expect(row).toContainElement(screen.getByRole('link', { name: 'nav.settings' }));
-    expect(row).toHaveClass('flex-wrap', 'items-center');
+    const search = screen.getByRole('button', { name: /commandPalette\.search/ });
+    expect(search).toHaveClass('border', 'border-ink', 'bg-white');
+    expect(search).toHaveAttribute('aria-keyshortcuts', 'Meta+K Control+K');
+    for (const name of ['nav.queue', 'nav.applicationTracker', 'nav.settings']) {
+      const link = screen.getByRole('link', { name });
+      expect(link).toHaveClass('border-none', 'shadow-none');
+      expect(link.parentElement).toBe(search.parentElement);
+    }
   });
 
   it('puts the queue, tracker and a gear settings button in the header, not a footer', () => {
@@ -83,8 +89,9 @@ describe('SwissGrid', () => {
       expect(strip).toContainElement(screen.getByRole('link', { name }));
     }
     // No footer row between the tiles and the strip any more.
+    const row = strip!.closest('.border-t');
     const tiles = screen.getByRole('heading', { level: 2 }).parentElement;
-    expect(tiles!.nextElementSibling).toBe(strip);
-    expect(strip).toHaveClass('border-t', 'border-ink', 'bg-canvas');
+    expect(tiles!.nextElementSibling).toBe(row);
+    expect(row).toHaveClass('border-t', 'border-ink', 'bg-canvas');
   });
 });

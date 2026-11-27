@@ -31,39 +31,25 @@ export const SwissGrid = ({
     <PageFrame height="screen">
       <PageHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <PageHeader.Title>{t('nav.dashboard')}</PageHeader.Title>
-        {/* One row: the brand line, then the buttons, as the old bottom bar had them. */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 font-mono text-xs text-primary">
-            <Image src="/logo.svg" alt="" width={20} height={20} className="w-5 h-5" />
-            <span className="uppercase font-bold">Resume Matcher</span>
-            <span className="text-steel">v{APP_VERSION}</span>
-          </div>
+        {/* One field-like search, then quiet links: one bordered element, not five. */}
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={openCommandPalette}
             aria-keyshortcuts="Meta+K Control+K"
-            className={buttonClass({ variant: 'outline' })}
+            className="flex h-10 w-full items-center gap-2 border border-ink bg-white px-3 text-left text-sm text-steel hover:border-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary sm:w-64"
           >
-            <MagnifyingGlass aria-hidden="true" />
-            {t('commandPalette.search')}
-            <kbd
-              aria-hidden="true"
-              className="border border-ink px-1 font-mono text-xs normal-case"
-            >
+            <MagnifyingGlass aria-hidden="true" className="size-4 shrink-0 text-ink" />
+            <span className="min-w-0 flex-1 truncate">{t('commandPalette.search')}…</span>
+            <kbd aria-hidden="true" className="border border-ink px-1 font-mono text-xs text-ink">
               {modKey} K
             </kbd>
           </button>
-          <Link
-            href="/queue"
-            className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
-          >
+          <Link href="/queue" className={buttonClass({ variant: 'ghost' })}>
             <ListNumbers aria-hidden="true" />
             {t('nav.queue')}
           </Link>
-          <Link
-            href="/tracker"
-            className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
-          >
+          <Link href="/tracker" className={buttonClass({ variant: 'ghost' })}>
             <SquaresFour aria-hidden="true" />
             {t('nav.applicationTracker')}
           </Link>
@@ -71,8 +57,7 @@ export const SwissGrid = ({
             href="/settings"
             aria-label={t('nav.settings')}
             title={t('nav.settings')}
-            // Icon size, at the height of the text buttons beside it.
-            className={buttonClass({ variant: 'warning', size: 'icon', className: 'h-10 w-10' })}
+            className={buttonClass({ variant: 'ghost', size: 'icon', className: 'h-10 w-10' })}
           >
             <GearSix aria-hidden="true" />
           </Link>
@@ -94,8 +79,13 @@ export const SwissGrid = ({
       </div>
 
       {/* Community strip - a slim last row, kept above hovered cards */}
-      <div className="px-4 py-2 bg-canvas border-t border-ink shrink-0 relative z-30">
+      <div className="px-4 py-2 bg-canvas border-t border-ink shrink-0 relative z-30 flex flex-wrap items-center justify-between gap-2">
         <CommunityLinks variant="strip" />
+        <div className="flex items-center gap-2 font-mono text-xs text-primary">
+          <Image src="/logo.svg" alt="" width={16} height={16} className="w-4 h-4" />
+          <span className="uppercase font-bold">Resume Matcher</span>
+          <span className="text-steel">v{APP_VERSION}</span>
+        </div>
       </div>
     </PageFrame>
   );
