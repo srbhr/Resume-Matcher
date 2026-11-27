@@ -49,4 +49,46 @@ describe('print route template settings from the query string', () => {
     // Margins go to Playwright, so the rendered sheet always gets zero.
     expect(received.settings?.margins).toEqual({ top: 0, bottom: 0, left: 0, right: 0 });
   });
+
+  it('reads the link style and each list row, falling back for unknown values', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: { processed_resume: { personalInfo: { name: 'Jane' } } } }),
+      })
+    );
+
+    await renderWith({
+      linkStyle: 'text',
+      listSkills: 'comma',
+      listLanguages: 'bullets',
+      listAwards: 'comma',
+    });
+
+    expect(received.settings?.linkStyle).toBe('text');
+    expect(received.settings?.listStyle).toEqual({
+      skills: 'comma',
+      languages: 'pills',
+      certifications: 'pills',
+      awards: 'comma',
+    });
+  });
+
+  it('prints links as chips and lists as pills when the query says nothing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: { processed_resume: { personalInfo: { name: 'Jane' } } } }),
+      })
+    );
+
+    await renderWith({ linkStyle: 'badge' });
+
+    expect(received.settings?.linkStyle).toBe('chip');
+    expect(received.settings?.listStyle).toEqual(DEFAULT_TEMPLATE_SETTINGS.listStyle);
+  });
 });

@@ -506,7 +506,19 @@
       "tight": "좁게",
       "loose": "넓게",
       "resetMargins": "여백 초기화",
-      "marginsLinked": "모든 면 동일하게"
+      "marginsLinked": "모든 면 동일하게",
+      "links": "프로젝트 링크",
+      "linksHint": "프로젝트의 GitHub 및 웹사이트 링크를 인쇄하는 방식입니다.",
+      "linkStyles": {
+        "chip": "버튼",
+        "url": "전체 링크",
+        "text": "링크된 텍스트"
+      },
+      "lists": "목록",
+      "listStyles": {
+        "pills": "태그",
+        "comma": "쉼표"
+      }
     },
     "personalInfoForm": {
       "placeholders": {

@@ -63,4 +63,23 @@ describe('multi-master api client', () => {
     });
     expect(fit).not.toHaveProperty('lang');
   });
+
+  it('carries the link style and list rows, with defaults for settings saved before them', () => {
+    const fit = toPageFitSettings({
+      ...DEFAULT_TEMPLATE_SETTINGS,
+      linkStyle: 'url',
+      listStyle: { ...DEFAULT_TEMPLATE_SETTINGS.listStyle, skills: 'comma' },
+    });
+    expect(fit).toMatchObject({
+      linkStyle: 'url',
+      listSkills: 'comma',
+      listLanguages: 'pills',
+      listCertifications: 'pills',
+      listAwards: 'pills',
+    });
+
+    const { linkStyle: _l, listStyle: _s, ...older } = DEFAULT_TEMPLATE_SETTINGS;
+    const legacy = toPageFitSettings(older as typeof DEFAULT_TEMPLATE_SETTINGS);
+    expect(legacy).toMatchObject({ linkStyle: 'chip', listSkills: 'pills', listAwards: 'pills' });
+  });
 });

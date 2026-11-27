@@ -1265,6 +1265,11 @@ async def download_resume_pdf(
     compactMode: bool = Query(False),
     showContactIcons: bool = Query(False),
     accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
+    linkStyle: str = Query("chip", pattern="^(chip|url|text)$"),
+    listSkills: str = Query("pills", pattern="^(pills|comma)$"),
+    listLanguages: str = Query("pills", pattern="^(pills|comma)$"),
+    listCertifications: str = Query("pills", pattern="^(pills|comma)$"),
+    listAwards: str = Query("pills", pattern="^(pills|comma)$"),
     lang: str | None = Query(None, pattern="^[a-z]{2}(-[A-Z]{2})?$"),
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
@@ -1283,6 +1288,8 @@ async def download_resume_pdf(
     - bodyFont: serif, sans-serif, or mono
     - compactMode: enable tighter spacing
     - showContactIcons: show icons in contact info
+    - linkStyle: project links as chip (button), url (full link) or text (linked text)
+    - listSkills/listLanguages/listCertifications/listAwards: pills or comma, per row
     - lang: locale used for print page translations
     """
     resume = await db.get_resume(resume_id)
@@ -1311,6 +1318,11 @@ async def download_resume_pdf(
         compactMode=compactMode,
         showContactIcons=showContactIcons,
         accentColor=accentColor,
+        linkStyle=linkStyle,
+        listSkills=listSkills,
+        listLanguages=listLanguages,
+        listCertifications=listCertifications,
+        listAwards=listAwards,
         lang=lang,
     )
     url = resume_print_url(resume_id, fit)

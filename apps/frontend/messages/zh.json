@@ -536,7 +536,19 @@
       "tight": "紧凑",
       "loose": "宽松",
       "resetMargins": "重置页边距",
-      "marginsLinked": "四边相同"
+      "marginsLinked": "四边相同",
+      "links": "项目链接",
+      "linksHint": "项目中 GitHub 和网站链接的打印方式。",
+      "linkStyles": {
+        "chip": "按钮",
+        "url": "完整链接",
+        "text": "链接文字"
+      },
+      "lists": "列表",
+      "listStyles": {
+        "pills": "标签",
+        "comma": "逗号分隔"
+      }
     },
     "personalInfoForm": {
       "placeholders": {

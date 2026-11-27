@@ -33,6 +33,41 @@ export type PageSize = 'A4' | 'LETTER';
 
 export type AccentColor = 'blue' | 'green' | 'orange' | 'red';
 
+/**
+ * How a project's GitHub and website links print: `chip` a small boxed button
+ * with an icon, `url` the bare address as a plain link, `text` a word linked
+ * underneath ("GitHub", or the site's host name).
+ */
+export type LinkStyle = 'chip' | 'url' | 'text';
+export const LINK_STYLES: readonly LinkStyle[] = ['chip', 'url', 'text'];
+
+/** How a list row prints: boxed pills, or one line of comma-separated text. */
+export type ListStyle = 'pills' | 'comma';
+export const LIST_STYLES: readonly ListStyle[] = ['pills', 'comma'];
+
+export type ListRow = 'skills' | 'languages' | 'certifications' | 'awards';
+export const LIST_ROWS: readonly ListRow[] = ['skills', 'languages', 'certifications', 'awards'];
+export type ListStyleSettings = Record<ListRow, ListStyle>;
+
+/** Templates whose project links the link style changes. */
+export const LINK_STYLE_TEMPLATES: ReadonlySet<TemplateType> = new Set([
+  'swiss-single',
+  'swiss-two-column',
+  'modern',
+  'modern-two-column',
+  'latex',
+  'clean',
+  'vivid',
+]);
+
+/** The rows each template draws as pills, so the pill-or-comma choice changes them. */
+export const LIST_STYLE_ROWS: Partial<Record<TemplateType, readonly ListRow[]>> = {
+  'swiss-single': LIST_ROWS,
+  modern: LIST_ROWS,
+  'swiss-two-column': ['skills'],
+  'modern-two-column': ['skills'],
+};
+
 export type SpacingLevel = 1 | 2 | 3 | 4 | 5;
 
 export type HeaderFontFamily = 'serif' | 'sans-serif' | 'mono';
@@ -67,6 +102,8 @@ export interface TemplateSettings {
   compactMode: boolean; // Apply tighter spacing across the board
   showContactIcons: boolean; // Show icons next to contact info
   accentColor: AccentColor; // Accent color for Modern template
+  linkStyle: LinkStyle; // How project links print
+  listStyle: ListStyleSettings; // Pills or commas, per list row
   // On saved settings: which builder session saved them, and its save number.
   session?: string | null;
   revision?: number;
@@ -84,6 +121,8 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   compactMode: false,
   showContactIcons: false,
   accentColor: 'blue',
+  linkStyle: 'chip',
+  listStyle: { skills: 'pills', languages: 'pills', certifications: 'pills', awards: 'pills' },
 };
 
 /**

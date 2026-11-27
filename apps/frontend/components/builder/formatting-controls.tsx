@@ -27,7 +27,20 @@ import {
   TEMPLATE_OPTIONS,
   PAGE_SIZE_INFO,
   ACCENT_COLOR_MAP,
+  LINK_STYLES,
+  LINK_STYLE_TEMPLATES,
+  LIST_STYLE_ROWS,
+  type ListRow,
+  type ListStyle,
 } from '@/lib/types/template-settings';
+
+/** Each list row is named as the resume names its section. */
+const LIST_ROW_LABELS: Record<ListRow, string> = {
+  skills: 'resume.sections.skillsOnly',
+  languages: 'resume.sections.languages',
+  certifications: 'resume.sections.certifications',
+  awards: 'resume.sections.awards',
+};
 import { TemplateThumbnail } from './template-selector';
 import { useTranslations } from '@/lib/i18n';
 
@@ -180,6 +193,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     }),
     [t]
   );
+
+  // Settings saved before these options existed have neither; they print the defaults.
+  const linkStyle = settings.linkStyle ?? DEFAULT_TEMPLATE_SETTINGS.linkStyle;
+  const listStyle = { ...DEFAULT_TEMPLATE_SETTINGS.listStyle, ...settings.listStyle };
+  const listRows = LIST_STYLE_ROWS[settings.template] ?? [];
 
   const spacingEnds: [string, string] = [
     t('builder.formatting.tight'),
@@ -482,6 +500,53 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
             </div>
           </div>
 
+          {/* Project links: how GitHub and website links print, where the template shows them. */}
+          {LINK_STYLE_TEMPLATES.has(settings.template) && (
+            <div>
+              <h4
+                id={`${contentId}-links`}
+                className="font-mono text-xs font-bold uppercase tracking-wider mb-1 text-ink-soft"
+              >
+                {t('builder.formatting.links')}
+              </h4>
+              <p className="mb-3 text-xs text-steel">{t('builder.formatting.linksHint')}</p>
+              <SegmentedControl
+                size="sm"
+                aria-labelledby={`${contentId}-links`}
+                className="gap-1"
+                value={linkStyle}
+                onChange={(value) => onChange({ ...settings, linkStyle: value })}
+                items={LINK_STYLES.map((style) => ({
+                  value: style,
+                  label: t(`builder.formatting.linkStyles.${style}`),
+                }))}
+              />
+            </div>
+          )}
+
+          {/* Lists: pills or one comma-separated line, row by row, where the template draws pills. */}
+          {listRows.length > 0 && (
+            <div>
+              <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
+                {t('builder.formatting.lists')}
+              </h4>
+              <div className="space-y-3">
+                {listRows.map((row) => (
+                  <ListStyleRow
+                    key={row}
+                    label={t(LIST_ROW_LABELS[row])}
+                    value={listStyle[row]}
+                    pills={t('builder.formatting.listStyles.pills')}
+                    commas={t('builder.formatting.listStyles.comma')}
+                    onChange={(value) =>
+                      onChange({ ...settings, listStyle: { ...listStyle, [row]: value } })
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Options Section */}
           <div>
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
@@ -648,6 +713,35 @@ const SpacingSelector: React.FC<SpacingSelectorProps> = ({ label, value, onChang
           </span>
         )}
       </span>
+    </div>
+  );
+};
+
+/** One list row: its name, then Pills | Commas. */
+const ListStyleRow: React.FC<{
+  label: string;
+  value: ListStyle;
+  pills: string;
+  commas: string;
+  onChange: (value: ListStyle) => void;
+}> = ({ label, value, pills, commas, onChange }) => {
+  const labelId = useId();
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span id={labelId} className="w-32 shrink-0 font-mono text-xs text-ink-soft">
+        {label}
+      </span>
+      <SegmentedControl
+        size="sm"
+        className="gap-1"
+        aria-labelledby={labelId}
+        value={value}
+        onChange={onChange}
+        items={[
+          { value: 'pills', label: pills },
+          { value: 'comma', label: commas },
+        ]}
+      />
     </div>
   );
 };

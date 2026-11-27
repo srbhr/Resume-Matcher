@@ -230,6 +230,7 @@ const Resume: React.FC<ResumeProps> = ({
     margins: { ...DEFAULT_TEMPLATE_SETTINGS.margins, ...settings?.margins },
     spacing: { ...DEFAULT_TEMPLATE_SETTINGS.spacing, ...settings?.spacing },
     fontSize: { ...DEFAULT_TEMPLATE_SETTINGS.fontSize, ...settings?.fontSize },
+    listStyle: { ...DEFAULT_TEMPLATE_SETTINGS.listStyle, ...settings?.listStyle },
   };
 
   // If template is provided as prop but not in settings, use the prop
@@ -244,6 +245,12 @@ const Resume: React.FC<ResumeProps> = ({
     <div
       className={`${baseStyles['resume-body']} bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
       style={cssVars}
+      // Read by _base.module.css: how project links and each list row print.
+      data-link-style={mergedSettings.linkStyle}
+      data-list-skills={mergedSettings.listStyle.skills}
+      data-list-languages={mergedSettings.listStyle.languages}
+      data-list-certifications={mergedSettings.listStyle.certifications}
+      data-list-awards={mergedSettings.listStyle.awards}
     >
       {mergedSettings.template === 'swiss-single' && (
         <ResumeSingleColumn

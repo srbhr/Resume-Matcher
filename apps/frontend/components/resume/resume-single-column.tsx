@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import type {
   ResumeData,
   SectionMeta,
@@ -14,6 +14,7 @@ import { TagList } from './tag-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { ResumePhoto, photoHeaderClass } from './resume-photo';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
+import { ProjectLink } from './project-link';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-single.module.css';
 import modernStyles from './styles/modern.module.css';
@@ -187,42 +188,8 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                       <h4 className={baseStyles['resume-item-title']}>{project.name}</h4>
                       {(project.github || project.website) && (
                         <span className="flex gap-1.5">
-                          {project.github && (
-                            <a
-                              href={
-                                project.github.startsWith('http')
-                                  ? project.github
-                                  : `https://${project.github}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={baseStyles['resume-link-pill']}
-                            >
-                              <Github size={10} />
-                              {project.github
-                                .replace(/^https?:\/\//, '')
-                                .replace(/^www\./, '')
-                                .replace(/\/$/, '')}
-                            </a>
-                          )}
-                          {project.website && (
-                            <a
-                              href={
-                                project.website.startsWith('http')
-                                  ? project.website
-                                  : `https://${project.website}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={baseStyles['resume-link-pill']}
-                            >
-                              <ExternalLink size={10} />
-                              {project.website
-                                .replace(/^https?:\/\//, '')
-                                .replace(/^www\./, '')
-                                .replace(/\/$/, '')}
-                            </a>
-                          )}
+                          {project.github && <ProjectLink kind="github" url={project.github} />}
+                          {project.website && <ProjectLink kind="website" url={project.website} />}
                         </span>
                       )}
                     </div>
@@ -444,29 +411,29 @@ const AdditionalSection: React.FC<{
             {row.label ? (
               <span className="min-w-0">
                 <span className="font-bold">{row.label}: </span>
-                <TagList items={row.items} />
+                <TagList items={row.items} row="skills" />
               </span>
             ) : (
-              <TagList items={row.items} />
+              <TagList items={row.items} row="skills" />
             )}
           </div>
         ))}
         {languages.length > 0 && (
           <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
-            <TagList items={languages} />
+            <TagList items={languages} row="languages" />
           </div>
         )}
         {certificationsTraining.length > 0 && (
           <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
-            <TagList items={certificationsTraining} />
+            <TagList items={certificationsTraining} row="certifications" />
           </div>
         )}
         {awards.length > 0 && (
           <div {...resumeItem()} className="flex items-baseline">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
-            <TagList items={awards} />
+            <TagList items={awards} row="awards" />
           </div>
         )}
       </div>

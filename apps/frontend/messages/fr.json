@@ -536,7 +536,19 @@
       "tight": "Serré",
       "loose": "Aéré",
       "resetMargins": "Réinitialiser les marges",
-      "marginsLinked": "Identiques sur tous les côtés"
+      "marginsLinked": "Identiques sur tous les côtés",
+      "links": "Liens des projets",
+      "linksHint": "Comment les liens GitHub et web s’impriment dans Projets.",
+      "linkStyles": {
+        "chip": "Bouton",
+        "url": "Lien complet",
+        "text": "Texte lié"
+      },
+      "lists": "Listes",
+      "listStyles": {
+        "pills": "Étiquettes",
+        "comma": "Virgules"
+      }
     },
     "personalInfoForm": {
       "placeholders": {

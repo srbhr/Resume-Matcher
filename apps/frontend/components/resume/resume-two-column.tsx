@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import type { ResumeData, ResumeSectionHeadings } from '@/components/dashboard/resume-component';
 import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
@@ -8,6 +8,8 @@ import { DynamicResumeSection } from './dynamic-resume-section';
 import { DescriptionList } from './description-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
+import { ProjectLink } from './project-link';
+import { TagList } from './tag-list';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-two-column.module.css';
 import { ResumePhoto, photoHeaderClass } from './resume-photo';
@@ -294,41 +296,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                           <h4 className={baseStyles['resume-item-title-sm']}>{project.name}</h4>
                           {(project.github || project.website) && (
                             <span className="flex gap-1">
-                              {project.github && (
-                                <a
-                                  href={
-                                    project.github.startsWith('http')
-                                      ? project.github
-                                      : `https://${project.github}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={baseStyles['resume-link-pill']}
-                                >
-                                  <Github size={9} />
-                                  {project.github
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .replace(/\/$/, '')}
-                                </a>
-                              )}
+                              {project.github && <ProjectLink kind="github" url={project.github} />}
                               {project.website && (
-                                <a
-                                  href={
-                                    project.website.startsWith('http')
-                                      ? project.website
-                                      : `https://${project.website}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={baseStyles['resume-link-pill']}
-                                >
-                                  <ExternalLink size={9} />
-                                  {project.website
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .replace(/\/$/, '')}
-                                </a>
+                                <ProjectLink kind="website" url={project.website} />
                               )}
                             </span>
                           )}
@@ -423,12 +393,8 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                 {headingFallbacks.skills}
               </h3>
               {isPlainSkillList(skillRows) ? (
-                <div className="flex flex-wrap gap-1">
-                  {skillRows[0].items.map((skill, index) => (
-                    <span key={index} className={baseStyles['resume-skill-pill']}>
-                      {skill}
-                    </span>
-                  ))}
+                <div>
+                  <TagList items={skillRows[0].items} row="skills" />
                 </div>
               ) : (
                 <div className="flex flex-col gap-1.5">
@@ -439,12 +405,8 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                           {row.label}:
                         </p>
                       )}
-                      <div className="flex flex-wrap gap-1">
-                        {row.items.map((skill, index) => (
-                          <span key={index} className={baseStyles['resume-skill-pill']}>
-                            {skill}
-                          </span>
-                        ))}
+                      <div>
+                        <TagList items={row.items} row="skills" />
                       </div>
                     </div>
                   ))}

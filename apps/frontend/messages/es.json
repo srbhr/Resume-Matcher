@@ -536,7 +536,19 @@
       "tight": "Compacto",
       "loose": "Amplio",
       "resetMargins": "Restablecer márgenes",
-      "marginsLinked": "Igual en todos los lados"
+      "marginsLinked": "Igual en todos los lados",
+      "links": "Enlaces de proyectos",
+      "linksHint": "Cómo se imprimen los enlaces de GitHub y web en Proyectos.",
+      "linkStyles": {
+        "chip": "Botón",
+        "url": "Enlace completo",
+        "text": "Texto enlazado"
+      },
+      "lists": "Listas",
+      "listStyles": {
+        "pills": "Etiquetas",
+        "comma": "Comas"
+      }
     },
     "personalInfoForm": {
       "placeholders": {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Mail, Phone, Globe, Linkedin, Github } from 'lucide-react';
 import type {
   ResumeData,
   SectionMeta,
@@ -11,6 +11,7 @@ import { labeledSkillRows } from '@/lib/utils/skill-groups';
 import { DescriptionList } from './description-list';
 import { EarlierExperience, splitCondensed } from './earlier-experience';
 import { RESUME_SECTION, RESUME_SECTION_TITLE, resumeItem } from './page-break-attrs';
+import { ProjectLink } from './project-link';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/latex.module.css';
 import { customSectionHasContent } from './dynamic-resume-section';
@@ -198,42 +199,8 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
                       <span className={styles.entryPrimary}>{project.name}</span>
                       {(project.github || project.website) && (
                         <span className="flex gap-1.5">
-                          {project.github && (
-                            <a
-                              href={
-                                project.github.startsWith('http')
-                                  ? project.github
-                                  : `https://${project.github}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={baseStyles['resume-link-pill']}
-                            >
-                              <Github size={10} />
-                              {project.github
-                                .replace(/^https?:\/\//, '')
-                                .replace(/^www\./, '')
-                                .replace(/\/$/, '')}
-                            </a>
-                          )}
-                          {project.website && (
-                            <a
-                              href={
-                                project.website.startsWith('http')
-                                  ? project.website
-                                  : `https://${project.website}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={baseStyles['resume-link-pill']}
-                            >
-                              <ExternalLink size={10} />
-                              {project.website
-                                .replace(/^https?:\/\//, '')
-                                .replace(/^www\./, '')
-                                .replace(/\/$/, '')}
-                            </a>
-                          )}
+                          {project.github && <ProjectLink kind="github" url={project.github} />}
+                          {project.website && <ProjectLink kind="website" url={project.website} />}
                         </span>
                       )}
                     </div>

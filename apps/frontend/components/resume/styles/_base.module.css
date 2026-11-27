@@ -207,6 +207,65 @@
   background-color: var(--resume-accent-bg);
 }
 
+/*
+ * Project links print in one of three styles, chosen on the resume root
+ * (data-link-style, from the template settings): chip (the pill above, with an
+ * icon), url (the bare address as a plain underlined link) or text (a word,
+ * "GitHub" or the host name, linked). Hidden parts are display: none, so they
+ * stay out of the PDF text layer; the href is the same in every style.
+ */
+.resume-link-label {
+  display: none;
+}
+
+.resume-body[data-link-style='url'] .resume-link-pill,
+.resume-body[data-link-style='text'] .resume-link-pill {
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.resume-body[data-link-style='url'] .resume-link-icon,
+.resume-body[data-link-style='text'] .resume-link-icon,
+.resume-body[data-link-style='text'] .resume-link-url {
+  display: none;
+}
+
+.resume-body[data-link-style='text'] .resume-link-label {
+  display: inline;
+}
+
+/*
+ * A list row (data-list-row on a TagList) prints as pills unless the resume
+ * root asks for commas on that row (data-list-<row>="comma"): then the pills
+ * lose their boxes and the separators, transparent until now, show.
+ */
+.resume-body[data-list-skills='comma'] [data-list-row='skills'] .resume-skill-pill,
+.resume-body[data-list-languages='comma'] [data-list-row='languages'] .resume-skill-pill,
+.resume-body[data-list-certifications='comma'] [data-list-row='certifications'] .resume-skill-pill,
+.resume-body[data-list-awards='comma'] [data-list-row='awards'] .resume-skill-pill {
+  display: inline;
+  margin-bottom: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+.resume-body[data-list-skills='comma'] [data-list-row='skills'] .resume-tag-separator,
+.resume-body[data-list-languages='comma'] [data-list-row='languages'] .resume-tag-separator,
+.resume-body[data-list-certifications='comma'] [data-list-row='certifications'] .resume-tag-separator,
+.resume-body[data-list-awards='comma'] [data-list-row='awards'] .resume-tag-separator {
+  color: inherit;
+}
+
 /* Resume Section Styles */
 .resume-section {
   margin-bottom: var(--section-gap);

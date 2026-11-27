@@ -189,4 +189,44 @@ describe('FormattingControls', () => {
       'builder.formatting.effectiveLineHeight'
     );
   });
+
+  it('offers the link style and every list row for the single-column template', () => {
+    const onChange = renderControls();
+    const links = screen.getByRole('radiogroup', { name: 'builder.formatting.links' });
+    fireEvent.click(
+      within(links).getByRole('radio', { name: 'builder.formatting.linkStyles.text' })
+    );
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ linkStyle: 'text' }));
+
+    const awards = screen.getByRole('radiogroup', { name: 'resume.sections.awards' });
+    fireEvent.click(
+      within(awards).getByRole('radio', { name: 'builder.formatting.listStyles.comma' })
+    );
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        listStyle: { ...DEFAULT_TEMPLATE_SETTINGS.listStyle, awards: 'comma' },
+      })
+    );
+  });
+
+  it('shows only the controls a template uses', () => {
+    render(
+      <FormattingControls
+        settings={{ ...DEFAULT_TEMPLATE_SETTINGS, template: 'swiss-two-column' }}
+        onChange={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole('radiogroup', { name: 'resume.sections.skillsOnly' })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup', { name: 'resume.sections.awards' })).toBeNull();
+
+    render(
+      <FormattingControls
+        settings={{ ...DEFAULT_TEMPLATE_SETTINGS, template: 'deedy' }}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getAllByRole('radiogroup', { name: 'builder.formatting.links' })).toHaveLength(1);
+  });
 });

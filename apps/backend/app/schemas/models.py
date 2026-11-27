@@ -793,6 +793,15 @@ class TemplateFontSize(BaseModel):
     bodyFont: Literal["serif", "sans-serif", "mono"] = "sans-serif"
 
 
+class TemplateListStyle(BaseModel):
+    """Pills or one comma-separated line, per list row of a resume."""
+
+    skills: Literal["pills", "comma"] = "pills"
+    languages: Literal["pills", "comma"] = "pills"
+    certifications: Literal["pills", "comma"] = "pills"
+    awards: Literal["pills", "comma"] = "pills"
+
+
 class TemplateSettings(BaseModel):
     """A resume's saved formatting.
 
@@ -807,6 +816,9 @@ class TemplateSettings(BaseModel):
     compactMode: bool = False
     showContactIcons: bool = False
     accentColor: Literal["blue", "green", "orange", "red"] = "blue"
+    # How project links print: a boxed button, the bare address, or linked text.
+    linkStyle: Literal["chip", "url", "text"] = "chip"
+    listStyle: TemplateListStyle = Field(default_factory=TemplateListStyle)
     # Orders saves from one builder session (a tab): `revision` counts up per session.
     # A save older than the stored one from the same session is ignored, so that
     # tab's requests arriving out of order cannot undo its newer choice. Saves from
@@ -841,6 +853,11 @@ class PageFitSettings(BaseModel):
     compactMode: bool = False
     showContactIcons: bool = False
     accentColor: Literal["blue", "green", "orange", "red"] = "blue"
+    linkStyle: Literal["chip", "url", "text"] = "chip"
+    listSkills: Literal["pills", "comma"] = "pills"
+    listLanguages: Literal["pills", "comma"] = "pills"
+    listCertifications: Literal["pills", "comma"] = "pills"
+    listAwards: Literal["pills", "comma"] = "pills"
     lang: str | None = Field(None, pattern=r"^[a-z]{2}(-[A-Z]{2})?$")
     # Academic CV mode: no page cap. Page fit and verification report the page count
     # but never trim to a limit or raise an over-limit warning. Not a print setting,

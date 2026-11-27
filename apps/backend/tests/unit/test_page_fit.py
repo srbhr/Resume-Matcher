@@ -35,6 +35,30 @@ def test_page_fit_settings_query_matches_pdf_endpoint_params() -> None:
     assert "lang" not in PageFitSettings().to_query()
 
 
+def test_link_and_list_styles_reach_the_print_query() -> None:
+    default = PageFitSettings().to_query()
+    assert default["linkStyle"] == "chip"
+    assert [
+        default[k]
+        for k in ("listSkills", "listLanguages", "listCertifications", "listAwards")
+    ] == ["pills"] * 4
+    q = PageFitSettings(
+        linkStyle="text", listSkills="comma", listAwards="comma"
+    ).to_query()
+    assert q["linkStyle"] == "text"
+    assert q["listSkills"] == "comma" and q["listAwards"] == "comma"
+    assert q["listLanguages"] == "pills"
+
+
+def test_link_and_list_styles_reject_unknown_values() -> None:
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        PageFitSettings(linkStyle="badge")
+    with pytest.raises(ValidationError):
+        PageFitSettings(listSkills="bullets")
+
+
 def test_cv_mode_is_off_by_default_and_not_a_print_setting() -> None:
     assert PageFitSettings().cv_mode is False
     on = PageFitSettings(cv_mode=True)

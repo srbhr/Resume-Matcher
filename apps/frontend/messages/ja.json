@@ -536,7 +536,19 @@
       "tight": "狭い",
       "loose": "広い",
       "resetMargins": "余白をリセット",
-      "marginsLinked": "すべての辺を同じにする"
+      "marginsLinked": "すべての辺を同じにする",
+      "links": "プロジェクトのリンク",
+      "linksHint": "プロジェクト欄の GitHub とウェブサイトのリンクの印刷方法。",
+      "linkStyles": {
+        "chip": "ボタン",
+        "url": "完全なリンク",
+        "text": "リンク付きテキスト"
+      },
+      "lists": "リスト",
+      "listStyles": {
+        "pills": "タグ",
+        "comma": "カンマ区切り"
+      }
     },
     "personalInfoForm": {
       "placeholders": {

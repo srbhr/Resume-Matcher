@@ -8,6 +8,11 @@ import {
   type BodyFontFamily,
   type AccentColor,
   DEFAULT_TEMPLATE_SETTINGS,
+  LINK_STYLES,
+  LIST_STYLES,
+  type LinkStyle,
+  type ListRow,
+  type ListStyle,
 } from '@/lib/types/template-settings';
 import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
@@ -34,6 +39,11 @@ type PageProps = {
     compactMode?: string;
     showContactIcons?: string;
     accentColor?: string;
+    linkStyle?: string;
+    listSkills?: string;
+    listLanguages?: string;
+    listCertifications?: string;
+    listAwards?: string;
     lang?: string;
     draft?: string;
   }>;
@@ -67,6 +77,20 @@ function parseAccentColor(value: string | undefined): AccentColor {
     return value;
   }
   return DEFAULT_TEMPLATE_SETTINGS.accentColor;
+}
+
+/** Parse the project link style; anything unknown prints as the default. */
+function parseLinkStyle(value: string | undefined): LinkStyle {
+  return LINK_STYLES.includes(value as LinkStyle)
+    ? (value as LinkStyle)
+    : DEFAULT_TEMPLATE_SETTINGS.linkStyle;
+}
+
+/** Parse one list row's style: pills or commas. */
+function parseListStyle(value: string | undefined, row: ListRow): ListStyle {
+  return LIST_STYLES.includes(value as ListStyle)
+    ? (value as ListStyle)
+    : DEFAULT_TEMPLATE_SETTINGS.listStyle[row];
 }
 
 /**
@@ -288,6 +312,13 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
       DEFAULT_TEMPLATE_SETTINGS.showContactIcons
     ),
     accentColor: parseAccentColor(resolvedSearchParams?.accentColor),
+    linkStyle: parseLinkStyle(resolvedSearchParams?.linkStyle),
+    listStyle: {
+      skills: parseListStyle(resolvedSearchParams?.listSkills, 'skills'),
+      languages: parseListStyle(resolvedSearchParams?.listLanguages, 'languages'),
+      certifications: parseListStyle(resolvedSearchParams?.listCertifications, 'certifications'),
+      awards: parseListStyle(resolvedSearchParams?.listAwards, 'awards'),
+    },
   };
 
   // Note: Margins are applied by Playwright's PDF renderer (not here)

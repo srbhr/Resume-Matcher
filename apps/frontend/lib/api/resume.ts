@@ -4,7 +4,7 @@ import type {
   InterviewPrepData,
 } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import { type TemplateSettings } from '@/lib/types/template-settings';
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
 import { clearResumeWizardCompletion } from '@/lib/utils/resume-wizard-storage';
 import {
@@ -85,6 +85,11 @@ export interface PageFitSettings {
   compactMode: boolean;
   showContactIcons: boolean;
   accentColor: string;
+  linkStyle: string;
+  listSkills: string;
+  listLanguages: string;
+  listCertifications: string;
+  listAwards: string;
   lang?: string;
 }
 
@@ -102,6 +107,20 @@ export interface BulletSelectionSummary {
   final_pages: number | null;
   /** Re-render of the rewritten result: 'skipped' means final_pages predates the rewrite. */
   final_check?: 'ok' | 'skipped' | null;
+}
+
+/**
+ * The list-row styles as print parameters. Settings saved before the option
+ * existed have no listStyle; they print with the default, pills.
+ */
+function listStyleQuery(settings: TemplateSettings) {
+  const list = { ...DEFAULT_TEMPLATE_SETTINGS.listStyle, ...settings.listStyle };
+  return {
+    listSkills: list.skills,
+    listLanguages: list.languages,
+    listCertifications: list.certifications,
+    listAwards: list.awards,
+  };
 }
 
 /** Maps builder template settings onto the PDF/page-fit parameter names. */
@@ -123,6 +142,8 @@ export function toPageFitSettings(settings: TemplateSettings, locale?: string): 
     compactMode: settings.compactMode,
     showContactIcons: settings.showContactIcons,
     accentColor: settings.accentColor,
+    linkStyle: settings.linkStyle ?? DEFAULT_TEMPLATE_SETTINGS.linkStyle,
+    ...listStyleQuery(settings),
     ...(locale ? { lang: locale } : {}),
   };
 }
@@ -364,6 +385,8 @@ export function getResumePdfUrl(
     params.set('compactMode', String(settings.compactMode));
     params.set('showContactIcons', String(settings.showContactIcons));
     params.set('accentColor', settings.accentColor);
+    params.set('linkStyle', settings.linkStyle ?? DEFAULT_TEMPLATE_SETTINGS.linkStyle);
+    for (const [name, value] of Object.entries(listStyleQuery(settings))) params.set(name, value);
   } else {
     params.set('template', 'swiss-single');
     params.set('pageSize', 'A4');

@@ -23,6 +23,13 @@ VIVID: dict[str, Any] = {
     "compactMode": True,
     "showContactIcons": True,
     "accentColor": "orange",
+    "linkStyle": "text",
+    "listStyle": {
+        "skills": "comma",
+        "languages": "pills",
+        "certifications": "comma",
+        "awards": "pills",
+    },
     "session": "tab-1",
     "revision": 3,
 }
@@ -207,3 +214,44 @@ async def test_another_tabs_save_cannot_make_a_tabs_older_save_valid_again(
 
     assert res.json() == tab_b
     assert await _fetch_settings(client, resume["resume_id"]) == tab_b
+
+
+async def test_pdf_forwards_link_and_list_styles_to_the_print_page(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.routers import resumes as resumes_router
+
+    rendered: list[str] = []
+
+    async def fake_render(url: str, page_size: str, margins: dict[str, int]) -> bytes:
+        rendered.append(url)
+        return b"%PDF-1.4"
+
+    monkeypatch.setattr(resumes_router, "render_resume_pdf", fake_render)
+    resume = await _ready_resume(isolated_db)
+
+    res = await client.get(
+        f"/api/v1/resumes/{resume['resume_id']}/pdf",
+        params={"linkStyle": "url", "listSkills": "comma", "listAwards": "comma"},
+    )
+
+    assert res.status_code == 200, res.text
+    (url,) = rendered
+    assert "linkStyle=url" in url
+    assert "listSkills=comma" in url and "listAwards=comma" in url
+    assert "listLanguages=pills" in url and "listCertifications=pills" in url
+
+
+@pytest.mark.parametrize(
+    ("name", "value"), [("linkStyle", "badge"), ("listSkills", "bullets")]
+)
+async def test_pdf_rejects_unknown_link_and_list_styles(
+    client: AsyncClient, isolated_db: Database, name: str, value: str
+) -> None:
+    resume = await _ready_resume(isolated_db)
+
+    res = await client.get(
+        f"/api/v1/resumes/{resume['resume_id']}/pdf", params={name: value}
+    )
+
+    assert res.status_code == 422
