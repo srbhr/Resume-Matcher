@@ -6,7 +6,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Annotated, Any, NoReturn
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
@@ -46,7 +46,7 @@ from app.schemas import (
     ImproveResumeRequest,
     ImproveResumeResponse,
     InterviewPrepData,
-    PageFitSettings,
+    PrintSettings,
     RawResume,
     ResumeData,
     ResumeFetchData,
@@ -62,7 +62,6 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
-from app.schemas.models import ResumeTemplate
 from app.schemas.writing import ApplyKeywordsRequest
 from app.services.cover_letter import (
     generate_cover_letter,
@@ -1249,32 +1248,11 @@ async def update_resume_endpoint(
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
     resume_id: str,
-    template: ResumeTemplate = Query("swiss-single"),
-    pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
-    marginTop: int = Query(10, ge=5, le=25),
-    marginBottom: int = Query(10, ge=5, le=25),
-    marginLeft: int = Query(10, ge=5, le=25),
-    marginRight: int = Query(10, ge=5, le=25),
-    sectionSpacing: int = Query(3, ge=1, le=5),
-    itemSpacing: int = Query(2, ge=1, le=5),
-    lineHeight: int = Query(3, ge=1, le=5),
-    fontSize: int = Query(3, ge=1, le=5),
-    headerScale: int = Query(3, ge=1, le=5),
-    headerFont: str = Query("serif", pattern="^(serif|sans-serif|mono)$"),
-    bodyFont: str = Query("sans-serif", pattern="^(serif|sans-serif|mono)$"),
-    compactMode: bool = Query(False),
-    showContactIcons: bool = Query(False),
-    accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
-    linkStyle: str = Query("chip", pattern="^(chip|url|text)$"),
-    listSkills: str = Query("pills", pattern="^(pills|comma)$"),
-    listLanguages: str = Query("pills", pattern="^(pills|comma)$"),
-    listCertifications: str = Query("pills", pattern="^(pills|comma)$"),
-    listAwards: str = Query("pills", pattern="^(pills|comma)$"),
-    lang: str | None = Query(None, pattern="^[a-z]{2}(-[A-Z]{2})?$"),
+    print_settings: Annotated[PrintSettings, Query()],
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
 
-    Accepts template settings for customization:
+    Takes the print settings (``PrintSettings``) as query parameters:
     - template: swiss-single, swiss-two-column, modern, modern-two-column, latex, clean, vivid,
       vivid-single, modern-deedy, or deedy
     - pageSize: A4 or LETTER
@@ -1300,44 +1278,22 @@ async def download_resume_pdf(
         # run). Say so now instead of waiting out the render deadline.
         raise HTTPException(status_code=409, detail=UNPARSED_RESUME_PDF_DETAIL)
 
-    # Validated and URL-encoded the same way as the page-fit and ATS renders.
-    fit = PageFitSettings(
-        template=template,
-        pageSize=pageSize,
-        marginTop=marginTop,
-        marginBottom=marginBottom,
-        marginLeft=marginLeft,
-        marginRight=marginRight,
-        sectionSpacing=sectionSpacing,
-        itemSpacing=itemSpacing,
-        lineHeight=lineHeight,
-        fontSize=fontSize,
-        headerScale=headerScale,
-        headerFont=headerFont,
-        bodyFont=bodyFont,
-        compactMode=compactMode,
-        showContactIcons=showContactIcons,
-        accentColor=accentColor,
-        linkStyle=linkStyle,
-        listSkills=listSkills,
-        listLanguages=listLanguages,
-        listCertifications=listCertifications,
-        listAwards=listAwards,
-        lang=lang,
-    )
-    url = resume_print_url(resume_id, fit)
+    # URL-encoded the same way as the page-fit and ATS renders.
+    url = resume_print_url(resume_id, print_settings)
 
     # Use the exact margins provided; compact mode only affects spacing.
     pdf_margins = {
-        "top": marginTop,
-        "right": marginRight,
-        "bottom": marginBottom,
-        "left": marginLeft,
+        "top": print_settings.marginTop,
+        "right": print_settings.marginRight,
+        "bottom": print_settings.marginBottom,
+        "left": print_settings.marginLeft,
     }
 
     # Render PDF with margins applied to every page
     try:
-        pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
+        pdf_bytes = await render_resume_pdf(
+            url, print_settings.pageSize, margins=pdf_margins
+        )
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))
 

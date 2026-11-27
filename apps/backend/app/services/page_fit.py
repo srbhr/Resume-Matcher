@@ -14,7 +14,7 @@ from pdfminer.pdfpage import PDFPage
 from app.ai_budget import AIOperationDeadlineExceeded
 from app.config import settings
 from app.pdf import PRINT_ERROR_SELECTOR, render_resume_pdf
-from app.schemas.models import PageFitSettings
+from app.schemas.models import PageFitSettings, PrintSettings
 from app.services.bullet_selector import PageMeasureError
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ def print_margins(fit: PageFitSettings) -> dict[str, int]:
     }
 
 
-def resume_print_url(resume_id: str, fit: PageFitSettings) -> str:
+def resume_print_url(resume_id: str, fit: PrintSettings) -> str:
     """Print-route URL for a saved resume (same query as GET /resumes/{id}/pdf)."""
     query = urlencode(fit.to_query())
     return f"{settings.frontend_base_url}/print/resumes/{resume_id}?{query}"

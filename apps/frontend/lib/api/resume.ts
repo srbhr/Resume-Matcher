@@ -374,34 +374,15 @@ export function getResumePdfUrl(
   locale?: Locale
 ): string {
   const normalizedId = normalizeResumeId(resumeId);
-  const params = new URLSearchParams();
-
-  if (settings) {
-    params.set('template', settings.template);
-    params.set('pageSize', settings.pageSize);
-    params.set('marginTop', String(settings.margins.top));
-    params.set('marginBottom', String(settings.margins.bottom));
-    params.set('marginLeft', String(settings.margins.left));
-    params.set('marginRight', String(settings.margins.right));
-    params.set('sectionSpacing', String(settings.spacing.section));
-    params.set('itemSpacing', String(settings.spacing.item));
-    params.set('lineHeight', String(settings.spacing.lineHeight));
-    params.set('fontSize', String(settings.fontSize.base));
-    params.set('headerScale', String(settings.fontSize.headerScale));
-    params.set('headerFont', settings.fontSize.headerFont);
-    params.set('bodyFont', settings.fontSize.bodyFont);
-    params.set('compactMode', String(settings.compactMode));
-    params.set('showContactIcons', String(settings.showContactIcons));
-    params.set('accentColor', settings.accentColor);
-    params.set('linkStyle', settings.linkStyle ?? DEFAULT_TEMPLATE_SETTINGS.linkStyle);
-    for (const [name, value] of Object.entries(listStyleQuery(settings))) params.set(name, value);
-  } else {
-    params.set('template', 'swiss-single');
-    params.set('pageSize', 'A4');
-  }
-  if (locale) {
-    params.set('lang', locale);
-  }
+  // The same settings, in the same names, as page fitting sends: one mapping.
+  const params = new URLSearchParams(
+    settings
+      ? Object.entries(toPageFitSettings(settings, locale)).map(([name, value]) => [
+          name,
+          String(value),
+        ])
+      : [['template', 'swiss-single'], ['pageSize', 'A4'], ...(locale ? [['lang', locale]] : [])]
+  );
 
   return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
 }

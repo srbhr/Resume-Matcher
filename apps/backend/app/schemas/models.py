@@ -838,8 +838,13 @@ ResumeSummary.model_rebuild()
 ResumeListResponse.model_rebuild()
 
 
-class PageFitSettings(BaseModel):
-    """Print settings used to measure page count (mirrors GET /resumes/{id}/pdf)."""
+class PrintSettings(BaseModel):
+    """How a resume prints: the query of GET /resumes/{id}/pdf and of the print page.
+
+    The one list of print settings, their defaults and their allowed values. The
+    PDF route takes it as a query-parameter model; page fitting and the ATS render
+    build the print URL from it with ``to_query``.
+    """
 
     template: ResumeTemplate = "swiss-single"
     pageSize: Literal["A4", "LETTER"] = "A4"
@@ -863,10 +868,6 @@ class PageFitSettings(BaseModel):
     listCertifications: Literal["pills", "comma"] = "pills"
     listAwards: Literal["pills", "comma"] = "pills"
     lang: str | None = Field(None, pattern=r"^[a-z]{2}(-[A-Z]{2})?$")
-    # Academic CV mode: no page cap. Page fit and verification report the page count
-    # but never trim to a limit or raise an over-limit warning. Not a print setting,
-    # so it is not sent to the print route.
-    cv_mode: bool = False
 
     def to_query(self) -> dict[str, str]:
         query: dict[str, str] = {}
@@ -875,6 +876,15 @@ class PageFitSettings(BaseModel):
         ).items():
             query[name] = str(value).lower() if isinstance(value, bool) else str(value)
         return query
+
+
+class PageFitSettings(PrintSettings):
+    """Print settings used to measure page count, and how to read the count."""
+
+    # Academic CV mode: no page cap. Page fit and verification report the page count
+    # but never trim to a limit or raise an over-limit warning. Not a print setting,
+    # so it is not sent to the print route.
+    cv_mode: bool = False
 
 
 class ImproveResumeRequest(BaseModel):
