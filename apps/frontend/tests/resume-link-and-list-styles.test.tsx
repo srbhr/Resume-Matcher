@@ -56,6 +56,28 @@ describe('TagList rows', () => {
     expect(list).toHaveTextContent('Python, Go');
   });
 
+  it('sets tight pills 0.25rem apart, each holding the separator after it', () => {
+    const { container } = render(<TagList items={['Python', 'Go', 'SQL']} row="skills" tight />);
+    const list = container.firstChild as HTMLElement;
+
+    expect(list).toHaveAttribute('data-tight');
+    // The same text, so the PDF text layer still reads "Python, Go, SQL".
+    expect(list).toHaveTextContent('Python, Go, SQL');
+    const items = [...list.children];
+    expect(items).toHaveLength(3);
+    // A pill and the comma after it are one unbreakable item; the last has none.
+    expect(items.map((item) => item.textContent)).toEqual(['Python, ', 'Go, ', 'SQL']);
+    expect(css).toMatch(/\.resume-tag-item \{\s*white-space: nowrap;/);
+    expect(css).toMatch(
+      /\.resume-tag-list\[data-tight\] \.resume-tag-separator \{\s*display: inline-block;\s*width: 0\.25rem;/
+    );
+  });
+
+  it('keeps the space-wide gap for a list that is not tight', () => {
+    const { container } = render(<TagList items={['Python', 'Go']} row="skills" />);
+    expect(container.firstChild).not.toHaveAttribute('data-tight');
+  });
+
   it('has a comma rule for every row', () => {
     for (const row of ['skills', 'languages', 'certifications', 'awards']) {
       expect(css).toContain(

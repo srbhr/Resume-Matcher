@@ -365,7 +365,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
               </h3>
               {isPlainSkillList(skillRows) ? (
                 <div>
-                  <TagList items={skillRows[0].items} row="skills" />
+                  <TagList items={skillRows[0].items} row="skills" tight />
                 </div>
               ) : (
                 <div className="flex flex-col gap-1.5">
@@ -377,7 +377,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
                         </p>
                       )}
                       <div>
-                        <TagList items={row.items} row="skills" />
+                        <TagList items={row.items} row="skills" tight />
                       </div>
                     </div>
                   ))}

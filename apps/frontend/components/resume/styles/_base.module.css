@@ -189,6 +189,21 @@
   color: transparent;
 }
 
+/* Tight lists (TagList `tight`, the two-column sidebars): pills 0.25rem apart. The
+   separator's box is exactly that wide, and its comma overflows it, still
+   transparent: overflowing text is painted, so it stays in the PDF text layer,
+   where clipped text would not. A pill and the separator after it don't break
+   apart, so a row never starts with the separator's gap. */
+.resume-tag-item {
+  white-space: nowrap;
+}
+
+.resume-tag-list[data-tight] .resume-tag-separator {
+  display: inline-block;
+  width: 0.25rem;
+  white-space: pre;
+}
+
 /* Link pill - styled clickable link with icon support */
 .resume-link-pill {
   font-family: var(--resume-font-mono);
@@ -263,6 +278,8 @@
 .resume-body[data-list-languages='comma'] [data-list-row='languages'] .resume-tag-separator,
 .resume-body[data-list-certifications='comma'] [data-list-row='certifications'] .resume-tag-separator,
 .resume-body[data-list-awards='comma'] [data-list-row='awards'] .resume-tag-separator {
+  display: inline;
+  width: auto;
   color: inherit;
 }
 
