@@ -13,6 +13,7 @@ import pytest
 from uvicorn.logging import AccessFormatter
 
 import app  # noqa: F401  (installs the redaction)
+from app.redaction import redact_credentials
 
 KEY = "sk-proj-abcdef1234567890XYZ"
 
@@ -161,3 +162,22 @@ def test_an_argument_whose_str_raises_is_still_logged_and_redacted(
 
     assert "Provider client: <Client" in stream.getvalue()
     assert KEY not in stream.getvalue()
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "api-key {key}",
+        "x-api-key {key}",
+        "api_key\t{key}",
+        "apikey {key}",
+        "Authorization: ApiKey {key}",
+    ],
+)
+def test_a_key_after_whitespace_alone_is_redacted(line: str) -> None:
+    """The ':' or '=' requirement (for the access-log fix) let these leak."""
+    key = "0123456789abcdef0123456789ABCDEF"
+
+    redacted = redact_credentials(line.format(key=key))
+
+    assert key not in redacted

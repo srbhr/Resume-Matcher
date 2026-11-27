@@ -26,6 +26,9 @@ CREDENTIAL_PATTERNS: tuple[re.Pattern[str], ...] = (
     # A ':' or '=' must separate name and value: with whitespace alone the
     # access line "GET /api/v1/config/llm-api-key HTTP/1.1" matched.
     re.compile(r"(?i)(api[-_]?key[\"'\s]*[:=][\"'\s]*)[^\s\"',}]+"),
+    # Whitespace alone ("x-api-key VALUE", "Authorization: ApiKey VALUE") only
+    # before a key-length value, which "HTTP/1.1" in an access line is not.
+    re.compile(r"(?i)(api[-_]?key[\"']?\s+)[A-Za-z0-9_\-]{16,}"),
 )
 
 REDACTED = "<redacted>"
