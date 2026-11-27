@@ -59,10 +59,10 @@ import { SettingsAbout, SettingsSupportStrip } from '@/components/settings/commu
 import { StatusStrip } from '@/components/settings/status-strip';
 import {
   SectionFromUrl,
-  SectionNav,
   writeSectionToUrl,
   type SettingsSection,
 } from '@/components/settings/section-nav';
+import { SideTab, SideTabs, SideTabsList, SideTabsPanel } from '@/components/ui/side-tabs';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dropdown } from '@/components/ui/dropdown';
 import {
@@ -833,10 +833,6 @@ export default function SettingsPage() {
             <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
               {t('settings.title')}
             </h1>
-            <p className="font-mono text-xs uppercase tracking-wide text-steel">
-              {'// '}
-              {t('settings.subtitle')}
-            </p>
           </div>
         </header>
 
@@ -852,47 +848,50 @@ export default function SettingsPage() {
           <SectionFromUrl onSection={setActiveSection} />
         </Suspense>
 
-        {/* The section rail beside one section at a time; each scrolls on its own. */}
-        <div className="flex flex-col md:min-h-0 md:flex-1 md:flex-row">
-          <SectionNav
+        {/* The section menu beside one section at a time; each scrolls on its own. On
+            the same six-column grid as the status strip from xl up, so the menu's edge
+            continues the strip's first divider. Below xl the menu is a row above. */}
+        <SideTabs
+          value={activeSection}
+          onValueChange={selectSection}
+          className="flex flex-col md:min-h-0 md:flex-1 xl:grid xl:grid-cols-6 xl:grid-rows-[minmax(0,1fr)] xl:gap-px xl:bg-ink"
+        >
+          <SideTabsList
             label={t('settings.sectionsNav')}
-            active={activeSection}
-            onSelect={selectSection}
-            items={[
-              {
-                id: 'llm',
-                label: t('settings.llmConfigurationTitle'),
-                icon: <Key aria-hidden="true" className="size-4" />,
-              },
-              {
-                id: 'content',
-                label: t('settings.contentGeneration.title'),
-                icon: <SlidersHorizontal aria-hidden="true" className="size-4" />,
-              },
-              {
-                id: 'language',
-                label: t('settings.languageTitle'),
-                icon: <Globe aria-hidden="true" className="size-4" />,
-              },
-              {
-                id: 'danger',
-                label: t('settings.dangerZone'),
-                icon: (
-                  <Warning
-                    aria-hidden="true"
-                    className={activeSection === 'danger' ? 'size-4' : 'size-4 text-destructive'}
-                  />
-                ),
-              },
-              {
-                id: 'about',
-                label: t('community.aboutTitle'),
-                icon: <Info aria-hidden="true" className="size-4" />,
-              },
-            ]}
-          />
-          <div ref={paneRef} className="md:min-h-0 md:flex-1 md:overflow-y-auto">
-            <div className="max-w-4xl space-y-8 px-6 py-6 md:px-8 md:py-8">
+            className="shrink-0 overflow-x-auto border-b border-ink bg-canvas px-6 py-3 xl:col-span-1 xl:flex-col xl:overflow-y-auto xl:border-b-0 xl:py-6"
+          >
+            <SideTab value="llm" icon={<Key aria-hidden="true" className="size-4" />}>
+              {t('settings.llmConfigurationTitle')}
+            </SideTab>
+            <SideTab
+              value="content"
+              icon={<SlidersHorizontal aria-hidden="true" className="size-4" />}
+            >
+              {t('settings.contentGeneration.title')}
+            </SideTab>
+            <SideTab value="language" icon={<Globe aria-hidden="true" className="size-4" />}>
+              {t('settings.languageTitle')}
+            </SideTab>
+            <SideTab
+              value="danger"
+              icon={
+                <Warning
+                  aria-hidden="true"
+                  className={activeSection === 'danger' ? 'size-4' : 'size-4 text-destructive'}
+                />
+              }
+            >
+              {t('settings.dangerZone')}
+            </SideTab>
+            <SideTab value="about" icon={<Info aria-hidden="true" className="size-4" />}>
+              {t('community.aboutTitle')}
+            </SideTab>
+          </SideTabsList>
+          <div
+            ref={paneRef}
+            className="bg-canvas md:min-h-0 md:flex-1 md:overflow-y-auto xl:col-span-5"
+          >
+            <div className="max-w-4xl space-y-8 px-6 py-6">
               {/* API Key Not Configured Warning */}
               {!statusLoading && systemStatus && !systemStatus.llm_configured && (
                 <Alert tone="warning">
@@ -904,7 +903,7 @@ export default function SettingsPage() {
               )}
 
               {/* LLM Configuration */}
-              {activeSection === 'llm' && (
+              <SideTabsPanel value="llm">
                 <section className="space-y-6">
                   <div className="flex items-center gap-2 border-b border-panel-hover pb-2">
                     <Key className="w-4 h-4" />
@@ -1296,10 +1295,10 @@ export default function SettingsPage() {
                     )}
                   </div>
                 </section>
-              )}
+              </SideTabsPanel>
 
               {/* Content Generation Section */}
-              {activeSection === 'content' && (
+              <SideTabsPanel value="content">
                 <section className="space-y-6">
                   <div className="flex items-center gap-2 border-b border-panel-hover pb-2">
                     <SlidersHorizontal className="w-4 h-4" />
@@ -1482,10 +1481,10 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </section>
-              )}
+              </SideTabsPanel>
 
               {/* Language Settings Section */}
-              {activeSection === 'language' && (
+              <SideTabsPanel value="language">
                 <section className="space-y-6">
                   <div className="flex items-center gap-2 border-b border-panel-hover pb-2">
                     <Globe className="w-4 h-4" />
@@ -1548,10 +1547,10 @@ export default function SettingsPage() {
                     />
                   </div>
                 </section>
-              )}
+              </SideTabsPanel>
 
               {/* Danger Zone */}
-              {activeSection === 'danger' && (
+              <SideTabsPanel value="danger">
                 <section className="space-y-6">
                   <div className="flex items-center gap-2 border-b border-destructive pb-2">
                     <Warning className="w-4 h-4 text-destructive" />
@@ -1606,12 +1605,14 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </section>
-              )}
+              </SideTabsPanel>
 
-              {activeSection === 'about' && <SettingsAbout />}
+              <SideTabsPanel value="about">
+                <SettingsAbout />
+              </SideTabsPanel>
             </div>
           </div>
-        </div>
+        </SideTabs>
 
         {/* Footer: the support ask and links on the left, version and status on the right. */}
         <div className="bg-canvas px-6 py-3 border-t border-ink flex flex-wrap justify-between items-center gap-x-6 gap-y-2">

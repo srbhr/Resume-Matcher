@@ -110,10 +110,10 @@ async function renderLoaded() {
   await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
 }
 
-/** Open one Settings section from the rail (one section shows at a time). */
+/** Open one Settings section from the side menu (one section shows at a time). */
 function openSection(label: string) {
-  const rail = screen.getByRole('navigation', { name: 'settings.sectionsNav' });
-  fireEvent.click(within(rail).getByRole('button', { name: label }));
+  const menu = screen.getByRole('tablist', { name: 'settings.sectionsNav' });
+  fireEvent.click(within(menu).getByRole('tab', { name: label }));
 }
 
 const SECTION_LABELS = [
@@ -604,7 +604,7 @@ describe('settings page (Swiss sweep)', () => {
     // The section pane, not the frame, keeps a form's measure.
     const pane = screen
       .getByRole('heading', { level: 2, name: 'settings.llmConfigurationTitle' })
-      .closest('section')?.parentElement as HTMLElement;
+      .closest('section')?.parentElement?.parentElement as HTMLElement;
     expect(pane).toHaveClass('max-w-4xl');
 
     // No inner column cap: fields and prompts fill the frame instead of leaving a gap.
@@ -625,11 +625,16 @@ describe('settings page (Swiss sweep)', () => {
     await renderLoaded();
     const body = screen
       .getByText('settings.llmConfigurationTitle', { selector: 'h2' })
-      .closest('section')?.parentElement as HTMLElement;
-    expect(body).toHaveClass('py-6', 'md:py-8', 'space-y-8');
+      .closest('section')?.parentElement?.parentElement as HTMLElement;
+    // py-6 puts the heading level with the rail's first button.
+    expect(body).toHaveClass('py-6', 'space-y-8');
     for (const old of ['py-12', 'md:py-12', 'space-y-12']) expect(body).not.toHaveClass(old);
-    // The gutter matches the compact header's px-6, then widens with the pane.
-    expect(body).toHaveClass('px-6', 'md:px-8');
+    // The gutter matches the compact header's and the rail's px-6.
+    expect(body).toHaveClass('px-6');
+    expect(screen.getByRole('tablist', { name: 'settings.sectionsNav' })).toHaveClass(
+      'px-6',
+      'xl:py-6'
+    );
   });
 
   it('keeps system status in one ruled strip, drawn like the dashboard grid', async () => {
@@ -650,27 +655,43 @@ describe('settings page (Swiss sweep)', () => {
     expect(screen.getByRole('region', { name: 'settings.systemStatus.title' })).toBeInTheDocument();
   });
 
-  it('opens one section at a time from the rail, marks it, and keeps it in the URL', async () => {
+  it('opens one section at a time from a side menu of tabs, and keeps it in the URL', async () => {
     await renderLoaded();
-    const rail = screen.getByRole('navigation', { name: 'settings.sectionsNav' });
+    const menu = screen.getByRole('tablist', { name: 'settings.sectionsNav' });
+    expect(menu).toHaveAttribute('aria-orientation', 'vertical');
     expect(
-      within(rail)
-        .getAllByRole('button')
-        .map((b) => b.textContent)
+      within(menu)
+        .getAllByRole('tab')
+        .map((tab) => tab.textContent)
     ).toEqual(SECTION_LABELS);
     expect(
-      within(rail).getByRole('button', { name: 'settings.llmConfigurationTitle' })
-    ).toHaveAttribute('aria-current', 'true');
+      within(menu).getByRole('tab', { name: 'settings.llmConfigurationTitle' })
+    ).toHaveAttribute('aria-selected', 'true');
 
     openSection('settings.dangerZone');
 
-    const danger = within(rail).getByRole('button', { name: 'settings.dangerZone' });
-    expect(danger).toHaveAttribute('aria-current', 'true');
-    expect(danger).toHaveClass('bg-ink', 'text-white');
+    const danger = within(menu).getByRole('tab', { name: 'settings.dangerZone' });
+    expect(danger).toHaveAttribute('aria-selected', 'true');
+    expect(danger).toHaveClass('data-selected:bg-ink');
+    expect(screen.getByRole('tabpanel')).toContainElement(
+      screen.getByRole('heading', { level: 2, name: 'settings.dangerZone' })
+    );
     expect(
       screen.queryByRole('heading', { level: 2, name: 'settings.llmConfigurationTitle' })
     ).toBeNull();
     expect(window.location.search).toBe('?section=danger');
+  });
+
+  it("puts the menu and the section on the status strip's six columns, so their edges meet", async () => {
+    await renderLoaded();
+    const menu = screen.getByRole('tablist', { name: 'settings.sectionsNav' });
+    const layout = menu.parentElement as HTMLElement;
+    expect(layout).toHaveClass('xl:grid', 'xl:grid-cols-6', 'xl:gap-px');
+    expect(menu).toHaveClass('xl:col-span-1');
+    const strip = within(screen.getByRole('region', { name: 'settings.systemStatus.title' }))
+      .getByText('settings.statusCards.llm')
+      .closest('.grid') as HTMLElement;
+    expect(strip).toHaveClass('xl:grid-cols-6', 'gap-px');
   });
 
   it('gives nested boxes the nested shadow and keeps solid ink for controls', async () => {
