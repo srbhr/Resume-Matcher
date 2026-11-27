@@ -36,7 +36,8 @@
     "popupBlocked": "Popup bloqueado. Por favor, permita popups ou abra esta URL manualmente: {url}",
     "resumeDeleted": "Este currículo foi excluído. Envie ou selecione outro currículo.",
     "on": "Sim",
-    "off": "Não"
+    "off": "Não",
+    "partLoadFailed": "Esta parte da página não carregou. Atualize a página para tentar novamente."
   },
   "home": {
     "brandLine1": "Resume",
@@ -1312,7 +1313,8 @@
           "zoom": "Zoom",
           "rotate": "Girar um quarto de volta",
           "apply": "Usar foto",
-          "cancel": "Cancelar"
+          "cancel": "Cancelar",
+          "failed": "Não foi possível recortar esta foto. Tente outra foto ou cancele."
         }
       }
     },

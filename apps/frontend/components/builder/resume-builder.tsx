@@ -44,6 +44,8 @@ import {
   generateInterviewPrep,
 } from '@/lib/api/resume';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
+import type { RegenerateWizardStep } from './regenerate-wizard';
+import { PartLoadFailed, withFallback } from '@/components/common/lazy-fallback';
 import { useResumeFormatting } from '@/hooks/use-resume-formatting';
 import { useJobContext } from '@/hooks/use-job-context';
 import { useResumePhoto } from '@/hooks/use-resume-photo';
@@ -104,27 +106,111 @@ import {
 // their own chunks: they sat in /builder's first-load JS though the page opens
 // on the Resume tab.
 // The resume form brings dnd-kit; it loads while the resume is fetched.
-const ResumeForm = dynamic(() => import('./resume-form').then((m) => m.ResumeForm));
+const ResumeForm = dynamic(() =>
+  withFallback(
+    import('./resume-form').then((m) => m.ResumeForm),
+    'Resume form',
+    PartLoadFailed
+  )
+);
 const CoverLetterEditor = dynamic(() =>
-  import('./cover-letter-editor').then((m) => m.CoverLetterEditor)
+  withFallback(
+    import('./cover-letter-editor').then((m) => m.CoverLetterEditor),
+    'Cover letter editor',
+    PartLoadFailed
+  )
 );
-const OutreachEditor = dynamic(() => import('./outreach-editor').then((m) => m.OutreachEditor));
+const OutreachEditor = dynamic(() =>
+  withFallback(
+    import('./outreach-editor').then((m) => m.OutreachEditor),
+    'Outreach editor',
+    PartLoadFailed
+  )
+);
 const CoverLetterPreview = dynamic(() =>
-  import('./cover-letter-preview').then((m) => m.CoverLetterPreview)
+  withFallback(
+    import('./cover-letter-preview').then((m) => m.CoverLetterPreview),
+    'Cover letter preview',
+    PartLoadFailed
+  )
 );
-const OutreachPreview = dynamic(() => import('./outreach-preview').then((m) => m.OutreachPreview));
+const OutreachPreview = dynamic(() =>
+  withFallback(
+    import('./outreach-preview').then((m) => m.OutreachPreview),
+    'Outreach preview',
+    PartLoadFailed
+  )
+);
 const InterviewPrepView = dynamic(() =>
-  import('./interview-prep-view').then((m) => m.InterviewPrepView)
+  withFallback(
+    import('./interview-prep-view').then((m) => m.InterviewPrepView),
+    'Interview practice',
+    PartLoadFailed
+  )
 );
-const InterviewBrief = dynamic(() => import('./interview-prep-view').then((m) => m.InterviewBrief));
+const InterviewBrief = dynamic(() =>
+  withFallback(
+    import('./interview-prep-view').then((m) => m.InterviewBrief),
+    'Interview brief',
+    PartLoadFailed
+  )
+);
 const JDComparisonView = dynamic(() =>
-  import('./jd-comparison-view').then((m) => m.JDComparisonView)
+  withFallback(
+    import('./jd-comparison-view').then((m) => m.JDComparisonView),
+    'JD match',
+    PartLoadFailed
+  )
 );
-const AtsCheckView = dynamic(() => import('./ats-check-view').then((m) => m.AtsCheckView));
-const WritingPanel = dynamic(() => import('./writing-panel').then((m) => m.WritingPanel));
-const AtsScorePanel = dynamic(() => import('./ats-score-panel').then((m) => m.AtsScorePanel));
+const AtsCheckView = dynamic(() =>
+  withFallback(
+    import('./ats-check-view').then((m) => m.AtsCheckView),
+    'ATS check',
+    PartLoadFailed
+  )
+);
+const WritingPanel = dynamic(() =>
+  withFallback(
+    import('./writing-panel').then((m) => m.WritingPanel),
+    'Writing panel',
+    PartLoadFailed
+  )
+);
+const AtsScorePanel = dynamic(() =>
+  withFallback(
+    import('./ats-score-panel').then((m) => m.AtsScorePanel),
+    'ATS score panel',
+    PartLoadFailed
+  )
+);
+
+/**
+ * Stands in for the regenerate wizard if its code fails to load. The wizard is
+ * mounted closed, so this shows nothing until it is opened; then it says the
+ * part didn't load and closes again.
+ */
+function RegenerateWizardLoadFailed({
+  step,
+  onClose,
+}: {
+  step: RegenerateWizardStep;
+  onClose: () => void;
+}) {
+  const { t } = useTranslations();
+  useEffect(() => {
+    if (step === 'idle') return;
+    toast.error(t('common.partLoadFailed'));
+    onClose();
+  }, [step, onClose, t]);
+  return null;
+}
+
 const RegenerateWizard = dynamic(() =>
-  import('./regenerate-wizard').then((m) => m.RegenerateWizard)
+  withFallback(
+    import('./regenerate-wizard').then((m) => m.RegenerateWizard),
+    'Regenerate wizard',
+    RegenerateWizardLoadFailed
+  )
 );
 
 type TabId =

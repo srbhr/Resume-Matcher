@@ -36,7 +36,8 @@
     "popupBlocked": "Se bloqueó la ventana emergente. Permite las ventanas emergentes o abre manualmente esta URL: {url}",
     "resumeDeleted": "Este currículum se eliminó. Sube o selecciona otro.",
     "on": "Sí",
-    "off": "No"
+    "off": "No",
+    "partLoadFailed": "Esta parte de la página no se cargó. Actualiza la página para volver a intentarlo."
   },
   "home": {
     "brandLine1": "Currículum",
@@ -1312,7 +1313,8 @@
           "zoom": "Zoom",
           "rotate": "Girar un cuarto de vuelta",
           "apply": "Usar foto",
-          "cancel": "Cancelar"
+          "cancel": "Cancelar",
+          "failed": "No se pudo recortar esta foto. Prueba con otra foto o cancela."
         }
       }
     },

@@ -52,12 +52,20 @@ import {
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { ApiError } from '@/lib/api/client';
+import { NothingLoaded, withFallback } from '@/components/common/lazy-fallback';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { hasMeaningfulResumeContent } from '@/lib/utils/resume-content';
 
 // The tile menu (ui-sdk's Menu) loads after the page: nobody opens it before first paint,
 // and it would otherwise add its whole popup layer to the dashboard's first-load JS.
-const ActionMenu = dynamic(() => import('@/components/ui/action-menu').then((m) => m.ActionMenu));
+// If its code fails to load, the tile keeps its other actions and the menu is left out.
+const ActionMenu = dynamic(() =>
+  withFallback(
+    import('@/components/ui/action-menu').then((m) => m.ActionMenu),
+    'Tile menu',
+    NothingLoaded
+  )
+);
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 

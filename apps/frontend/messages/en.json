@@ -36,7 +36,8 @@
     "popupBlocked": "Popup blocked. Please allow popups or open this URL manually: {url}",
     "resumeDeleted": "This resume was deleted. Upload or select another resume.",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "partLoadFailed": "This part of the page didn't load. Refresh the page to try again."
   },
   "home": {
     "brandLine1": "Resume",
@@ -1312,7 +1313,8 @@
           "zoom": "Zoom",
           "rotate": "Rotate a quarter turn",
           "apply": "Use photo",
-          "cancel": "Cancel"
+          "cancel": "Cancel",
+          "failed": "Couldn't crop this photo. Try another photo, or cancel."
         }
       }
     },

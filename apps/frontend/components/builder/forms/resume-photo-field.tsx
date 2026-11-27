@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type ComponentProps } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,10 +12,30 @@ import {
   uploadResumePhoto,
 } from '@/lib/api/resume';
 import { useTranslations } from '@/lib/i18n';
+import { withFallback } from '@/components/common/lazy-fallback';
+import type { PhotoCropDialog as PhotoCropDialogType } from '@/components/ui/photo-crop-dialog';
+
+/**
+ * If the crop dialog's code fails to load, the photo is uploaded as chosen, the
+ * way a browser that can't crop uploads it.
+ */
+function UploadUncropped({ file, onCropped }: ComponentProps<typeof PhotoCropDialogType>) {
+  useEffect(() => {
+    onCropped(file);
+    // Once, for the file this stand-in was mounted with.
+    // oxlint-disable-next-line react/exhaustive-deps -- runs once per chosen file
+  }, [file]);
+  return null;
+}
 
 // The crop dialog (ui-sdk's Image Cropper and Dialog) loads when a photo is chosen.
 const PhotoCropDialog = dynamic(
-  () => import('@/components/ui/photo-crop-dialog').then((m) => m.PhotoCropDialog),
+  () =>
+    withFallback(
+      import('@/components/ui/photo-crop-dialog').then((m) => m.PhotoCropDialog),
+      'Photo crop dialog',
+      UploadUncropped
+    ),
   { ssr: false }
 );
 
@@ -168,6 +188,7 @@ export const ResumePhotoField: React.FC<ResumePhotoFieldProps> = ({
             rotate: t('resume.personalInfo.photo.crop.rotate'),
             apply: t('resume.personalInfo.photo.crop.apply'),
             cancel: t('resume.personalInfo.photo.crop.cancel'),
+            failed: t('resume.personalInfo.photo.crop.failed'),
           }}
           onCancel={() => setCropping(null)}
           onCropped={(cropped) => {

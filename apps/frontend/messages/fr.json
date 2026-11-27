@@ -36,7 +36,8 @@
     "popupBlocked": "Fenêtre contextuelle bloquée. Veuillez autoriser les fenêtres contextuelles ou ouvrir cette URL manuellement : {url}",
     "resumeDeleted": "Ce CV a été supprimé. Importez ou sélectionnez un autre CV.",
     "on": "Oui",
-    "off": "Non"
+    "off": "Non",
+    "partLoadFailed": "Cette partie de la page ne s'est pas chargée. Actualisez la page pour réessayer."
   },
   "home": {
     "brandLine1": "Resume",
@@ -1312,7 +1313,8 @@
           "zoom": "Zoom",
           "rotate": "Pivoter d’un quart de tour",
           "apply": "Utiliser la photo",
-          "cancel": "Annuler"
+          "cancel": "Annuler",
+          "failed": "Impossible de recadrer cette photo. Essayez une autre photo ou annulez."
         }
       }
     },

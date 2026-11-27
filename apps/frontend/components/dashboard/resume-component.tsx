@@ -40,32 +40,74 @@ import '@fontsource/noto-sans-mono/800.css';
 // first-load JS of /builder and /resumes/[id]. The preview re-measures pages when
 // one arrives (usePagination observes the measured copy). Print pages render on
 // the server, where next/dynamic doesn't split server code.
+/**
+ * If a template's code fails to load in the browser (a tab left open across an
+ * upgrade, a dropped connection), the resume shows in the single-column template
+ * instead of the page failing. On the server, which renders the print page for
+ * the PDF, the error is thrown: a PDF in the wrong template would be worse than
+ * a failed download, which says so.
+ */
+function orSingleColumn<P>(load: Promise<React.ComponentType<P>>, template: string) {
+  return load.catch((error: unknown): React.ComponentType<P> => {
+    if (typeof window === 'undefined') throw error;
+    console.error(`The ${template} template failed to load; showing Single column.`, error);
+    return ResumeSingleColumn as unknown as React.ComponentType<P>;
+  });
+}
+
 const ResumeTwoColumn = dynamic(() =>
-  import('@/components/resume/resume-two-column').then((m) => m.ResumeTwoColumn)
+  orSingleColumn(
+    import('@/components/resume/resume-two-column').then((m) => m.ResumeTwoColumn),
+    'Two column'
+  )
 );
 const ResumeModern = dynamic(() =>
-  import('@/components/resume/resume-modern').then((m) => m.ResumeModern)
+  orSingleColumn(
+    import('@/components/resume/resume-modern').then((m) => m.ResumeModern),
+    'Modern'
+  )
 );
 const ResumeModernTwoColumn = dynamic(() =>
-  import('@/components/resume/resume-modern-two-column').then((m) => m.ResumeModernTwoColumn)
+  orSingleColumn(
+    import('@/components/resume/resume-modern-two-column').then((m) => m.ResumeModernTwoColumn),
+    'Modern two column'
+  )
 );
 const ResumeLatex = dynamic(() =>
-  import('@/components/resume/resume-latex').then((m) => m.ResumeLatex)
+  orSingleColumn(
+    import('@/components/resume/resume-latex').then((m) => m.ResumeLatex),
+    'LaTeX'
+  )
 );
 const ResumeClean = dynamic(() =>
-  import('@/components/resume/resume-clean').then((m) => m.ResumeClean)
+  orSingleColumn(
+    import('@/components/resume/resume-clean').then((m) => m.ResumeClean),
+    'Clean'
+  )
 );
 const ResumeVivid = dynamic(() =>
-  import('@/components/resume/resume-vivid').then((m) => m.ResumeVivid)
+  orSingleColumn(
+    import('@/components/resume/resume-vivid').then((m) => m.ResumeVivid),
+    'Vivid'
+  )
 );
 const ResumeVividSingle = dynamic(() =>
-  import('@/components/resume/resume-vivid-single').then((m) => m.ResumeVividSingle)
+  orSingleColumn(
+    import('@/components/resume/resume-vivid-single').then((m) => m.ResumeVividSingle),
+    'Vivid single'
+  )
 );
 const ResumeModernDeedy = dynamic(() =>
-  import('@/components/resume/resume-modern-deedy').then((m) => m.ResumeModernDeedy)
+  orSingleColumn(
+    import('@/components/resume/resume-modern-deedy').then((m) => m.ResumeModernDeedy),
+    'Modern Deedy'
+  )
 );
 const ResumeDeedy = dynamic(() =>
-  import('@/components/resume/resume-deedy').then((m) => m.ResumeDeedy)
+  orSingleColumn(
+    import('@/components/resume/resume-deedy').then((m) => m.ResumeDeedy),
+    'Deedy'
+  )
 );
 
 export interface PersonalInfo {
