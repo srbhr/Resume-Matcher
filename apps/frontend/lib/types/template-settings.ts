@@ -58,6 +58,7 @@ export const LINK_STYLE_TEMPLATES: ReadonlySet<TemplateType> = new Set([
   'latex',
   'clean',
   'vivid',
+  'vivid-single',
 ]);
 
 /** The rows each template draws as pills, so the pill-or-comma choice changes them. */

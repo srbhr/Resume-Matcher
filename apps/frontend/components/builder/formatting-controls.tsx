@@ -87,11 +87,13 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     onChange({ ...settings, pageSize });
   };
 
-  // "Same on all sides" starts on when the four margins already match.
-  const [marginsLinked, setMarginsLinked] = useState(() => {
-    const { top, bottom, left, right } = settings.margins;
-    return top === bottom && top === left && top === right;
-  });
+  // "Same on all sides" is on while the four margins match, unless the user turned
+  // it off. It is worked out from the margins on every render, not stored: the
+  // panel mounts with the default margins before the resume's own arrive, and a
+  // stored "on" would then drive all four sides from one slider.
+  const [marginsUnlinked, setMarginsUnlinked] = useState(false);
+  const { top, bottom, left, right } = settings.margins;
+  const marginsLinked = !marginsUnlinked && top === bottom && top === left && top === right;
 
   const handleAllMarginsChange = (value: number) => {
     onChange({ ...settings, margins: { top: value, bottom: value, left: value, right: value } });
@@ -210,7 +212,6 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     return t('builder.formatting.fontNames.mono');
   };
 
-  const { top, bottom, left, right } = settings.margins;
   const effectiveRows: Array<[string, string]> = [
     [
       t('builder.formatting.margins'),
@@ -384,7 +385,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 label={t('builder.formatting.marginsLinked')}
                 checked={marginsLinked}
                 onCheckedChange={(linked) => {
-                  setMarginsLinked(linked);
+                  setMarginsUnlinked(!linked);
                   // Linking takes the top margin for every side.
                   if (linked) handleAllMarginsChange(settings.margins.top);
                 }}
@@ -620,7 +621,10 @@ const FONT_PREVIEW: Record<HeaderFontFamily, string> = {
  * Margin Slider Component
  *
  * One margin: label, slider and a number field in mm that edit the same value
- * (5-25mm). Typing past either end is held to it.
+ * (5-25mm). The field keeps what is typed while it has focus, passes on each
+ * value inside the range as it is typed, and holds anything else to the range
+ * when it loses focus (or on Enter): clamping each keystroke would turn the
+ * "1" of "12" into 5.
  */
 interface MarginSliderProps {
   label: string;
@@ -633,7 +637,14 @@ const MARGIN_MAX = 25;
 
 const MarginSlider: React.FC<MarginSliderProps> = ({ label, value, onChange }) => {
   const sliderId = useId();
+  const [draft, setDraft] = useState<string | null>(null);
   const clamp = (n: number) => Math.min(MARGIN_MAX, Math.max(MARGIN_MIN, Math.round(n)));
+  const commitDraft = () => {
+    if (draft === null) return;
+    const n = Number(draft);
+    if (draft.trim() !== '' && Number.isFinite(n) && clamp(n) !== value) onChange(clamp(n));
+    setDraft(null);
+  };
   return (
     <div className="flex items-center gap-3">
       <label htmlFor={sliderId} className="w-16 shrink-0 font-mono text-xs text-ink-soft">
@@ -652,11 +663,22 @@ const MarginSlider: React.FC<MarginSliderProps> = ({ label, value, onChange }) =
           inputMode="numeric"
           min={MARGIN_MIN}
           max={MARGIN_MAX}
-          value={value}
+          value={draft ?? value}
           aria-label={`${label} (mm)`}
           onChange={(e) => {
-            const n = Number(e.target.value);
-            if (e.target.value !== '' && Number.isFinite(n)) onChange(clamp(n));
+            const text = e.target.value;
+            setDraft(text);
+            const n = Number(text);
+            if (text !== '' && Number.isInteger(n) && n >= MARGIN_MIN && n <= MARGIN_MAX) {
+              onChange(n);
+            }
+          }}
+          onBlur={commitDraft}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitDraft();
+            }
           }}
           className="h-8 w-12 border border-ink bg-white px-1 text-right font-mono text-xs tabular-nums text-ink focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
         />

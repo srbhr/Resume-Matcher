@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FormattingControls } from '@/components/builder/formatting-controls';
 import { DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
@@ -77,6 +77,7 @@ describe('FormattingControls', () => {
     const onChange = renderControls();
     fireEvent.click(screen.getByRole('radio', { name: 'builder.formatting.templates.deedy.name' }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ template: 'deedy' }));
+    cleanup();
 
     render(
       <FormattingControls
@@ -84,6 +85,10 @@ describe('FormattingControls', () => {
         onChange={vi.fn()}
       />
     );
+    // The Deedy panel is the only one on screen, so this is about Deedy alone.
+    expect(
+      screen.getByRole('radio', { name: 'builder.formatting.templates.deedy.name' })
+    ).toHaveAttribute('aria-checked', 'true');
     expect(screen.queryByText('builder.formatting.accentColor')).not.toBeInTheDocument();
   });
 
@@ -148,10 +153,102 @@ describe('FormattingControls', () => {
     );
 
     fireEvent.change(field, { target: { value: '40' } });
+    // Out of range while typing: nothing is passed on until the field is left.
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.blur(field);
     // Held to the 25mm maximum.
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ margins: expect.objectContaining({ bottom: 25 }) })
     );
+  });
+
+  it('lets a two-digit margin be typed: the first digit is not clamped', () => {
+    const onChange = vi.fn();
+    const margins = { top: 10, bottom: 20, left: 10, right: 10 };
+    const { rerender } = render(
+      <FormattingControls
+        settings={{ ...DEFAULT_TEMPLATE_SETTINGS, margins }}
+        onChange={onChange}
+      />
+    );
+    const field = screen.getByRole('spinbutton', { name: 'builder.formatting.margin.bottom (mm)' });
+
+    fireEvent.change(field, { target: { value: '1' } });
+    // "1" is below the 5mm minimum, but it is only the start of "12": it stays as typed.
+    expect(field).toHaveValue(1);
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.change(field, { target: { value: '12' } });
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ margins: { ...margins, bottom: 12 } })
+    );
+    const next = onChange.mock.lastCall?.[0];
+    rerender(<FormattingControls settings={next} onChange={onChange} />);
+    fireEvent.blur(field);
+    expect(field).toHaveValue(12);
+    expect(screen.getByRole('slider', { name: 'builder.formatting.margin.bottom' })).toHaveValue(
+      '12'
+    );
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts a cleared margin field back to its value when it is left', () => {
+    const onChange = vi.fn();
+    render(
+      <FormattingControls
+        settings={{
+          ...DEFAULT_TEMPLATE_SETTINGS,
+          margins: { top: 10, bottom: 12, left: 10, right: 10 },
+        }}
+        onChange={onChange}
+      />
+    );
+    const field = screen.getByRole('spinbutton', { name: 'builder.formatting.margin.bottom (mm)' });
+    fireEvent.change(field, { target: { value: '' } });
+    fireEvent.blur(field);
+    expect(field).toHaveValue(12);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('shows the four margins when the resume’s own unequal margins arrive after mount', () => {
+    const onChange = vi.fn();
+    // The builder mounts the panel with the defaults while the resume loads.
+    const { rerender } = render(
+      <FormattingControls settings={DEFAULT_TEMPLATE_SETTINGS} onChange={onChange} />
+    );
+    expect(
+      screen.getByRole('switch', { name: 'builder.formatting.marginsLinked' })
+    ).toHaveAttribute('aria-checked', 'true');
+
+    const saved = { top: 10, bottom: 10, left: 15, right: 15 };
+    rerender(
+      <FormattingControls
+        settings={{ ...DEFAULT_TEMPLATE_SETTINGS, margins: saved }}
+        onChange={onChange}
+      />
+    );
+    expect(
+      screen.getByRole('switch', { name: 'builder.formatting.marginsLinked' })
+    ).toHaveAttribute('aria-checked', 'false');
+    expect(screen.queryByRole('slider', { name: 'builder.formatting.margin.all' })).toBeNull();
+
+    // Editing one side leaves the other three as saved.
+    fireEvent.change(screen.getByRole('slider', { name: 'builder.formatting.margin.top' }), {
+      target: { value: '12' },
+    });
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ margins: { ...saved, top: 12 } })
+    );
+  });
+
+  it('keeps the four sliders after "same on all sides" is turned off, even with equal margins', () => {
+    renderControls();
+    const linked = screen.getByRole('switch', { name: 'builder.formatting.marginsLinked' });
+    fireEvent.click(linked);
+    expect(linked).toHaveAttribute('aria-checked', 'false');
+    expect(
+      screen.getByRole('slider', { name: 'builder.formatting.margin.left' })
+    ).toBeInTheDocument();
   });
 
   it('links the four margins: one slider then sets every side', () => {
@@ -220,13 +317,27 @@ describe('FormattingControls', () => {
       screen.getByRole('radiogroup', { name: 'resume.sections.skillsOnly' })
     ).toBeInTheDocument();
     expect(screen.queryByRole('radiogroup', { name: 'resume.sections.awards' })).toBeNull();
+    cleanup();
 
+    // Deedy prints its links one way, so it has no link control.
     render(
       <FormattingControls
         settings={{ ...DEFAULT_TEMPLATE_SETTINGS, template: 'deedy' }}
         onChange={vi.fn()}
       />
     );
-    expect(screen.getAllByRole('radiogroup', { name: 'builder.formatting.links' })).toHaveLength(1);
+    expect(screen.queryByRole('radiogroup', { name: 'builder.formatting.links' })).toBeNull();
+    cleanup();
+
+    // Vivid single prints its projects through the same links as Vivid.
+    render(
+      <FormattingControls
+        settings={{ ...DEFAULT_TEMPLATE_SETTINGS, template: 'vivid-single' }}
+        onChange={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole('radiogroup', { name: 'builder.formatting.links' })
+    ).toBeInTheDocument();
   });
 });
