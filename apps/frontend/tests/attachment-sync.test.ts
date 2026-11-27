@@ -67,22 +67,22 @@ const rows: Row[] = [
     part({ ...EDITED, savesInFlight: 2 }),
   ],
   [
-    'a save of the current text and version is saved',
+    'a save of the current text is saved',
     part({ ...EDITED, savesInFlight: 1 }),
-    { type: 'saveSucceeded', content: 'EDIT', version: 4 },
+    { type: 'saveSucceeded', content: 'EDIT' },
     part({ value: 'EDIT', baseline: 'EDIT', editVersion: 4, savesInFlight: 1 }),
   ],
   [
     'a save overtaken by a different edit moves the baseline and stays unsaved',
     part({ ...EDITED, value: 'LATER', editVersion: 5 }),
-    { type: 'saveSucceeded', content: 'EDIT', version: 4 },
+    { type: 'saveSucceeded', content: 'EDIT' },
     part({ value: 'LATER', baseline: 'EDIT', editVersion: 5, unsaved: true }),
   ],
   [
-    'a save overtaken by an edit typed away and back stays unsaved',
+    'a save overtaken by an edit typed away and back is saved',
     part({ ...EDITED, editVersion: 6 }),
-    { type: 'saveSucceeded', content: 'EDIT', version: 4 },
-    part({ value: 'EDIT', baseline: 'EDIT', editVersion: 6, unsaved: true }),
+    { type: 'saveSucceeded', content: 'EDIT' },
+    part({ value: 'EDIT', baseline: 'EDIT', editVersion: 6 }),
   ],
   [
     'the first of two overlapping saves to end leaves one in flight',

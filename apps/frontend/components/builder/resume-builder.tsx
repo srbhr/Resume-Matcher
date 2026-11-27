@@ -1107,17 +1107,13 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
       dispatchAttachment(part, { type: 'saveStarted' });
       if (!(await agentAllowsSave(part, showFailure))) return false;
       // A prior generation or newer edit can replace the value while this save waits.
-      const { savedContent, savedVersion } = await queueAttachmentWrite(part, async () => {
-        const { value: savedContent, editVersion: savedVersion } = attachmentsRef.current[part];
-        await save(activeResumeId, savedContent);
-        return { savedContent, savedVersion };
+      const savedContent = await queueAttachmentWrite(part, async () => {
+        const { value } = attachmentsRef.current[part];
+        await save(activeResumeId, value);
+        return value;
       });
       if (!documentIsActiveRef.current) return false;
-      dispatchAttachment(part, {
-        type: 'saveSucceeded',
-        content: savedContent,
-        version: savedVersion,
-      });
+      dispatchAttachment(part, { type: 'saveSucceeded', content: savedContent });
       persistAttachmentDraft();
       if (showSuccess) {
         showNotification(t(saveSuccess), 'success');

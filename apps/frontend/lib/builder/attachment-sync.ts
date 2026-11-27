@@ -14,10 +14,7 @@ export interface AttachmentState {
   baseline: string;
   /** Bumps on every change the editor did not just read from the server. */
   editVersion: number;
-  /**
-   * Kept explicit: after a save it also needs the version to match, so an edit
-   * typed away and back during the save still counts as unsaved.
-   */
+  /** The editor differs from what the server is known to hold. */
   unsaved: boolean;
   /** A count, not a flag: saves can overlap, and the first to end must not clear it. */
   savesInFlight: number;
@@ -29,8 +26,8 @@ export type AttachmentEvent =
   | { type: 'changed'; value: string }
   | { type: 'draftRestored'; value: string }
   | { type: 'saveStarted' }
-  /** `content` and `version` are read when the queued write runs, not when Save was pressed. */
-  | { type: 'saveSucceeded'; content: string; version: number }
+  /** `content` is read when the queued write runs, not when Save was pressed. */
+  | { type: 'saveSucceeded'; content: string }
   /** A save ended, whatever the outcome; also when it stopped for an agent conflict. */
   | { type: 'saveSettled' }
   /** The server generated and stored `content`; `startVersion` is the version when it was requested. */
@@ -63,7 +60,8 @@ export function attachmentSync(state: AttachmentState, event: AttachmentEvent): 
       return {
         ...state,
         baseline: event.content,
-        unsaved: !(event.version === state.editVersion && state.value === event.content),
+        // An edit typed away and back during the save matches what it stored.
+        unsaved: state.value !== event.content,
       };
     case 'saveSettled':
       return { ...state, savesInFlight: Math.max(0, state.savesInFlight - 1) };

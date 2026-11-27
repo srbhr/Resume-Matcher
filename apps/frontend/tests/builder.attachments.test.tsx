@@ -457,6 +457,24 @@ describe('builder attachment persistence', () => {
     expect(unload.defaultPrevented).toBe(true);
   });
 
+  it('counts a cover save as done when an edit during it is typed back to the saved text', async () => {
+    documents.a = { cover_letter: 'SERVER COVER' };
+    const save = holdNextSave();
+    route.search = 'id=a&tab=cover-letter';
+    renderBuilder();
+    const editor = await screen.findByDisplayValue('SERVER COVER');
+    fireEvent.change(editor, { target: { value: 'FIRST EDIT' } });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(coverSaves()).toEqual(['FIRST EDIT']));
+    fireEvent.change(editor, { target: { value: 'FIRST EDITS' } });
+    fireEvent.change(editor, { target: { value: 'FIRST EDIT' } });
+    await act(async () => save.resolve());
+
+    const unload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(false);
+  });
+
   it('saves the latest cover revision before exporting when editing continues during save', async () => {
     documents.a = { cover_letter: 'SERVER COVER' };
     const firstSave = holdNextSave();
