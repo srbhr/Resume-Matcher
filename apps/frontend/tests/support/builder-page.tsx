@@ -10,6 +10,20 @@ import {
 } from '@/components/common/resume_previewer_context';
 import en from '@/messages/en.json';
 
+// The builder loads these panels with next/dynamic. Loaded here first, each
+// dynamic import resolves from the module cache, so advance() flushes it the
+// way a fetched chunk lands in the browser.
+import '@/components/builder/cover-letter-editor';
+import '@/components/builder/outreach-editor';
+import '@/components/builder/cover-letter-preview';
+import '@/components/builder/outreach-preview';
+import '@/components/builder/interview-prep-view';
+import '@/components/builder/jd-comparison-view';
+import '@/components/builder/ats-check-view';
+import '@/components/builder/writing-panel';
+import '@/components/builder/ats-score-panel';
+import '@/components/builder/regenerate-wizard';
+
 /**
  * The /builder page as a user meets it: the real route, layout, providers and
  * editor tree. Spec files mock only `next/navigation`, with

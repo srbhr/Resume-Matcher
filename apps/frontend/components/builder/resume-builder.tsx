@@ -2,16 +2,12 @@
 
 import { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { ResumePhotoField } from './forms/resume-photo-field';
 import { FormattingControls } from './formatting-controls';
-import { CoverLetterEditor } from './cover-letter-editor';
-import { OutreachEditor } from './outreach-editor';
-import { CoverLetterPreview } from './cover-letter-preview';
-import { OutreachPreview } from './outreach-preview';
 import { GeneratePrompt } from './generate-prompt';
-import { InterviewPrepView } from './interview-prep-view';
 import { CommunityLinks } from '@/components/common/community-links';
 import { Button } from '@/components/ui/button';
 import { RetroTabs } from '@/components/ui/retro-tabs';
@@ -47,11 +43,6 @@ import {
   generateOutreachMessage,
   generateInterviewPrep,
 } from '@/lib/api/resume';
-import { JDComparisonView } from './jd-comparison-view';
-import { AtsCheckView } from './ats-check-view';
-import { WritingPanel } from './writing-panel';
-import { AtsScorePanel } from './ats-score-panel';
-import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useResumeFormatting } from '@/hooks/use-resume-formatting';
 import { useJobContext } from '@/hooks/use-job-context';
@@ -107,6 +98,30 @@ import {
   writeAttachmentDraft,
   type AttachmentDraftEnvelope,
 } from '@/lib/utils/attachment-draft-storage';
+
+// The panels of the tabs other than Resume, and the regenerate wizard, load as
+// their own chunks: they sat in /builder's first-load JS though the page opens
+// on the Resume tab.
+const CoverLetterEditor = dynamic(() =>
+  import('./cover-letter-editor').then((m) => m.CoverLetterEditor)
+);
+const OutreachEditor = dynamic(() => import('./outreach-editor').then((m) => m.OutreachEditor));
+const CoverLetterPreview = dynamic(() =>
+  import('./cover-letter-preview').then((m) => m.CoverLetterPreview)
+);
+const OutreachPreview = dynamic(() => import('./outreach-preview').then((m) => m.OutreachPreview));
+const InterviewPrepView = dynamic(() =>
+  import('./interview-prep-view').then((m) => m.InterviewPrepView)
+);
+const JDComparisonView = dynamic(() =>
+  import('./jd-comparison-view').then((m) => m.JDComparisonView)
+);
+const AtsCheckView = dynamic(() => import('./ats-check-view').then((m) => m.AtsCheckView));
+const WritingPanel = dynamic(() => import('./writing-panel').then((m) => m.WritingPanel));
+const AtsScorePanel = dynamic(() => import('./ats-score-panel').then((m) => m.AtsScorePanel));
+const RegenerateWizard = dynamic(() =>
+  import('./regenerate-wizard').then((m) => m.RegenerateWizard)
+);
 
 type TabId =
   | 'resume'
