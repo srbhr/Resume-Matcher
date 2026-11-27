@@ -262,3 +262,11 @@ async def test_parse_restores_skills_the_llm_dropped(
 
     assert "CI/CD" in _skills(result)
     assert "MongoDB" in _skills(result)
+
+
+def test_parse_prompt_leaves_undated_entries_undated() -> None:
+    """A degree the resume doesn't date stays undated: the parser must not infer
+    a year for it (leaving degree dates out is a common, deliberate choice)."""
+    rule = PARSE_RESUME_PROMPT.lower()
+    assert 'keeps "years" empty' in rule
+    assert "never infer, estimate or add a date" in rule

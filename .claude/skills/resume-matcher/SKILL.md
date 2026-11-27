@@ -80,10 +80,10 @@ On Windows: `Invoke-RestMethod -Method Put -Uri http://localhost:3000/api/v1/con
 
 ## 2. Master resume (once)
 
-Run `get_status`. If `master_resumes` is 0, ask the user for their resume file (PDF, DOCX, Markdown or text). If they have none, interview them: contact details, each role with dates and achievements, education, skills.
+Run `get_status`. If `master_resumes` is 0, ask the user for their resume file (PDF, DOCX, Markdown or text). If they have none, interview them: contact details, each role with dates and achievements, education, skills. Degree dates are optional: ask, and leave `years` empty for any degree they'd rather not date.
 
 1. `extract_document_text file_path=/abs/path/resume.pdf` turns the file into Markdown.
-2. Build `resume_data` from the Markdown **faithfully**: copy names, employers, titles, dates and bullets as written; do not improve or invent anything yet. `get_resume_schema` has the full structure; most resumes need only this much (leave out `sectionMeta` and `customSections` on a new master, and the app fills them in):
+2. Build `resume_data` from the Markdown **faithfully**: copy names, employers, titles, dates and bullets as written; do not improve or invent anything yet. An entry without a date in the source (often a degree) keeps `"years": ""`; never add one. `get_resume_schema` has the full structure; most resumes need only this much (leave out `sectionMeta` and `customSections` on a new master, and the app fills them in):
 
    ```json
    {"personalInfo": {"name": "Ada Lovelace", "title": "Engineer", "email": "ada@example.com",

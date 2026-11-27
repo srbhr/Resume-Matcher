@@ -105,8 +105,10 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
                   />
                 </div>
                 <div className="space-y-2">
+                  {/* Many people leave degree dates out; say the field may stay empty. */}
                   <Label htmlFor={`${fieldId}-${item.id}-years`}>
-                    {t('builder.genericItemForm.fields.years')}
+                    {t('builder.genericItemForm.fields.years')}{' '}
+                    <span className="text-steel">({t('common.optional')})</span>
                   </Label>
                   <Input
                     id={`${fieldId}-${item.id}-years`}
