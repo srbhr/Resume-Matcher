@@ -104,7 +104,8 @@
     },
     "noTailored": "Aún no hay currículums personalizados.",
     "filter": {
-      "all": "Todos los maestros"
+      "all": "Todos los maestros",
+      "label": "Filtrar por currículum maestro"
     },
     "sort": {
       "label": "Ordenar currículums personalizados",

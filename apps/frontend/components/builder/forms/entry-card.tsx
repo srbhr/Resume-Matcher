@@ -72,26 +72,30 @@ export function EntryCard({
             <span className="min-w-0 truncate font-mono text-xs text-steel">{summary}</span>
           )}
         </button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="shrink-0 text-ink-soft hover:text-ink"
-          onClick={onDuplicate}
-          aria-label={t('a11y.duplicateItem')}
-          title={t('a11y.duplicateItem')}
-        >
-          <Copy aria-hidden="true" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="shrink-0 text-ink-soft hover:bg-destructive-tint hover:text-destructive"
-          onClick={onRemove}
-          aria-label={t('a11y.removeItem')}
-          title={t('a11y.removeItem')}
-        >
-          <Trash aria-hidden="true" />
-        </Button>
+        {/* 12px apart: each button's hit area reaches 6px past its edge, so a tap
+            between Duplicate and Remove can't land on the other one. */}
+        <div className="flex shrink-0 items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-ink-soft hover:text-ink"
+            onClick={onDuplicate}
+            aria-label={t('a11y.duplicateItem')}
+            title={t('a11y.duplicateItem')}
+          >
+            <Copy aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-ink-soft hover:bg-destructive-tint hover:text-destructive"
+            onClick={onRemove}
+            aria-label={t('a11y.removeItem')}
+            title={t('a11y.removeItem')}
+          >
+            <Trash aria-hidden="true" />
+          </Button>
+        </div>
       </div>
       <div id={bodyId} hidden={!open} className="space-y-6 p-4">
         {children}
@@ -101,9 +105,10 @@ export function EntryCard({
 }
 
 /** "Acme · 2021 - 2024": the non-empty parts, for an entry's collapsed row. */
-export function entrySummary(...parts: Array<string | undefined | null>): string {
+export function entrySummary(...parts: unknown[]): string {
+  // Stored entries are user data and may hold a number or null where text is expected.
   return parts
-    .map((part) => part?.trim())
+    .map((part) => (typeof part === 'string' ? part.trim() : ''))
     .filter(Boolean)
     .join(' · ');
 }

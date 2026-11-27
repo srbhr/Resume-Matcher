@@ -104,7 +104,8 @@
     },
     "noTailored": "Ainda não há currículos personalizados.",
     "filter": {
-      "all": "Todos os principais"
+      "all": "Todos os principais",
+      "label": "Filtrar por currículo mestre"
     },
     "sort": {
       "label": "Ordenar currículos personalizados",

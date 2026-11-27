@@ -104,7 +104,8 @@
     },
     "noTailored": "Aucun CV personnalisé pour l'instant.",
     "filter": {
-      "all": "Tous les CV principaux"
+      "all": "Tous les CV principaux",
+      "label": "Filtrer par CV maître"
     },
     "sort": {
       "label": "Trier les CV personnalisés",
@@ -1538,7 +1539,7 @@
       "roleUnknown": "Poste sans titre",
       "selectAria": "Sélectionner la candidature",
       "dragAria": "Faire glisser pour réorganiser",
-      "appliedAgo": "Postulé {when}",
+      "appliedAgo": "Candidature envoyée {when}",
       "viewResume": "Voir le CV"
     },
     "modal": {

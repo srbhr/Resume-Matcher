@@ -80,6 +80,12 @@ describe('multi-master api client', () => {
 
     const { linkStyle: _l, listStyle: _s, ...older } = DEFAULT_TEMPLATE_SETTINGS;
     const legacy = toPageFitSettings(older as typeof DEFAULT_TEMPLATE_SETTINGS);
-    expect(legacy).toMatchObject({ linkStyle: 'chip', listSkills: 'pills', listAwards: 'pills' });
+    expect(legacy).toMatchObject({
+      linkStyle: 'chip',
+      listSkills: 'pills',
+      listLanguages: 'pills',
+      listCertifications: 'pills',
+      listAwards: 'pills',
+    });
   });
 });

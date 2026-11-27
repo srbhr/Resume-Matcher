@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatDate, formatTimeAgo } from '@/lib/format-date';
+import { calendarDaysBetween, formatDate, formatTimeAgo } from '@/lib/format-date';
 
 describe('formatDate', () => {
   it('formats in the UI locale', () => {
@@ -101,9 +101,41 @@ describe('formatTimeAgo', () => {
     expect(formatTimeAgo('2026-11-24T12:00:00Z', 'fr', now)).toBe('il y a 3 jours');
   });
 
+  it('holds each unit below the next one up', () => {
+    // 59.6 minutes and 23.6 hours: rounding would say "60 minutes" and "24 hours".
+    expect(formatTimeAgo(now - 59.6 * 60_000, 'en', now)).toBe('59 minutes ago');
+    expect(formatTimeAgo(now - 23.6 * 3_600_000, 'en', now)).toBe('23 hours ago');
+  });
+
+  it('counts days by the calendar: yesterday is the day before today', () => {
+    const lateEvening = new Date(2026, 10, 27, 23, 30).getTime();
+    const sameDayMorning = new Date(2026, 10, 27, 0, 15).getTime();
+    // Not quite a day earlier, but the same calendar day: hours, never "yesterday".
+    expect(formatTimeAgo(sameDayMorning, 'en', lateEvening)).toBe('23 hours ago');
+    const nextMorning = new Date(2026, 10, 29, 9, 0).getTime();
+    // 33.5 hours, but two calendar days before.
+    expect(formatTimeAgo(lateEvening, 'en', nextMorning)).toBe('2 days ago');
+  });
+
+  it('moves from weeks to months after four weeks', () => {
+    expect(formatTimeAgo(now - 29 * 86_400_000, 'en', now)).toBe('4 weeks ago');
+    expect(formatTimeAgo(now - 31 * 86_400_000, 'en', now)).toBe('last month');
+    expect(formatTimeAgo(now - 45 * 86_400_000, 'en', now)).toBe('last month');
+    expect(formatTimeAgo(now - 75 * 86_400_000, 'en', now)).toBe('2 months ago');
+  });
+
   it('returns nothing for missing or invalid input', () => {
     expect(formatTimeAgo(null, 'en', now)).toBe('');
     expect(formatTimeAgo('', 'en', now)).toBe('');
     expect(formatTimeAgo('not a date', 'en', now)).toBe('');
+  });
+});
+
+describe('calendarDaysBetween', () => {
+  it('counts local midnights crossed, not 24-hour periods', () => {
+    const at = (day: number, hour: number) => new Date(2026, 10, day, hour).getTime();
+    expect(calendarDaysBetween(at(27, 1), at(27, 23))).toBe(0);
+    expect(calendarDaysBetween(at(26, 23), at(27, 1))).toBe(1);
+    expect(calendarDaysBetween(at(20, 12), at(27, 12))).toBe(7);
   });
 });

@@ -9,7 +9,7 @@ import { DotsSixVertical, FileText } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useTranslations } from '@/lib/i18n';
-import { formatDate } from '@/lib/format-date';
+import { calendarDaysBetween, formatDate, formatDaysAgo } from '@/lib/format-date';
 import type { Application } from '@/lib/api/tracker';
 import { daysSinceApplied, isFollowUpDue } from '@/lib/tracker-follow-up';
 import { cn } from '@/lib/utils';
@@ -27,14 +27,19 @@ interface ApplicationCardProps {
   onOpen: (id: string) => void;
 }
 
-/** "Applied 52 days ago", in the UI language; the exact date goes in a tooltip. */
+/**
+ * "Applied 52 days ago", in the UI language; the exact date goes in a tooltip.
+ * Counted in calendar days, so an application sent at 23:00 reads "yesterday"
+ * the next morning, not "today".
+ */
 function appliedAgo(
-  days: number,
+  appliedAt: string,
+  now: Date,
   locale: string,
   t: (key: string, p?: Record<string, string>) => string
 ) {
-  const when = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-days, 'day');
-  return t('tracker.card.appliedAgo', { when });
+  const days = calendarDaysBetween(Date.parse(appliedAt), now.getTime());
+  return t('tracker.card.appliedAgo', { when: formatDaysAgo(days, locale) });
 }
 
 export function ApplicationCard({
@@ -85,7 +90,7 @@ export function ApplicationCard({
                   className="mt-1 font-mono text-xs text-steel tabular-nums"
                   title={formatDate(application.applied_at, locale)}
                 >
-                  {appliedAgo(days, locale, t)}
+                  {appliedAgo(application.applied_at, now, locale, t)}
                 </p>
               )}
               {isFollowUpDue(application, now) && (

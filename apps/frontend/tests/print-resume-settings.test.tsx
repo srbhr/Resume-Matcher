@@ -64,14 +64,16 @@ describe('print route template settings from the query string', () => {
       linkStyle: 'text',
       listSkills: 'comma',
       listLanguages: 'bullets',
+      listCertifications: 'comma',
       listAwards: 'comma',
     });
 
     expect(received.settings?.linkStyle).toBe('text');
+    // Each row is read from its own parameter; an unknown value falls back to pills.
     expect(received.settings?.listStyle).toEqual({
       skills: 'comma',
       languages: 'pills',
-      certifications: 'pills',
+      certifications: 'comma',
       awards: 'comma',
     });
   });

@@ -27,6 +27,14 @@ describe('ProjectLink', () => {
     expect(link).toHaveTextContent('GitHub');
   });
 
+  it('keeps an address whose scheme is in capitals, instead of adding a second one', () => {
+    render(<ProjectLink kind="website" url="HTTPS://WWW.Example.com/Work" />);
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', 'HTTPS://WWW.Example.com/Work');
+    expect(link).toHaveTextContent('Example.com/Work');
+    expect(link).not.toHaveTextContent('HTTPS://');
+  });
+
   it('labels a website by its host name', () => {
     render(<ProjectLink kind="website" url="https://www.project-demo.com/docs" />);
     expect(screen.getByRole('link')).toHaveTextContent('project-demo.com');

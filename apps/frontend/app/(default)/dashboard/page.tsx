@@ -1012,6 +1012,9 @@ export default function DashboardPage() {
                     {masterOptions.length > 1 && (
                       <Dropdown
                         className="w-56"
+                        // Named for assistive technology: the value alone ("All masters") says nothing.
+                        label={t('dashboard.filter.label')}
+                        hideLabel
                         options={[
                           { id: 'all', label: t('dashboard.filter.all') },
                           ...masterOptions,

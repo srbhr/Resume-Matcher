@@ -127,7 +127,7 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
         >
           {(item, _index, handle) => (
             <EntryCard
-              title={item.title || ''}
+              title={typeof item.title === 'string' ? item.title : ''}
               summary={entrySummary(item.subtitle, item.years)}
               handle={handle}
               onDuplicate={() => onChange(duplicateById(items, item.id))}

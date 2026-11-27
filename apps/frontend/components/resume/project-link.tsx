@@ -4,8 +4,8 @@ import baseStyles from './styles/_base.module.css';
 
 const bare = (url: string) =>
   url
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
     .replace(/\/$/, '');
 
 /** "github.com/a/b" → "github.com": the host, for the linked-text style. */
@@ -22,7 +22,7 @@ export const ProjectLink: React.FC<{ kind: 'github' | 'website'; url: string }> 
   url,
 }) => (
   <a
-    href={url.startsWith('http') ? url : `https://${url}`}
+    href={/^https?:\/\//i.test(url) ? url : `https://${url}`}
     target="_blank"
     rel="noopener noreferrer"
     className={baseStyles['resume-link-pill']}

@@ -243,7 +243,12 @@ describe('dashboard tailored order and filter', () => {
     ]);
     render(<DashboardPage />);
     await screen.findByText('T-beta');
-    fireEvent.click(screen.getByRole('button', { name: /dashboard\.filter\.all/ }));
+    // Named for what it does, then its value; the name stays off screen.
+    const filter = screen.getByRole('button', {
+      name: 'dashboard.filter.label dashboard.filter.all',
+    });
+    expect(screen.getByText('dashboard.filter.label')).toHaveClass('sr-only');
+    fireEvent.click(filter);
     fireEvent.click(screen.getByRole('option', { name: 'Second track' }));
 
     expect(tailoredOrder()).toEqual(['T-gamma']);

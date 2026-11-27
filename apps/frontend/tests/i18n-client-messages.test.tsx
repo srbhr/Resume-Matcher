@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { locales, type Locale } from '@/i18n/config';
 import { useTranslations } from '@/lib/i18n';
 import { MESSAGE_LOADERS } from '@/lib/i18n/client-messages';
 import fr from '@/messages/fr.json';
+import ko from '@/messages/ko.json';
 import en from '@/messages/en.json';
 
 /**
@@ -41,10 +42,45 @@ describe('client UI messages', () => {
     expect(await screen.findByText(fr.common.save)).toBeInTheDocument();
   });
 
-  it('can load every UI language but English, which is always there', () => {
+  it('can load every UI language but English, which is always there', async () => {
     expect(Object.keys(MESSAGE_LOADERS).sort()).toEqual(
       locales.filter((locale) => locale !== 'en').sort()
     );
+    // Each loader resolves to a full message table, so no import path is broken.
+    for (const load of Object.values(MESSAGE_LOADERS)) {
+      const messages = await load();
+      expect(Object.keys(messages).sort()).toEqual(Object.keys(en).sort());
+    }
+  });
+
+  it('tries a failed language again, so a dropped connection does not leave English', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const realLoad = MESSAGE_LOADERS.ko;
+    const load = vi
+      .spyOn(MESSAGE_LOADERS, 'ko')
+      .mockRejectedValueOnce(new Error('ChunkLoadError'))
+      .mockImplementation(realLoad);
+    try {
+      uiLanguage = 'ko';
+      render(<Label />);
+      // The first load fails; the page stays in English.
+      await act(async () => {});
+      expect(screen.getByText(en.common.save)).toBeInTheDocument();
+      expect(load).toHaveBeenCalledTimes(1);
+
+      // Two seconds later it tries again, and Korean arrives.
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+      vi.useRealTimers();
+      expect(load).toHaveBeenCalledTimes(2);
+      expect(await screen.findByText(ko.common.save)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+      load.mockRestore();
+      uiLanguage = 'en';
+    }
   });
 
   it('keeps the other languages out of the client bundle: no static imports', () => {

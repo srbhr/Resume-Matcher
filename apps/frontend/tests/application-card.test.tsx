@@ -2,9 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApplicationCard } from '@/components/tracker/application-card';
 import type { Application } from '@/lib/api/tracker';
+import { formatDate } from '@/lib/format-date';
 
+// A test may swap in a translator that shows its parameters.
+const tMock = vi.hoisted(() => ({
+  current: null as ((key: string, params?: Record<string, string>) => string) | null,
+}));
 vi.mock('@/lib/i18n', () => ({
-  useTranslations: () => ({ t: (key: string) => key, locale: 'en' }),
+  useTranslations: () => ({ t: tMock.current ?? ((key: string) => key), locale: 'en' }),
 }));
 vi.mock('@dnd-kit/sortable', () => ({
   useSortable: () => ({
@@ -67,7 +72,24 @@ describe('ApplicationCard', () => {
     renderCard({ selected: false, application: { ...application, applied_at: tenDaysAgo } });
     // t is the identity mock, so the key shows; the date itself sits in the tooltip.
     const when = screen.getByText('tracker.card.appliedAgo');
-    expect(when).toHaveAttribute('title', expect.stringMatching(/\d/));
+    expect(when).toHaveAttribute('title', formatDate(tenDaysAgo, 'en'));
+  });
+
+  it('counts calendar days: sent late last night reads yesterday this morning', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 28, 9, 0));
+    try {
+      const lastNight = new Date(2026, 10, 27, 23, 0).toISOString();
+      const t = vi.fn((key: string, params?: Record<string, string>) =>
+        params?.when ? `${key}:${params.when}` : key
+      );
+      tMock.current = t;
+      renderCard({ selected: false, application: { ...application, applied_at: lastNight } });
+      expect(screen.getByText('tracker.card.appliedAgo:yesterday')).toBeInTheDocument();
+    } finally {
+      tMock.current = null;
+      vi.useRealTimers();
+    }
   });
 
   it('lets the role run to two lines instead of cutting it at one', () => {

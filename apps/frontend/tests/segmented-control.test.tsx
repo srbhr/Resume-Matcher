@@ -104,4 +104,26 @@ describe('SegmentedControl groups', () => {
     fireEvent.keyDown(screen.getByRole('radio', { name: 'B' }), { key: 'ArrowRight' });
     expect(onChange).toHaveBeenLastCalledWith('c');
   });
+
+  it('keeps a caption that comes back in a later run as its own run, without a key clash', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      render(
+        <SegmentedControl
+          aria-label="Provider"
+          value="a"
+          onChange={vi.fn()}
+          items={[
+            { value: 'a', label: 'A', group: 'Keys' },
+            { value: 'b', label: 'B', group: 'Local' },
+            { value: 'c', label: 'C', group: 'Keys' },
+          ]}
+        />
+      );
+      expect(screen.getAllByText('Keys')).toHaveLength(2);
+      expect(error.mock.calls.flat().join(' ')).not.toMatch(/same key/i);
+    } finally {
+      error.mockRestore();
+    }
+  });
 });

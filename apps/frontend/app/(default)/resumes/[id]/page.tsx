@@ -550,9 +550,9 @@ export default function ResumeViewerPage() {
         <BackLink label={t('nav.backToDashboard')} />
 
         {/* Editable title (the track name for a master): up to two lines, then clipped,
-            with the full title on hover. min-w keeps it readable: the actions wrap
-            below it before it is squeezed. */}
-        <div className="flex min-w-[16rem] flex-1 items-center gap-2">
+            with the full title on hover. From sm, min-w keeps it readable: the actions
+            wrap below it before it is squeezed. A phone's row is narrower than that. */}
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[16rem]">
           {isEditingTitle ? (
             <Input
               type="text"

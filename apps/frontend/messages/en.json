@@ -104,7 +104,8 @@
     },
     "noTailored": "No tailored resumes yet.",
     "filter": {
-      "all": "All masters"
+      "all": "All masters",
+      "label": "Filter by master resume"
     },
     "sort": {
       "label": "Sort tailored resumes",

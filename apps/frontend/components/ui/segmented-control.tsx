@@ -123,7 +123,8 @@ export function SegmentedControl<T extends string>({
     return (
       <div role="radiogroup" {...aria} className={cn('space-y-4', className)}>
         {groups.map((group) => (
-          <div key={group.label} className="space-y-2">
+          // A caption can repeat in another run; the run's first item can't.
+          <div key={String(group.entries[0][0].value)} className="space-y-2">
             {group.label && (
               <p className="font-mono text-xs uppercase tracking-wider text-steel">{group.label}</p>
             )}

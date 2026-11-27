@@ -16,7 +16,7 @@ export const RangeSlider = React.forwardRef<
       type="range"
       className={cn(
         'h-4 w-full cursor-pointer appearance-none bg-transparent',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
         'disabled:cursor-not-allowed disabled:opacity-50',
         // WebKit / Blink
         '[&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:bg-panel-hover',

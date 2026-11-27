@@ -25,19 +25,30 @@ const loaded = new Map<Locale, Messages>([['en', en]]);
 const inFlight = new Set<Locale>();
 const listeners = new Set<() => void>();
 
-function load(locale: Locale): void {
+/** After a failed load, tries again after 2, 4 and 8 seconds, then waits for a new mount. */
+const RETRY_DELAYS_MS = [2000, 4000, 8000];
+
+function load(locale: Locale, attempt = 0): void {
   if (loaded.has(locale) || inFlight.has(locale) || !(locale in MESSAGE_LOADERS)) return;
   inFlight.add(locale);
   MESSAGE_LOADERS[locale as Exclude<Locale, 'en'>]()
     .then((messages) => {
       loaded.set(locale, messages);
+      inFlight.delete(locale);
       listeners.forEach((notify) => notify());
     })
     .catch((error: unknown) => {
-      // Stays in English; the next render of a translated component retries.
-      console.warn(`Could not load the ${locale} UI messages:`, error);
-    })
-    .finally(() => inFlight.delete(locale));
+      inFlight.delete(locale);
+      // The page stays in English meanwhile. A dropped connection often comes
+      // back, so try again a few times; after that, a component mounting with
+      // this locale (opening another page) starts over.
+      const delay = RETRY_DELAYS_MS[attempt];
+      console.warn(
+        `Could not load the ${locale} UI messages${delay ? `; retrying in ${delay / 1000}s` : ''}:`,
+        error
+      );
+      if (delay) setTimeout(() => load(locale, attempt + 1), delay);
+    });
 }
 
 function subscribe(notify: () => void): () => void {

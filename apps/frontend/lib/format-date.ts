@@ -44,32 +44,24 @@ export function formatDate(
   return formatterFor(locale, options).format(date);
 }
 
-/** Each unit and how many of it make the next one up. */
-const TIME_AGO_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
-  ['second', 60],
-  ['minute', 60],
-  ['hour', 24],
-  ['day', 7],
-  ['week', 4.348],
-  ['month', 12],
-  ['year', Number.POSITIVE_INFINITY],
-];
+const DAY_MS = 86_400_000;
+
+/**
+ * Whole calendar days from `earlier` to `later` in the local time zone: 1 for
+ * any time yesterday, however few hours ago. Counted between local midnights,
+ * so a 23- or 25-hour day at a clock change still counts as one.
+ */
+export function calendarDaysBetween(earlier: number, later: number): number {
+  const midnight = (time: number) => {
+    const d = new Date(time);
+    return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+  return Math.round((midnight(later) - midnight(earlier)) / DAY_MS);
+}
 
 const relativeFormatters = new Map<string, Intl.RelativeTimeFormat>();
 
-/**
- * How long ago `value` was, in the UI locale and the largest unit that fits:
- * "now", "5 seconds ago", "2 days ago". A time after `now` (clock skew) reads as
- * now. Returns '' for missing or invalid input.
- */
-export function formatTimeAgo(
-  value: string | number | Date | null | undefined,
-  locale: string,
-  now: number
-): string {
-  if (value === null || value === undefined || value === '') return '';
-  const time = toDate(value).getTime();
-  if (Number.isNaN(time)) return '';
+function relativeFormatter(locale: string): Intl.RelativeTimeFormat {
   let formatter = relativeFormatters.get(locale);
   if (!formatter) {
     try {
@@ -79,11 +71,43 @@ export function formatTimeAgo(
     }
     relativeFormatters.set(locale, formatter);
   }
-  let delta = Math.min(0, (time - now) / 1000);
-  for (const [unit, size] of TIME_AGO_UNITS) {
-    const rounded = Math.round(delta);
-    if (Math.abs(rounded) < size) return formatter.format(rounded === 0 ? 0 : rounded, unit);
-    delta /= size;
-  }
-  return '';
+  return formatter;
+}
+
+/** "Today", "yesterday", "3 days ago": calendar days before `now`, in the UI locale. */
+export function formatDaysAgo(days: number, locale: string): string {
+  return relativeFormatter(locale).format(-Math.max(0, days), 'day');
+}
+
+/**
+ * How long ago `value` was, in the UI locale and the largest unit that fits:
+ * "now", "5 seconds ago", "3 hours ago", "yesterday", "2 weeks ago". Under a day
+ * it counts seconds, minutes or hours, each held below the next unit up (59
+ * minutes, never "60 minutes"). From a day it counts calendar days, so
+ * "yesterday" means the day before today, and weeks, months and years follow
+ * from those days. A time after `now` (clock skew) reads as now. Returns '' for
+ * missing or invalid input.
+ */
+export function formatTimeAgo(
+  value: string | number | Date | null | undefined,
+  locale: string,
+  now: number
+): string {
+  if (value === null || value === undefined || value === '') return '';
+  const time = toDate(value).getTime();
+  if (Number.isNaN(time)) return '';
+  const formatter = relativeFormatter(locale);
+  const ago = (amount: number, unit: Intl.RelativeTimeFormatUnit) =>
+    formatter.format(amount === 0 ? 0 : -amount, unit);
+
+  const seconds = Math.max(0, (now - time) / 1000);
+  if (seconds < 60) return ago(Math.min(59, Math.round(seconds)), 'second');
+  if (seconds < 3600) return ago(Math.min(59, Math.max(1, Math.round(seconds / 60))), 'minute');
+  if (seconds < 86_400) return ago(Math.min(23, Math.max(1, Math.round(seconds / 3600))), 'hour');
+
+  const days = Math.max(1, calendarDaysBetween(time, now));
+  if (days < 7) return ago(days, 'day');
+  if (days < 30) return ago(Math.min(4, Math.round(days / 7)), 'week');
+  if (days < 365) return ago(Math.min(11, Math.max(1, Math.round(days / 30.44))), 'month');
+  return ago(Math.max(1, Math.round(days / 365.25)), 'year');
 }

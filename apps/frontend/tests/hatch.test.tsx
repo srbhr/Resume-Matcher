@@ -34,6 +34,13 @@ describe('Hatch', () => {
     const ids = [...container.querySelectorAll('pattern')].map((p) => p.id);
 
     expect(new Set(ids).size).toBe(2);
-    expect(container.querySelectorAll('rect')[1]).toHaveAttribute('fill', `url(#${ids[1]})`);
+    const rects = container.querySelectorAll('rect');
+    expect(rects[0]).toHaveAttribute('fill', `url(#${ids[0]})`);
+    expect(rects[1]).toHaveAttribute('fill', `url(#${ids[1]})`);
+  });
+
+  it('stays out of print, like the cross field', () => {
+    const { container } = render(<Hatch />);
+    expect(container.querySelector('svg')).toHaveClass('print:hidden');
   });
 });

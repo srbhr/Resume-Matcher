@@ -15,7 +15,7 @@ export function Hatch({ className, pitch = 8 }: { className?: string; pitch?: nu
   return (
     <svg
       aria-hidden="true"
-      className={cn('pointer-events-none absolute inset-0 size-full', className)}
+      className={cn('pointer-events-none absolute inset-0 size-full print:hidden', className)}
     >
       <defs>
         <pattern

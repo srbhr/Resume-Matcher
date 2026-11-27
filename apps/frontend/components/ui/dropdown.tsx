@@ -19,6 +19,8 @@ interface DropdownProps {
   value: string;
   onChange: (value: string) => void;
   label?: string;
+  /** Keep the label for assistive technology only, where the row around it says what it is. */
+  hideLabel?: boolean;
   description?: string;
   /** Shown, and nothing is marked selected, when `value` matches no option. */
   placeholder?: string;
@@ -69,6 +71,7 @@ export function Dropdown({
   value,
   onChange,
   label,
+  hideLabel = false,
   description,
   placeholder,
   disabled = false,
@@ -156,7 +159,7 @@ export function Dropdown({
   return (
     <div ref={containerRef} className={cn('space-y-1', className)}>
       {label && (
-        <span id={labelId} className={cn('block', labelClass)}>
+        <span id={labelId} className={hideLabel ? 'sr-only' : cn('block', labelClass)}>
           {label}
         </span>
       )}
