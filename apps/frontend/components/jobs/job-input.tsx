@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ClipboardText } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,19 +55,33 @@ export function JobInput({
   // The clipboard API exists only in secure contexts; decide after mount so the
   // server and client render the same thing.
   const [canPaste, setCanPaste] = useState(false);
-  const [pasteFailed, setPasteFailed] = useState(false);
+  // Why the last paste did nothing: the clipboard couldn't be read, or held no text.
+  const [pasteProblem, setPasteProblem] = useState<'failed' | 'empty' | null>(null);
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  const isEmpty = !value.trim();
   useEffect(() => {
     setCanPaste(typeof navigator !== 'undefined' && Boolean(navigator.clipboard?.readText));
   }, []);
 
   const paste = async () => {
-    setPasteFailed(false);
+    setPasteProblem(null);
     try {
       const text = await navigator.clipboard.readText();
-      if (text.trim()) onChange(text);
+      if (!text.trim()) {
+        setPasteProblem('empty');
+        return;
+      }
+      onChange(text);
+      // The paste button goes with the empty state; keep focus in the field, at the end.
+      requestAnimationFrame(() => {
+        const field = fieldRef.current;
+        if (!field) return;
+        field.focus();
+        field.setSelectionRange(field.value.length, field.value.length);
+      });
     } catch {
-      // Permission refused or no text: typing and Cmd/Ctrl+V still work.
-      setPasteFailed(true);
+      // Permission refused: typing and Cmd/Ctrl+V still work.
+      setPasteProblem('failed');
     }
   };
 
@@ -97,10 +111,14 @@ export function JobInput({
         <Label htmlFor={id}>{fieldLabel}</Label>
         <div className="relative flex min-h-48 flex-1">
           <Textarea
+            ref={fieldRef}
             id={id}
             aria-describedby={hintId}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              setPasteProblem(null);
+              onChange(e.target.value);
+            }}
             onKeyDown={(e) => {
               // The field sits in pages that act on Enter; keep Enter for new lines.
               if (e.key === 'Enter') e.stopPropagation();
@@ -108,7 +126,7 @@ export function JobInput({
             disabled={disabled}
             className="min-h-48 flex-1 resize-none p-4"
           />
-          {!value && (
+          {isEmpty && (
             // The empty state sits over the field; clicks fall through to it, so
             // typing and Cmd/Ctrl+V work, except on the paste button.
             <div className="pointer-events-none absolute inset-0 flex flex-col items-start justify-center gap-2 p-6">
@@ -130,15 +148,15 @@ export function JobInput({
                   {t('jobInput.paste')}
                 </Button>
               )}
-              {pasteFailed && (
+              {pasteProblem && (
                 <p role="status" className="text-xs text-ink-soft">
-                  {t('jobInput.pasteFailed')}
+                  {t(pasteProblem === 'empty' ? 'jobInput.pasteEmpty' : 'jobInput.pasteFailed')}
                 </p>
               )}
             </div>
           )}
         </div>
-        {value && (
+        {!isEmpty && (
           <p id={hintId} className="sr-only">
             {fieldHint}
           </p>

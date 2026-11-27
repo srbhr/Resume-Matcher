@@ -249,14 +249,21 @@ async function postImprove(
   }
 }
 
-/** Uploads job descriptions and returns a job_id */
+/**
+ * Uploads job descriptions and returns a job_id. `details` are the role and
+ * company the user typed for a single description; they win over what tailoring
+ * extracts for the tracker card.
+ */
 export async function uploadJobDescriptions(
   descriptions: string[],
-  resumeId: string
+  resumeId: string,
+  details?: { role?: string; company?: string }
 ): Promise<string> {
   const res = await apiPost('/jobs/upload', {
     job_descriptions: descriptions,
     resume_id: resumeId,
+    ...(details?.role ? { role: details.role } : {}),
+    ...(details?.company ? { company: details.company } : {}),
   });
   if (!res.ok) throw await apiError(res, `Upload failed with status ${res.status}`);
   const data = await res.json();

@@ -24,9 +24,16 @@ def _new_client() -> AsyncClient:
 
 
 async def _preview_then_confirm(
-    isolated_db: Database, sample_resume: dict[str, Any], confirm_count: int = 1
+    isolated_db: Database,
+    sample_resume: dict[str, Any],
+    confirm_count: int = 1,
+    job_details: dict[str, str] | None = None,
 ) -> tuple[str, str, str]:
-    """Run the mocked preview→confirm handshake; return the tailored resume id."""
+    """Run the mocked preview→confirm handshake; return the tailored resume id.
+
+    ``job_details`` are the role/company sent with the job description, as the
+    Tailor page sends what the user corrected.
+    """
     upload_resp = await _upload_resume(isolated_db, sample_resume)
     resume_id = upload_resp.json()["resume_id"]
 
@@ -36,7 +43,8 @@ async def _preview_then_confirm(
             json={
                 "job_descriptions": [
                     "Senior Backend Engineer at Acme Corp: Python, FastAPI."
-                ]
+                ],
+                **(job_details or {}),
             },
         )
     job_id = jobs_resp.json()["job_id"][0]
@@ -137,6 +145,29 @@ class TestTrackerAutoCreate:
         assert card["company"] == "Acme Corp"
         assert card["role"] == "Senior Backend Engineer - Acme Corp"
         assert card["applied_at"] is not None
+
+    async def test_corrected_role_and_company_win_over_extraction(
+        self, isolated_db: Database, sample_resume: dict[str, Any]
+    ) -> None:
+        """What the user corrected on the Tailor page reaches the card: the
+        extraction during tailoring ("Acme Corp") doesn't overwrite it, and the
+        corrected role wins over the generated resume title."""
+        _, job_id, _ = await _preview_then_confirm(
+            isolated_db,
+            sample_resume,
+            job_details={"company": "Acme Bank", "role": "Staff Backend Engineer"},
+        )
+
+        async with _new_client() as client:
+            board = (await client.get("/api/v1/applications")).json()["columns"]
+        card = board["applied"][0]
+        assert card["company"] == "Acme Bank"
+        assert card["role"] == "Staff Backend Engineer"
+        job = await isolated_db.get_job(job_id)
+        assert job is not None
+        assert job["company"] == "Acme Bank"
+        # The extracted keywords are still cached for the ATS score.
+        assert job["job_keywords"]["keywords"] == ["Python", "FastAPI"]
 
     async def test_autocreate_is_idempotent_on_double_confirm(
         self,

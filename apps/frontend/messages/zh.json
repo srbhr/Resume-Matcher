@@ -1005,7 +1005,8 @@
     "blocked": {
       "noJob": "请先粘贴职位描述",
       "noMaster": "正在加载主简历"
-    }
+    },
+    "queueIgnoresLength": "加入队列时，会在不限制页数和要点数量的情况下定制。"
   },
   "settings": {
     "title": "设置",
@@ -1679,7 +1680,8 @@
       "loadFailed": "无法加载队列。",
       "deleteFailed": "无法移除该职位，请重试。",
       "deleteInProgress": "该职位正在定制中，请在完成后再移除。",
-      "clearFailed": "无法清空队列，请重试。"
+      "clearFailed": "无法清空队列，请重试。",
+      "resumesLoadFailed": "无法加载你的主简历。请刷新页面后重试。"
     }
   },
   "agentPrompt": {
@@ -1736,6 +1738,7 @@
     "emptyTitle": "粘贴职位描述",
     "paste": "从剪贴板粘贴",
     "pasteFailed": "无法读取剪贴板。请使用 Cmd+V 或 Ctrl+V 粘贴。",
-    "minimum": "至少 {min}"
+    "minimum": "至少 {min}",
+    "pasteEmpty": "剪贴板中没有可粘贴的文本。"
   }
 }

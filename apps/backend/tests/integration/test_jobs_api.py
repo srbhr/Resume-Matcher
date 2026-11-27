@@ -41,6 +41,49 @@ class TestJobUpload:
         assert data["message"] == "data successfully processed"
         assert len(data["job_id"]) == 1
 
+    async def test_upload_keeps_the_given_role_and_company(
+        self, isolated_db, client: AsyncClient
+    ) -> None:
+        async with client:
+            resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={
+                    "job_descriptions": ["Senior Engineer at TechCorp"],
+                    "role": "  Staff Engineer ",
+                    "company": "TechCorp Labs",
+                },
+            )
+        assert resp.status_code == 200
+        job = await isolated_db.get_job(resp.json()["job_id"][0])
+        assert job is not None
+        assert job["role"] == "Staff Engineer"
+        assert job["company"] == "TechCorp Labs"
+        assert sorted(job["user_details"]) == ["company", "role"]
+
+    async def test_upload_ignores_blank_role_and_company(
+        self, isolated_db, client: AsyncClient
+    ) -> None:
+        async with client:
+            resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={"job_descriptions": ["JD"], "role": "  ", "company": ""},
+            )
+        assert resp.status_code == 200
+        job = await isolated_db.get_job(resp.json()["job_id"][0])
+        assert job is not None
+        assert "user_details" not in job
+        assert "role" not in job
+
+    async def test_upload_refuses_details_for_a_batch(
+        self, client: AsyncClient
+    ) -> None:
+        async with client:
+            resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={"job_descriptions": ["JD 1", "JD 2"], "company": "Acme"},
+            )
+        assert resp.status_code == 400
+
     @patch("app.routers.jobs.db", new_callable=AsyncMock)
     async def test_upload_multiple_jobs(
         self, mock_db: AsyncMock, client: AsyncClient

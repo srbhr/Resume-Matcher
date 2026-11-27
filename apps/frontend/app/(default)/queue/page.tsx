@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useEffectEvent, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import Link from 'next/link';
 import { ArrowsClockwise, SpinnerGap, Trash } from '@phosphor-icons/react';
 import {
@@ -90,6 +91,11 @@ export default function QueuePage() {
   const [now, setNow] = useState(() => Date.now());
   const descriptionRef = useRef<HTMLDivElement>(null);
 
+  // Translated in the load below without making it re-run on a language change.
+  const reportResumesFailed = useEffectEvent(() =>
+    setQueueError(t('queue.errors.resumesLoadFailed'))
+  );
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -107,6 +113,8 @@ export default function QueuePage() {
         if (initial) setSelectedResumeId(initial.resume_id);
       } catch (err) {
         console.error('Failed to load resumes', err);
+        // Say so, instead of "no master" and an empty queue that teaches.
+        if (!cancelled) reportResumesFailed();
       } finally {
         if (!cancelled) setResumesLoading(false);
       }
@@ -213,14 +221,18 @@ export default function QueuePage() {
     setQueueError(null);
     setQueueSuccessMessage(null);
 
+    let added = false;
     try {
+      // Details detected for an earlier version of the text are left out; the
+      // server reads them from this description instead.
+      const details = jobDetails.current();
       const newItem = await addJobToQueue(
         selectedResumeId,
         trimmed,
         rateLimitSeconds,
-        jobDetails.role.trim() || undefined,
-        jobDetails.company.trim() || undefined,
-        jobDetails.jobReqId.trim() || undefined,
+        details.role || undefined,
+        details.company || undefined,
+        details.jobReqId || undefined,
         selectedPromptId
       );
       queueRequest.current++;
@@ -229,14 +241,16 @@ export default function QueuePage() {
       jobDetails.reset();
       setQueueSuccessMessage(t('queue.form.added'));
       incrementJobs();
-      // Ready for the next posting at once.
-      descriptionRef.current?.querySelector('textarea')?.focus();
+      added = true;
     } catch (err) {
       console.error('Failed to add job to queue', err);
       setQueueError(t('queue.errors.addFailed'));
     } finally {
-      setIsAddingToQueue(false);
+      // The field is disabled while adding; enable it before focusing it.
+      flushSync(() => setIsAddingToQueue(false));
     }
+    // Ready for the next posting at once.
+    if (added) descriptionRef.current?.querySelector('textarea')?.focus();
   };
 
   const handleDeleteItem = async (itemId: string) => {

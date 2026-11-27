@@ -27,6 +27,7 @@ import {
   type ForcedKeywordInput,
   type ResumeListItem,
 } from '@/lib/api/resume';
+import { tailorBlock } from '@/lib/tailor/readiness';
 import { ApiError } from '@/lib/api/client';
 import { newProgressId, subscribeToProgress } from '@/lib/api/progress';
 import type { WritingReport } from '@/lib/api/writing';
@@ -82,6 +83,8 @@ export default function TailorPage() {
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
   const [masters, setMasters] = useState<ResumeListItem[]>([]);
+  // The list of masters couldn't load: the stored master is used, unnamed.
+  const [mastersFailed, setMastersFailed] = useState(false);
   // The master a preview was built from; confirm must send this, not the picker's current value.
   const previewSourceIdRef = useRef<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
@@ -188,6 +191,7 @@ export default function TailorPage() {
         setMasterResumeId(initial.resume_id);
       } catch {
         if (cancelled) return;
+        setMastersFailed(true);
         const storedId = localStorage.getItem('master_resume_id');
         if (storedId) setMasterResumeId(storedId);
         else router.push('/dashboard');
@@ -312,12 +316,18 @@ export default function TailorPage() {
     return true;
   };
 
-  const getGenerateValidationError = (trimmedDescription: string) => {
-    if (!trimmedDescription) return null;
-    if (trimmedDescription.length < MIN_JOB_DESCRIPTION_LENGTH) {
-      return t('tailor.errors.jobDescriptionTooShort');
+  /**
+   * The job to send and the master to tailor, or null: one rule for Generate,
+   * Regenerate and Add to queue. A description too short to tailor from says so.
+   */
+  const jobToSend = (): { resumeId: string; description: string } | null => {
+    const description = jobDescription.trim();
+    if (!description || !masterResumeId) return null;
+    if (description.length < MIN_JOB_DESCRIPTION_LENGTH) {
+      setError(t('tailor.errors.jobDescriptionTooShort'));
+      return null;
     }
-    return null;
+    return { resumeId: masterResumeId, description };
   };
 
   const runGenerate = async (resumeId: string, description: string, token: number) => {
@@ -335,7 +345,13 @@ export default function TailorPage() {
       // 1. Upload Job Description
       // The API expects an array of strings
       previewSourceIdRef.current = resumeId;
-      const jobId = await uploadJobDescriptions([description], resumeId);
+      // What the user typed into Role and Company goes with the job, so the tracker
+      // card keeps it; detected values are left for the server's own extraction.
+      const typed = jobDetails.current();
+      const jobId = await uploadJobDescriptions([description], resumeId, {
+        role: jobDetails.isEdited('role') ? typed.role : undefined,
+        company: jobDetails.isEdited('company') ? typed.company : undefined,
+      });
       if (!isCurrent(token)) return;
       incrementJobs(); // Update cached counter
 
@@ -438,21 +454,15 @@ export default function TailorPage() {
   };
 
   const handleGenerate = async () => {
-    const trimmedDescription = jobDescription.trim();
-    if (!trimmedDescription || !masterResumeId) return;
-    const validationError = getGenerateValidationError(trimmedDescription);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    const resumeId = masterResumeId;
+    const job = jobToSend();
+    if (!job) return;
     const token = begin();
     if (token === null) return;
     setIsLoading(true);
     setError(null);
     startTimer();
     try {
-      await runGenerate(resumeId, trimmedDescription, token);
+      await runGenerate(job.resumeId, job.description, token);
     } finally {
       if (isCurrent(token)) {
         setIsLoading(false);
@@ -554,27 +564,7 @@ export default function TailorPage() {
 
   const handleRegenerateConfirm = async () => {
     setShowRegenerateDialog(false);
-    const trimmedDescription = jobDescription.trim();
-    if (!trimmedDescription || !masterResumeId) return;
-    const validationError = getGenerateValidationError(trimmedDescription);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    const resumeId = masterResumeId;
-    const token = begin();
-    if (token === null) return;
-    setIsLoading(true);
-    setError(null);
-    startTimer();
-    try {
-      await runGenerate(resumeId, trimmedDescription, token);
-    } finally {
-      if (isCurrent(token)) {
-        setIsLoading(false);
-        stopTimer();
-      }
-    }
+    await handleGenerate();
   };
 
   // Missing keywords the pending preview still lacks (forced ones drop off the chips).
@@ -587,23 +577,20 @@ export default function TailorPage() {
   // Hand the job to the background queue instead of waiting here. Same rules as
   // Generate: a master, and a description long enough to tailor from.
   const handleAddToQueue = async () => {
-    const trimmed = jobDescription.trim();
-    if (!trimmed || !masterResumeId) return;
-    const validationError = getGenerateValidationError(trimmed);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    const job = jobToSend();
+    if (!job) return;
     setIsQueueing(true);
     setError(null);
     try {
+      const details = jobDetails.current();
+      // The queue's own default cooldown, as the queue page starts with.
       await addJobToQueue(
-        masterResumeId,
-        trimmed,
+        job.resumeId,
+        job.description,
         undefined,
-        jobDetails.role.trim() || undefined,
-        jobDetails.company.trim() || undefined,
-        undefined,
+        details.role || undefined,
+        details.company || undefined,
+        details.jobReqId || undefined,
         selectedPromptId
       );
       incrementJobs();
@@ -623,23 +610,26 @@ export default function TailorPage() {
       ? promptOptions.map((opt) => opt.id)
       : ['nudge', 'keywords', 'full', 'heavy'];
 
-  // Why Generate is grey, said beside it; nothing when it can be pressed.
-  const blockedReason = statusLoading
-    ? null
-    : !(isLlmConfigured || agentMode)
-      ? null // the button's own label says to configure a model
-      : !masterResumeId
-        ? t('tailor.blocked.noMaster')
-        : !jobDescription.trim()
-          ? t('tailor.blocked.noJob')
-          : null;
-  const generateDisabled =
-    isLoading ||
-    isQueueing ||
-    statusLoading ||
-    !jobDescription.trim() ||
-    !(isLlmConfigured || agentMode) ||
-    !masterResumeId;
+  const block = tailorBlock({
+    busy: isLoading || isQueueing,
+    statusLoading,
+    modelReady: isLlmConfigured || agentMode,
+    hasMaster: Boolean(masterResumeId),
+    hasJob: Boolean(jobDescription.trim()),
+  });
+  const generateDisabled = block !== null;
+  // Why Generate is grey, said beside it. Busy, loading and no model need no line:
+  // the button's own label says so.
+  const blockedReason =
+    block === 'noMaster'
+      ? t('tailor.blocked.noMaster')
+      : block === 'noJob'
+        ? t('tailor.blocked.noJob')
+        : null;
+  // A queued job is tailored without the page limit and bullet cap (the queue
+  // doesn't carry them), so say so rather than drop them silently.
+  const queueIgnoresLength =
+    !agentMode && (tailorLength.maxPages != null || tailorLength.maxBulletsPerEntry != null);
   const hasResults = Boolean(atsResult || writingResult);
   const showOptions = !isGenerating && (!hasResults || optionsOpen);
   const masterName = masters.find((m) => m.resume_id === masterResumeId);
@@ -647,6 +637,9 @@ export default function TailorPage() {
     masterName ? masterLabel(masterName) : null,
     t(`tailor.promptOptions.${selectedPromptId}.label`),
     t(`tailor.length.pageLimitOptions.${tailorLength.maxPages ?? 'none'}`),
+    tailorLength.maxBulletsPerEntry != null
+      ? `${t('tailor.length.bulletsLabel')}: ${t(`tailor.length.bulletOptions.${tailorLength.maxBulletsPerEntry}`)}`
+      : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -748,7 +741,7 @@ export default function TailorPage() {
                   disabled={isLoading || promptLoading || showDiffModal}
                   className={OPTION_ROW}
                 />
-              ) : (
+              ) : mastersFailed ? null : (
                 <div className={OPTION_ROW}>
                   <span className={cn('block', labelClass)}>{t('tailor.tailoringLabel')}</span>
                   <p className="flex min-h-10 items-center font-mono text-sm font-bold break-words text-ink">
@@ -839,8 +832,12 @@ export default function TailorPage() {
           <Alert tone="error">{error}</Alert>
         </FadePresence>
         <div className="flex flex-wrap items-center justify-end gap-3">
-          {blockedReason && (
+          {blockedReason ? (
             <p className="mr-auto font-mono text-xs text-ink-soft">{blockedReason}</p>
+          ) : (
+            queueIgnoresLength && (
+              <p className="mr-auto text-xs text-ink-soft">{t('tailor.queueIgnoresLength')}</p>
+            )
           )}
           {!agentMode && (
             <Button

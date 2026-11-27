@@ -116,15 +116,20 @@ async def auto_create_tracker_application(
 ) -> None:
     """Best-effort: drop an ``applied`` card on the tracker after a tailoring.
 
-    Company/role come from the cached job (zero extra LLM call). Wrapped so a
-    tracker failure can never break the tailoring flow.
+    Company/role come from the cached job (zero extra LLM call). A role the
+    user gave or corrected wins over the resume title. Wrapped so a tracker
+    failure can never break the tailoring flow.
     """
     try:
         if title is None:
             saved_resume = await db.get_resume(tailored_resume_id)
             title = (saved_resume or {}).get("title")
-        company = (job or {}).get("company")
-        role = title or (job or {}).get("role")
+        job = job or {}
+        company = job.get("company")
+        user_role = (
+            job.get("role") if "role" in (job.get("user_details") or ()) else None
+        )
+        role = user_role or title or job.get("role")
         await db.create_application(
             job_id=job_id,
             resume_id=tailored_resume_id,
@@ -150,13 +155,18 @@ def hash_job_content(content: str) -> str:
 
 
 async def _cache_job_keywords(
-    job_id: str, content_hash: str, job_keywords: dict[str, Any]
+    job_id: str,
+    content_hash: str,
+    job_keywords: dict[str, Any],
+    user_details: list[str] | tuple[str, ...] = (),
 ) -> dict[str, Any] | None:
     """Best-effort: cache extracted keywords on the job with its content hash.
 
     The hash gives basic invalidation, and ATS recalculation reads this cache.
     Company/role are also surfaced to the job's top level so the tracker's
-    auto-create-on-confirm path can read them without an extra LLM call.
+    auto-create-on-confirm path can read them without an extra LLM call,
+    except those in ``user_details``: the user gave or corrected them, so the
+    extraction doesn't overwrite them.
     Returns the updated job, or None when it could not be persisted.
     """
     cache_updates: dict[str, Any] = {
@@ -168,9 +178,9 @@ async def _cache_job_keywords(
     raw_role = job_keywords.get("role")
     company = raw_company.strip() if isinstance(raw_company, str) else ""
     role = raw_role.strip() if isinstance(raw_role, str) else ""
-    if company:
+    if company and "company" not in user_details:
         cache_updates["company"] = company
-    if role:
+    if role and "role" not in user_details:
         cache_updates["role"] = role
     try:
         updated_job = await db.update_job(job_id, cache_updates)
@@ -473,7 +483,12 @@ async def improve_preview_flow(
     content_hash = hash_job_content(job["content"])
     if not job_keywords or job_keywords_hash != content_hash:
         job_keywords = await extract_job_keywords(job["content"])
-        await _cache_job_keywords(request.job_id, content_hash, job_keywords)
+        await _cache_job_keywords(
+            request.job_id,
+            content_hash,
+            job_keywords,
+            user_details=job.get("user_details") or (),
+        )
     progress["stage"] = "load_original_resume"
     original_resume_data = get_original_resume_data(resume)
     # Collect warnings throughout the process
@@ -816,7 +831,10 @@ async def execute_tailoring_pipeline(
     # The refreshed job carries the extracted company/role for the tracker card.
     job = (
         await _cache_job_keywords(
-            job_id, hash_job_content(job["content"]), job_keywords
+            job_id,
+            hash_job_content(job["content"]),
+            job_keywords,
+            user_details=job.get("user_details") or (),
         )
         or job
     )

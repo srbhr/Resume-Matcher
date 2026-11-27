@@ -144,6 +144,32 @@ describe('queue page', () => {
     ).toBe('');
   });
 
+  it('puts focus back in the description after adding, for the next posting', async () => {
+    addJob.mockResolvedValue(item('new', 'pending'));
+    render(<QueuePage />);
+    await screen.findByText(/Backend track/);
+    const field = screen.getByLabelText('queue.form.jobDescriptionLabel');
+    fireEvent.change(field, { target: { value: JOB_DESCRIPTION } });
+    const submit = screen.getByRole('button', { name: 'queue.form.submit' });
+    submit.focus();
+
+    await act(async () => {
+      fireEvent.click(submit);
+    });
+
+    await screen.findByText('queue.form.added');
+    expect(field).not.toBeDisabled();
+    expect(field).toHaveFocus();
+  });
+
+  it('says the master resumes did not load, instead of "no master" and an empty queue', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    listResumes.mockRejectedValue(new Error('offline'));
+    render(<QueuePage />);
+
+    expect(await screen.findByText('queue.errors.resumesLoadFailed')).toBeInTheDocument();
+  });
+
   it('refuses a description too short to tailor without calling the API', async () => {
     render(<QueuePage />);
     await screen.findByText(/Backend track/);

@@ -1661,16 +1661,30 @@ class Database:
     async def get_queue(
         self, resume_id: str | None = None, limit: int = 100
     ) -> list[dict[str, Any]]:
-        """List queue items, newest first, optionally for one master resume."""
-        stmt = select(QueueItem)
+        """List queue items, newest first, optionally for one master resume.
+
+        Every item still waiting or running is listed, however many there are,
+        plus the newest ``limit`` items of any status: a client numbers the
+        waiting jobs from the oldest, so none of them may fall off the list.
+        """
+        order = (QueueItem.created_at.desc(), QueueItem.item_id.desc())
+        recent = select(QueueItem)
+        active = select(QueueItem).where(
+            QueueItem.status.in_(("pending", "processing"))
+        )
         if resume_id:
-            stmt = stmt.where(QueueItem.resume_id == resume_id)
-        stmt = stmt.order_by(
-            QueueItem.created_at.desc(), QueueItem.item_id.desc()
-        ).limit(limit)
+            recent = recent.where(QueueItem.resume_id == resume_id)
+            active = active.where(QueueItem.resume_id == resume_id)
         async with self._session() as session:
-            result = await session.execute(stmt)
-            return [self._queue_item_to_dict(row) for row in result.scalars().all()]
+            rows = {
+                row.item_id: row
+                for stmt in (recent.order_by(*order).limit(limit), active)
+                for row in (await session.execute(stmt)).scalars().all()
+            }
+        newest_first = sorted(
+            rows.values(), key=lambda row: (row.created_at, row.item_id), reverse=True
+        )
+        return [self._queue_item_to_dict(row) for row in newest_first]
 
     async def update_queue_item(
         self, item_id: str, updates: dict[str, Any]

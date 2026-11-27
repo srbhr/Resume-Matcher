@@ -150,6 +150,25 @@ async def test_list_filters_by_resume_newest_first(
     ]
 
 
+async def test_list_keeps_every_waiting_job_past_the_limit(
+    isolated_db: Database,
+) -> None:
+    """Waiting jobs are numbered from the oldest, so an old pending job must be
+    listed even when newer finished jobs fill the recent-items limit."""
+    await isolated_db.create_queue_item("old-pending", "r1", "JD")
+    await isolated_db.create_queue_item("old-done", "r1", "JD")
+    await isolated_db.update_queue_item("old-done", {"status": "completed"})
+    for i in range(3):
+        await isolated_db.create_queue_item(f"new-{i}", "r1", "JD")
+        await isolated_db.update_queue_item(f"new-{i}", {"status": "completed"})
+
+    ids = [item["item_id"] for item in await isolated_db.get_queue(limit=2)]
+
+    # The two newest, then the old pending one, newest first; the old finished
+    # one is past the limit.
+    assert ids == ["new-2", "new-1", "old-pending"]
+
+
 async def test_delete_and_clear_remove_rows(
     isolated_db: Database, client: AsyncClient
 ) -> None:

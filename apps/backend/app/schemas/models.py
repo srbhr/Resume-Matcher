@@ -742,6 +742,10 @@ class JobUploadRequest(BaseModel):
 
     job_descriptions: list[str]
     resume_id: str | None = None
+    # The role and company the user confirmed or corrected, for a single
+    # description. They win over what tailoring extracts for the tracker card.
+    role: str | None = Field(None, max_length=200)
+    company: str | None = Field(None, max_length=200)
 
 
 class JobUploadResponse(BaseModel):

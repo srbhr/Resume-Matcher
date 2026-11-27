@@ -4,10 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TailorPage from '@/app/(default)/tailor/page';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
 import type { ResumeListItem } from '@/lib/api/resume';
+import { writeTailorLength } from '@/lib/utils/tailor-length-settings';
 
 const api = vi.hoisted(() => ({
   list: vi.fn(),
   addToQueue: vi.fn(),
+  upload: vi.fn(),
+  parse: vi.fn(),
   push: vi.fn(),
   llmConfigured: true,
 }));
@@ -18,8 +21,8 @@ vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t, locale: 'en' }) }));
 vi.mock('@/components/ui/toast', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/api/resume', () => ({
   addJobToQueue: api.addToQueue,
-  parseJobMetadata: async () => ({ role: 'Platform Engineer', company: 'Acme', job_req_id: '' }),
-  uploadJobDescriptions: vi.fn(),
+  parseJobMetadata: api.parse,
+  uploadJobDescriptions: api.upload,
   previewImproveResume: vi.fn(),
   confirmImproveResume: vi.fn(),
   fetchResumeList: api.list,
@@ -63,6 +66,9 @@ beforeEach(() => {
   localStorage.clear();
   api.llmConfigured = true;
   api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
+  api.parse.mockResolvedValue({ role: 'Platform Engineer', company: 'Acme', job_req_id: '' });
+  // Generate stops after the upload; these tests only read what was sent.
+  api.upload.mockRejectedValue(new Error('stop here'));
 });
 
 async function renderPage() {
@@ -129,6 +135,107 @@ describe('tailor page: a portrait card on the cross field', () => {
       )
     );
     expect(screen.getByRole('textbox', { name: 'jobInput.company' })).toHaveValue('Acme');
+    // From the server's heuristics, given the pasted description.
+    expect(api.parse).toHaveBeenCalledWith(JOB);
+  });
+
+  it('sends a role or company the user typed with Generate, and leaves detected ones out', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await renderPage();
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'jobInput.role' })).toHaveValue(
+        'Platform Engineer'
+      )
+    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'jobInput.company' }), {
+      target: { value: 'Acme Bank' },
+    });
+
+    await act(async () => {
+      fireEvent.click(generateButton());
+    });
+
+    expect(api.upload).toHaveBeenCalledWith([JOB], 'm1', {
+      role: undefined,
+      company: 'Acme Bank',
+    });
+  });
+
+  it('queues the detected details once detection has caught up with the text', async () => {
+    api.addToQueue.mockResolvedValue({});
+    await renderPage();
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'jobInput.company' })).toHaveValue('Acme')
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'tailor.addToQueue' }));
+    });
+    expect(api.addToQueue).toHaveBeenCalledWith(
+      'm1',
+      JOB,
+      undefined,
+      'Platform Engineer',
+      'Acme',
+      undefined,
+      'keywords'
+    );
+  });
+
+  it('never queues the previous job’s details while detection catches up with new text', async () => {
+    api.addToQueue.mockResolvedValue({});
+    await renderPage();
+    const field = screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' });
+    fireEvent.change(field, { target: { value: JOB } });
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'jobInput.company' })).toHaveValue('Acme')
+    );
+    // A different job, sent before its own details are detected.
+    const next = `${JOB} At Globex, a different employer.`;
+    fireEvent.change(field, { target: { value: next } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'tailor.addToQueue' }));
+    });
+    expect(api.addToQueue).toHaveBeenCalledWith(
+      'm1',
+      next,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'keywords'
+    );
+  });
+
+  it('says a queued job is tailored without the page limit while one is chosen', async () => {
+    await renderPage();
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
+    // The default is a 2-page limit, which the queue doesn't carry.
+    expect(screen.getByText('tailor.queueIgnoresLength')).toBeInTheDocument();
+  });
+
+  it('says nothing about the queue when no page limit or bullet cap is chosen', async () => {
+    writeTailorLength({ maxPages: null, maxBulletsPerEntry: null });
+    await renderPage();
+    fireEvent.change(screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' }), {
+      target: { value: JOB },
+    });
+    expect(screen.queryByText('tailor.queueIgnoresLength')).toBeNull();
+  });
+
+  it('leaves out the master row, instead of "Loading" for good, when the list fails', async () => {
+    api.list.mockRejectedValue(new Error('offline'));
+    localStorage.setItem('master_resume_id', 'm1');
+    await renderPage();
+    expect(screen.queryByText('common.loading')).toBeNull();
+    expect(screen.queryByText('tailor.tailoringLabel')).toBeNull();
   });
 
   it('says why Generate is grey, beside it', async () => {

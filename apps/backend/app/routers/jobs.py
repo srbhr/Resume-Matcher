@@ -34,11 +34,26 @@ async def upload_job_descriptions(request: JobUploadRequest) -> JobUploadRespons
     descriptions = [jd.strip() for jd in request.job_descriptions]
     if any(not jd for jd in descriptions):
         raise HTTPException(status_code=400, detail="Empty job description")
-    try:
-        jobs = await db.create_jobs(
-            contents=descriptions,
-            resume_id=request.resume_id,
+    user_details = _user_job_details(request)
+    if user_details and len(descriptions) != 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Role and company can only be given for one job description.",
         )
+    try:
+        if user_details:
+            jobs = [
+                await db.create_job(
+                    content=descriptions[0],
+                    resume_id=request.resume_id,
+                    metadata=user_details,
+                )
+            ]
+        else:
+            jobs = await db.create_jobs(
+                contents=descriptions,
+                resume_id=request.resume_id,
+            )
     except DatabaseBusyError:
         raise
     except Exception as exc:
@@ -56,6 +71,25 @@ async def upload_job_descriptions(request: JobUploadRequest) -> JobUploadRespons
             "resume_id": request.resume_id,
         },
     )
+
+
+def _user_job_details(request: JobUploadRequest) -> dict[str, str]:
+    """The role and company the user gave, keyed as tailoring stores them.
+
+    Each is recorded in ``user_details`` too, so the extraction that runs during
+    tailoring leaves it alone (see ``tailoring._cache_job_keywords``).
+    """
+    details = {
+        key: value
+        for key, value in (
+            ("role", (request.role or "").strip()),
+            ("company", (request.company or "").strip()),
+        )
+        if value
+    }
+    if details:
+        details["user_details"] = sorted(details)
+    return details
 
 
 def _format_queue_item(item: dict) -> JobQueueItemResponse:
