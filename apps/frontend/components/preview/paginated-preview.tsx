@@ -22,25 +22,41 @@ interface PaginatedPreviewProps {
   settings: TemplateSettings;
   /** A photo CV's photo; it takes room in the header, so pages are measured with it. */
   photo?: string | null;
+  /**
+   * `panel` (the builder): zoom and margin controls on a grey panel.
+   * `page` (the resume viewer): the pages alone under their count.
+   */
+  variant?: 'panel' | 'page';
+  /** The `page` variant shows this beside the count once the resume runs past one page. */
+  overflowAction?: React.ReactNode;
 }
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 1.5;
-// Opening zoom, and the ceiling for fit-to-width: a panel with room for at least 85% of the page opens here.
-const DEFAULT_ZOOM = 0.85;
+// Opening zoom, and the ceiling for fit-to-width: a view with room for the page at this
+// size opens at it, a narrower one fits the page to its width.
+const DEFAULT_ZOOM = { panel: 0.85, page: 1.05 } as const;
+// Width fit-to-width leaves free: the panel's 24px padding a side; the page's shadow.
+const RESERVED_WIDTH = { panel: 48, page: 16 } as const;
 const ZOOM_STEP = 0.1;
 
 /**
  * PaginatedPreview shows a WYSIWYG preview of the resume with actual page dimensions,
  * margin guides, and automatic pagination.
  */
-export function PaginatedPreview({ resumeData, settings, photo }: PaginatedPreviewProps) {
+export function PaginatedPreview({
+  resumeData,
+  settings,
+  photo,
+  variant = 'panel',
+  overflowAction,
+}: PaginatedPreviewProps) {
   const { t } = useTranslations();
   // Orders the CJK font fallback so the preview matches the generated PDF.
   const { contentLanguage } = useLanguage();
   const measurementRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const [zoom, setZoom] = useState<number>(DEFAULT_ZOOM[variant]);
   const [showMargins, setShowMargins] = useState(false);
   const [autoZoom, setAutoZoom] = useState(true);
   const resumeSettings: TemplateSettings = {
@@ -89,12 +105,12 @@ export function PaginatedPreview({ resumeData, settings, photo }: PaginatedPrevi
   const calculateAutoZoom = useCallback(() => {
     if (!containerRef.current || !autoZoom) return;
 
-    const containerWidth = containerRef.current.clientWidth - 48; // Padding
+    const containerWidth = containerRef.current.clientWidth - RESERVED_WIDTH[variant];
     const pageWidthPx = mmToPx(PAGE_DIMENSIONS[settings.pageSize].width);
     const optimalZoom = Math.min(containerWidth / pageWidthPx, MAX_ZOOM);
-    // Fit to the panel, but never open larger than the default zoom.
-    setZoom(Math.max(MIN_ZOOM, Math.min(optimalZoom, DEFAULT_ZOOM)));
-  }, [settings.pageSize, autoZoom]);
+    // Fit to the view, but never open larger than the default zoom.
+    setZoom(Math.max(MIN_ZOOM, Math.min(optimalZoom, DEFAULT_ZOOM[variant])));
+  }, [settings.pageSize, autoZoom, variant]);
 
   // Auto-zoom on mount and when page size changes
   useEffect(() => {
@@ -120,68 +136,85 @@ export function PaginatedPreview({ resumeData, settings, photo }: PaginatedPrevi
   // Get content area dimensions for the hidden measurement container
   const contentArea = getContentAreaPx(settings.pageSize, settings.margins);
 
+  const pageCount = (
+    <div className="flex items-center gap-2 text-ink-soft">
+      <FileText aria-hidden="true" className="size-4" />
+      <span className="font-mono text-xs uppercase tabular-nums">
+        {isCalculating
+          ? t('preview.calculating')
+          : pages.length === 1
+            ? t('preview.pageCountSingular', { count: pages.length })
+            : t('preview.pageCountPlural', { count: pages.length })}
+      </span>
+    </div>
+  );
+
+  const isPanel = variant === 'panel';
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className={isPanel ? 'flex flex-col h-full overflow-hidden' : 'flex flex-col'}>
+      {!isPanel && (
+        <div className="flex items-center justify-end gap-4 pb-4">
+          {pageCount}
+          {!isCalculating && pages.length > 1 && overflowAction}
+        </div>
+      )}
       {/* Controls bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-steel bg-panel shrink-0">
-        <div className="flex items-center gap-2">
-          {/* Zoom controls */}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleZoomOut}
-            disabled={zoom <= MIN_ZOOM}
-            className="hover:bg-panel-hover"
-            aria-label={t('preview.zoomOut')}
-            title={t('preview.zoomOut')}
-          >
-            <MagnifyingGlassMinus aria-hidden="true" />
-          </Button>
-          <span className="font-mono text-xs w-12 text-center text-ink-soft tabular-nums">
-            {Math.round(zoom * 100)}%
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleZoomIn}
-            disabled={zoom >= MAX_ZOOM}
-            className="hover:bg-panel-hover"
-            aria-label={t('preview.zoomIn')}
-            title={t('preview.zoomIn')}
-          >
-            <MagnifyingGlassPlus aria-hidden="true" />
-          </Button>
+      {isPanel && (
+        <div className="flex items-center justify-between px-4 py-2 border-b border-steel bg-panel shrink-0">
+          <div className="flex items-center gap-2">
+            {/* Zoom controls */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleZoomOut}
+              disabled={zoom <= MIN_ZOOM}
+              className="hover:bg-panel-hover"
+              aria-label={t('preview.zoomOut')}
+              title={t('preview.zoomOut')}
+            >
+              <MagnifyingGlassMinus aria-hidden="true" />
+            </Button>
+            <span className="font-mono text-xs w-12 text-center text-ink-soft tabular-nums">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleZoomIn}
+              disabled={zoom >= MAX_ZOOM}
+              className="hover:bg-panel-hover"
+              aria-label={t('preview.zoomIn')}
+              title={t('preview.zoomIn')}
+            >
+              <MagnifyingGlassPlus aria-hidden="true" />
+            </Button>
 
-          <div aria-hidden="true" className="w-px h-4 bg-steel mx-2" />
+            <div aria-hidden="true" className="w-px h-4 bg-steel mx-2" />
 
-          {/* Margin toggle */}
-          <Button
-            variant={showMargins ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={toggleMargins}
-            aria-pressed={showMargins}
-            className="hover:bg-panel-hover"
-          >
-            {showMargins ? <Eye aria-hidden="true" /> : <EyeSlash aria-hidden="true" />}
-            <span className="font-mono text-xs uppercase">{t('preview.margins')}</span>
-          </Button>
+            {/* Margin toggle */}
+            <Button
+              variant={showMargins ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={toggleMargins}
+              aria-pressed={showMargins}
+              className="hover:bg-panel-hover"
+            >
+              {showMargins ? <Eye aria-hidden="true" /> : <EyeSlash aria-hidden="true" />}
+              <span className="font-mono text-xs uppercase">{t('preview.margins')}</span>
+            </Button>
+          </div>
+
+          {/* Page count */}
+          {pageCount}
         </div>
-
-        {/* Page count */}
-        <div className="flex items-center gap-2 text-ink-soft">
-          <FileText aria-hidden="true" className="size-4" />
-          <span className="font-mono text-xs uppercase tabular-nums">
-            {isCalculating
-              ? t('preview.calculating')
-              : pages.length === 1
-                ? t('preview.pageCountSingular', { count: pages.length })
-                : t('preview.pageCountPlural', { count: pages.length })}
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Scrollable preview area */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-panel-hover p-6">
+      <div
+        ref={containerRef}
+        className={isPanel ? 'flex-1 overflow-auto bg-panel-hover p-6' : 'relative'}
+      >
         {/* Hidden measurement container - renders content at actual size */}
         <div
           ref={measurementRef}

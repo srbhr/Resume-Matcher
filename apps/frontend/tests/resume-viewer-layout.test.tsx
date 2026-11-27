@@ -1,3 +1,4 @@
+import type React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ResumeViewerPage from '@/app/(default)/resumes/[id]/page';
@@ -19,7 +20,15 @@ vi.mock('@/lib/context/language-context', () => ({
 }));
 vi.mock('@/components/enrichment/enrichment-modal', () => ({ EnrichmentModal: () => null }));
 vi.mock('@/components/dashboard/resume-component', () => ({ default: () => null }));
-vi.mock('@/components/preview', () => ({ PaginatedPreview: () => null }));
+const preview = vi.hoisted(() => ({
+  props: null as null | { variant?: string; overflowAction?: React.ReactNode },
+}));
+vi.mock('@/components/preview', () => ({
+  PaginatedPreview: (props: { variant?: string; overflowAction?: React.ReactNode }) => {
+    preview.props = props;
+    return null;
+  },
+}));
 vi.mock('@/lib/api/resume', () => ({
   fetchResumePhoto: vi.fn(() => Promise.resolve(null)),
   fetchResume: vi.fn(),
@@ -48,6 +57,18 @@ beforeEach(() => {
 });
 
 describe('resume viewer layout', () => {
+  it('shows the page alone, offering Edit only when it runs past one page', async () => {
+    mockResume({ title: 'SWE track' });
+    render(<ResumeViewerPage />);
+    await screen.findByRole('heading', { level: 1, name: 'SWE track' });
+
+    expect(preview.props?.variant).toBe('page');
+    // The preview shows overflowAction only past one page; here it is rendered alone.
+    const { container: action } = render(<>{preview.props?.overflowAction}</>);
+    fireEvent.click(within(action).getByRole('button', { name: 'dashboard.editResume' }));
+    expect(push).toHaveBeenCalledWith('/builder?id=r1');
+  });
+
   it('frames the loaded viewer with one PageHeader h1 and a back link', async () => {
     mockResume({ title: 'SWE track', is_master: true, is_default_master: true });
     const { container } = render(<ResumeViewerPage />);

@@ -629,11 +629,18 @@ export default function ResumeViewerPage() {
       <div className="px-8 py-6 md:px-12 md:py-8">
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
-          <div className="no-print w-full max-w-[250mm] border border-ink">
+          <div className="no-print w-full max-w-[250mm]">
             <PaginatedPreview
               resumeData={localizedResumeData || resumeData}
               settings={templateSettings}
               photo={photo}
+              variant="page"
+              overflowAction={
+                <Button type="button" variant="outline" size="sm" onClick={handleEdit}>
+                  <NotePencil aria-hidden="true" />
+                  {t('dashboard.editResume')}
+                </Button>
+              }
             />
           </div>
           {/* Browser printing shows only .resume-print (globals.css), so print this copy
