@@ -1644,5 +1644,16 @@
       "title": "Améliorer la rédaction",
       "prompt": "Utilise Resume Matcher pour améliorer la rédaction du CV {resumeId} : fais deux tours de rédaction (relis chaque ligne selon la grille, réécris les plus faibles en gardant chaque fait, vérifie), puis enregistre."
     }
+  },
+  "commandPalette": {
+    "title": "Rechercher dans Resume Matcher",
+    "placeholder": "Aller à une page ou ouvrir un CV…",
+    "empty": "Aucun résultat.",
+    "goTo": "Aller à",
+    "resumes": "CV",
+    "untitled": "CV sans titre",
+    "master": "Principal",
+    "footer": "↑↓ pour naviguer · Entrée pour ouvrir · Échap pour fermer",
+    "search": "Rechercher"
   }
 }

@@ -1644,5 +1644,16 @@
       "title": "Melhorar a escrita",
       "prompt": "Use o Resume Matcher para melhorar a escrita do currículo {resumeId}: faça duas rodadas de escrita (avalie cada linha pela rubrica, reescreva as fracas mantendo cada fato, verifique) e salve."
     }
+  },
+  "commandPalette": {
+    "title": "Pesquisar no Resume Matcher",
+    "placeholder": "Ir para uma página ou abrir um currículo…",
+    "empty": "Nenhum resultado.",
+    "goTo": "Ir para",
+    "resumes": "Currículos",
+    "untitled": "Currículo sem título",
+    "master": "Mestre",
+    "footer": "↑↓ para mover · Enter para abrir · Esc para fechar",
+    "search": "Pesquisar"
   }
 }

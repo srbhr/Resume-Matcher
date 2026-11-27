@@ -1644,5 +1644,16 @@
       "title": "改进文字",
       "prompt": "用 Resume Matcher 改进简历 {resumeId} 的文字：进行两轮文字修改（按评分标准评审每一行，在保留所有事实的前提下改写薄弱的行，然后核对），再保存。"
     }
+  },
+  "commandPalette": {
+    "title": "搜索 Resume Matcher",
+    "placeholder": "前往页面或打开简历…",
+    "empty": "没有匹配项。",
+    "goTo": "前往",
+    "resumes": "简历",
+    "untitled": "未命名简历",
+    "master": "主简历",
+    "footer": "↑↓ 移动 · Enter 打开 · Esc 关闭",
+    "search": "搜索"
   }
 }

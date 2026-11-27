@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { GearSix, ListNumbers, SquaresFour } from '@phosphor-icons/react';
+import { GearSix, ListNumbers, MagnifyingGlass, SquaresFour } from '@phosphor-icons/react';
+import { openCommandPalette } from '@/components/common/command-palette-launcher';
 import { CommunityLinks } from '@/components/common/community-links';
 import { buttonClass } from '@/components/ui/button';
 import { PageFrame } from '@/components/ui/page-frame';
@@ -20,6 +21,11 @@ export const SwissGrid = ({
   children: React.ReactNode;
 }) => {
   const { t } = useTranslations();
+  // Ctrl K until mounted, so server and client render the same; then the Mac key.
+  const [modKey, setModKey] = useState('Ctrl');
+  useEffect(() => {
+    if (/Mac|iPhone|iPad/.test(navigator.platform)) setModKey('⌘');
+  }, []);
 
   return (
     <PageFrame height="screen">
@@ -32,6 +38,21 @@ export const SwissGrid = ({
             <span className="uppercase font-bold">Resume Matcher</span>
             <span className="text-steel">v{APP_VERSION}</span>
           </div>
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-keyshortcuts="Meta+K Control+K"
+            className={buttonClass({ variant: 'outline' })}
+          >
+            <MagnifyingGlass aria-hidden="true" />
+            {t('commandPalette.search')}
+            <kbd
+              aria-hidden="true"
+              className="border border-ink px-1 font-mono text-xs normal-case"
+            >
+              {modKey} K
+            </kbd>
+          </button>
           <Link
             href="/queue"
             className={buttonClass({ variant: 'outline', className: 'min-w-36' })}

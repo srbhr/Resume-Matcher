@@ -1644,5 +1644,16 @@
       "title": "文章を改善",
       "prompt": "Resume Matcher を使って履歴書 {resumeId} の文章を改善してください：文章ラウンドを2回行い（各行を基準で評価し、事実をすべて残したまま弱い行を書き直し、確認する）、保存してください。"
     }
+  },
+  "commandPalette": {
+    "title": "Resume Matcher を検索",
+    "placeholder": "ページへ移動、または履歴書を開く…",
+    "empty": "一致する項目はありません。",
+    "goTo": "移動",
+    "resumes": "履歴書",
+    "untitled": "無題の履歴書",
+    "master": "マスター",
+    "footer": "↑↓ で移動 · Enter で開く · Esc で閉じる",
+    "search": "検索"
   }
 }

@@ -1644,5 +1644,16 @@
       "title": "Improve the writing",
       "prompt": "Use Resume Matcher to improve the writing of resume {resumeId}: run two writing rounds (critique every line against the rubric, rewrite the weak ones keeping every fact, verify), then save."
     }
+  },
+  "commandPalette": {
+    "title": "Search Resume Matcher",
+    "placeholder": "Go to a page or open a resume…",
+    "empty": "Nothing matches.",
+    "goTo": "Go to",
+    "resumes": "Resumes",
+    "untitled": "Untitled resume",
+    "master": "Master",
+    "footer": "↑↓ to move · Enter to open · Esc to close",
+    "search": "Search"
   }
 }

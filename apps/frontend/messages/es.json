@@ -1644,5 +1644,16 @@
       "title": "Mejorar la redacción",
       "prompt": "Usa Resume Matcher para mejorar la redacción del currículum {resumeId}: haz dos rondas de redacción (revisa cada línea con la rúbrica, reescribe las débiles conservando cada hecho, verifica) y guarda."
     }
+  },
+  "commandPalette": {
+    "title": "Buscar en Resume Matcher",
+    "placeholder": "Ir a una página o abrir un currículum…",
+    "empty": "No hay coincidencias.",
+    "goTo": "Ir a",
+    "resumes": "Currículums",
+    "untitled": "Currículum sin título",
+    "master": "Maestro",
+    "footer": "↑↓ para moverte · Intro para abrir · Esc para cerrar",
+    "search": "Buscar"
   }
 }

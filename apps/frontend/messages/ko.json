@@ -1644,5 +1644,16 @@
       "title": "문장 개선",
       "prompt": "Resume Matcher로 이력서 {resumeId}의 문장을 개선해 줘: 문장 라운드를 두 번 진행하고(모든 줄을 기준에 따라 평가하고, 모든 사실을 유지한 채 약한 줄을 다시 쓰고, 확인), 저장해 줘."
     }
+  },
+  "commandPalette": {
+    "title": "Resume Matcher 검색",
+    "placeholder": "페이지로 이동하거나 이력서 열기…",
+    "empty": "일치하는 항목이 없습니다.",
+    "goTo": "이동",
+    "resumes": "이력서",
+    "untitled": "제목 없는 이력서",
+    "master": "마스터",
+    "footer": "↑↓ 이동 · Enter 열기 · Esc 닫기",
+    "search": "검색"
   }
 }
