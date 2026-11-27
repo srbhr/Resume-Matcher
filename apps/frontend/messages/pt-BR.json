@@ -158,9 +158,7 @@
     },
     "title": "Criar Currículo",
     "copySuffix": "(Cópia)",
-    "editMode": "Modo Edição",
     "previewMode": "Modo Visualização",
-    "createAndPreview": "Criar e Visualizar",
     "unsavedDraft": "Rascunho Não Salvo",
     "autoSave": {
       "saving": "Sincronizando...",
@@ -1069,21 +1067,18 @@
         "justNow": "Agora mesmo",
         "minutesAgo": "{minutes}min atrás",
         "hoursAgo": "{hours}h atrás"
-      }
+      },
+      "updated": "Atualizado"
     },
     "llmConfiguration": {
-      "selectedProvider": "SELECIONADO: {provider}",
       "claudeCliNote": "Executa a CLI do Claude Code instalada e conectada nesta máquina, então nenhuma chave de API é necessária aqui. O Claude Code ainda envia seus prompts à Anthropic pela sua conta.",
       "claudeCliDefaultModel": "Padrão do Claude Code",
       "claudeCliModelHint": "Cada alias usa o modelo mais recente da sua família. Seu plano Claude define quais você pode usar.",
-      "claudeCliName": "Assinatura do Claude (via Claude Code)",
       "claudeCliShortName": "Plano Claude",
       "claudeCliWarningTitle": "Use por sua conta e risco",
       "claudeCliWarning": "A Anthropic não permite que aplicativos de terceiros enviem solicitações pelos planos Claude Free, Pro ou Max, e esta opção pode se enquadrar nisso. A Anthropic pode aplicar essa regra sem aviso prévio; para acesso garantido, use uma chave de API da Anthropic. O Resume Matcher nunca vê nem armazena suas credenciais do Claude: ele executa a sua própria CLI do Claude Code, na qual você mesmo faz login com `claude auth login`. As solicitações contam para os limites de uso do seu plano Claude, e a Anthropic pode descontá-las de créditos de uso em vez disso.",
       "communityBuilt": "Recurso criado pela comunidade.",
-      "chatgptName": "Plano do ChatGPT (Sign in with ChatGPT)",
       "agentShortName": "Agente de código",
-      "agentName": "Seu agente de código (Claude Code, Codex, Cursor ou Copilot)",
       "agentNoteTitle": "Não precisa de chave de API",
       "agentNote": "Seu agente de código faz o trabalho de IA: ele lê seu currículo e as descrições de vagas, escreve as versões adaptadas e as salva aqui com o comando resume-matcher. O app não faz chamadas de IA próprias, então os botões de IA mostram um prompt para colar no seu agente.",
       "agentGuideLink": "Guia de configuração do agente",
@@ -1138,7 +1133,15 @@
       },
       "healthWarnings": {
         "empty_content": "O LLM retornou conteúdo vazio na verificação de integridade."
-      }
+      },
+      "providerGroups": {
+        "apiKey": "Chave de API",
+        "local": "Local",
+        "subscription": "Assinatura",
+        "agent": "Agente de código"
+      },
+      "advanced": "Avançado",
+      "unsavedChanges": "Alterações não salvas"
     },
     "chatgpt": {
       "continue": "Continuar com o ChatGPT",
@@ -1200,8 +1203,8 @@
       }
     },
     "promptSettings": {
-      "title": "Configurações de Prompt",
-      "description": "Escolha o prompt padrão usado para personalização de currículo.",
+      "title": "Intensidade padrão de personalização",
+      "description": "Quanto a personalização reescreve por padrão. Você pode mudar para cada vaga.",
       "defaultLabel": "Prompt padrão de personalização"
     },
     "footer": {
@@ -1228,7 +1231,13 @@
       "deleteConfirmTitle": "Excluir chave de API?",
       "deleteConfirmDescription": "Remover a chave de API de {provider} salva? Você pode adicioná-la novamente depois."
     },
-    "sectionsNav": "Seções de configurações"
+    "sectionsNav": "Seções de configurações",
+    "yourData": "Seus dados",
+    "notes": {
+      "llm": "As chaves ficam salvas criptografadas na pasta de dados do app, neste computador, uma por provedor, então trocar de provedor mantém as outras. Um provedor por assinatura usa seu plano do Claude ou do ChatGPT em vez de uma chave.",
+      "content": "Os interruptores definem o que é escrito automaticamente quando um currículo personalizado é salvo. O que estiver desligado ainda pode ser gerado no editor.",
+      "language": "O idioma da interface muda os textos do app. O idioma do conteúdo é aquele em que a IA escreve currículos, cartas e mensagens."
+    }
   },
   "resumeViewer": {
     "resumeNotFound": "Currículo não encontrado",
@@ -1502,7 +1511,6 @@
       "rail": "Etapas"
     },
     "title": "Acompanhamento de candidaturas",
-    "subtitle": "Acompanhe em que etapa está cada currículo personalizado.",
     "addApplication": "Adicionar candidatura",
     "columns": {
       "saved": "Salvo",

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 
 function Harness() {
@@ -76,5 +76,32 @@ describe('SegmentedControl', () => {
     expect(letter).toHaveFocus();
     fireEvent.keyDown(letter, { key: 'ArrowRight' });
     expect(screen.getByRole('radio', { name: 'A4' })).toHaveAttribute('aria-checked', 'true');
+  });
+});
+
+describe('SegmentedControl groups', () => {
+  it('captions runs of grouped options in one radiogroup, and the arrows cross groups', () => {
+    const onChange = vi.fn();
+    render(
+      <SegmentedControl
+        aria-label="Provider"
+        value="a"
+        onChange={onChange}
+        items={[
+          { value: 'a', label: 'A', group: 'Keys' },
+          { value: 'b', label: 'B', group: 'Keys' },
+          { value: 'c', label: 'C', group: 'Local' },
+        ]}
+      />
+    );
+    expect(screen.getAllByRole('radiogroup')).toHaveLength(1);
+    expect(screen.getByText('Keys')).toBeInTheDocument();
+    expect(screen.getByText('Local')).toBeInTheDocument();
+    expect(screen.getByText('Local').nextElementSibling).toContainElement(
+      screen.getByRole('radio', { name: 'C' })
+    );
+
+    fireEvent.keyDown(screen.getByRole('radio', { name: 'B' }), { key: 'ArrowRight' });
+    expect(onChange).toHaveBeenLastCalledWith('c');
   });
 });

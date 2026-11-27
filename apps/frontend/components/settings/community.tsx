@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Info } from '@phosphor-icons/react';
 import { CommunityLinks } from '@/components/common/community-links';
+import type { DatabaseStats } from '@/lib/api/config';
 import { APP_VERSION } from '@/lib/config/version';
 import { useTranslations } from '@/lib/i18n';
 
@@ -20,9 +21,19 @@ export function SettingsSupportStrip() {
   );
 }
 
-/** The bottom of Settings: the app version, shown as on the dashboard, and all five links. */
-export function SettingsAbout() {
+/**
+ * The bottom of Settings: the app version, shown as on the dashboard, the counts of
+ * what the app holds, and all five links.
+ */
+export function SettingsAbout({ stats }: { stats: DatabaseStats | null }) {
   const { t } = useTranslations();
+  const counts = stats
+    ? [
+        [t('settings.statusCards.resumes'), stats.total_resumes],
+        [t('settings.statusCards.jobs'), stats.total_jobs],
+        [t('settings.statusCards.improvements'), stats.total_improvements],
+      ]
+    : [];
 
   return (
     <section className="space-y-6">
@@ -38,6 +49,22 @@ export function SettingsAbout() {
         <span className="uppercase font-bold">Resume Matcher</span>
         <span className="text-steel">v{APP_VERSION}</span>
       </div>
+
+      {counts.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft">
+            {t('settings.yourData')}
+          </h3>
+          <dl className="grid max-w-xl grid-cols-3 gap-px border border-ink bg-ink">
+            {counts.map(([label, count]) => (
+              <div key={label} className="bg-canvas px-4 py-3">
+                <dt className="font-mono text-xs uppercase text-steel">{label}</dt>
+                <dd className="font-mono text-2xl font-bold tabular-nums text-ink">{count}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
 
       <CommunityLinks variant="about" />
     </section>

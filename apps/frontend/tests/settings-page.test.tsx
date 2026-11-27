@@ -618,11 +618,16 @@ describe('settings page (Swiss sweep)', () => {
     const frame = screen.getByRole('heading', { level: 1 }).closest('.shadow-sw-lg') as HTMLElement;
     // Full height with scrolling panes from md up; a normal scrolling page on a phone.
     expect(frame).toHaveClass('max-w-[104rem]', 'md:max-h-full', 'md:overflow-hidden');
-    // The section pane, not the frame, keeps a form's measure.
-    const pane = screen
+    // The form spans the strip's columns 2 to 5 (no 56rem cap leaving a dead band);
+    // column 6 holds the open section's note.
+    const form = screen
       .getByRole('heading', { level: 2, name: 'settings.llmConfigurationTitle' })
       .closest('section')?.parentElement?.parentElement as HTMLElement;
-    expect(pane).toHaveClass('max-w-4xl');
+    expect(form).toHaveClass('xl:col-span-4');
+    expect(form).not.toHaveClass('max-w-4xl');
+    expect(form.parentElement).toHaveClass('xl:grid', 'xl:grid-cols-5', 'xl:gap-px');
+    expect(form.nextElementSibling).toHaveClass('xl:col-span-1', 'bg-canvas');
+    expect(form.nextElementSibling).toHaveTextContent('settings.notes.llm');
 
     // No inner column cap: fields and prompts fill the frame instead of leaving a gap.
     expect(container.querySelector('.max-w-3xl')).toBeNull();
@@ -919,5 +924,106 @@ describe('settings page (accessibility)', () => {
       expect(icon?.tagName.toLowerCase(), label).toBe('svg');
       expect(icon).toHaveClass('w-4', 'h-4');
     }
+  });
+});
+
+describe('settings page (round 2)', () => {
+  it('reads status in one band: the label over the menu, three states, when, and Refresh', async () => {
+    await renderLoaded();
+    const strip = screen.getByRole('region', { name: 'settings.systemStatus.title' });
+    const grid = strip.querySelector('.grid') as HTMLElement;
+    const cells = Array.from(grid.children);
+    expect(cells).toHaveLength(6);
+    expect(cells[0]).toContainElement(
+      screen.getByRole('heading', { level: 2, name: 'settings.systemStatus.title' })
+    );
+    expect(cells[1]).toHaveTextContent('settings.statusCards.llm');
+    expect(cells[2]).toHaveTextContent('settings.statusCards.database');
+    expect(cells[3]).toHaveTextContent('settings.statusCards.masterResume');
+    expect(cells[4]).toHaveTextContent('settings.systemStatus.updated');
+    expect(cells[5]).toContainElement(
+      within(strip).getByRole('button', { name: 'settings.systemStatus.refresh' })
+    );
+    // The counts moved to About.
+    expect(within(strip).queryByText('settings.statusCards.resumes')).toBeNull();
+    openSection('community.aboutTitle');
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'settings.yourData' })
+    ).toBeInTheDocument();
+  });
+
+  it('goes back with the arrow alone, as on every page', async () => {
+    await renderLoaded();
+    const back = screen.getByRole('link', { name: 'nav.backToDashboard' });
+    expect(back).toHaveAttribute('href', '/dashboard');
+    expect(back).toHaveTextContent('');
+  });
+
+  it('groups the providers under four captions in one radiogroup, with no Selected line', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    for (const group of ['apiKey', 'local', 'subscription', 'agent']) {
+      expect(
+        within(providers).getByText(`settings.llmConfiguration.providerGroups.${group}`)
+      ).toBeInTheDocument();
+    }
+    const local = within(providers).getByText('settings.llmConfiguration.providerGroups.local');
+    expect(local.nextElementSibling).toContainElement(
+      within(providers).getByRole('radio', { name: 'Ollama' })
+    );
+    expect(screen.queryByText(/settings\.llmConfiguration\.selectedProvider/)).toBeNull();
+  });
+
+  it('keeps Base URL and reasoning effort in a closed Advanced block until needed', async () => {
+    await renderLoaded();
+    const advanced = screen.getByRole('button', { name: 'settings.llmConfiguration.advanced' });
+    expect(advanced).toHaveAttribute('aria-expanded', 'false');
+    expect(document.getElementById('apiBase')).not.toBeVisible();
+
+    fireEvent.click(advanced);
+    expect(advanced).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById('apiBase')).toBeVisible();
+
+    // Always open for a provider that needs a Base URL.
+    fireEvent.click(advanced);
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    fireEvent.click(within(providers).getByRole('radio', { name: 'Azure' }));
+    expect(document.getElementById('apiBase')).toBeVisible();
+  });
+
+  it('says there are unsaved changes in the action bar until they are saved', async () => {
+    await renderLoaded();
+    expect(screen.queryByText('settings.llmConfiguration.unsavedChanges')).toBeNull();
+    fireEvent.change(screen.getByLabelText('settings.llmConfiguration.modelLabel'), {
+      target: { value: 'gpt-5-mini' },
+    });
+    const unsaved = screen.getByText('settings.llmConfiguration.unsavedChanges');
+    const bar = unsaved.closest('.sticky') as HTMLElement;
+    expect(bar).toHaveClass('bottom-0', 'border-t', 'border-ink', 'bg-canvas');
+    expect(within(bar).getByRole('button', { name: 'common.save' })).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(within(bar).getByRole('button', { name: 'common.save' }));
+    });
+    await waitFor(() =>
+      expect(screen.queryByText('settings.llmConfiguration.unsavedChanges')).toBeNull()
+    );
+  });
+
+  it('sets the content switches in one ruled list', async () => {
+    api.fetchFeatureConfig.mockResolvedValue({
+      enable_cover_letter: false,
+      enable_outreach_message: false,
+      enable_interview_prep: false,
+    });
+    await renderLoaded();
+    openSection('settings.contentGeneration.title');
+    const switches = screen.getAllByRole('switch');
+    expect(switches).toHaveLength(3);
+    const list = switches[0].closest('.divide-y') as HTMLElement;
+    expect(list).toHaveClass('divide-ink', 'border', 'border-ink');
+    for (const toggle of switches) expect(list).toContainElement(toggle);
+    // Inline switches: the list draws the rules, not a shadowed card each.
+    expect(list.querySelector('.shadow-sw-nested')).toBeNull();
   });
 });

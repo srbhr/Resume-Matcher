@@ -158,9 +158,7 @@
     },
     "title": "Créateur de CV",
     "copySuffix": "(Copie)",
-    "editMode": "Mode édition",
     "previewMode": "Mode aperçu",
-    "createAndPreview": "Créer et prévisualiser",
     "unsavedDraft": "Brouillon non enregistré",
     "autoSave": {
       "saving": "Synchronisation...",
@@ -1069,21 +1067,18 @@
         "justNow": "À l'instant",
         "minutesAgo": "Il y a {minutes} min",
         "hoursAgo": "Il y a {hours} h"
-      }
+      },
+      "updated": "Mis à jour"
     },
     "llmConfiguration": {
-      "selectedProvider": "SÉLECTIONNÉ : {provider}",
       "claudeCliNote": "Exécute la CLI Claude Code installée et connectée sur cette machine, aucune clé API n'est donc nécessaire ici. Claude Code envoie toujours vos prompts à Anthropic via votre compte.",
       "claudeCliDefaultModel": "Modèle par défaut de Claude Code",
       "claudeCliModelHint": "Chaque alias utilise le modèle le plus récent de sa famille. Votre forfait Claude détermine ceux que vous pouvez utiliser.",
-      "claudeCliName": "Abonnement Claude (via Claude Code)",
       "claudeCliShortName": "Forfait Claude",
       "claudeCliWarningTitle": "À vos risques",
       "claudeCliWarning": "Anthropic n'autorise pas les applications tierces à faire passer des requêtes par les forfaits Claude Free, Pro ou Max, et cette option pourrait en relever. Anthropic peut faire respecter cette règle sans préavis ; pour un accès garanti, utilisez une clé API Anthropic. Resume Matcher ne voit ni ne stocke jamais vos identifiants Claude : il exécute votre propre CLI Claude Code, à laquelle vous vous connectez vous-même avec `claude auth login`. Les requêtes comptent dans les limites d'utilisation de votre forfait Claude, et Anthropic peut les imputer à des crédits d'utilisation à la place.",
       "communityBuilt": "Fonctionnalité créée par la communauté.",
-      "chatgptName": "Forfait ChatGPT (Se connecter avec ChatGPT)",
       "agentShortName": "Agent de code",
-      "agentName": "Votre agent de code (Claude Code, Codex, Cursor ou Copilot)",
       "agentNoteTitle": "Aucune clé d'API nécessaire",
       "agentNote": "Votre agent de code fait le travail d'IA : il lit votre CV et les offres d'emploi, rédige les versions adaptées et les enregistre ici avec la commande resume-matcher. L'application ne fait aucun appel d'IA elle-même, donc ses boutons d'IA vous donnent un prompt à coller dans votre agent.",
       "agentGuideLink": "Guide de configuration de l'agent",
@@ -1138,7 +1133,15 @@
       },
       "healthWarnings": {
         "empty_content": "Le LLM a retourné un contenu vide lors de la vérification de l'état."
-      }
+      },
+      "providerGroups": {
+        "apiKey": "Clé d'API",
+        "local": "Local",
+        "subscription": "Abonnement",
+        "agent": "Agent de code"
+      },
+      "advanced": "Avancé",
+      "unsavedChanges": "Modifications non enregistrées"
     },
     "chatgpt": {
       "continue": "Continuer avec ChatGPT",
@@ -1200,8 +1203,8 @@
       }
     },
     "promptSettings": {
-      "title": "Paramètres d'invite",
-      "description": "Choisissez l'invite par défaut utilisée pour la personnalisation du CV.",
+      "title": "Intensité de personnalisation par défaut",
+      "description": "Le degré de réécriture par défaut. Vous pouvez le changer pour chaque offre.",
       "defaultLabel": "Invite de personnalisation par défaut"
     },
     "footer": {
@@ -1228,7 +1231,13 @@
       "deleteConfirmTitle": "Supprimer la clé API ?",
       "deleteConfirmDescription": "Supprimer la clé API {provider} enregistrée ? Vous pourrez la rajouter ultérieurement."
     },
-    "sectionsNav": "Sections des paramètres"
+    "sectionsNav": "Sections des paramètres",
+    "yourData": "Vos données",
+    "notes": {
+      "llm": "Les clés sont enregistrées chiffrées dans le dossier de données de l'application, sur cet ordinateur, une par fournisseur : changer de fournisseur conserve les autres. Un fournisseur par abonnement utilise votre forfait Claude ou ChatGPT au lieu d'une clé.",
+      "content": "Les interrupteurs décident de ce qui est rédigé automatiquement à l'enregistrement d'un CV personnalisé. Ce qui est désactivé peut toujours être généré depuis l'éditeur.",
+      "language": "La langue de l'interface change les textes de l'application. La langue du contenu est celle dans laquelle l'IA rédige CV, lettres et messages."
+    }
   },
   "resumeViewer": {
     "resumeNotFound": "CV introuvable",
@@ -1502,7 +1511,6 @@
       "rail": "Étapes"
     },
     "title": "Suivi des candidatures",
-    "subtitle": "Suivez l'avancement de chaque CV personnalisé dans votre pipeline.",
     "addApplication": "Ajouter une candidature",
     "columns": {
       "saved": "Enregistré",

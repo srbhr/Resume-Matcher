@@ -23,7 +23,7 @@ describe('settings community strip', () => {
 
 describe('settings About section', () => {
   it('shows the app version and all five community links', () => {
-    render(<SettingsAbout />);
+    render(<SettingsAbout stats={null} />);
 
     expect(screen.getByRole('heading', { level: 2, name: 'community.aboutTitle' })).toBeVisible();
     expect(screen.getByText(`v${APP_VERSION}`)).toBeInTheDocument();
@@ -34,6 +34,31 @@ describe('settings About section', () => {
       'https://github.com/sponsors/srbhr',
       'https://dsc.gg/resume-matcher',
       'https://github.com/srbhr/Resume-Matcher/graphs/contributors',
+    ]);
+  });
+
+  it('lists what the app holds under Your data', () => {
+    render(
+      <SettingsAbout
+        stats={{
+          total_resumes: 3,
+          total_jobs: 2,
+          total_improvements: 1,
+          has_master_resume: true,
+        }}
+      />
+    );
+    const data = screen.getByRole('heading', { level: 3, name: 'settings.yourData' })
+      .nextElementSibling as HTMLElement;
+    expect(data.tagName).toBe('DL');
+    expect(
+      Array.from(data.querySelectorAll('dt')).map(
+        (dt) => `${dt.textContent}=${dt.nextElementSibling?.textContent}`
+      )
+    ).toEqual([
+      'settings.statusCards.resumes=3',
+      'settings.statusCards.jobs=2',
+      'settings.statusCards.improvements=1',
     ]);
   });
 });

@@ -158,9 +158,7 @@
     },
     "title": "履歴書ビルダー",
     "copySuffix": "(コピー)",
-    "editMode": "編集モード",
     "previewMode": "プレビューモード",
-    "createAndPreview": "作成＆プレビュー",
     "unsavedDraft": "未保存の下書き",
     "autoSave": {
       "saving": "同期中...",
@@ -1069,21 +1067,18 @@
         "justNow": "たった今",
         "minutesAgo": "{minutes} 分前",
         "hoursAgo": "{hours} 時間前"
-      }
+      },
+      "updated": "更新"
     },
     "llmConfiguration": {
-      "selectedProvider": "選択中: {provider}",
       "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はお使いのアカウント経由でプロンプトを Anthropic に送信します。",
       "claudeCliDefaultModel": "Claude Code の既定",
       "claudeCliModelHint": "各エイリアスは、そのファミリーの最新モデルを使います。使えるモデルは Claude プランによって決まります。",
-      "claudeCliName": "Claude サブスクリプション（Claude Code 経由）",
       "claudeCliShortName": "Claude プラン",
       "claudeCliWarningTitle": "自己責任でご利用ください",
       "claudeCliWarning": "Anthropic は、サードパーティ製アプリが Claude Free / Pro / Max プラン経由でリクエストを送ることを認めておらず、このオプションもそれに該当する可能性があります。Anthropic は予告なくこれを適用できます（確実に利用するには Anthropic の API キーをご利用ください）。Resume Matcher が Claude の認証情報を見たり保存したりすることはありません。実行するのは、ご自身で `claude auth login` からサインインした Claude Code CLI だけです。リクエストは Claude プランの利用上限に計上され、代わりに利用クレジットから消費される場合もあります。",
       "communityBuilt": "コミュニティが開発した機能です。",
-      "chatgptName": "ChatGPT プラン（Sign in with ChatGPT）",
       "agentShortName": "コーディングエージェント",
-      "agentName": "お使いのコーディングエージェント（Claude Code、Codex、Cursor、Copilot）",
       "agentNoteTitle": "API キーは不要です",
       "agentNote": "AI の作業はコーディングエージェントが行います。履歴書と求人内容を読み、最適化した版を書き、resume-matcher コマンドでここに保存します。アプリ自体は AI を呼び出さないため、AI ボタンを押すとエージェントに貼り付けるプロンプトが表示されます。",
       "agentGuideLink": "エージェント設定ガイド",
@@ -1138,7 +1133,15 @@
       },
       "healthWarnings": {
         "empty_content": "ヘルスチェックで空の内容が返されました。"
-      }
+      },
+      "providerGroups": {
+        "apiKey": "API キー",
+        "local": "ローカル",
+        "subscription": "サブスクリプション",
+        "agent": "コーディングエージェント"
+      },
+      "advanced": "詳細設定",
+      "unsavedChanges": "未保存の変更"
     },
     "chatgpt": {
       "continue": "ChatGPT で続行",
@@ -1200,8 +1203,8 @@
       }
     },
     "promptSettings": {
-      "title": "プロンプト設定",
-      "description": "履歴書カスタマイズで使う既定のプロンプトを選択します。",
+      "title": "既定のカスタマイズ強度",
+      "description": "既定でどの程度書き直すかを決めます。求人ごとに変更できます。",
       "defaultLabel": "既定のカスタマイズプロンプト"
     },
     "footer": {
@@ -1228,7 +1231,13 @@
       "deleteConfirmTitle": "API キーを削除しますか？",
       "deleteConfirmDescription": "保存された {provider} の API キーを削除しますか？後で再度追加できます。"
     },
-    "sectionsNav": "設定のセクション"
+    "sectionsNav": "設定のセクション",
+    "yourData": "あなたのデータ",
+    "notes": {
+      "llm": "キーはこのコンピューター上のアプリのデータフォルダーに、プロバイダーごとに暗号化して保存されます。プロバイダーを切り替えても他のキーは残ります。サブスクリプション型のプロバイダーは、キーの代わりに Claude または ChatGPT のプランを使います。",
+      "content": "スイッチは、カスタマイズ済み履歴書を保存したときに自動で作成するものを決めます。オフにしたものも、エディターから生成できます。",
+      "language": "表示言語はこのアプリの文字を切り替えます。コンテンツ言語は、AI が履歴書・カバーレター・メッセージを書く言語です。"
+    }
   },
   "resumeViewer": {
     "resumeNotFound": "履歴書が見つかりません",
@@ -1502,7 +1511,6 @@
       "rail": "ステージ"
     },
     "title": "応募トラッカー",
-    "subtitle": "各カスタマイズ済み履歴書の選考状況を管理します。",
     "addApplication": "応募を追加",
     "columns": {
       "saved": "保存済み",

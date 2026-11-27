@@ -8,6 +8,8 @@ export interface SegmentedItem<T extends string> {
   label: React.ReactNode;
   disabled?: boolean;
   title?: string;
+  /** A caption for a run of options. Consecutive items with the same group share one. */
+  group?: string;
 }
 
 export interface SegmentedControlProps<T extends string> {
@@ -21,6 +23,8 @@ export interface SegmentedControlProps<T extends string> {
   variant?: 'fill' | 'tile';
   size?: 'sm' | 'default';
   className?: string;
+  /** With grouped items: the layout of each group's options (className lays out the groups). */
+  groupClassName?: string;
   'aria-label'?: string;
   'aria-labelledby'?: string;
 }
@@ -33,6 +37,7 @@ export function SegmentedControl<T extends string>({
   variant = 'fill',
   size = 'default',
   className,
+  groupClassName,
   ...aria
 }: SegmentedControlProps<T>) {
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
@@ -71,41 +76,69 @@ export function SegmentedControl<T extends string>({
     }
   };
 
+  const renderItem = (item: SegmentedItem<T>, index: number) => {
+    const selected = item.value === value;
+    return (
+      <button
+        key={item.value}
+        ref={(el) => {
+          refs.current[index] = el;
+        }}
+        type="button"
+        role="radio"
+        aria-checked={selected}
+        tabIndex={index === tabStop ? 0 : -1}
+        disabled={item.disabled}
+        title={item.title}
+        onClick={() => onChange(item.value)}
+        onKeyDown={(event) => onKeyDown(event, index)}
+        className={cn(
+          'rounded-none border border-ink font-mono uppercase tracking-wider transition-colors',
+          'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+          'focus-visible:outline-none',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          size === 'sm' ? 'min-h-8 px-3 text-xs' : 'min-h-10 px-4 text-sm',
+          variant === 'tile' && 'px-0',
+          variant === 'fill' &&
+            (selected ? 'bg-ink text-white' : 'bg-white text-ink hover:bg-panel'),
+          variant === 'tile' &&
+            cn('overflow-hidden bg-white p-0 text-ink', !selected && 'hover:bg-panel')
+        )}
+      >
+        {item.label}
+      </button>
+    );
+  };
+
+  // Grouped items: one radiogroup (the arrow keys still run through every option), with a
+  // caption over each run of options that share a group.
+  if (items.some((item) => item.group)) {
+    const groups: Array<{ label: string; entries: Array<[SegmentedItem<T>, number]> }> = [];
+    items.forEach((item, index) => {
+      const label = item.group ?? '';
+      const last = groups[groups.length - 1];
+      if (last && last.label === label) last.entries.push([item, index]);
+      else groups.push({ label, entries: [[item, index]] });
+    });
+    return (
+      <div role="radiogroup" {...aria} className={cn('space-y-4', className)}>
+        {groups.map((group) => (
+          <div key={group.label} className="space-y-2">
+            {group.label && (
+              <p className="font-mono text-xs uppercase tracking-wider text-steel">{group.label}</p>
+            )}
+            <div className={cn('flex flex-wrap gap-2', groupClassName)}>
+              {group.entries.map(([item, index]) => renderItem(item, index))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div role="radiogroup" {...aria} className={cn('flex flex-wrap gap-2', className)}>
-      {items.map((item, index) => {
-        const selected = item.value === value;
-        return (
-          <button
-            key={item.value}
-            ref={(el) => {
-              refs.current[index] = el;
-            }}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            tabIndex={index === tabStop ? 0 : -1}
-            disabled={item.disabled}
-            title={item.title}
-            onClick={() => onChange(item.value)}
-            onKeyDown={(event) => onKeyDown(event, index)}
-            className={cn(
-              'rounded-none border border-ink font-mono uppercase tracking-wider transition-colors',
-              'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-              'focus-visible:outline-none',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-              size === 'sm' ? 'min-h-8 px-3 text-xs' : 'min-h-10 px-4 text-sm',
-              variant === 'tile' && 'px-0',
-              variant === 'fill' &&
-                (selected ? 'bg-ink text-white' : 'bg-white text-ink hover:bg-panel'),
-              variant === 'tile' &&
-                cn('overflow-hidden bg-white p-0 text-ink', !selected && 'hover:bg-panel')
-            )}
-          >
-            {item.label}
-          </button>
-        );
-      })}
+      {items.map((item, index) => renderItem(item, index))}
     </div>
   );
 }

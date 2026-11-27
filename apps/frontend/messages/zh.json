@@ -158,9 +158,7 @@
     },
     "title": "简历生成器",
     "copySuffix": "(副本)",
-    "editMode": "编辑模式",
     "previewMode": "预览模式",
-    "createAndPreview": "创建与预览",
     "unsavedDraft": "未保存草稿",
     "autoSave": {
       "saving": "同步中...",
@@ -1069,21 +1067,18 @@
         "justNow": "刚刚",
         "minutesAgo": "{minutes} 分钟前",
         "hoursAgo": "{hours} 小时前"
-      }
+      },
+      "updated": "更新时间"
     },
     "llmConfiguration": {
-      "selectedProvider": "已选择：{provider}",
       "claudeCliNote": "运行本机已安装并已登录的 Claude Code CLI，因此这里无需 API 密钥。Claude Code 仍会通过你的账户将提示词发送给 Anthropic。",
       "claudeCliDefaultModel": "Claude Code 默认模型",
       "claudeCliModelHint": "每个别名都会使用该系列的最新模型。可用的模型取决于你的 Claude 订阅。",
-      "claudeCliName": "Claude 订阅（通过 Claude Code）",
       "claudeCliShortName": "Claude 订阅",
       "claudeCliWarningTitle": "风险自负",
       "claudeCliWarning": "Anthropic 不允许第三方应用通过 Claude Free、Pro 或 Max 订阅发送请求，此选项可能属于这种情况。Anthropic 可以不经通知执行该规定；如需稳定可靠的访问，请使用 Anthropic API 密钥。Resume Matcher 不会看到或存储你的 Claude 凭据，它只是运行你自己的 Claude Code CLI，你需要自行通过 `claude auth login` 登录。请求会计入你的 Claude 订阅用量上限，Anthropic 也可能改为从用量额度中扣除。",
       "communityBuilt": "社区贡献的功能。",
-      "chatgptName": "ChatGPT 订阅（使用 ChatGPT 登录）",
       "agentShortName": "编程智能体",
-      "agentName": "你的编程智能体（Claude Code、Codex、Cursor 或 Copilot）",
       "agentNoteTitle": "无需 API 密钥",
       "agentNote": "AI 工作由你的编程智能体完成：它读取你的简历和职位描述，撰写定制版本，并通过 resume-matcher 命令保存到这里。应用本身不调用 AI，因此点击 AI 按钮时会给你一段提示词，粘贴到智能体中即可。",
       "agentGuideLink": "智能体设置指南",
@@ -1138,7 +1133,15 @@
       },
       "healthWarnings": {
         "empty_content": "健康检查返回了空内容。"
-      }
+      },
+      "providerGroups": {
+        "apiKey": "API 密钥",
+        "local": "本地",
+        "subscription": "订阅",
+        "agent": "编程智能体"
+      },
+      "advanced": "高级",
+      "unsavedChanges": "未保存的更改"
     },
     "chatgpt": {
       "continue": "通过 ChatGPT 继续",
@@ -1200,8 +1203,8 @@
       }
     },
     "promptSettings": {
-      "title": "提示词设置",
-      "description": "选择用于简历定制的默认提示词。",
+      "title": "默认定制强度",
+      "description": "默认改写的程度。每个职位都可以单独更改。",
       "defaultLabel": "默认定制提示词"
     },
     "footer": {
@@ -1228,7 +1231,13 @@
       "deleteConfirmTitle": "删除 API 密钥？",
       "deleteConfirmDescription": "删除已保存的 {provider} API 密钥？你之后可以重新添加。"
     },
-    "sectionsNav": "设置分区"
+    "sectionsNav": "设置分区",
+    "yourData": "你的数据",
+    "notes": {
+      "llm": "密钥按提供商分别加密保存在本机的应用数据文件夹中，切换提供商不会删除其他密钥。订阅类提供商使用你的 Claude 或 ChatGPT 套餐，而不是密钥。",
+      "content": "开关决定保存定制简历时自动生成哪些内容。关闭的项目仍可在编辑器中生成。",
+      "language": "界面语言改变本应用的文字。内容语言是 AI 撰写简历、求职信和消息所用的语言。"
+    }
   },
   "resumeViewer": {
     "resumeNotFound": "未找到简历",
@@ -1502,7 +1511,6 @@
       "rail": "阶段"
     },
     "title": "申请追踪",
-    "subtitle": "追踪每份定制简历在求职流程中的进展。",
     "addApplication": "添加申请",
     "columns": {
       "saved": "已保存",

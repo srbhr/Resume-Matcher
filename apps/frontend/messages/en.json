@@ -158,9 +158,7 @@
     },
     "title": "Resume Builder",
     "copySuffix": "(Copy)",
-    "editMode": "Edit Mode",
     "previewMode": "Preview Mode",
-    "createAndPreview": "Create & Preview",
     "unsavedDraft": "Unsaved Draft",
     "autoSave": {
       "saving": "Syncing...",
@@ -1069,21 +1067,18 @@
         "justNow": "Just now",
         "minutesAgo": "{minutes}m ago",
         "hoursAgo": "{hours}h ago"
-      }
+      },
+      "updated": "Updated"
     },
     "llmConfiguration": {
-      "selectedProvider": "SELECTED: {provider}",
       "claudeCliNote": "Runs the Claude Code CLI installed and signed in on this machine, so no API key is needed here. Claude Code still sends your prompts to Anthropic through your account.",
       "claudeCliDefaultModel": "Claude Code default",
       "claudeCliModelHint": "Each alias runs the newest model in its family. Your Claude plan decides which ones you can use.",
-      "claudeCliName": "Claude subscription (via Claude Code)",
       "claudeCliShortName": "Claude plan",
       "claudeCliWarningTitle": "Use at your own risk",
       "claudeCliWarning": "Anthropic doesn't allow third-party apps to route requests through Claude Free, Pro or Max plans, and this option may count as one. Anthropic can enforce that without notice; for guaranteed access, use an Anthropic API key. Resume Matcher never sees or stores your Claude credentials: it runs your own Claude Code CLI, which you sign in to yourself with `claude auth login`. Requests count toward your Claude plan's usage limits, and Anthropic may draw them from usage credits instead.",
       "communityBuilt": "Community-built feature.",
-      "chatgptName": "ChatGPT plan (Sign in with ChatGPT)",
       "agentShortName": "Coding agent",
-      "agentName": "Your coding agent (Claude Code, Codex, Cursor or Copilot)",
       "agentNoteTitle": "No API key needed",
       "agentNote": "Your coding agent does the AI work: it reads your resume and job descriptions, writes tailored versions and saves them here with the resume-matcher command. The app makes no AI calls of its own, so its AI buttons give you a prompt to paste into your agent.",
       "agentGuideLink": "Agent setup guide",
@@ -1138,7 +1133,15 @@
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."
-      }
+      },
+      "providerGroups": {
+        "apiKey": "API key",
+        "local": "Local",
+        "subscription": "Subscription",
+        "agent": "Coding agent"
+      },
+      "advanced": "Advanced",
+      "unsavedChanges": "Unsaved changes"
     },
     "chatgpt": {
       "continue": "Continue with ChatGPT",
@@ -1200,8 +1203,8 @@
       }
     },
     "promptSettings": {
-      "title": "Prompt Settings",
-      "description": "Choose the default prompt used for resume tailoring.",
+      "title": "Default tailoring intensity",
+      "description": "How much tailoring rewrites by default. You can change it for each job.",
       "defaultLabel": "Default tailoring prompt"
     },
     "footer": {
@@ -1228,7 +1231,13 @@
       "deleteConfirmTitle": "Delete API key?",
       "deleteConfirmDescription": "Remove the saved {provider} API key? You can add it again later."
     },
-    "sectionsNav": "Settings sections"
+    "sectionsNav": "Settings sections",
+    "yourData": "Your data",
+    "notes": {
+      "llm": "Keys are saved encrypted in the app's data folder on this computer, one per provider, so switching providers keeps the others. A subscription provider uses your Claude or ChatGPT plan instead of a key.",
+      "content": "The switches decide what is written automatically when a tailored resume is saved. Anything switched off can still be generated from the builder.",
+      "language": "The interface language changes this app's text. The content language is the one the AI writes resumes, letters and messages in."
+    }
   },
   "resumeViewer": {
     "resumeNotFound": "Resume not found",
@@ -1502,7 +1511,6 @@
       "rail": "Stages"
     },
     "title": "Application Tracker",
-    "subtitle": "Track where each tailored resume stands in your pipeline.",
     "addApplication": "Add Application",
     "columns": {
       "saved": "Saved",

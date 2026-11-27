@@ -158,9 +158,7 @@
     },
     "title": "이력서 빌더",
     "copySuffix": "(사본)",
-    "editMode": "편집 모드",
     "previewMode": "미리보기 모드",
-    "createAndPreview": "만들고 미리보기",
     "unsavedDraft": "저장되지 않은 초안",
     "personalInfo": "개인 정보",
     "summary": "요약",
@@ -1069,21 +1067,18 @@
         "justNow": "방금 전",
         "minutesAgo": "{minutes}분 전",
         "hoursAgo": "{hours}시간 전"
-      }
+      },
+      "updated": "업데이트"
     },
     "llmConfiguration": {
-      "selectedProvider": "선택됨: {provider}",
       "claudeCliNote": "이 컴퓨터에 설치되어 로그인된 Claude Code CLI를 실행하므로 여기에서는 API 키가 필요하지 않습니다. Claude Code는 계정을 통해 프롬프트를 Anthropic으로 전송합니다.",
       "claudeCliDefaultModel": "Claude Code 기본값",
       "claudeCliModelHint": "각 별칭은 해당 계열의 최신 모델을 사용합니다. 사용할 수 있는 모델은 Claude 요금제에 따라 다릅니다.",
-      "claudeCliName": "Claude 구독(Claude Code 경유)",
       "claudeCliShortName": "Claude 요금제",
       "claudeCliWarningTitle": "위험은 본인 책임",
       "claudeCliWarning": "Anthropic은 서드파티 앱이 Claude Free, Pro 또는 Max 요금제를 통해 요청을 보내는 것을 허용하지 않으며, 이 옵션도 이에 해당할 수 있습니다. Anthropic은 사전 통지 없이 이를 적용할 수 있습니다(안정적인 이용을 원하면 Anthropic API 키를 사용하세요). Resume Matcher는 Claude 자격 증명을 보거나 저장하지 않으며, 사용자가 `claude auth login`으로 직접 로그인한 본인의 Claude Code CLI를 실행할 뿐입니다. 요청은 Claude 요금제의 사용 한도에 포함되며, Anthropic이 대신 사용 크레딧에서 차감할 수도 있습니다.",
       "communityBuilt": "커뮤니티에서 만든 기능입니다.",
-      "chatgptName": "ChatGPT 요금제(Sign in with ChatGPT)",
       "agentShortName": "코딩 에이전트",
-      "agentName": "사용 중인 코딩 에이전트(Claude Code, Codex, Cursor 또는 Copilot)",
       "agentNoteTitle": "API 키가 필요 없습니다",
       "agentNote": "AI 작업은 코딩 에이전트가 합니다. 이력서와 채용 공고를 읽고, 맞춤 버전을 작성해 resume-matcher 명령으로 여기에 저장합니다. 앱 자체는 AI를 호출하지 않으므로 AI 버튼을 누르면 에이전트에 붙여 넣을 프롬프트가 표시됩니다.",
       "agentGuideLink": "에이전트 설정 가이드",
@@ -1138,7 +1133,15 @@
       },
       "healthWarnings": {
         "empty_content": "상태 확인 시 LLM이 빈 응답을 반환했습니다."
-      }
+      },
+      "providerGroups": {
+        "apiKey": "API 키",
+        "local": "로컬",
+        "subscription": "구독",
+        "agent": "코딩 에이전트"
+      },
+      "advanced": "고급",
+      "unsavedChanges": "저장되지 않은 변경 사항"
     },
     "chatgpt": {
       "continue": "ChatGPT로 계속하기",
@@ -1200,8 +1203,8 @@
       }
     },
     "promptSettings": {
-      "title": "프롬프트 설정",
-      "description": "이력서 맞춤화에 사용할 기본 프롬프트를 선택하세요.",
+      "title": "기본 맞춤화 강도",
+      "description": "기본적으로 얼마나 다시 쓸지 정합니다. 채용 공고마다 바꿀 수 있습니다.",
       "defaultLabel": "기본 맞춤화 프롬프트"
     },
     "footer": {
@@ -1228,7 +1231,13 @@
       "deleteConfirmTitle": "API 키를 삭제하시겠습니까?",
       "deleteConfirmDescription": "저장된 {provider} API 키를 삭제할까요? 나중에 다시 추가할 수 있습니다."
     },
-    "sectionsNav": "설정 섹션"
+    "sectionsNav": "설정 섹션",
+    "yourData": "내 데이터",
+    "notes": {
+      "llm": "키는 이 컴퓨터의 앱 데이터 폴더에 제공자별로 암호화되어 저장되므로, 제공자를 바꿔도 다른 키는 유지됩니다. 구독형 제공자는 키 대신 Claude 또는 ChatGPT 요금제를 사용합니다.",
+      "content": "스위치는 맞춤화된 이력서를 저장할 때 자동으로 작성할 항목을 정합니다. 꺼 둔 항목도 편집기에서 생성할 수 있습니다.",
+      "language": "인터페이스 언어는 이 앱의 텍스트를 바꿉니다. 콘텐츠 언어는 AI가 이력서, 편지, 메시지를 작성하는 언어입니다."
+    }
   },
   "resumeViewer": {
     "resumeNotFound": "이력서를 찾을 수 없습니다",
@@ -1502,7 +1511,6 @@
       "rail": "단계"
     },
     "title": "지원 현황 트래커",
-    "subtitle": "각 맞춤화된 이력서가 지원 파이프라인에서 어느 단계에 있는지 추적하세요.",
     "addApplication": "지원 추가",
     "columns": {
       "saved": "저장됨",

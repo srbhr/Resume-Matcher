@@ -39,7 +39,7 @@ describe('KanbanBoard header', () => {
     expect(screen.getByRole('status')).toHaveTextContent('common.loading');
   });
 
-  it('is a compact single-row toolbar: one short H1, an inline back link, a mono caption', async () => {
+  it('is a compact single-row toolbar: one short H1, an arrow-only back link, no caption', async () => {
     vi.mocked(listApplications).mockResolvedValue({ columns: columnsWith([]) });
     render(<KanbanBoard />);
     await screen.findByText('tracker.empty.title');
@@ -63,10 +63,13 @@ describe('KanbanBoard header', () => {
 
     const back = screen.getByRole('link', { name: 'nav.backToDashboard' });
     expect(back).toHaveAttribute('href', '/dashboard');
-    expect(back).toHaveClass('border-ink', 'h-8');
+    expect(back).toHaveClass('border-ink', 'h-8', 'w-8');
     expect(back).not.toHaveClass('mb-8');
-
-    expect(screen.getByText(/tracker\.subtitle/)).toHaveClass('font-mono', 'text-xs', 'text-steel');
+    // The arrow alone, named by its label and tooltip, as on every page.
+    expect(back).toHaveTextContent('');
+    expect(back).toHaveAttribute('title', 'nav.backToDashboard');
+    // No "// subtitle" caption beside the title.
+    expect(title.parentElement?.querySelector('p')).toBeNull();
 
     const band = title.closest('header');
     expect(band).toHaveClass('px-6', 'py-3', 'border-b', 'border-ink');

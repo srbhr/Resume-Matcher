@@ -199,9 +199,13 @@ export function KanbanBoard() {
           this is a full-height working view, so the band stays short and the
           board keeps the height. Wraps onto more rows on narrow screens. */}
       <header className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3 border-b border-ink px-6 py-3">
-        <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+        <Link
+          href="/dashboard"
+          aria-label={t('nav.backToDashboard')}
+          title={t('nav.backToDashboard')}
+          className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
+        >
           <ArrowLeft aria-hidden="true" />
-          {t('nav.backToDashboard')}
         </Link>
         {/* min-w keeps the title readable: with a 0 basis the actions would
             never wrap and would squeeze the title to nothing. */}
@@ -209,10 +213,6 @@ export function KanbanBoard() {
           <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
             {t('tracker.title')}
           </h1>
-          <p className="font-mono text-xs uppercase tracking-wide text-steel">
-            {'// '}
-            {t('tracker.subtitle')}
-          </p>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <Button type="button" variant="outline" size="sm" onClick={() => setManageOpen(true)}>

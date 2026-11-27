@@ -1373,17 +1373,19 @@ const ResumeBuilderContent = ({ agentMode = false }: ResumeBuilderProps) => {
         {/* Header: one compact toolbar row (owner F2, builder only) */}
         <PageHeader className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print">
           <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
-            <Button variant="outline" size="sm" onClick={handleBackToDashboard}>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              className="shrink-0"
+              onClick={handleBackToDashboard}
+              aria-label={t('nav.backToDashboard')}
+              title={t('nav.backToDashboard')}
+            >
               <ArrowLeft aria-hidden="true" />
-              {t('nav.backToDashboard')}
             </Button>
             <PageHeader.Title className="text-2xl leading-tight md:text-3xl">
               {t('nav.builder')}
             </PageHeader.Title>
-            <p className="font-mono text-xs font-bold uppercase tracking-wide text-steel">
-              {'// '}
-              {resumeId ? t('builder.editMode') : t('builder.createAndPreview')}
-            </p>
             <span role="status">
               {resumeSaveStatus && (
                 <StatusIndicator tone={resumeSaveStatus.tone} live={false}>

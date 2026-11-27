@@ -212,8 +212,8 @@ export const PROVIDER_INFO: Record<
     defaultBaseUrl: 'http://localhost:11434',
   },
   // Runs the `claude` CLI already signed in on this machine. defaultModel is the
-  // sentinel for Claude Code's own default model (no --model flag). The settings page
-  // shows a translated name (settings.llmConfiguration.claudeCliName); this is the
+  // sentinel for Claude Code's own default model (no --model flag). The settings picker
+  // shows a translated name (settings.llmConfiguration.claudeCliShortName); this is the
   // English fallback.
   claude_cli: {
     name: 'Claude subscription (via Claude Code)',
@@ -224,7 +224,7 @@ export const PROVIDER_INFO: Record<
   // OpenAI's official Sign in with ChatGPT for open-source apps (preview). The
   // backend holds the tokens. The model normally comes from the signed-in
   // account's catalog; defaultModel (the docs' example slug) is only the fallback.
-  // The settings page shows a translated name (settings.llmConfiguration.chatgptName).
+  // The settings picker shows a translated name (settings.llmConfiguration.chatgptShortName).
   chatgpt: {
     name: 'ChatGPT plan (Sign in with ChatGPT)',
     defaultModel: 'gpt-6.1-sol',
@@ -232,7 +232,7 @@ export const PROVIDER_INFO: Record<
     chatgptSignIn: true,
   },
   // No model of the app's own: defaultModel is only a placeholder the backend
-  // stores. The settings page shows a translated name (settings.llmConfiguration.agentName).
+  // stores. The settings picker shows a translated name (settings.llmConfiguration.agentShortName).
   agent: {
     name: 'Coding agent',
     defaultModel: 'agent',
