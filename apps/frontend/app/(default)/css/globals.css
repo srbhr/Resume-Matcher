@@ -4,6 +4,39 @@
 @import 'tailwindcss';
 @import '@ui-sdk/core/web.css' layer(components);
 
+/* web.css also styles every a, hr, code and kbd, and a focused link's outline,
+   and in the components layer those rules beat Tailwind's base reset: links
+   were underlined app-wide and the deedy template's rule took ui-sdk spacing.
+   A layer's own rules beat its nested ui-sdk sublayer, so outside ui-sdk's
+   parts the reset's values come back here; Tailwind utilities still win. */
+@layer components {
+  a:not([data-slot]) {
+    color: inherit;
+    text-decoration: inherit;
+  }
+  :is(a, summary):not([data-slot]):focus-visible {
+    outline: revert;
+    @apply outline-primary/50;
+  }
+  hr:not([data-slot]) {
+    align-self: auto;
+    height: 0;
+    margin: 0;
+    border: 0 solid;
+    border-top-width: 1px;
+    background: none;
+    color: inherit;
+  }
+  :is(code, kbd):not([data-slot]) {
+    padding: 0;
+    border: 0 solid;
+    border-radius: 0;
+    background: none;
+    font-family: var(--default-mono-font-family);
+    font-size: 1em;
+  }
+}
+
 @source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
 
 /* Swiss palette — the single source of colour (spec §4.1). Hex values (oklch in
