@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useState, useRef, useLayoutEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
-import Link from 'next/link';
-import { Button, buttonClass } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/back-link';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Hatch } from '@/components/ui/hatch';
@@ -33,7 +33,6 @@ import {
   DownloadSimple,
   SpinnerGap,
   PencilSimple,
-  ArrowLeft,
   Chats,
   Copy,
 } from '@phosphor-icons/react';
@@ -548,14 +547,7 @@ export default function ResumeViewerPage() {
     <PageFrame ground="crosses-wide">
       {/* One compact toolbar row, as in the builder and tracker, so the sheet starts high. */}
       <PageHeader className="flex flex-wrap items-center gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print">
-        <Link
-          href="/dashboard"
-          aria-label={t('nav.backToDashboard')}
-          title={t('nav.backToDashboard')}
-          className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
-        >
-          <ArrowLeft aria-hidden="true" />
-        </Link>
+        <BackLink label={t('nav.backToDashboard')} />
 
         {/* Editable title (the track name for a master): up to two lines, then clipped,
             with the full title on hover. min-w keeps it readable: the actions wrap

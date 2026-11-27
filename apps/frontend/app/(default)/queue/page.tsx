@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowsClockwise, SpinnerGap, Trash } from '@phosphor-icons/react';
+import { ArrowsClockwise, SpinnerGap, Trash } from '@phosphor-icons/react';
 import {
   fetchResumeList,
   fetchJobQueue,
@@ -22,6 +22,7 @@ import { useJobDetails } from '@/hooks/use-job-details';
 import { JobInput, MIN_JOB_DESCRIPTION_LENGTH } from '@/components/jobs/job-input';
 import { Alert } from '@/components/ui/alert';
 import { Button, buttonClass } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/back-link';
 import { Dropdown } from '@/components/ui/dropdown';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
@@ -325,14 +326,7 @@ export default function QueuePage() {
     <PageFrame ground="crosses-wide">
       {/* One compact toolbar row, as on the other pages. */}
       <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-3 border-b border-ink px-6 py-3">
-        <Link
-          href="/dashboard"
-          aria-label={t('common.back')}
-          title={t('common.back')}
-          className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
-        >
-          <ArrowLeft aria-hidden="true" />
-        </Link>
+        <BackLink label={t('common.back')} />
         <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
           {t('queue.title')}
         </h1>

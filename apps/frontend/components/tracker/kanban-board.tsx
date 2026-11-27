@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import {
   DndContext,
   DragEndEvent,
@@ -13,8 +12,9 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useReducedMotion } from 'motion/react';
-import { ArrowLeft, Plus, Gear, SpinnerGap } from '@phosphor-icons/react';
+import { Plus, Gear, SpinnerGap } from '@phosphor-icons/react';
 import { Button, buttonClass } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/back-link';
 import { Alert } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useTranslations } from '@/lib/i18n';
@@ -199,14 +199,7 @@ export function KanbanBoard() {
           this is a full-height working view, so the band stays short and the
           board keeps the height. Wraps onto more rows on narrow screens. */}
       <header className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3 border-b border-ink px-6 py-3">
-        <Link
-          href="/dashboard"
-          aria-label={t('nav.backToDashboard')}
-          title={t('nav.backToDashboard')}
-          className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
-        >
-          <ArrowLeft aria-hidden="true" />
-        </Link>
+        <BackLink label={t('nav.backToDashboard')} />
         {/* min-w keeps the title readable: with a 0 basis the actions would
             never wrap and would squeeze the title to nothing. */}
         <div className="flex min-w-[14rem] flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">

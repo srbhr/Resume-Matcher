@@ -1,7 +1,6 @@
 'use client';
 
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { AnimatePresence, m } from 'motion/react';
 import {
@@ -46,7 +45,8 @@ import {
 import { getVersionString } from '@/lib/config/version';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Button, buttonClass } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/back-link';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -70,7 +70,6 @@ import {
   CaretDown,
   FloppyDisk,
   Key,
-  ArrowLeft,
   Pulse,
   SpinnerGap,
   Check,
@@ -878,14 +877,7 @@ export default function SettingsPage() {
       <PageFrame width="wide" height="screen-md" ground="crosses-wide" className="md:h-full">
         {/* One compact toolbar row, as on the tracker: Settings is a working view. */}
         <header className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3 border-b border-ink px-6 py-3">
-          <Link
-            href="/dashboard"
-            aria-label={t('nav.backToDashboard')}
-            title={t('nav.backToDashboard')}
-            className={buttonClass({ variant: 'outline', size: 'icon-sm', className: 'shrink-0' })}
-          >
-            <ArrowLeft aria-hidden="true" />
-          </Link>
+          <BackLink label={t('nav.backToDashboard')} />
           <div className="flex min-w-[14rem] flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
               {t('settings.title')}
