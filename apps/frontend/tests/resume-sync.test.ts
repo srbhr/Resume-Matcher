@@ -153,10 +153,10 @@ const rows: Row[] = [
   ],
   // regenerateWizard onSuccess
   [
-    'a regenerated resume is clean without a version bump, and keeps a failed save',
+    'a regenerated resume is clean without a version bump, and clears a failed save',
     state({ ...DIRTY, saveFailed: true }),
     { type: 'regenerated' },
-    state({ editVersion: 3, syncedVersion: 3, saveFailed: true }),
+    state({ editVersion: 3, syncedVersion: 3 }),
   ],
   // applyAgentVersion
   [

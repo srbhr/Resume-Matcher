@@ -130,7 +130,8 @@ export function resumeSync(state: ResumeSyncState, event: ResumeSyncEvent): Resu
         saveFailed: false,
       };
     case 'regenerated':
-      return synced(state);
+      // The editor now shows the server's copy, so an earlier failed save is moot.
+      return { ...synced(state), saveFailed: false };
     case 'agentApplied': {
       // The bump stops an agent check that started earlier from reopening the banner.
       const next = { ...state, editVersion: state.editVersion + 1 };
