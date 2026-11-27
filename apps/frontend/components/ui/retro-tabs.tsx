@@ -6,11 +6,10 @@ import { cn } from '@/lib/utils';
 /**
  * Swiss International Style Tabs Component
  *
- * Design Principles:
- * - Square corners (rounded-none) - Brutalist aesthetic
- * - Active tab joins its panel (white fill, no bottom border)
- * - Ink borders for high contrast
- * - Monospace uppercase text
+ * One ink-bordered bar of segments, labels on one line in the label face. The
+ * selected tab fills ink (selection is ink). Segments share the width; when
+ * they don't fit, they wrap to another row, ruled like the dashboard grid (1px
+ * ink gaps over an ink ground), so no label wraps or hides off the edge.
  */
 
 export interface Tab {
@@ -57,7 +56,11 @@ export const RetroTabs: React.FC<RetroTabsProps> = ({
   };
 
   return (
-    <div role="tablist" {...aria} className={cn('flex gap-0 border-b border-ink', className)}>
+    <div
+      role="tablist"
+      {...aria}
+      className={cn('flex flex-wrap gap-px border border-ink bg-ink', className)}
+    >
       {tabs.map((tab, i) => {
         const isActive = activeTab === tab.id;
         return (
@@ -85,13 +88,12 @@ export const RetroTabs: React.FC<RetroTabsProps> = ({
               }
             }}
             className={cn(
-              '-mb-px border border-b-0 border-ink px-4 py-2 font-mono text-xs uppercase tracking-wider transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-              isActive && 'border-b-white bg-white font-bold text-ink',
-              !isActive &&
-                !tab.disabled &&
-                'bg-panel text-ink-soft hover:bg-panel-hover hover:text-ink',
-              tab.disabled && 'cursor-not-allowed bg-paper text-steel opacity-50'
+              'flex-auto whitespace-nowrap px-2 py-2 font-mono text-xs uppercase tracking-wide',
+              // Inset, so the neighbouring segments don't cover it.
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
+              isActive && 'bg-ink font-bold text-white',
+              !isActive && !tab.disabled && 'bg-white text-ink-soft hover:bg-panel hover:text-ink',
+              tab.disabled && 'cursor-not-allowed bg-paper text-steel'
             )}
           >
             {tab.label}
