@@ -858,7 +858,7 @@ export default function SettingsPage() {
         >
           <SideTabsList
             label={t('settings.sectionsNav')}
-            className="shrink-0 overflow-x-auto border-b border-ink bg-canvas px-6 py-3 xl:col-span-1 xl:flex-col xl:overflow-y-auto xl:border-b-0 xl:py-6"
+            className="shrink-0 flex-row overflow-x-auto border-b border-ink bg-canvas px-6 py-3 xl:col-span-1 xl:flex-col xl:overflow-y-auto xl:border-b-0 xl:py-6"
           >
             <SideTab value="llm" icon={<Key aria-hidden="true" className="size-4" />}>
               {t('settings.llmConfigurationTitle')}

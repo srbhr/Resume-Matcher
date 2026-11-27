@@ -49,7 +49,9 @@ export function SideTabsList({
   return (
     <TabsList
       aria-label={label}
-      className={cn('flex gap-1 border-0 bg-transparent p-0 shadow-none', className)}
+      // ui-sdk's stylesheet makes a vertical list a column; state the direction here so
+      // a caller's responsive row (flex-row xl:flex-col) is never overridden by it.
+      className={cn('flex flex-col gap-1 border-0 bg-transparent p-0 shadow-none', className)}
     >
       {children}
     </TabsList>
