@@ -527,16 +527,18 @@ def _sync_custom_section_meta(
     sections whose metadata exists with isDefault False. Entries that
     aren't objects are left for schema validation to reject.
     """
+    # A key that isn't a string is left for schema validation to reject.
     synced = [
         {**meta, "isDefault": False}
         if isinstance(meta, dict)
+        and isinstance(meta.get("key"), str)
         and meta.get("isDefault", True)
-        and meta.get("key") not in _DEFAULT_SECTION_KEYS
+        and meta["key"] not in _DEFAULT_SECTION_KEYS
         else meta
         for meta in section_meta
     ]
     entries = [meta for meta in synced if isinstance(meta, dict)]
-    known_keys = {meta.get("key") for meta in entries}
+    known_keys = {meta["key"] for meta in entries if isinstance(meta.get("key"), str)}
     orders = [meta.get("order") for meta in entries]
     next_order = max((o for o in orders if isinstance(o, int)), default=0) + 1
     for key, section in custom_sections.items():

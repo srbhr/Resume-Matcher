@@ -166,3 +166,35 @@ def test_malformed_meta_is_left_for_validation(section_meta: Any) -> None:
     assert data["sectionMeta"] == section_meta
     with pytest.raises(ValidationError):
         ResumeData.model_validate(data)
+
+
+def test_custom_meta_without_is_default_is_marked_custom() -> None:
+    # Raw data (stored rows, MCP input) can leave the key out entirely.
+    data = _parsed_resume()
+    data["sectionMeta"] = copy.deepcopy(DEFAULT_SECTION_META) + [
+        {
+            "id": "publications",
+            "key": "publications",
+            "displayName": "Papers",
+            "sectionType": "itemList",
+            "isVisible": True,
+            "order": 6,
+        }
+    ]
+
+    meta = _meta_by_key(normalize_resume_data(data))
+
+    assert meta["publications"]["isDefault"] is False
+
+
+@pytest.mark.parametrize("bad_key", [["publications"], {"k": 1}])
+def test_a_malformed_meta_key_is_left_for_validation(bad_key) -> None:
+    data = _parsed_resume()
+    data["sectionMeta"] = copy.deepcopy(DEFAULT_SECTION_META) + [
+        {"id": "x", "key": bad_key, "isDefault": True, "order": 6}
+    ]
+
+    normalized = normalize_resume_data(data)
+
+    with pytest.raises(ValidationError):
+        ResumeData.model_validate(normalized)
