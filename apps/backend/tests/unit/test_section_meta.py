@@ -198,3 +198,37 @@ def test_a_malformed_meta_key_is_left_for_validation(bad_key) -> None:
 
     with pytest.raises(ValidationError):
         ResumeData.model_validate(normalized)
+
+
+def test_added_meta_never_reuses_an_existing_section_id() -> None:
+    # API/MCP data can store id != key; the builder acts on sections by id.
+    data = _parsed_resume()
+    data["sectionMeta"] = copy.deepcopy(DEFAULT_SECTION_META) + [
+        {
+            "id": "custom_1",
+            "key": "publications",
+            "displayName": "Papers",
+            "sectionType": "itemList",
+            "isDefault": False,
+            "isVisible": True,
+            "order": 6,
+        }
+    ]
+    data["customSections"]["custom_1"] = {"sectionType": "text", "text": "x"}
+
+    ids = [m["id"] for m in normalize_resume_data(data)["sectionMeta"]]
+
+    assert len(ids) == len(set(ids))
+
+
+def test_added_meta_goes_after_decimal_orders() -> None:
+    data = _parsed_resume()
+    data["sectionMeta"] = [
+        {**meta, "order": float(meta["order"])}
+        for meta in copy.deepcopy(DEFAULT_SECTION_META)
+    ]
+    highest = max(meta["order"] for meta in data["sectionMeta"])
+
+    meta = _meta_by_key(normalize_resume_data(data))
+
+    assert meta["publications"]["order"] == int(highest) + 1

@@ -539,15 +539,28 @@ def _sync_custom_section_meta(
     ]
     entries = [meta for meta in synced if isinstance(meta, dict)]
     known_keys = {meta["key"] for meta in entries if isinstance(meta.get("key"), str)}
-    orders = [meta.get("order") for meta in entries]
-    next_order = max((o for o in orders if isinstance(o, int)), default=0) + 1
+    # The builder acts on sections by id, and data written through the API can
+    # store an id that differs from its key, so an added id must be unused.
+    used_ids = {meta["id"] for meta in entries if isinstance(meta.get("id"), str)}
+    # Raw stored rows can carry decimal orders (6.0); bool is not an order.
+    orders = [
+        meta.get("order")
+        for meta in entries
+        if isinstance(meta.get("order"), (int, float))
+        and not isinstance(meta.get("order"), bool)
+    ]
+    next_order = int(max(orders, default=0)) + 1
     for key, section in custom_sections.items():
         section_type = section.get("sectionType") if isinstance(section, dict) else None
         if key in known_keys or key in _DEFAULT_SECTION_KEYS or not section_type:
             continue
+        section_id, suffix = key, 2
+        while section_id in used_ids:
+            section_id, suffix = f"{key}_{suffix}", suffix + 1
+        used_ids.add(section_id)
         synced.append(
             {
-                "id": key,
+                "id": section_id,
                 "key": key,
                 "displayName": _custom_section_display_name(key),
                 "sectionType": section_type,
