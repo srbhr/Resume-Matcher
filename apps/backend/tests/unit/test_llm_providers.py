@@ -143,10 +143,17 @@ class TestNormalizeApiBase:
     def test_gemini_strips_v1(self):
         assert _normalize_api_base("gemini", "https://host/v1") == "https://host"
 
-    def test_openrouter_strips_v1(self):
+    def test_openrouter_preserves_v1(self):
+        # LiteLLM's OpenRouter handler appends /chat/completions, not /v1.
         assert (
             _normalize_api_base("openrouter", "https://openrouter.ai/api/v1")
-            == "https://openrouter.ai/api"
+            == "https://openrouter.ai/api/v1"
+        )
+
+    def test_openrouter_strips_only_trailing_slash(self) -> None:
+        assert (
+            _normalize_api_base("openrouter", "https://openrouter.ai/api/v1/")
+            == "https://openrouter.ai/api/v1"
         )
 
     @pytest.mark.parametrize(
