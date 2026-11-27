@@ -53,6 +53,8 @@ const TILE_BUTTON =
 // vanish on the fill). Inherited text turns white with the tile; anything that sets its own
 // colour (steel captions, the spinner, status squares, monogram frames) opts in below so it
 // stays AA on blue (white on primary is 6.7:1).
+// Every dashboard tile: 5:4, a fifth shorter than the square it was.
+const TILE_SHAPE = 'aspect-5/4 h-full';
 const TILE_FILL =
   'hover:border-transparent hover:translate-x-0 hover:translate-y-0 hover:bg-primary hover:text-white has-[:focus-visible]:z-20 has-[:focus-visible]:bg-primary has-[:focus-visible]:text-white';
 const TILE_WHITE = 'group-hover:text-white group-has-[:focus-visible]:text-white';
@@ -601,7 +603,10 @@ export default function DashboardPage() {
               >
                 <Card
                   variant="interactive"
-                  className="aspect-square h-full border-dashed border-warning bg-warning-tint hover:border-transparent hover:translate-x-0 hover:translate-y-0 hover:bg-primary hover:text-white group-focus-visible/setup:z-20 group-focus-visible/setup:border-transparent group-focus-visible/setup:translate-x-0 group-focus-visible/setup:translate-y-0 group-focus-visible/setup:bg-primary group-focus-visible/setup:text-white group-focus-visible/setup:ring-2 group-focus-visible/setup:ring-inset group-focus-visible/setup:ring-white"
+                  className={cn(
+                    TILE_SHAPE,
+                    'border-dashed border-warning bg-warning-tint hover:border-transparent hover:translate-x-0 hover:translate-y-0 hover:bg-primary hover:text-white group-focus-visible/setup:z-20 group-focus-visible/setup:border-transparent group-focus-visible/setup:translate-x-0 group-focus-visible/setup:translate-y-0 group-focus-visible/setup:bg-primary group-focus-visible/setup:text-white group-focus-visible/setup:ring-2 group-focus-visible/setup:ring-inset group-focus-visible/setup:ring-white'
+                  )}
                 >
                   <div className="flex-1 flex flex-col justify-between">
                     <Warning
@@ -626,11 +631,7 @@ export default function DashboardPage() {
                 </Card>
               </Link>
             ) : (
-              <Card
-                variant="interactive"
-                noPadding
-                className={cn('aspect-square h-full', TILE_FILL)}
-              >
+              <Card variant="interactive" noPadding className={cn(TILE_SHAPE, TILE_FILL)}>
                 <button
                   type="button"
                   className={TILE_BUTTON}
@@ -659,7 +660,7 @@ export default function DashboardPage() {
             )
           ) : (
             // Master Resume Exists
-            <Card variant="interactive" className={cn('aspect-square h-full', TILE_FILL)}>
+            <Card variant="interactive" className={cn(TILE_SHAPE, TILE_FILL)}>
               <div className="flex-1 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-6">
                   <div
@@ -756,7 +757,7 @@ export default function DashboardPage() {
               <Card
                 key={resume.resume_id}
                 variant="interactive"
-                className={cn('aspect-square h-full', TILE_FILL)}
+                className={cn(TILE_SHAPE, TILE_FILL)}
               >
                 <div className="flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-6">
@@ -818,7 +819,7 @@ export default function DashboardPage() {
 
           {/* 3. Add Master Track */}
           {showAddTrackTile && (
-            <Card variant="interactive" noPadding className={cn('aspect-square h-full', TILE_FILL)}>
+            <Card variant="interactive" noPadding className={cn(TILE_SHAPE, TILE_FILL)}>
               <button
                 type="button"
                 className={TILE_BUTTON}
@@ -845,7 +846,7 @@ export default function DashboardPage() {
               <Card
                 key={resume.resume_id}
                 variant="interactive"
-                className={cn('aspect-square h-full', TILE_FILL)}
+                className={cn(TILE_SHAPE, TILE_FILL)}
               >
                 <div className="flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-6">
@@ -890,7 +891,7 @@ export default function DashboardPage() {
 
           {/* 5. Create Tailored Resume: not a highlight target and no stretched click area. The
               blue + button is the only control, with the Button primitive's own press-in and ring. */}
-          <Card className="aspect-square h-full">
+          <Card className={TILE_SHAPE}>
             <div className="flex-1 flex flex-col items-center justify-center text-center h-full">
               <Button
                 type="button"
@@ -914,7 +915,7 @@ export default function DashboardPage() {
               key={`filler-${index}`}
               variant="ghost"
               noPadding
-              className="hidden md:block bg-canvas aspect-square h-full opacity-50 pointer-events-none"
+              className={cn(TILE_SHAPE, 'hidden md:block bg-canvas opacity-50 pointer-events-none')}
             />
           ))}
 
@@ -923,7 +924,11 @@ export default function DashboardPage() {
               key={`extra-filler-${index}`}
               variant="ghost"
               noPadding
-              className={`hidden md:block ${FILLER_FILLS[index % FILLER_FILLS.length]} aspect-square h-full opacity-70 pointer-events-none`}
+              className={cn(
+                TILE_SHAPE,
+                'hidden md:block opacity-70 pointer-events-none',
+                FILLER_FILLS[index % FILLER_FILLS.length]
+              )}
             />
           ))}
         </>

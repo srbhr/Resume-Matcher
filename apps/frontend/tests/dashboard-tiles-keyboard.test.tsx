@@ -475,12 +475,22 @@ describe('dashboard tile highlight and the one blue action', () => {
     expect(classAttr(label)).not.toMatch(/group-/);
   });
 
+  it('draws every tile 5:4, a fifth shorter than a square', async () => {
+    api.list.mockResolvedValue([{ ...row('m1', true), is_default_master: true }]);
+    const { container } = render(<DashboardPage />);
+    await screen.findByText('dashboard.createResume');
+
+    const tiles = container.querySelectorAll('[class~="aspect-5/4"]');
+    expect(tiles.length).toBeGreaterThanOrEqual(3);
+    expect(container.querySelector('[class~="aspect-square"]')).toBeNull();
+  });
+
   it('keeps the Create tile plain: no blue highlight and the + button is its only control', async () => {
     api.list.mockResolvedValue([{ ...row('m1', true), is_default_master: true }]);
     render(<DashboardPage />);
     const label = await screen.findByText('dashboard.createResume');
     const create = within(label.parentElement!).getByRole('button');
-    const tile = create.closest('.aspect-square') as HTMLElement;
+    const tile = create.closest('[class~="aspect-5/4"]') as HTMLElement;
 
     // Not a TILE_FILL tile: nothing on it fills blue or turns text white on hover or focus.
     expect(classAttr(tile)).not.toMatch(
