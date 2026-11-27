@@ -1195,7 +1195,8 @@
       "deleteAria": "Excluir a chave de {provider}",
       "deleteConfirmTitle": "Excluir chave de API?",
       "deleteConfirmDescription": "Remover a chave de API de {provider} salva? Você pode adicioná-la novamente depois."
-    }
+    },
+    "sectionsNav": "Seções de configurações"
   },
   "resumeViewer": {
     "resumeNotFound": "Currículo não encontrado",

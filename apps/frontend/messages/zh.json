@@ -1195,7 +1195,8 @@
       "deleteAria": "删除 {provider} 密钥",
       "deleteConfirmTitle": "删除 API 密钥？",
       "deleteConfirmDescription": "删除已保存的 {provider} API 密钥？你之后可以重新添加。"
-    }
+    },
+    "sectionsNav": "设置分区"
   },
   "resumeViewer": {
     "resumeNotFound": "未找到简历",

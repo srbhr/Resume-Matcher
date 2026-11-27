@@ -110,6 +110,20 @@ async function renderLoaded() {
   await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
 }
 
+/** Open one Settings section from the rail (one section shows at a time). */
+function openSection(label: string) {
+  const rail = screen.getByRole('navigation', { name: 'settings.sectionsNav' });
+  fireEvent.click(within(rail).getByRole('button', { name: label }));
+}
+
+const SECTION_LABELS = [
+  'settings.llmConfigurationTitle',
+  'settings.contentGeneration.title',
+  'settings.languageTitle',
+  'settings.dangerZone',
+  'community.aboutTitle',
+];
+
 /** Pick a subscription provider and accept the risk dialog it opens. */
 function chooseSubscription(providers: HTMLElement, label: string) {
   fireEvent.click(within(providers).getByRole('radio', { name: label }));
@@ -131,15 +145,18 @@ describe('settings page (Swiss sweep)', () => {
     expect(titles).toHaveLength(1);
     expect(titles[0]).toHaveTextContent('settings.title');
 
-    const sections = screen.getAllByRole('heading', { level: 2 });
-    expect(sections.map((h) => h.textContent)).toEqual([
+    // The status strip's heading, then the open section's; the rail reaches the rest.
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
       'settings.systemStatus.title',
       'settings.llmConfigurationTitle',
-      'settings.contentGeneration.title',
-      'settings.languageTitle',
-      'settings.dangerZone',
-      'community.aboutTitle',
     ]);
+    const sections = [
+      screen.getByRole('heading', { level: 2, name: 'settings.systemStatus.title' }),
+    ];
+    for (const label of SECTION_LABELS) {
+      openSection(label);
+      sections.push(screen.getByRole('heading', { level: 2, name: label }));
+    }
     for (const heading of sections) {
       expect(heading).toHaveClass('font-serif', 'font-bold', 'text-ink');
       expect(heading).not.toHaveClass('font-mono');
@@ -179,6 +196,7 @@ describe('settings page (Swiss sweep)', () => {
       'claude-haiku-4-5-20251001'
     );
 
+    openSection('settings.languageTitle');
     const ui = screen.getByRole('radiogroup', { name: 'settings.uiLanguage' });
     fireEvent.click(within(ui).getByRole('radio', { name: 'Español' }));
     expect(api.setUiLanguage).toHaveBeenCalledWith('es');
@@ -557,6 +575,7 @@ describe('settings page (Swiss sweep)', () => {
       within(savedKey).getByRole('button', { name: 'settings.apiKeys.deleteAria' })
     ).toHaveClass('border-destructive', 'text-destructive');
 
+    openSection('settings.dangerZone');
     expect(screen.getByRole('button', { name: 'settings.clearApiKeys' })).toHaveClass(
       'border-destructive',
       'text-destructive'
@@ -570,7 +589,7 @@ describe('settings page (Swiss sweep)', () => {
     for (const heading of dangerCards) expect(heading).toHaveClass('font-serif', 'text-ink');
   });
 
-  it('sits in the narrow frame and lets its form columns fill it', async () => {
+  it('fills a wide, full-height frame and keeps the open section at a readable width', async () => {
     api.fetchFeatureConfig.mockResolvedValue({
       enable_cover_letter: true,
       enable_outreach_message: true,
@@ -580,8 +599,13 @@ describe('settings page (Swiss sweep)', () => {
     await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
 
     const frame = screen.getByRole('heading', { level: 1 }).closest('.shadow-sw-lg') as HTMLElement;
-    expect(frame).toHaveClass('max-w-4xl');
-    expect(frame).not.toHaveClass('max-w-[86rem]');
+    // Full height with scrolling panes from md up; a normal scrolling page on a phone.
+    expect(frame).toHaveClass('max-w-[104rem]', 'md:max-h-full', 'md:overflow-hidden');
+    // The section pane, not the frame, keeps a form's measure.
+    const pane = screen
+      .getByRole('heading', { level: 2, name: 'settings.llmConfigurationTitle' })
+      .closest('section')?.parentElement as HTMLElement;
+    expect(pane).toHaveClass('max-w-4xl');
 
     // No inner column cap: fields and prompts fill the frame instead of leaving a gap.
     expect(container.querySelector('.max-w-3xl')).toBeNull();
@@ -589,6 +613,7 @@ describe('settings page (Swiss sweep)', () => {
       .getByLabelText('settings.llmConfiguration.modelLabel')
       .closest('.grid') as HTMLElement;
     expect(llmFields).toHaveClass('gap-6');
+    openSection('settings.contentGeneration.title');
     const promptBody = screen.getByText('settings.contentGeneration.description')
       .parentElement as HTMLElement;
     for (const id of ['coverLetterPrompt', 'outreachPrompt']) {
@@ -596,14 +621,56 @@ describe('settings page (Swiss sweep)', () => {
     }
   });
 
-  it('keeps the compact vertical rhythm: tight body padding, 8-unit section gaps', async () => {
+  it('keeps the compact vertical rhythm: tight pane padding, 8-unit section gaps', async () => {
     await renderLoaded();
-    const body = screen.getByText('settings.systemStatus.title').closest('section')
-      ?.parentElement as HTMLElement;
-    expect(body).toHaveClass('py-8', 'space-y-8');
+    const body = screen
+      .getByText('settings.llmConfigurationTitle', { selector: 'h2' })
+      .closest('section')?.parentElement as HTMLElement;
+    expect(body).toHaveClass('py-6', 'md:py-8', 'space-y-8');
     for (const old of ['py-12', 'md:py-12', 'space-y-12']) expect(body).not.toHaveClass(old);
-    // The horizontal gutter matches the shared page header (md:p-12) so edges align.
-    expect(body).toHaveClass('px-8', 'md:px-12');
+    // The gutter matches the compact header's px-6, then widens with the pane.
+    expect(body).toHaveClass('px-6', 'md:px-8');
+  });
+
+  it('keeps system status in one ruled strip, drawn like the dashboard grid', async () => {
+    await renderLoaded();
+    const strip = screen.getByRole('region', { name: 'settings.systemStatus.title' });
+    const grid = within(strip)
+      .getByText('settings.statusCards.llm')
+      .closest('.grid') as HTMLElement;
+
+    expect(grid).toHaveClass('gap-px', 'bg-ink', 'xl:grid-cols-6');
+    expect(grid.children).toHaveLength(6);
+    for (const cell of Array.from(grid.children)) {
+      expect(cell).toHaveClass('bg-canvas');
+      expect(cell).not.toHaveClass('shadow-sw-nested');
+    }
+    // It stays when another section opens.
+    openSection('settings.languageTitle');
+    expect(screen.getByRole('region', { name: 'settings.systemStatus.title' })).toBeInTheDocument();
+  });
+
+  it('opens one section at a time from the rail, marks it, and keeps it in the URL', async () => {
+    await renderLoaded();
+    const rail = screen.getByRole('navigation', { name: 'settings.sectionsNav' });
+    expect(
+      within(rail)
+        .getAllByRole('button')
+        .map((b) => b.textContent)
+    ).toEqual(SECTION_LABELS);
+    expect(
+      within(rail).getByRole('button', { name: 'settings.llmConfigurationTitle' })
+    ).toHaveAttribute('aria-current', 'true');
+
+    openSection('settings.dangerZone');
+
+    const danger = within(rail).getByRole('button', { name: 'settings.dangerZone' });
+    expect(danger).toHaveAttribute('aria-current', 'true');
+    expect(danger).toHaveClass('bg-ink', 'text-white');
+    expect(
+      screen.queryByRole('heading', { level: 2, name: 'settings.llmConfigurationTitle' })
+    ).toBeNull();
+    expect(window.location.search).toBe('?section=danger');
   });
 
   it('gives nested boxes the nested shadow and keeps solid ink for controls', async () => {
@@ -624,19 +691,12 @@ describe('settings page (Swiss sweep)', () => {
     });
     await screen.findByText('settings.llmConfiguration.connectionSuccessful');
 
-    const statBoxes = [
-      'settings.statusCards.llm',
-      'settings.statusCards.database',
-      'settings.statusCards.resumes',
-      'settings.statusCards.jobs',
-      'settings.statusCards.improvements',
-      'settings.statusCards.masterResume',
-    ].map((label) => screen.getByText(label).closest('.border') as HTMLElement);
+    // The status cells are ruled grid cells (see the strip test), not nested boxes.
     const savedKeys = screen.getByText('settings.apiKeys.savedTitle').parentElement as HTMLElement;
     const detailBlocks = ['ping prompt', 'pong output', 'thinking trace'].map((text) =>
       screen.getByText(text)
     );
-    for (const box of [...statBoxes, savedKeys, ...detailBlocks]) {
+    for (const box of [savedKeys, ...detailBlocks]) {
       expect(box).toHaveClass('border-ink', 'shadow-sw-nested');
       expect(box).not.toHaveClass('shadow-sw-sm');
     }
@@ -655,15 +715,22 @@ describe('settings page (Swiss sweep)', () => {
       enable_interview_prep: false,
     });
     await renderLoaded();
-    // Includes Test connection and both prompt Save / Reset pairs.
+    // Includes Test connection and both prompt Save / Reset pairs, section by section.
     expect(
       screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
     ).toHaveAttribute('type', 'button');
-    expect(
-      screen.getAllByRole('button', { name: 'settings.contentGeneration.customPromptResetButton' })
-    ).toHaveLength(2);
-    for (const button of screen.getAllByRole('button')) {
-      expect(button).toHaveAttribute('type', 'button');
+    for (const label of SECTION_LABELS) {
+      openSection(label);
+      if (label === 'settings.contentGeneration.title') {
+        expect(
+          screen.getAllByRole('button', {
+            name: 'settings.contentGeneration.customPromptResetButton',
+          })
+        ).toHaveLength(2);
+      }
+      for (const button of screen.getAllByRole('button')) {
+        expect(button).toHaveAttribute('type', 'button');
+      }
     }
   });
 
@@ -750,6 +817,7 @@ describe('settings page (accessibility)', () => {
       })
     );
     await renderLoaded();
+    openSection('settings.contentGeneration.title');
     const cover = document.getElementById('coverLetterPrompt') as HTMLTextAreaElement;
     const outreach = document.getElementById('outreachPrompt') as HTMLTextAreaElement;
     expect(cover).not.toHaveAttribute('aria-invalid', 'true');
@@ -806,9 +874,11 @@ describe('settings page (accessibility)', () => {
 
   it('leads every section heading, Display included, with a 16px icon', async () => {
     await renderLoaded();
-    for (const heading of screen.getAllByRole('heading', { level: 2 })) {
+    for (const label of SECTION_LABELS) {
+      openSection(label);
+      const heading = screen.getByRole('heading', { level: 2, name: label });
       const icon = heading.previousElementSibling;
-      expect(icon?.tagName.toLowerCase(), heading.textContent ?? '').toBe('svg');
+      expect(icon?.tagName.toLowerCase(), label).toBe('svg');
       expect(icon).toHaveClass('w-4', 'h-4');
     }
   });

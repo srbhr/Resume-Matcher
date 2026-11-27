@@ -1195,7 +1195,8 @@
       "deleteAria": "{provider} 키 삭제",
       "deleteConfirmTitle": "API 키를 삭제하시겠습니까?",
       "deleteConfirmDescription": "저장된 {provider} API 키를 삭제할까요? 나중에 다시 추가할 수 있습니다."
-    }
+    },
+    "sectionsNav": "설정 섹션"
   },
   "resumeViewer": {
     "resumeNotFound": "이력서를 찾을 수 없습니다",

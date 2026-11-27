@@ -1195,7 +1195,8 @@
       "deleteAria": "Supprimer la clé {provider}",
       "deleteConfirmTitle": "Supprimer la clé API ?",
       "deleteConfirmDescription": "Supprimer la clé API {provider} enregistrée ? Vous pourrez la rajouter ultérieurement."
-    }
+    },
+    "sectionsNav": "Sections des paramètres"
   },
   "resumeViewer": {
     "resumeNotFound": "CV introuvable",

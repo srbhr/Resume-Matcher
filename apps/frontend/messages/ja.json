@@ -1195,7 +1195,8 @@
       "deleteAria": "{provider} のキーを削除",
       "deleteConfirmTitle": "API キーを削除しますか？",
       "deleteConfirmDescription": "保存された {provider} の API キーを削除しますか？後で再度追加できます。"
-    }
+    },
+    "sectionsNav": "設定のセクション"
   },
   "resumeViewer": {
     "resumeNotFound": "履歴書が見つかりません",

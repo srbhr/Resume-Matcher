@@ -33,6 +33,19 @@ describe('PageFrame + PageHeader', () => {
     expect(frame).not.toHaveClass('h-full');
   });
 
+  it('fills the viewport only from md up in screen-md mode, and scrolls as a page below', () => {
+    const { container } = render(
+      <PageFrame height="screen-md">
+        <p>content</p>
+      </PageFrame>
+    );
+    expect(container.firstChild).toHaveClass('min-h-screen', 'md:h-dvh', 'md:overflow-hidden');
+    expect(container.firstChild).not.toHaveClass('h-dvh', 'overflow-hidden');
+    const frame = screen.getByText('content').parentElement;
+    expect(frame).toHaveClass('md:max-h-full', 'md:overflow-hidden');
+    expect(frame).not.toHaveClass('max-h-full', 'overflow-hidden');
+  });
+
   it('offers a narrow frame for single-column form pages', () => {
     render(
       <PageFrame width="narrow">

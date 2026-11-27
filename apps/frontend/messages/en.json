@@ -1195,7 +1195,8 @@
       "deleteAria": "Delete {provider} key",
       "deleteConfirmTitle": "Delete API key?",
       "deleteConfirmDescription": "Remove the saved {provider} API key? You can add it again later."
-    }
+    },
+    "sectionsNav": "Settings sections"
   },
   "resumeViewer": {
     "resumeNotFound": "Resume not found",
