@@ -186,7 +186,7 @@ The most important setting is your AI provider. Here's a minimal configuration f
 
 ```env
 LLM_PROVIDER=openai
-LLM_MODEL=gpt-5-nano-2025-08-07
+LLM_MODEL=gpt-6-luna
 LLM_API_KEY=sk-your-api-key-here
 
 # Keep these as default for local development
@@ -268,7 +268,7 @@ Resume Matcher supports multiple AI providers. You can configure your provider t
 
 | Provider | Configuration | Get API Key |
 |----------|--------------|-------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-5-nano-2025-08-07` | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-6-luna` | [platform.openai.com](https://platform.openai.com/api-keys) |
 | **Azure AI Foundry** | `LLM_PROVIDER=azure_foundry`<br>`LLM_MODEL=mistral-large-latest`<br>`LLM_API_BASE=https://<resource>.services.ai.azure.com/models`<br>For Foundry-hosted Azure OpenAI GPT deployments, use the service root or the full `/openai/v1/responses` endpoint from Foundry. | Azure AI Foundry endpoint/key |
 | **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-haiku-4-5-20251001` | [console.anthropic.com](https://console.anthropic.com/) |
 | **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini/gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |

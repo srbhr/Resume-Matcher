@@ -1164,6 +1164,30 @@ _CHATGPT_ERROR_CODES: dict[str, str] = {
 }
 
 
+def _probe_reasoning_effort(config: LLMConfig) -> str | None:
+    """The reasoning effort for the 64-token connection probe.
+
+    The configured effort when the model takes it. Otherwise an OpenAI model
+    that reasons by default (gpt-6-luna defaults to medium) is asked for none
+    when the model map says it supports that, so the probe has room to answer.
+    An effort the model refuses counts as unset: LiteLLM drops it, and the gpt-5
+    migration left ``minimal`` on configs later moved to gpt-6-luna. The probe
+    tests the connection, not the reasoning.
+    """
+    effort = config.reasoning_effort
+    if config.provider != "openai":
+        return effort
+    try:
+        info = _litellm().get_model_info(model=get_model_name(config))
+    except Exception:
+        return effort
+    if effort and info.get(f"supports_{effort}_reasoning_effort") is not False:
+        return effort
+    if info.get("supports_none_reasoning_effort") is True:
+        return "none"
+    return effort
+
+
 async def check_llm_health(
     config: LLMConfig | None = None,
     *,
@@ -1231,7 +1255,7 @@ async def check_llm_health(
         api_version = _azure_foundry_api_version(config)
         if api_version:
             kwargs["api_version"] = api_version
-        _apply_reasoning_effort(config, kwargs, config.reasoning_effort, 64)
+        _apply_reasoning_effort(config, kwargs, _probe_reasoning_effort(config), 64)
 
         response = await _route_acompletion(config, _litellm(), **kwargs)
         content = _extract_choice_text(response.choices[0])

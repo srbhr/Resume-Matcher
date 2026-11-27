@@ -1856,3 +1856,50 @@ class TestOllamaThinkingDefault:
 
         assert result == {"ok": True}
         assert acompletion.call_args.kwargs["reasoning_effort"] == "none"
+
+
+class TestHealthProbeOnModelsThatReasonByDefault:
+    """gpt-6-luna (the default OpenAI model since gpt-5-nano retires on
+    2026-12-11) reasons at medium effort unless told otherwise, which leaves
+    the 64-token connection probe no room to answer. With no effort set, the
+    probe asks for none when the model map says the model supports it."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("model", "effort", "sent"),
+        [
+            ("gpt-6-luna", None, "none"),
+            ("gpt-6-luna", "low", "low"),
+            # Left by the gpt-5 migration; gpt-6-luna has no minimal level.
+            ("gpt-6-luna", "minimal", "none"),
+            ("gpt-5-nano-2025-08-07", "minimal", "minimal"),
+            # No "none" level: the probe keeps omitting the parameter.
+            ("gpt-5-nano-2025-08-07", None, None),
+        ],
+    )
+    async def test_probe_effort(self, model, effort, sent) -> None:
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="openai", model=model, api_key="sk-test", reasoning_effort=effort
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        assert acompletion.call_args.kwargs.get("reasoning_effort") == sent
+
+
+def test_default_model_matches_the_example_env() -> None:
+    from pathlib import Path
+
+    from app.config import Settings
+
+    example = Path(__file__).parents[2] / ".env.example"
+    line = next(
+        row for row in example.read_text().splitlines() if row.startswith("LLM_MODEL=")
+    )
+    assert line == f"LLM_MODEL={Settings.model_fields['llm_model'].default}"
+    assert Settings.model_fields["llm_model"].default == "gpt-6-luna"
