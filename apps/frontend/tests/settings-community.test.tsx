@@ -61,4 +61,32 @@ describe('settings About section', () => {
       'settings.statusCards.improvements=1',
     ]);
   });
+
+  it('stacks the counts on a phone and sets them side by side from sm', () => {
+    render(
+      <SettingsAbout
+        stats={{ total_resumes: 3, total_jobs: 2, total_improvements: 1, has_master_resume: true }}
+      />
+    );
+    const data = screen.getByRole('heading', { level: 3, name: 'settings.yourData' })
+      .nextElementSibling as HTMLElement;
+    expect(data).toHaveClass('grid-cols-1', 'sm:grid-cols-3');
+  });
+
+  it('says the counts are unavailable, not zero, when the database did not answer', () => {
+    render(
+      <SettingsAbout
+        stats={{
+          total_resumes: 0,
+          total_jobs: 0,
+          total_improvements: 0,
+          has_master_resume: false,
+          available: false,
+        }}
+      />
+    );
+    expect(screen.getByText('settings.yourDataUnavailable')).toBeInTheDocument();
+    expect(screen.queryByText('0')).toBeNull();
+    expect(document.querySelector('dl')).toBeNull();
+  });
 });

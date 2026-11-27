@@ -41,6 +41,8 @@ export interface DatabaseStats {
   total_jobs: number;
   total_improvements: number;
   has_master_resume: boolean;
+  /** False when the stats query failed and the counts are placeholders, not zeros. */
+  available?: boolean;
 }
 
 export interface SystemStatus {

@@ -135,6 +135,8 @@ class TestStatusEndpoint:
         assert data["llm_healthy"] is True  # LLM check still ran
         assert data["has_master_resume"] is False
         assert data["database_stats"]["total_resumes"] == 0
+        # The zeros are marked as placeholders, so a client doesn't show an empty app.
+        assert data["database_stats"]["available"] is False
 
     @patch("app.routers.health.db", new_callable=AsyncMock)
     @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)

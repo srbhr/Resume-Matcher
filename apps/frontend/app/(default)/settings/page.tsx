@@ -1,6 +1,14 @@
 'use client';
 
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Image from 'next/image';
 import { AnimatePresence, m } from 'motion/react';
 import {
@@ -189,7 +197,21 @@ export default function SettingsPage() {
     if (paneRef.current) paneRef.current.scrollTop = 0;
   };
   const [status, setStatus] = useState<Status>('loading');
-  const [error, setError] = useState<string | null>(null);
+  // An error shows in the section whose action raised it: the sections are tabs, so
+  // one alert in the LLM tab left a failed Reset database with no message at all.
+  // 'page' errors (the settings could not load) show above every section.
+  const [errorState, setErrorState] = useState<{
+    section: SettingsSection | 'page';
+    message: string;
+  } | null>(null);
+  const setError = useCallback(
+    (message: string | null, section: SettingsSection | 'page' = 'llm') =>
+      setErrorState(message === null ? null : { section, message }),
+    []
+  );
+  const errorIn = (section: SettingsSection | 'page') =>
+    errorState?.section === section ? errorState.message : null;
+  const error = errorIn('llm');
 
   // LLM Config state
   const [provider, setProvider] = useState<LLMProvider>('openai');
@@ -231,6 +253,7 @@ export default function SettingsPage() {
   const {
     status: systemStatus,
     isLoading: statusLoading,
+    error: statusError,
     lastFetched,
     refreshStatus,
   } = useStatusCache();
@@ -383,6 +406,10 @@ export default function SettingsPage() {
     if (error || healthCheck) resultRef.current?.scrollIntoView({ block: 'nearest' });
   }, [error, healthCheck]);
 
+  // Translates inside the load below without making it re-run: with `t` as a
+  // dependency, changing the UI language re-loaded the config over unsaved edits.
+  const describe = useEffectEvent((key: string, params?: Record<string, string>) => t(key, params));
+
   useEffect(() => {
     let cancelled = false;
 
@@ -427,6 +454,11 @@ export default function SettingsPage() {
           setApiKey('');
           setApiBase(resumeChatGpt ? '' : llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
+          // Advanced opens when its fields are in use; after that only the user opens or
+          // closes it, so clearing the Base URL to retype it doesn't hide the field.
+          setAdvancedOpen(
+            (!resumeChatGpt && Boolean(llmConfig.api_base)) || Boolean(llmConfig.reasoning_effort)
+          );
           setSavedLlm({
             provider: safeProvider,
             model: llmConfig.model || PROVIDER_INFO[safeProvider].defaultModel,
@@ -435,8 +467,15 @@ export default function SettingsPage() {
           });
 
           if (providerFromBackend !== safeProvider) {
-            setError(t('settings.errors.unknownProvider', { provider: providerFromBackend }));
+            setError(
+              describe('settings.errors.unknownProvider', { provider: providerFromBackend })
+            );
           }
+        }
+
+        if (!llmConfig) {
+          // No saved config to compare with: measure changes from the form's starting values.
+          setSavedLlm({ provider: 'openai', model: '', apiBase: '', reasoningEffort: 'auto' });
         }
 
         if (featureConfig) {
@@ -461,7 +500,7 @@ export default function SettingsPage() {
       } catch (err) {
         console.error('Failed to load settings', err);
         if (!cancelled) {
-          setError(t('settings.errors.unableToConnectBackend'));
+          setError(describe('settings.errors.unableToConnectBackend'), 'page');
           setStatus('error');
         }
       }
@@ -471,7 +510,7 @@ export default function SettingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [t, readChatGptReturn]);
+  }, [readChatGptReturn, setError]);
 
   // Whether a given key-store provider currently has a saved key.
   const providerHasStoredKey = (p: LLMProvider): boolean => {
@@ -530,6 +569,7 @@ export default function SettingsPage() {
     // survived the switch and was saved as Azure's required endpoint.
     if (newProvider !== provider) {
       setApiBase(nextInfo.defaultBaseUrl ?? '');
+      if (nextInfo.defaultBaseUrl) setAdvancedOpen(true);
     } else if (nextInfo.defaultBaseUrl && !apiBase.trim()) {
       setApiBase(nextInfo.defaultBaseUrl);
     }
@@ -695,7 +735,7 @@ export default function SettingsPage() {
       if (err instanceof FeaturePromptsError) {
         setFeaturePromptError({ field: err.detail.field, missing: err.detail.missing });
       } else {
-        setError((err as Error).message);
+        setError((err as Error).message, 'content');
       }
     } finally {
       setFeaturePromptSaving(null);
@@ -713,7 +753,7 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error('Failed to update prompt config', err);
-      setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
+      setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'), 'content');
     } finally {
       setPromptConfigLoading(false);
     }
@@ -756,7 +796,7 @@ export default function SettingsPage() {
       setShowSuccessDialog(true);
     } catch (err) {
       console.error('Failed to clear API keys', err);
-      setError(t('settings.errors.failedToClearApiKeys'));
+      setError(t('settings.errors.failedToClearApiKeys'), 'danger');
     } finally {
       setIsResetting(false);
       setShowClearApiKeysDialog(false);
@@ -803,7 +843,7 @@ export default function SettingsPage() {
       setShowSuccessDialog(true);
     } catch (err) {
       console.error('Failed to reset database', err);
-      setError(t('settings.errors.failedToResetDatabase'));
+      setError(t('settings.errors.failedToResetDatabase'), 'danger');
     } finally {
       setIsResetting(false);
       setShowResetDatabaseDialog(false);
@@ -854,8 +894,8 @@ export default function SettingsPage() {
       apiBase.trim() !== savedLlm.apiBase.trim() ||
       reasoningEffort !== savedLlm.reasoningEffort);
   // Open when in use: a Base URL is set or required, or an effort is chosen.
-  const showAdvanced =
-    advancedOpen || requiresApiBase || apiBase.trim() !== '' || reasoningEffort !== 'auto';
+  // A provider that needs a Base URL always shows it, with no toggle.
+  const showAdvanced = advancedOpen || requiresApiBase;
   // M-04: provider-specific base-URL copy comes from the message catalogs, not
   // English literals in PROVIDER_INFO — otherwise this whole block reverted to
   // English inside an otherwise fully-translated settings page.
@@ -889,6 +929,7 @@ export default function SettingsPage() {
           status={systemStatus ?? null}
           loading={statusLoading}
           lastFetched={lastFetched ? formatLastFetched() : null}
+          error={statusError}
           apiUrl={API_URL}
           onRefresh={refreshStatus}
         />
@@ -903,6 +944,8 @@ export default function SettingsPage() {
         <SideTabs
           value={activeSection}
           onValueChange={selectSection}
+          // The menu is a row below xl and a column from xl.
+          verticalFrom="(min-width: 1280px)"
           className="flex flex-col md:min-h-0 md:flex-1 xl:grid xl:grid-cols-6 xl:grid-rows-[minmax(0,1fr)] xl:gap-px xl:bg-ink"
         >
           <SideTabsList
@@ -953,6 +996,12 @@ export default function SettingsPage() {
                       {t('settings.setupRequired.title')}
                     </StatusIndicator>
                     <p className="mt-2">{t('settings.setupRequired.description')}</p>
+                  </Alert>
+                )}
+
+                {errorIn('page') && (
+                  <Alert tone="error" className="break-words">
+                    {errorIn('page')}
                   </Alert>
                 )}
 
@@ -1160,19 +1209,25 @@ export default function SettingsPage() {
                       {!usesLocalCli && !usesChatGptSignIn && !usesAgent && (
                         // A gap, not space-y: it skips the hidden panel, so a closed block ends at its rule.
                         <div className="flex flex-col gap-6">
-                          <button
-                            type="button"
-                            aria-expanded={showAdvanced}
-                            aria-controls="llm-advanced"
-                            onClick={() => setAdvancedOpen(!showAdvanced)}
-                            className="flex w-full items-center justify-between gap-4 border-y border-ink py-2 text-left font-mono text-xs font-bold uppercase tracking-wider text-ink-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-                          >
-                            {t('settings.llmConfiguration.advanced')}
-                            <CaretDown
-                              aria-hidden="true"
-                              className={cn('size-4 text-steel', showAdvanced && 'rotate-180')}
-                            />
-                          </button>
+                          {requiresApiBase ? (
+                            <h3 className="border-y border-ink py-2 font-mono text-xs font-bold uppercase tracking-wider text-ink-soft">
+                              {t('settings.llmConfiguration.advanced')}
+                            </h3>
+                          ) : (
+                            <button
+                              type="button"
+                              aria-expanded={showAdvanced}
+                              aria-controls="llm-advanced"
+                              onClick={() => setAdvancedOpen(!advancedOpen)}
+                              className="flex w-full items-center justify-between gap-4 border-y border-ink py-2 text-left font-mono text-xs font-bold uppercase tracking-wider text-ink-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                            >
+                              {t('settings.llmConfiguration.advanced')}
+                              <CaretDown
+                                aria-hidden="true"
+                                className={cn('size-4 text-steel', showAdvanced && 'rotate-180')}
+                              />
+                            </button>
+                          )}
                           {/* Hidden, not unmounted, so typed values survive closing it. */}
                           <div id="llm-advanced" hidden={!showAdvanced} className="space-y-6">
                             {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
@@ -1368,7 +1423,7 @@ export default function SettingsPage() {
                           </Button>
                         )}
                         {/* The result of a test is the Alert above, the page's one live region. */}
-                        {llmDirty && !healthCheck && status !== 'saving' && (
+                        {llmDirty && status !== 'saving' && (
                           <StatusIndicator tone="warning" live={false}>
                             {t('settings.llmConfiguration.unsavedChanges')}
                           </StatusIndicator>
@@ -1392,6 +1447,12 @@ export default function SettingsPage() {
                         {t('settings.contentGeneration.title')}
                       </h2>
                     </div>
+
+                    {errorIn('content') && (
+                      <Alert tone="error" className="break-words">
+                        {errorIn('content')}
+                      </Alert>
+                    )}
 
                     <div className="space-y-2">
                       <p className="text-sm text-ink-soft mb-4">
@@ -1666,6 +1727,12 @@ export default function SettingsPage() {
                         {t('settings.dangerZone')}
                       </h2>
                     </div>
+
+                    {errorIn('danger') && (
+                      <Alert tone="error" className="break-words">
+                        {errorIn('danger')}
+                      </Alert>
+                    )}
 
                     <div className="grid md:grid-cols-2 gap-6">
                       {/* Clear API Keys */}

@@ -1069,7 +1069,8 @@
         "minutesAgo": "{minutes}min atrás",
         "hoursAgo": "{hours}h atrás"
       },
-      "updated": "Atualizado"
+      "updated": "Atualizado",
+      "refreshFailed": "Falha ao atualizar"
     },
     "llmConfiguration": {
       "claudeCliNote": "Executa a CLI do Claude Code instalada e conectada nesta máquina, então nenhuma chave de API é necessária aqui. O Claude Code ainda envia seus prompts à Anthropic pela sua conta.",
@@ -1235,10 +1236,11 @@
     "sectionsNav": "Seções de configurações",
     "yourData": "Seus dados",
     "notes": {
-      "llm": "As chaves ficam salvas criptografadas na pasta de dados do app, neste computador, uma por provedor, então trocar de provedor mantém as outras. Um provedor por assinatura usa seu plano do Claude ou do ChatGPT em vez de uma chave.",
+      "llm": "As chaves ficam salvas criptografadas no banco de dados do app, uma por provedor, então trocar de provedor mantém as outras. Um provedor por assinatura usa seu plano do Claude ou do ChatGPT em vez de uma chave.",
       "content": "Os interruptores definem o que é escrito automaticamente quando um currículo personalizado é salvo. O que estiver desligado ainda pode ser gerado no editor.",
       "language": "O idioma da interface muda os textos do app. O idioma do conteúdo é aquele em que a IA escreve currículos, cartas e mensagens."
-    }
+    },
+    "yourDataUnavailable": "As contagens não estão disponíveis: o banco de dados não respondeu."
   },
   "resumeViewer": {
     "resumeNotFound": "Currículo não encontrado",

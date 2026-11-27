@@ -5,26 +5,47 @@ import * as React from 'react';
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@ui-sdk/react/tabs';
 import { cn } from '@/lib/utils';
 
+/** Whether a media query matches; false on the server and during hydration. */
+function useMatches(query: string | undefined): boolean {
+  return React.useSyncExternalStore(
+    (notify) => {
+      if (!query) return () => {};
+      const list = window.matchMedia(query);
+      list.addEventListener('change', notify);
+      return () => list.removeEventListener('change', notify);
+    },
+    () => (query ? window.matchMedia(query).matches : false),
+    () => false
+  );
+}
+
 /**
  * A side menu that switches the panel beside it: ui-sdk's vertical Tabs (tab
  * semantics, Up and Down Arrow between items, Home and End), in the Swiss look.
  * The selected item is an ink fill; the others are quiet until hovered. Lay the
  * list and the panels out with `className`; panels unmount when not selected.
+ *
+ * A page that lays the list out as a row on smaller screens passes the media query
+ * from which it is a column as `verticalFrom`; below it the tabs are horizontal, so
+ * Left and Right Arrow move between them and the orientation announced matches.
  */
 export function SideTabs<T extends string>({
   value,
   onValueChange,
+  verticalFrom,
   className,
   children,
 }: {
   value: T;
   onValueChange: (value: T) => void;
+  verticalFrom?: string;
   className?: string;
   children: React.ReactNode;
 }) {
+  const wide = useMatches(verticalFrom);
   return (
     <Tabs
-      orientation="vertical"
+      orientation={!verticalFrom || wide ? 'vertical' : 'horizontal'}
       value={value}
       onValueChange={(next) => {
         if (next) onValueChange(next as T);

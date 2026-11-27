@@ -19,8 +19,8 @@ const api = vi.hoisted(() => ({
   resetDatabase: vi.fn(),
   unavailable: () => Promise.reject(new Error('not under test')),
 }));
-// Module-level so the page's load effect (deps: [t]) runs once.
-const t = (key: string) => key;
+// Module-level, so its identity only changes when a test swaps it (a UI language change).
+let t = (key: string) => key;
 // The picker label comes from i18n (the mocked t returns the key).
 const CLAUDE_CLI_LABEL = 'settings.llmConfiguration.claudeCliShortName';
 const CHATGPT_LABEL = 'settings.llmConfiguration.chatgptShortName';
@@ -680,7 +680,9 @@ describe('settings page (Swiss sweep)', () => {
   it('opens one section at a time from a side menu of tabs, and keeps it in the URL', async () => {
     await renderLoaded();
     const menu = screen.getByRole('tablist', { name: 'settings.sectionsNav' });
-    expect(menu).toHaveAttribute('aria-orientation', 'vertical');
+    // jsdom matches no media query, so this is the layout below xl: the menu is a row,
+    // and its tabs are horizontal for the keyboard (vertical from xl, in side-tabs.test).
+    expect(menu).not.toHaveAttribute('aria-orientation', 'vertical');
     expect(
       within(menu)
         .getAllByRole('tab')
@@ -1046,5 +1048,131 @@ describe('settings page (round 2)', () => {
     for (const toggle of switches) expect(list).toContainElement(toggle);
     // Inline switches: the list draws the rules, not a shadowed card each.
     expect(list.querySelector('.shadow-sw-nested')).toBeNull();
+  });
+
+  it('shows a failed Reset database in the Danger section, where it was pressed', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    api.resetDatabase.mockRejectedValue(new Error('disk full'));
+    await renderLoaded();
+    openSection('settings.dangerZone');
+    fireEvent.click(screen.getByRole('button', { name: 'settings.resetDatabase' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'common.reset' }));
+    });
+
+    const panel = screen.getByRole('tabpanel');
+    expect(await within(panel).findByText('settings.errors.failedToResetDatabase')).toBeVisible();
+    expect(within(panel).getByRole('alert')).toHaveTextContent(
+      'settings.errors.failedToResetDatabase'
+    );
+  });
+
+  it('shows a failed prompt save in the Content section, where it was pressed', async () => {
+    api.fetchFeatureConfig.mockResolvedValue({
+      enable_cover_letter: true,
+      enable_outreach_message: true,
+      enable_interview_prep: false,
+    });
+    api.updateFeaturePrompts.mockRejectedValue(new Error('Service unavailable'));
+    await renderLoaded();
+    openSection('settings.contentGeneration.title');
+    const cover = document.getElementById('coverLetterPrompt') as HTMLTextAreaElement;
+    await act(async () => {
+      fireEvent.click(
+        within(cover.closest('.pl-6') as HTMLElement).getByRole('button', { name: 'common.save' })
+      );
+    });
+
+    const panel = screen.getByRole('tabpanel');
+    expect(await within(panel).findByText('Service unavailable')).toBeVisible();
+    // It is not waiting in the LLM section instead.
+    openSection('settings.llmConfigurationTitle');
+    expect(screen.queryByText(/Service unavailable/)).toBeNull();
+  });
+
+  it('keeps Advanced open while its Base URL is cleared, and its toggle still closes it', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'openai',
+      model: 'gpt-5-nano',
+      api_base: 'https://proxy.example/v1',
+      reasoning_effort: null,
+    });
+    await renderLoaded();
+    const advanced = screen.getByRole('button', { name: 'settings.llmConfiguration.advanced' });
+    const apiBase = document.getElementById('apiBase') as HTMLInputElement;
+    // Open because the saved config uses it.
+    expect(advanced).toHaveAttribute('aria-expanded', 'true');
+    expect(apiBase).toBeVisible();
+
+    // Cleared to retype: the field stays on screen.
+    fireEvent.change(apiBase, { target: { value: '' } });
+    expect(apiBase).toBeVisible();
+    fireEvent.change(apiBase, { target: { value: 'https://other.example/v1' } });
+
+    // The toggle works while a value is set, too.
+    fireEvent.click(advanced);
+    expect(advanced).toHaveAttribute('aria-expanded', 'false');
+    expect(apiBase).not.toBeVisible();
+  });
+
+  it('gives a provider that needs a Base URL a heading, not a toggle that does nothing', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    fireEvent.click(within(providers).getByRole('radio', { name: 'Azure' }));
+    expect(screen.queryByRole('button', { name: 'settings.llmConfiguration.advanced' })).toBeNull();
+    expect(
+      screen.getByRole('heading', { name: 'settings.llmConfiguration.advanced' })
+    ).toBeInTheDocument();
+    expect(document.getElementById('apiBase')).toBeVisible();
+  });
+
+  it('still says there are unsaved changes after Test connection, which saves nothing', async () => {
+    api.testLlmConnection.mockResolvedValue({
+      healthy: true,
+      provider: 'openai',
+      model: 'gpt-5-mini',
+    });
+    await renderLoaded();
+    fireEvent.change(screen.getByLabelText('settings.llmConfiguration.modelLabel'), {
+      target: { value: 'gpt-5-mini' },
+    });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
+      );
+    });
+    await screen.findByText('settings.llmConfiguration.connectionSuccessful');
+    expect(screen.getByText('settings.llmConfiguration.unsavedChanges')).toBeInTheDocument();
+    expect(api.updateLlmConfig).not.toHaveBeenCalled();
+  });
+
+  it('says there are unsaved changes even when the saved config could not be read', async () => {
+    api.fetchLlmConfig.mockRejectedValue(new Error('offline'));
+    render(<SettingsPage />);
+    const model = await screen.findByLabelText('settings.llmConfiguration.modelLabel');
+    await act(async () => {});
+    expect(screen.queryByText('settings.llmConfiguration.unsavedChanges')).toBeNull();
+    fireEvent.change(model, { target: { value: 'gpt-5-mini' } });
+    expect(screen.getByText('settings.llmConfiguration.unsavedChanges')).toBeInTheDocument();
+  });
+
+  it('keeps unsaved LLM edits when the UI language changes', async () => {
+    const { rerender } = render(<SettingsPage />);
+    await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
+    const model = screen.getByLabelText('settings.llmConfiguration.modelLabel');
+    fireEvent.change(model, { target: { value: 'gpt-5-mini' } });
+
+    const previous = t;
+    t = (key: string) => key; // a new translator, as after switching language
+    try {
+      rerender(<SettingsPage />);
+      await act(async () => {});
+      expect(api.fetchLlmConfig).toHaveBeenCalledTimes(1);
+      expect(screen.getByLabelText('settings.llmConfiguration.modelLabel')).toHaveValue(
+        'gpt-5-mini'
+      );
+    } finally {
+      t = previous;
+    }
   });
 });

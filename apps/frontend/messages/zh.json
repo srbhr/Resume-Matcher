@@ -1069,7 +1069,8 @@
         "minutesAgo": "{minutes} 分钟前",
         "hoursAgo": "{hours} 小时前"
       },
-      "updated": "更新时间"
+      "updated": "更新时间",
+      "refreshFailed": "刷新失败"
     },
     "llmConfiguration": {
       "claudeCliNote": "运行本机已安装并已登录的 Claude Code CLI，因此这里无需 API 密钥。Claude Code 仍会通过你的账户将提示词发送给 Anthropic。",
@@ -1235,10 +1236,11 @@
     "sectionsNav": "设置分区",
     "yourData": "你的数据",
     "notes": {
-      "llm": "密钥按提供商分别加密保存在本机的应用数据文件夹中，切换提供商不会删除其他密钥。订阅类提供商使用你的 Claude 或 ChatGPT 套餐，而不是密钥。",
+      "llm": "密钥按提供商分别加密保存在应用的数据库中，切换提供商不会删除其他密钥。订阅类提供商使用你的 Claude 或 ChatGPT 套餐，而不是密钥。",
       "content": "开关决定保存定制简历时自动生成哪些内容。关闭的项目仍可在编辑器中生成。",
       "language": "界面语言改变本应用的文字。内容语言是 AI 撰写简历、求职信和消息所用的语言。"
-    }
+    },
+    "yourDataUnavailable": "无法显示数量：数据库没有响应。"
   },
   "resumeViewer": {
     "resumeNotFound": "未找到简历",

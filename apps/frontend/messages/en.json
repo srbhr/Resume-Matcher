@@ -1069,7 +1069,8 @@
         "minutesAgo": "{minutes}m ago",
         "hoursAgo": "{hours}h ago"
       },
-      "updated": "Updated"
+      "updated": "Updated",
+      "refreshFailed": "Refresh failed"
     },
     "llmConfiguration": {
       "claudeCliNote": "Runs the Claude Code CLI installed and signed in on this machine, so no API key is needed here. Claude Code still sends your prompts to Anthropic through your account.",
@@ -1235,10 +1236,11 @@
     "sectionsNav": "Settings sections",
     "yourData": "Your data",
     "notes": {
-      "llm": "Keys are saved encrypted in the app's data folder on this computer, one per provider, so switching providers keeps the others. A subscription provider uses your Claude or ChatGPT plan instead of a key.",
+      "llm": "Keys are saved encrypted in the app's database, one per provider, so switching providers keeps the others. A subscription provider uses your Claude or ChatGPT plan instead of a key.",
       "content": "The switches decide what is written automatically when a tailored resume is saved. Anything switched off can still be generated from the builder.",
       "language": "The interface language changes this app's text. The content language is the one the AI writes resumes, letters and messages in."
-    }
+    },
+    "yourDataUnavailable": "The counts are unavailable: the database didn't answer."
   },
   "resumeViewer": {
     "resumeNotFound": "Resume not found",

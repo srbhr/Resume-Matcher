@@ -1069,7 +1069,8 @@
         "minutesAgo": "{minutes}분 전",
         "hoursAgo": "{hours}시간 전"
       },
-      "updated": "업데이트"
+      "updated": "업데이트",
+      "refreshFailed": "새로고침 실패"
     },
     "llmConfiguration": {
       "claudeCliNote": "이 컴퓨터에 설치되어 로그인된 Claude Code CLI를 실행하므로 여기에서는 API 키가 필요하지 않습니다. Claude Code는 계정을 통해 프롬프트를 Anthropic으로 전송합니다.",
@@ -1235,10 +1236,11 @@
     "sectionsNav": "설정 섹션",
     "yourData": "내 데이터",
     "notes": {
-      "llm": "키는 이 컴퓨터의 앱 데이터 폴더에 제공자별로 암호화되어 저장되므로, 제공자를 바꿔도 다른 키는 유지됩니다. 구독형 제공자는 키 대신 Claude 또는 ChatGPT 요금제를 사용합니다.",
+      "llm": "키는 앱 데이터베이스에 제공자별로 암호화되어 저장되므로, 제공자를 바꿔도 다른 키는 유지됩니다. 구독형 제공자는 키 대신 Claude 또는 ChatGPT 요금제를 사용합니다.",
       "content": "스위치는 맞춤화된 이력서를 저장할 때 자동으로 작성할 항목을 정합니다. 꺼 둔 항목도 편집기에서 생성할 수 있습니다.",
       "language": "인터페이스 언어는 이 앱의 텍스트를 바꿉니다. 콘텐츠 언어는 AI가 이력서, 편지, 메시지를 작성하는 언어입니다."
-    }
+    },
+    "yourDataUnavailable": "개수를 표시할 수 없습니다. 데이터베이스가 응답하지 않았습니다."
   },
   "resumeViewer": {
     "resumeNotFound": "이력서를 찾을 수 없습니다",

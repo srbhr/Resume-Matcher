@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { SideTab, SideTabs, SideTabsList, SideTabsPanel } from '@/components/ui/side-tabs';
 
@@ -11,6 +12,21 @@ function Menu({ listClassName }: { listClassName?: string }) {
   return (
     <SideTabs value="a" onValueChange={vi.fn()}>
       <SideTabsList label="Sections" className={listClassName}>
+        <SideTab value="a">Alpha</SideTab>
+        <SideTab value="b">Beta</SideTab>
+      </SideTabsList>
+      <SideTabsPanel value="a">Panel A</SideTabsPanel>
+      <SideTabsPanel value="b">Panel B</SideTabsPanel>
+    </SideTabs>
+  );
+}
+
+/** Holds its own selection, as a page does. */
+function StatefulMenu({ verticalFrom }: { verticalFrom?: string }) {
+  const [value, setValue] = useState<'a' | 'b'>('a');
+  return (
+    <SideTabs value={value} onValueChange={setValue} verticalFrom={verticalFrom}>
+      <SideTabsList label="Sections">
         <SideTab value="a">Alpha</SideTab>
         <SideTab value="b">Beta</SideTab>
       </SideTabsList>
@@ -33,21 +49,62 @@ describe('SideTabs', () => {
     expect(list).not.toHaveClass('flex-col');
   });
 
-  it('is vertical for the keyboard and shows the selected panel only', () => {
-    const onValueChange = vi.fn();
-    render(
-      <SideTabs value="a" onValueChange={onValueChange}>
-        <SideTabsList label="Sections">
-          <SideTab value="a">Alpha</SideTab>
-          <SideTab value="b">Beta</SideTab>
-        </SideTabsList>
-        <SideTabsPanel value="a">Panel A</SideTabsPanel>
-        <SideTabsPanel value="b">Panel B</SideTabsPanel>
-      </SideTabs>
-    );
-    expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+  it('moves between tabs with Up and Down Arrow and shows the selected panel only', () => {
+    render(<StatefulMenu />);
+    const list = screen.getByRole('tablist');
+    expect(list).toHaveAttribute('aria-orientation', 'vertical');
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Panel A');
-    fireEvent.click(screen.getByRole('tab', { name: 'Beta' }));
-    expect(onValueChange).toHaveBeenCalledWith('b');
+
+    const alpha = screen.getByRole('tab', { name: 'Alpha' });
+    alpha.focus();
+    fireEvent.keyDown(alpha, { key: 'ArrowDown' });
+    const beta = screen.getByRole('tab', { name: 'Beta' });
+    expect(beta).toHaveFocus();
+    fireEvent.click(beta);
+
+    expect(beta).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Panel B');
+    expect(screen.queryByText('Panel A')).toBeNull();
+  });
+
+  it('is horizontal below its `verticalFrom` breakpoint: Left and Right Arrow move', () => {
+    const matchMedia = vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: false,
+          media: query,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+        }) as unknown as MediaQueryList
+    );
+    try {
+      render(<StatefulMenu verticalFrom="(min-width: 1280px)" />);
+      // Horizontal is the tablist default, so no aria-orientation means horizontal.
+      expect(screen.getByRole('tablist')).not.toHaveAttribute('aria-orientation', 'vertical');
+      const alpha = screen.getByRole('tab', { name: 'Alpha' });
+      alpha.focus();
+      fireEvent.keyDown(alpha, { key: 'ArrowRight' });
+      expect(screen.getByRole('tab', { name: 'Beta' })).toHaveFocus();
+    } finally {
+      matchMedia.mockRestore();
+    }
+  });
+
+  it('is vertical from its `verticalFrom` breakpoint up', () => {
+    const matchMedia = vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: true,
+          media: query,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+        }) as unknown as MediaQueryList
+    );
+    try {
+      render(<StatefulMenu verticalFrom="(min-width: 1280px)" />);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+    } finally {
+      matchMedia.mockRestore();
+    }
   });
 });

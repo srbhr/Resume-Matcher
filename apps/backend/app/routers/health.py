@@ -14,12 +14,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Health"])
 
 # Returned for database_stats when the stats query itself fails, so /status can
-# still respond (degraded) instead of 500-ing.
+# still respond (degraded) instead of 500-ing. "available": False tells clients
+# the zeros are placeholders, not an empty database.
 _EMPTY_DB_STATS = {
     "total_resumes": 0,
     "total_jobs": 0,
     "total_improvements": 0,
     "has_master_resume": False,
+    "available": False,
 }
 
 

@@ -13,6 +13,8 @@ interface StatusStripProps {
   loading: boolean;
   /** "Just now", "2m ago": when the status was last read, if it has been. */
   lastFetched: string | null;
+  /** Set when the last refresh failed: what is shown is from the read before it. */
+  error?: string | null;
   apiUrl: string;
   onRefresh: () => void;
 }
@@ -35,7 +37,14 @@ function Cell({ label, children }: { label: string; children: React.ReactNode })
  * master resume, when it was read, and Refresh. It stays in view whichever section is
  * open. The counts of what the app holds are in About.
  */
-export function StatusStrip({ status, loading, lastFetched, apiUrl, onRefresh }: StatusStripProps) {
+export function StatusStrip({
+  status,
+  loading,
+  lastFetched,
+  error,
+  apiUrl,
+  onRefresh,
+}: StatusStripProps) {
   const { t } = useTranslations();
 
   return (
@@ -59,7 +68,13 @@ export function StatusStrip({ status, loading, lastFetched, apiUrl, onRefresh }:
               </StatusIndicator>
             </Cell>
             <Cell label={t('settings.statusCards.database')}>
-              <StatusIndicator tone="ready">{t('settings.statusValues.connected')}</StatusIndicator>
+              {status.database_stats.available === false ? (
+                <StatusIndicator tone="error">{t('settings.statusValues.offline')}</StatusIndicator>
+              ) : (
+                <StatusIndicator tone="ready">
+                  {t('settings.statusValues.connected')}
+                </StatusIndicator>
+              )}
             </Cell>
             <Cell label={t('settings.statusCards.masterResume')}>
               {status.has_master_resume ? (
@@ -76,6 +91,11 @@ export function StatusStrip({ status, loading, lastFetched, apiUrl, onRefresh }:
               <span className="font-mono text-xs text-ink">
                 {lastFetched ?? t('settings.systemStatus.lastFetched.never')}
               </span>
+              {error && !loading && (
+                <StatusIndicator tone="error">
+                  {t('settings.systemStatus.refreshFailed')}
+                </StatusIndicator>
+              )}
             </Cell>
             <div className="flex items-center bg-canvas px-4 py-2">
               <Button

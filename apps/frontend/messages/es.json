@@ -1069,7 +1069,8 @@
         "minutesAgo": "hace {minutes} min",
         "hoursAgo": "hace {hours} h"
       },
-      "updated": "Actualizado"
+      "updated": "Actualizado",
+      "refreshFailed": "No se pudo actualizar"
     },
     "llmConfiguration": {
       "claudeCliNote": "Ejecuta la CLI de Claude Code instalada y con sesión iniciada en este equipo, por lo que no se necesita clave de API aquí. Claude Code sigue enviando tus prompts a Anthropic a través de tu cuenta.",
@@ -1235,10 +1236,11 @@
     "sectionsNav": "Secciones de ajustes",
     "yourData": "Tus datos",
     "notes": {
-      "llm": "Las claves se guardan cifradas en la carpeta de datos de la aplicación, en este equipo, una por proveedor, así que cambiar de proveedor conserva las demás. Un proveedor de suscripción usa tu plan de Claude o ChatGPT en lugar de una clave.",
+      "llm": "Las claves se guardan cifradas en la base de datos de la aplicación, una por proveedor, así que cambiar de proveedor conserva las demás. Un proveedor de suscripción usa tu plan de Claude o ChatGPT en lugar de una clave.",
       "content": "Los interruptores deciden qué se escribe automáticamente al guardar un currículum personalizado. Lo que esté desactivado se puede generar igualmente desde el editor.",
       "language": "El idioma de la interfaz cambia los textos de esta aplicación. El idioma del contenido es en el que la IA escribe currículums, cartas y mensajes."
-    }
+    },
+    "yourDataUnavailable": "Los recuentos no están disponibles: la base de datos no respondió."
   },
   "resumeViewer": {
     "resumeNotFound": "Currículum no encontrado",
