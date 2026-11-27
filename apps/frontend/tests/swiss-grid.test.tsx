@@ -20,6 +20,15 @@ describe('SwissGrid', () => {
     expect(brand.closest('.font-mono')).toContainElement(version);
   });
 
+  it('keeps the header to one row on wide screens: brand line and buttons together', () => {
+    render(<SwissGrid>{null}</SwissGrid>);
+
+    const row = screen.getByRole('link', { name: 'nav.queue' }).parentElement;
+    expect(row).toContainElement(screen.getByText('Resume Matcher'));
+    expect(row).toContainElement(screen.getByRole('link', { name: 'nav.settings' }));
+    expect(row).toHaveClass('flex-wrap', 'items-center');
+  });
+
   it('puts the queue, tracker and a gear settings button in the header, not a footer', () => {
     render(<SwissGrid>{null}</SwissGrid>);
 
@@ -40,15 +49,14 @@ describe('SwissGrid', () => {
     expect(settings).toHaveAttribute('title', 'nav.settings');
   });
 
-  it('names the tile region with its own heading, not a repeat of the page subtitle', () => {
+  it('names the tile region with its own heading, and has no page subtitle', () => {
     render(<SwissGrid>{null}</SwissGrid>);
 
     const heading = screen.getByRole('heading', { level: 2 });
     expect(heading).toHaveClass('sr-only');
     expect(heading).toHaveTextContent('dashboard.modulesHeading');
-    // The subtitle keeps dashboard.selectModule; a screen reader must not hear it twice.
-    expect(screen.getAllByText(/dashboard\.selectModule/)).toHaveLength(1);
-    expect(heading).not.toHaveTextContent('dashboard.selectModule');
+    // The header has no "// Select module" subtitle any more.
+    expect(screen.queryByText(/dashboard\.selectModule/)).toBeNull();
   });
 
   it('links the tailoring queue as a styled link, not a nested button', () => {

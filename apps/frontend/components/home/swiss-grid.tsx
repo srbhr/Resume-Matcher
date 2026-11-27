@@ -23,42 +23,38 @@ export const SwissGrid = ({
 
   return (
     <PageFrame height="screen">
-      <PageHeader className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <PageHeader.Title>{t('nav.dashboard')}</PageHeader.Title>
-          <PageHeader.Subtitle>{t('dashboard.selectModule')}</PageHeader.Subtitle>
-        </div>
-        <div className="flex flex-col gap-4 lg:items-end">
+      <PageHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+        <PageHeader.Title>{t('nav.dashboard')}</PageHeader.Title>
+        {/* One row: the brand line, then the buttons, as the old bottom bar had them. */}
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 font-mono text-xs text-primary">
             <Image src="/logo.svg" alt="" width={20} height={20} className="w-5 h-5" />
             <span className="uppercase font-bold">Resume Matcher</span>
             <span className="text-steel">v{APP_VERSION}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link
-              href="/queue"
-              className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
-            >
-              <ListNumbers aria-hidden="true" />
-              {t('nav.queue')}
-            </Link>
-            <Link
-              href="/tracker"
-              className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
-            >
-              <SquaresFour aria-hidden="true" />
-              {t('nav.applicationTracker')}
-            </Link>
-            <Link
-              href="/settings"
-              aria-label={t('nav.settings')}
-              title={t('nav.settings')}
-              // Icon size, at the height of the text buttons beside it.
-              className={buttonClass({ variant: 'warning', size: 'icon', className: 'h-10 w-10' })}
-            >
-              <GearSix aria-hidden="true" />
-            </Link>
-          </div>
+          <Link
+            href="/queue"
+            className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
+          >
+            <ListNumbers aria-hidden="true" />
+            {t('nav.queue')}
+          </Link>
+          <Link
+            href="/tracker"
+            className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
+          >
+            <SquaresFour aria-hidden="true" />
+            {t('nav.applicationTracker')}
+          </Link>
+          <Link
+            href="/settings"
+            aria-label={t('nav.settings')}
+            title={t('nav.settings')}
+            // Icon size, at the height of the text buttons beside it.
+            className={buttonClass({ variant: 'warning', size: 'icon', className: 'h-10 w-10' })}
+          >
+            <GearSix aria-hidden="true" />
+          </Link>
         </div>
       </PageHeader>
 
