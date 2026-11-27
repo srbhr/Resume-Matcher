@@ -109,6 +109,20 @@ def test_uvicorn_access_logs_still_format() -> None:
     assert line == '127.0.0.1:5000 - "GET /api/v1/health HTTP/1.1" 200 OK'
 
 
+@pytest.mark.parametrize(
+    "path", ["/api/v1/config/llm-api-key", "/api/v1/config/api-keys/openai"]
+)
+def test_an_api_key_route_in_an_access_log_still_formats(path: str) -> None:
+    """``llm-api-key`` followed by `` HTTP/1.1`` looked like an Azure key header,
+    so the record was flattened and uvicorn's formatter, which unpacks the five
+    request fields, raised a logging error on every Settings page load."""
+    formatter = AccessFormatter('%(client_addr)s - "%(request_line)s" %(status_code)s')
+
+    line = formatter.format(_access_record(path))
+
+    assert line == f'127.0.0.1:5000 - "GET {path} HTTP/1.1" 200 OK'
+
+
 def test_a_key_in_an_access_log_path_is_redacted_and_the_line_still_formats() -> None:
     formatter = AccessFormatter('%(client_addr)s - "%(request_line)s" %(status_code)s')
 

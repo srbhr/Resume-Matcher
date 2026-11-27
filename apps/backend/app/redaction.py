@@ -23,7 +23,9 @@ CREDENTIAL_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?i)(Bearer\s+)[^\s\"']+"),
     # Azure sends its key in a bare ``api-key:`` header and the value is a plain
     # 32-84 char alphanumeric, so it matches none of the patterns above. M-08.
-    re.compile(r"(?i)(api[-_]?key[\"'\s:=]+)[^\s\"',}]+"),
+    # A ':' or '=' must separate name and value: with whitespace alone the
+    # access line "GET /api/v1/config/llm-api-key HTTP/1.1" matched.
+    re.compile(r"(?i)(api[-_]?key[\"'\s]*[:=][\"'\s]*)[^\s\"',}]+"),
 )
 
 REDACTED = "<redacted>"
