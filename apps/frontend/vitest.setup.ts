@@ -68,6 +68,33 @@ vi.mock('motion/react', async () => {
   };
 });
 
+// jsdom hides every [popover] element but has no showPopover()/hidePopover().
+// ui-sdk opens its dialogs, menus and popovers in the top layer through the
+// popover API; here showing one only lifts the hide, so Testing Library sees it.
+// The top layer itself needs a real browser.
+if (typeof HTMLElement !== 'undefined' && !('showPopover' in HTMLElement.prototype)) {
+  Object.assign(HTMLElement.prototype, {
+    showPopover(this: HTMLElement) {
+      this.style.setProperty('display', 'block');
+    },
+    hidePopover(this: HTMLElement) {
+      this.style.removeProperty('display');
+    },
+    togglePopover(this: HTMLElement, force?: boolean) {
+      const show = force ?? this.style.getPropertyValue('display') !== 'block';
+      if (show) this.style.setProperty('display', 'block');
+      else this.style.removeProperty('display');
+      return show;
+    },
+  });
+}
+
+// jsdom has no Web Animations API. ui-sdk waits for a closing part's animations
+// before unmounting it; with none running, it unmounts at once.
+if (typeof Element !== 'undefined' && !('getAnimations' in Element.prototype)) {
+  Object.assign(Element.prototype, { getAnimations: () => [] });
+}
+
 // jsdom has HTMLDialogElement but not showModal()/close(). The Dialog primitive opens
 // as a native modal; here that only means `open`. Focus, the top layer and inertness
 // need a real browser: e2e/dialog.spec.ts checks them.

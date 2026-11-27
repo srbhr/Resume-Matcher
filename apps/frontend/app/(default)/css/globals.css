@@ -1,10 +1,35 @@
 /* ui-sdk's styles go in the components layer, after Tailwind's base, so the
    base reset doesn't undo them; Tailwind utilities still win over them.
-   web.css is about 12.6 KB gzip of render-blocking CSS, so it isn't imported
-   until the first components/ui wrapper uses ui-sdk. Then add, after
-   tailwindcss:  @import '@ui-sdk/core/web.css' layer(components); */
+   web.css (about 12.6 KB gzip) is imported by components/ui/ui-sdk.css, which
+   only the ui-sdk wrappers import, so it arrives with the first one a page
+   loads instead of blocking every page. */
 @layer ui-sdk;
 @import 'tailwindcss';
+
+/* ui-sdk's tokens in Swiss terms. Unlayered, so they beat web.css's own
+   values; also on ::backdrop for browsers whose backdrop inherits nothing.
+   Selection is ink, action is blue (the Swiss rule), corners are square, and
+   the page is light only (web.css otherwise follows the OS theme). */
+:root,
+::backdrop {
+  color-scheme: light;
+  --ui-background: var(--sw-white);
+  --ui-foreground: var(--sw-ink);
+  --ui-muted: var(--sw-panel);
+  --ui-muted-foreground: var(--sw-ink-soft);
+  --ui-border: var(--sw-ink);
+  --ui-input: var(--sw-ink);
+  --ui-primary: var(--sw-ink);
+  --ui-primary-foreground: var(--sw-white);
+  --ui-destructive: var(--sw-destructive);
+  --ui-ring: var(--sw-primary);
+  --ui-ring-border: var(--sw-primary);
+  --ui-overlay: var(--sw-overlay);
+  --ui-shadow: 4px 4px 0px 0px var(--sw-ink);
+  --ui-radius: 0;
+  --ui-font-size: 0.875rem;
+  --ui-font-sans: Helvetica, Arial, sans-serif;
+}
 
 /* web.css also styles every a, hr, code and kbd, and a focused link's outline,
    and in the components layer those rules beat Tailwind's base reset: links
@@ -28,6 +53,11 @@
     border-top-width: 1px;
     background: none;
     color: inherit;
+  }
+  /* ui-sdk draws a 4px outline with no offset; Swiss focus is a 2px blue ring, offset 2. */
+  [data-slot]:focus-visible {
+    outline: 2px solid var(--sw-primary);
+    outline-offset: 2px;
   }
   :is(code, kbd):not([data-slot]) {
     padding: 0;

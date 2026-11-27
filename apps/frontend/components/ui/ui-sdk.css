@@ -1,0 +1,6 @@
+/* ui-sdk's default styles (web.css), loaded with the first ui-sdk wrapper a page
+   uses instead of with every page. Only components/ui wrappers import this.
+   It lands in Tailwind's components layer, after Tailwind's base reset, as the
+   ui-sdk setup requires; the layer order and the Swiss token bridge are in
+   app/(default)/css/globals.css. */
+@import '@ui-sdk/core/web.css' layer(components);
