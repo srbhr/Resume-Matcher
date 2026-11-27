@@ -115,13 +115,19 @@ export function PaginatedPreview({
     setZoom(Math.max(MIN_ZOOM, Math.min(optimalZoom, DEFAULT_ZOOM[variant])));
   }, [settings.pageSize, autoZoom, variant]);
 
-  // Auto-zoom on mount and when page size changes
+  // Auto-zoom on mount, when the page size changes, and whenever the preview's
+  // own width changes: a window resize, or dragging the builder's split, which
+  // resizes the pane without resizing the window.
   useEffect(() => {
     calculateAutoZoom();
-    // Add resize listener
-    const handleResize = () => calculateAutoZoom();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', calculateAutoZoom);
+      return () => window.removeEventListener('resize', calculateAutoZoom);
+    }
+    const observer = new ResizeObserver(() => calculateAutoZoom());
+    observer.observe(container);
+    return () => observer.disconnect();
   }, [calculateAutoZoom]);
 
   const handleZoomIn = () => {

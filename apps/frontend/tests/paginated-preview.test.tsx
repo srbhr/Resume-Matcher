@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PaginatedPreview } from '@/components/preview/paginated-preview';
 import { DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
@@ -117,6 +117,46 @@ describe('PaginatedPreview', () => {
       expect(screen.getByText('preview.pageCountSingular')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
     });
+
+    it('counts several pages with the plural label', () => {
+      pagination.pages = TWO_PAGES;
+      renderPage(1400);
+
+      expect(screen.getByText('preview.pageCountPlural')).toBeInTheDocument();
+      expect(screen.queryByText('preview.pageCountSingular')).toBeNull();
+    });
+  });
+
+  it('refits when its own width changes, as when the builder split is dragged', () => {
+    let width = 1400;
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => width);
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          callbacks.push(callback);
+        }
+        observe() {}
+        disconnect() {}
+      }
+    );
+    try {
+      render(
+        <PaginatedPreview resumeData={{} as ResumeData} settings={DEFAULT_TEMPLATE_SETTINGS} />
+      );
+      expect(screen.getByText('85%')).toBeInTheDocument();
+
+      // The pane narrows without the window resizing: only the observer sees it.
+      width = 500;
+      act(() => callbacks.forEach((callback) => callback()));
+
+      const fit =
+        (width - PANEL_PADDING) / mmToPx(PAGE_DIMENSIONS[DEFAULT_TEMPLATE_SETTINGS.pageSize].width);
+      expect(screen.getByText(`${Math.round(fit * 100)}%`)).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('keeps the builder panel unchanged: controls and 85% by default', () => {
