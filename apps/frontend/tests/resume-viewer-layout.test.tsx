@@ -75,7 +75,8 @@ describe('resume viewer layout', () => {
 
     const title = await screen.findByRole('heading', { level: 1, name: 'SWE track' });
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(title).toHaveClass('font-serif', 'uppercase', 'text-4xl');
+    // The compact one-row header: a smaller title, clipped after two lines.
+    expect(title).toHaveClass('font-serif', 'uppercase', 'md:text-2xl', 'line-clamp-2');
     expect(container.firstChild as HTMLElement).toHaveClass('relative', 'isolate', 'bg-canvas');
     expect(screen.getByRole('link', { name: 'nav.backToDashboard' })).toHaveAttribute(
       'href',

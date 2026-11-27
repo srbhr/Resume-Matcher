@@ -3,7 +3,9 @@
 import React, { useEffect, useMemo, useState, useRef, useLayoutEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Button, buttonClass } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { PageFrame } from '@/components/ui/page-frame';
@@ -30,6 +32,7 @@ import {
   DownloadSimple,
   SpinnerGap,
   PencilSimple,
+  ArrowLeft,
   Chats,
   Copy,
 } from '@phosphor-icons/react';
@@ -542,11 +545,17 @@ export default function ResumeViewerPage() {
 
   return (
     <PageFrame>
-      <PageHeader className="no-print">
-        <PageHeader.Back href="/dashboard">{t('nav.backToDashboard')}</PageHeader.Back>
+      {/* One compact toolbar row, as in the builder and tracker, so the sheet starts high. */}
+      <PageHeader className="flex flex-wrap items-center gap-x-6 gap-y-3 px-6 py-3 md:px-6 md:py-3 no-print">
+        <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+          <ArrowLeft aria-hidden="true" />
+          {t('nav.backToDashboard')}
+        </Link>
 
-        {/* Editable title (the track name for a master) */}
-        <div className="flex flex-wrap items-center gap-4">
+        {/* Editable title (the track name for a master): up to two lines, then clipped,
+            with the full title on hover. min-w keeps it readable: the actions wrap
+            below it before it is squeezed. */}
+        <div className="flex min-w-[16rem] flex-1 items-center gap-2">
           {isEditingTitle ? (
             <Input
               type="text"
@@ -558,19 +567,26 @@ export default function ResumeViewerPage() {
               autoFocus
               maxLength={80}
               placeholder={t('resumeViewer.titlePlaceholder')}
-              className="h-12 max-w-xl font-serif text-2xl font-bold"
+              className="h-10 max-w-xl font-serif text-xl font-bold"
             />
           ) : (
             <>
-              <PageHeader.Title className={resumeTitle ? undefined : 'text-steel'}>
-                {resumeTitle || t('resumeViewer.titlePlaceholder')}
+              <PageHeader.Title
+                className={cn(
+                  'min-w-0 line-clamp-2 text-xl leading-tight md:text-2xl',
+                  !resumeTitle && 'text-steel'
+                )}
+              >
+                <span title={resumeTitle || undefined}>
+                  {resumeTitle || t('resumeViewer.titlePlaceholder')}
+                </span>
               </PageHeader.Title>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-sm"
                 aria-label={t('resumeViewer.renameTitle')}
-                className="text-steel hover:text-ink"
+                className="shrink-0 text-steel hover:text-ink"
                 onClick={() => {
                   setEditingTitleValue(resumeTitle || '');
                   setIsEditingTitle(true);
@@ -580,12 +596,15 @@ export default function ResumeViewerPage() {
               </Button>
             </>
           )}
-          {isDefaultMaster && <DefaultBadge>{t('resumeViewer.defaultBadge')}</DefaultBadge>}
+          {isDefaultMaster && (
+            <DefaultBadge className="shrink-0">{t('resumeViewer.defaultBadge')}</DefaultBadge>
+          )}
           {isMasterResume && !isDefaultMaster && (
             <Button
               type="button"
               variant="outline"
               size="sm"
+              className="shrink-0"
               onClick={handleSetDefault}
               disabled={isSettingDefault}
             >
@@ -594,19 +613,26 @@ export default function ResumeViewerPage() {
           )}
         </div>
 
-        <PageHeader.Actions>
+        {/* One primary per region: Enhance on a master, else Edit. */}
+        <div className="ml-auto flex flex-wrap items-center gap-3">
           {isMasterResume && (
-            <Button type="button" onClick={() => setShowEnrichmentModal(true)}>
+            <Button type="button" size="sm" onClick={() => setShowEnrichmentModal(true)}>
               {t('resumeViewer.enhanceResume')}
             </Button>
           )}
-          <Button type="button" variant="outline" onClick={handleEdit}>
+          <Button
+            type="button"
+            size="sm"
+            variant={isMasterResume ? 'outline' : 'default'}
+            onClick={handleEdit}
+          >
             <NotePencil aria-hidden="true" />
             {t('dashboard.editResume')}
           </Button>
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={handleDuplicate}
             disabled={isDuplicating}
           >
@@ -614,16 +640,22 @@ export default function ResumeViewerPage() {
             {t('resumeViewer.duplicate')}
           </Button>
           {isTailoredResume && (
-            <Button type="button" variant="outline" onClick={handleInterviewPrep}>
+            <Button type="button" variant="outline" size="sm" onClick={handleInterviewPrep}>
               <Chats aria-hidden="true" />
               {t('interviewPrep.title')}
             </Button>
           )}
-          <Button type="button" variant="outline" onClick={handleDownload} disabled={isDownloading}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={isDownloading}
+          >
             <DownloadSimple aria-hidden="true" />
             {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}
           </Button>
-        </PageHeader.Actions>
+        </div>
       </PageHeader>
 
       <div className="px-8 py-6 md:px-12 md:py-8">
