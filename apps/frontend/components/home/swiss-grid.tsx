@@ -27,8 +27,13 @@ export const SwissGrid = ({
     <PageFrame height="screen" ground="crosses-wide">
       <PageHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <PageHeader.Title>{t('nav.dashboard')}</PageHeader.Title>
-        {/* Where to go next: three labelled buttons, each an icon and a name. */}
-        <nav aria-label={t('nav.primary')} className="flex flex-wrap items-center gap-3">
+        {/* Where to go next: three labelled buttons, each an icon and a name, then the page's
+            one primary action. Between lg and xl the row is too short for all four icons, so
+            the names stand alone there and the header stays one row. */}
+        <nav
+          aria-label={t('nav.primary')}
+          className="flex flex-wrap items-center gap-3 lg:max-xl:gap-2 lg:max-xl:[&_svg]:hidden"
+        >
           <Link href="/queue" className={buttonClass({ variant: 'outline', size: 'sm' })}>
             <ListNumbers aria-hidden="true" />
             {t('nav.queue')}

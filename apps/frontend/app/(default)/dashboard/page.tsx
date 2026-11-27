@@ -99,11 +99,12 @@ const STATUS_TONE: Record<ResumeListItem['processing_status'], StatusTone> = {
   failed: 'error',
 };
 // Quick actions on a tailored tile show on hover and keyboard focus (opacity, so Tab still
-// reaches them). The menu button also shows on touch screens, which have no hover, and
-// stays while its menu is open.
+// reaches them). While hidden they take no pointer events, so a tap on a touch screen, which
+// has no hover, opens the tile instead of an action nobody can see. The menu button also
+// shows on touch screens, and stays while its menu is open.
 const TILE_REVEAL =
-  'opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 focus-visible:opacity-100';
-const TILE_MENU_REVEAL = `${TILE_REVEAL} pointer-coarse:opacity-100 aria-expanded:opacity-100`;
+  'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-has-[:focus-visible]:pointer-events-auto group-has-[:focus-visible]:opacity-100 focus-visible:opacity-100';
+const TILE_MENU_REVEAL = `${TILE_REVEAL} pointer-coarse:pointer-events-auto pointer-coarse:opacity-100 aria-expanded:pointer-events-auto aria-expanded:opacity-100`;
 const TILE_ICON_ACTION = cn(buttonClass({ variant: 'ghost', size: 'icon-sm' }), TILE_GHOST_ICON);
 // A group's label row spans the grid, on the canvas between the ink rules.
 const GROUP_ROW =
@@ -1049,7 +1050,9 @@ export default function DashboardPage() {
                           <span className="font-mono font-bold">{getMonogram(title)}</span>
                         </div>
                         {resume.processing_status === 'ready' ? (
-                          <div className="relative z-10 flex w-fit items-center gap-1">
+                          // The row itself takes no taps until revealed, so on a touch screen
+                          // the tile opens wherever the hidden actions sit.
+                          <div className="pointer-events-none relative z-10 flex w-fit items-center gap-1 group-hover:pointer-events-auto group-has-[:focus-visible]:pointer-events-auto">
                             <Link
                               href={`/resumes/${resume.resume_id}`}
                               aria-label={t('dashboard.tileActions.open', { title })}

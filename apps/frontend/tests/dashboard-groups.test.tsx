@@ -126,7 +126,9 @@ describe('dashboard groups', () => {
 
     const masters = screen.getByText('dashboard.groups.masters:1|5').parentElement!;
     const tailored = screen.getByText('dashboard.groups.tailored:1').parentElement!;
-    const fillers = Array.from(container.querySelectorAll('div[class~="pointer-events-none"]'));
+    const fillers = Array.from(
+      container.querySelectorAll('div[class~="pointer-events-none"][class~="aspect-5/4"]')
+    );
     const between = fillers.filter(
       (cell) =>
         masters.compareDocumentPosition(cell) & Node.DOCUMENT_POSITION_FOLLOWING &&
@@ -276,6 +278,8 @@ describe('dashboard tile quick actions', () => {
     ).toHaveAttribute('href', '/builder?id=T-one');
     // Revealed by opacity, so the keyboard still reaches them.
     expect(open).toHaveClass('opacity-0', 'group-hover:opacity-100', 'focus-visible:opacity-100');
+    // Hidden, it takes no taps: on a touch screen the tile opens instead.
+    expect(open).toHaveClass('pointer-events-none', 'group-hover:pointer-events-auto');
     expect(open.parentElement).toHaveClass('relative', 'z-10');
 
     fireEvent.click(
@@ -296,6 +300,7 @@ describe('dashboard tile quick actions', () => {
     expect(more).toHaveClass(
       'opacity-0',
       'pointer-coarse:opacity-100',
+      'pointer-coarse:pointer-events-auto',
       'aria-expanded:opacity-100'
     );
   });

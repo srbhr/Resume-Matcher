@@ -1010,6 +1010,27 @@ describe('settings page (round 2)', () => {
     );
   });
 
+  it('brings a test result into view above the action bar', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    api.testLlmConnection.mockResolvedValue({
+      healthy: true,
+      provider: 'openai',
+      model: 'gpt-5-nano',
+    });
+    await renderLoaded();
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
+      );
+    });
+    const result = await screen.findByText('settings.llmConfiguration.connectionSuccessful');
+    const target = scroll.mock.contexts.at(-1) as HTMLElement;
+    expect(target).toContainElement(result);
+    // Stops clear of the sticky bar.
+    expect(target).toHaveClass('scroll-mb-16');
+    scroll.mockRestore();
+  });
+
   it('sets the content switches in one ruled list', async () => {
     api.fetchFeatureConfig.mockResolvedValue({
       enable_cover_letter: false,
